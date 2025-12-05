@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friction · Problem Discovery Engine</title>
+    <style>
+        :root {
+            --bg: #02040a;
+            --panel: rgba(9, 13, 24, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.04);
+            --text: #edf1ff;
+            --muted: rgba(237, 241, 255, 0.65);
+            --accent: #7b8bff;
+            --accent-2: #3cf2ff;
+            --accent-hot: #ff8f6b;
+            --pill: rgba(255, 255, 255, 0.08);
+            --shadow: 0 20px 80px rgba(3, 8, 23, 0.65);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 20% -10%, rgba(123, 139, 255, 0.35), transparent 45%),
+                        radial-gradient(circle at 80% 0%, rgba(60, 242, 255, 0.35), transparent 40%),
+                        var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px clamp(16px, 4vw, 48px) 64px;
+            line-height: 1.65;
+        }
+
+        .layout-grid {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+            gap: 32px;
+        }
+
+        .sidebar {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 32px;
+            height: fit-content;
+            backdrop-filter: blur(30px);
+        }
+
+        .sidebar h1 {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar p {
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .chip {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: var(--pill);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .sidebar-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+
+        .sidebar-card h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .sidebar-card strong {
+            font-size: 24px;
+        }
+
+        .workspace {
+            background: rgba(3, 6, 16, 0.65);
+            border: 1px solid var(--panel-border);
+            border-radius: 28px;
+            padding: clamp(20px, 3vw, 36px);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(25px);
+        }
+
+        .command-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .search {
+            flex: 1;
+            min-width: 240px;
+            position: relative;
+        }
+
+        .search input {
+            width: 100%;
+            padding: 14px 50px 14px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text);
+            font-size: 15px;
+        }
+
+        .search svg {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            stroke: var(--muted);
+        }
+
+        .command-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: 14px;
+            padding: 12px 20px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+            transition: transform 0.2s ease, border 0.2s ease, background 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(120deg, var(--accent) 0%, var(--accent-2) 100%);
+            color: #050e22;
+            box-shadow: 0 15px 40px rgba(123, 139, 255, 0.4);
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .tab-pill {
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .tab-pill.active {
+            background: rgba(123, 139, 255, 0.18);
+            color: var(--text);
+            border-color: rgba(123, 139, 255, 0.4);
+        }
+
+        .section-panel {
+            display: none;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .section-panel.active {
+            display: flex;
+        }
+
+        .panel-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: clamp(18px, 2vw, 28px);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .panel-header h2 {
+            font-size: 22px;
+        }
+
+        .subdued {
+            color: var(--muted);
+        }
+
+        .hero-slab {
+            background: linear-gradient(135deg, rgba(123, 139, 255, 0.35), rgba(60, 242, 255, 0.2));
+            border-radius: 24px;
+            padding: clamp(24px, 4vw, 48px);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-slab::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.3), transparent 55%);
+            opacity: 0.7;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-metrics {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .hero-metrics span {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .suggestion-stack {
+            margin-top: 24px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .suggestion {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(2, 4, 10, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .suggestion strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .grid-two {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .category-card {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.01);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .category-card span {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .list-card {
+            display: grid;
+            gap: 12px;
+        }
+
+        .list-item {
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .list-item small {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        textarea, select, input[type="text"] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            color: var(--text);
+            padding: 16px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag {
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .tag.selected {
+            border-color: rgba(123, 139, 255, 0.6);
+            background: rgba(123, 139, 255, 0.2);
+            color: var(--text);
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .switch {
+            width: 48px;
+            height: 24px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            position: relative;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .switch::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            transition: transform 0.2s ease;
+        }
+
+        .switch.active {
+            background: linear-gradient(120deg, var(--accent) 0%, var(--accent-2) 100%);
+        }
+
+        .switch.active::after {
+            transform: translateX(22px);
+        }
+
+        .problem-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(76, 255, 190, 0.12);
+            color: #36f0b5;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .comment {
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            padding: 18px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .stat-card strong {
+            font-size: 24px;
+            display: block;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .table-card {
+            display: grid;
+            gap: 16px;
+        }
+
+        .table-row {
+            border-radius: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+        }
+
+        .pricing-card {
+            padding: 22px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pricing-card.highlight {
+            border-color: rgba(123, 139, 255, 0.6);
+            background: rgba(123, 139, 255, 0.12);
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            display: grid;
+            gap: 6px;
+        }
+
+        .pricing-card ul li {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 1100px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .command-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout-grid">
+        <aside class="sidebar">
+            <div class="chip">Problem Discovery Engine · Wireframe v2</div>
+            <h1>Friction</h1>
+            <p>Dual-sided platform converting global complaints into validated opportunities for founders, product teams, investors, and researchers.</p>
+
+            <div class="chip-row">
+                <span class="chip">Realtime problem graph</span>
+                <span class="chip">Perplexity-inspired UI</span>
+                <span class="chip">Dual-sided marketplace</span>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>Problems indexed</h3>
+                <strong>2.3M+</strong>
+                <div class="subdued">Growing 15% weekly</div>
+            </div>
+            <div class="sidebar-card">
+                <h3>User validations</h3>
+                <strong>500K+</strong>
+                <div class="subdued">Community verified</div>
+            </div>
+            <div class="sidebar-card">
+                <h3>Monetization</h3>
+                <strong>$10.8M</strong>
+                <div class="subdued">Projected ARR · Yr 3</div>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <div class="command-bar">
+                <div class="search">
+                    <input type="text" placeholder="Search unmet needs, industries, signals..." aria-label="Search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+                        <path d="M11 5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z" stroke="currentColor"/>
+                        <path d="m20 20-4.35-4.35" stroke="currentColor" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="command-actions">
+                    <button class="btn">Share a Problem</button>
+                    <button class="btn btn-primary">Launch Research Workspace</button>
+                </div>
+            </div>
+
+            <div class="mode-tabs" role="tablist">
+                <button class="tab-pill active" data-target="consumer" role="tab">Consumer Feed</button>
+                <button class="tab-pill" data-target="submit" role="tab">Submit Flow</button>
+                <button class="tab-pill" data-target="detail" role="tab">Problem Detail</button>
+                <button class="tab-pill" data-target="dashboard" role="tab">Research Dashboard</button>
+                <button class="tab-pill" data-target="deepdive" role="tab">Deep Dive</button>
+                <button class="tab-pill" data-target="pricing" role="tab">Pricing</button>
+            </div>
+
+            <!-- Consumer Homepage -->
+            <section class="section-panel active" id="consumer" role="tabpanel">
+                <div class="hero-slab">
+                    <div class="hero-content">
+                        <p class="subdued">Join 150,000+ people discovering opportunities</p>
+                        <h2 style="font-size: clamp(32px, 6vw, 48px); margin: 8px 0;">Your ideas matter.</h2>
+                        <p class="subdued">Share unmet needs. Find community validation. Discover what the world is waiting for.</p>
+                        <div class="hero-metrics">
+                            <div><strong>2.3M</strong><br><span>opportunities indexed</span></div>
+                            <div><strong>500+</strong><br><span>ideas validated</span></div>
+                            <div><strong>15%</strong><br><span>weekly growth</span></div>
+                        </div>
+                        <div class="suggestion-stack">
+                            <div class="suggestion">
+                                <strong>Finding reliable childcare in my area</strong>
+                                <small class="subdued">2,847 people need this solution</small>
+                            </div>
+                            <div class="suggestion">
+                                <strong>Managing subscription services and cancellations</strong>
+                                <small class="subdued">5,923 people need this solution</small>
+                            </div>
+                            <div class="suggestion">
+                                <strong>Getting accurate restaurant wait times</strong>
+                                <small class="subdued">1,456 people need this solution</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Trending Opportunities</h2>
+                        <span class="subdued">Updated in real-time</span>
+                    </div>
+                    <div class="grid-two">
+                        <div class="list-item">
+                            <strong>Universal healthcare scheduling platform</strong>
+                            <small>↑ 18% this week · 4,523 people</small>
+                        </div>
+                        <div class="list-item">
+                            <strong>Transparent small business banking</strong>
+                            <small>↑ 12% this week · 3,891 people</small>
+                        </div>
+                        <div class="list-item">
+                            <strong>Finding reliable contractors for home repairs</strong>
+                            <small>↑ 8% this week · 6,234 people</small>
+                        </div>
+                        <div class="list-item">
+                            <strong>Managing multiple streaming subscriptions</strong>
+                            <small>↓ 3% this week · 8,923 people</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Categories</h2>
+                        <span class="subdued">Explore 8 core domains</span>
+                    </div>
+                    <div class="grid-two">
+                        <div class="category-card">
+                            <strong>💼 Work & Productivity</strong>
+                            <span>12,483 problems</span>
+                        </div>
+                        <div class="category-card">
+                            <strong>💰 Money & Finance</strong>
+                            <span>8,921 problems</span>
+                        </div>
+                        <div class="category-card">
+                            <strong>🏥 Health & Wellness</strong>
+                            <span>15,672 problems</span>
+                        </div>
+                        <div class="category-card">
+                            <strong>🏠 Home & Living</strong>
+                            <span>9,234 problems</span>
+                        </div>
+                        <div class="category-card">
+                            <strong>💻 Technology</strong>
+                            <span>11,456 problems</span>
+                        </div>
+                        <div class="category-card">
+                            <strong>🚗 Transportation</strong>
+                            <span>6,789 problems</span>
+                        </div>
+                        <div class="category-card">
+                            <strong>📚 Education</strong>
+                            <span>7,345 problems</span>
+                        </div>
+                        <div class="category-card">
+                            <strong>🛒 Shopping & Services</strong>
+                            <span>10,123 problems</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Recent Signals</h2>
+                        <button class="btn">View feed</button>
+                    </div>
+                    <div class="list-card">
+                        <div class="list-item">
+                            <strong>Better parking solutions near apartments</strong>
+                            <small>Transportation · 2 hours ago · 234 people agree</small>
+                        </div>
+                        <div class="list-item">
+                            <strong>Unified healthcare portal across providers</strong>
+                            <small>Health & Wellness · 5 hours ago · 1,023 people agree</small>
+                        </div>
+                        <div class="list-item">
+                            <strong>Affordable quality furniture marketplace</strong>
+                            <small>Home & Living · 1 day ago · 567 people agree</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Submit Problem -->
+            <section class="section-panel" id="submit" role="tabpanel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Share an Unmet Need</h2>
+                        <span class="chip">Step 2 of 4 · 2-3 mins</span>
+                    </div>
+                    <div class="form-grid">
+                        <label>
+                            <span>1. What's missing in the world?</span>
+                            <textarea placeholder="Describe the unmet need, when it matters, and who it affects..."></textarea>
+                            <small class="subdued">💡 The more detail you provide, the easier it is for others to validate and for innovators to act.</small>
+                        </label>
+
+                        <div class="panel-card" style="background: rgba(255, 143, 107, 0.08); border-color: rgba(255, 143, 107, 0.3);">
+                            <strong>Similar opportunities already shared</strong>
+                            <p class="subdued">Consider validating existing entries before creating duplicates.</p>
+                            <div class="list-item" style="background: rgba(0,0,0,0.2);">
+                                <strong>Simpler bank account switching process</strong>
+                                <small>2,341 people need this · Posted 3 days ago</small>
+                            </div>
+                        </div>
+
+                        <label>
+                            <span>2. Categorize your problem</span>
+                            <div class="tag-row">
+                                <span class="tag">💼 Work & Productivity</span>
+                                <span class="tag selected">💰 Money & Finance</span>
+                                <span class="tag">🏥 Health & Wellness</span>
+                                <span class="tag">🏠 Home & Living</span>
+                                <span class="tag">💻 Technology</span>
+                                <span class="tag">🚗 Transportation</span>
+                                <span class="tag">📚 Education</span>
+                                <span class="tag">🛒 Shopping</span>
+                            </div>
+                        </label>
+
+                        <label>
+                            <span>3. How significant is this opportunity?</span>
+                            <div class="tag-row" style="flex-direction: column; align-items: flex-start;">
+                                <span class="tag">Nice to have · Convenience boost</span>
+                                <span class="tag selected">Important need · Impacts daily life</span>
+                                <span class="tag">Major opportunity · Broad impact</span>
+                                <span class="tag">Critical gap · Blocking goals</span>
+                            </div>
+                        </label>
+
+                        <label>
+                            <span>4. Privacy settings</span>
+                            <div class="toggle">
+                                <div class="switch" data-switch></div>
+                                <span>Post anonymously</span>
+                            </div>
+                            <div class="toggle">
+                                <div class="switch active" data-switch></div>
+                                <span>Notify me when others engage</span>
+                            </div>
+                        </label>
+
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn btn-primary">Submit Problem</button>
+                            <button class="btn">Save as Draft</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Problem Detail -->
+            <section class="section-panel" id="detail" role="tabpanel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Universal healthcare appointment scheduling platform</h2>
+                        <span class="badge">Major opportunity</span>
+                    </div>
+                    <div class="problem-metrics">
+                        <div>
+                            <small class="subdued">Category</small>
+                            <div>🏥 Health & Wellness</div>
+                        </div>
+                        <div>
+                            <small class="subdued">Shared</small>
+                            <div>5 days ago · United States</div>
+                        </div>
+                        <div>
+                            <small class="subdued">Growth</small>
+                            <div>+12% per week</div>
+                        </div>
+                        <div>
+                            <small class="subdued">Severity</small>
+                            <div>Major opportunity</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card" style="text-align: center;">
+                    <strong style="font-size: 56px;">4,523</strong>
+                    <p class="subdued">people need this solution</p>
+                    <button class="btn btn-primary" style="margin-top: 12px;">✋ I need this too</button>
+                    <small class="subdued">Growing 12% per week · First shared 3 months ago</small>
+                </div>
+
+                <div class="panel-card">
+                    <h3>The Unmet Need</h3>
+                    <p>People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction. Opportunity: a solution aggregating all healthcare appointments with unified reminders.</p>
+                </div>
+
+                <div class="panel-card">
+                    <h3>Solutions in Development</h3>
+                    <div class="list-card">
+                        <div class="list-item" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>HealthSync Technologies</strong>
+                                <div class="subdued">Universal healthcare appointment aggregator · Pre-launch</div>
+                            </div>
+                            <button class="btn">Follow progress</button>
+                        </div>
+                        <div class="list-item" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>MediCal (Stealth Startup)</strong>
+                                <div class="subdued">AI-powered healthcare scheduling · Seed stage</div>
+                            </div>
+                            <button class="btn">Get notified</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <h3>Discussion (47 comments)</h3>
+                    <div class="comment">
+                        <strong>Sarah M. · 🏆 Top Validator</strong>
+                        <p>This is exactly my experience! I created a shared calendar for medical appointments because the situation was so chaotic. Need a universal scheduler.</p>
+                        <small class="subdued">2 days ago</small>
+                    </div>
+                    <div class="comment">
+                        <strong>Anonymous · 💡 Solution Finder</strong>
+                        <p>I work in healthcare IT and this is a known problem. Legacy systems lack modern APIs—adoption is slow.</p>
+                        <small class="subdued">1 day ago</small>
+                    </div>
+                    <div class="comment">
+                        <strong>Michael R. · 🎯 Problem Solver</strong>
+                        <p>I'd easily pay $10-15/month for an app that syncs all appointments and reminders.</p>
+                        <small class="subdued">12 hours ago</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Research Dashboard -->
+            <section class="section-panel" id="dashboard" role="tabpanel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Innovation Dashboard · Discover</h2>
+                        <div class="chip-row" style="margin: 0;">
+                            <span class="chip">Discover</span>
+                            <span class="chip">Collections</span>
+                            <span class="chip">Analytics</span>
+                            <span class="chip">API</span>
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <strong>82,394</strong>
+                            <span class="subdued">Total opportunities</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>1,247</strong>
+                            <span class="subdued">New this week</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>156</strong>
+                            <span class="subdued">High validation</span>
+                        </div>
+                        <div class="stat-card">
+                            <strong>23</strong>
+                            <span class="subdued">Watchlists</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Market Opportunity Highlights</h2>
+                    </div>
+                    <div class="grid-two">
+                        <div class="list-item">
+                            <small class="subdued">Estimated TAM</small>
+                            <strong>$2.3B</strong>
+                            <small>Healthcare scheduling</small>
+                        </div>
+                        <div class="list-item">
+                            <small class="subdued">Avg willingness to pay</small>
+                            <strong>$12-15</strong>
+                            <small>Per month per user</small>
+                        </div>
+                        <div class="list-item">
+                            <small class="subdued">Competitive threat</small>
+                            <strong>Medium</strong>
+                            <small>3 partial solutions</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Filters</h2>
+                        <button class="btn">Save search</button>
+                    </div>
+                    <div class="filter-grid">
+                        <select>
+                            <option>All industries</option>
+                            <option>Healthcare</option>
+                            <option>Finance</option>
+                            <option>Education</option>
+                            <option>Transportation</option>
+                        </select>
+                        <select>
+                            <option>All regions</option>
+                            <option>United States</option>
+                            <option>Europe</option>
+                            <option>Asia</option>
+                        </select>
+                        <select>
+                            <option>Last 30 days</option>
+                            <option>Last 7 days</option>
+                            <option>Last 90 days</option>
+                        </select>
+                        <select>
+                            <option>All validation levels</option>
+                            <option>500+ confirmations</option>
+                            <option>1,000+ confirmations</option>
+                        </select>
+                        <input type="text" placeholder="Keywords: healthcare, scheduling...">
+                        <select>
+                            <option>All severities</option>
+                            <option>Minor</option>
+                            <option>Moderate</option>
+                            <option>Major</option>
+                            <option>Critical</option>
+                        </select>
+                        <select>
+                            <option>All trends</option>
+                            <option>Rising fast</option>
+                            <option>Growing</option>
+                            <option>Stable</option>
+                            <option>Declining</option>
+                        </select>
+                        <button class="btn btn-primary">Apply filters</button>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Trending Opportunities (234)</h2>
+                        <div class="chip-row" style="margin: 0;">
+                            <span class="chip">⭐ Add to Watchlist</span>
+                            <span class="chip">💾 Save</span>
+                            <span class="chip">📊 Export</span>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <div class="table-row">
+                            <strong>Universal healthcare appointment scheduling platform</strong>
+                            <small>🏥 Healthcare · United States · 4,523 confirmations · 📈 +12% this week</small>
+                        </div>
+                        <div class="table-row">
+                            <strong>Small business banking fees are opaque</strong>
+                            <small>💰 Finance · Global · 3,891 confirmations · 📈 +18% this week</small>
+                        </div>
+                        <div class="table-row">
+                            <strong>Finding reliable contractors for home repairs</strong>
+                            <small>🏠 Home & Living · United States · 6,234 confirmations · 📈 +8% this week</small>
+                        </div>
+                        <div class="table-row">
+                            <strong>EV charging infrastructure in apartments</strong>
+                            <small>🚗 Transportation · US & EU · 2,156 confirmations · 📈 +25% this week</small>
+                        </div>
+                        <div class="table-row">
+                            <strong>Managing multiple streaming subscriptions</strong>
+                            <small>💻 Technology · Global · 8,923 confirmations · 📉 -3% this week</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deep Dive -->
+            <section class="section-panel" id="deepdive" role="tabpanel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Opportunity Deep Dive · Market Analysis</h2>
+                        <span class="subdued">Universal healthcare appointment scheduling platform</span>
+                    </div>
+                    <p>In-depth analysis of market validation, demographics, revenue signals, and competition for the healthcare scheduling opportunity.</p>
+                </div>
+
+                <div class="grid-two">
+                    <div class="panel-card">
+                        <h3>Opportunity Summary</h3>
+                        <p>Users juggling multiple healthcare providers lack unified scheduling. Disconnected portals and legacy systems cause missed appointments. Solution: cross-provider aggregation, unified reminders, and API integrations.</p>
+                        <div class="grid-two" style="margin-top: 18px;">
+                            <div>
+                                <small class="subdued">First reported</small>
+                                <strong>3 months ago</strong>
+                            </div>
+                            <div>
+                                <small class="subdued">Growth rate</small>
+                                <strong style="color: #36f0b5;">+12% weekly</strong>
+                            </div>
+                            <div>
+                                <small class="subdued">Est. market size</small>
+                                <strong>~2.3M users</strong>
+                            </div>
+                            <div>
+                                <small class="subdued">Severity score</small>
+                                <strong style="color: var(--accent-hot);">8.2 / 10</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-card" style="text-align: center;">
+                        <small class="subdued">Validation Score</small>
+                        <div style="font-size: 64px; font-weight: 700;">94</div>
+                        <p class="subdued">Based on confirmations, engagement, growth, and clarity.</p>
+                        <div style="margin-top: 18px;">
+                            <small class="subdued">Solution feasibility</small>
+                            <div style="font-size: 32px;">7.8 / 10</div>
+                            <small>Medium technical complexity · 12-18 month timeline</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-two">
+                    <div class="panel-card">
+                        <h3>Investment & Market Intelligence</h3>
+                        <div class="list-card">
+                            <div class="list-item">
+                                <small class="subdued">Investor interest</small>
+                                <strong>High</strong>
+                                <small>7 VCs monitoring</small>
+                            </div>
+                            <div class="list-item">
+                                <small class="subdued">Time to market</small>
+                                <strong>12-18 months</strong>
+                                <small>For MVP launch</small>
+                            </div>
+                            <div class="list-item">
+                                <small class="subdued">Revenue potential</small>
+                                <strong>$34M</strong>
+                                <small>Year 3 ARR estimate</small>
+                            </div>
+                            <div class="list-item">
+                                <small class="subdued">Competitive threat</small>
+                                <strong>Medium</strong>
+                                <small>3 partial solutions</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-card">
+                        <h3>Willingness to Pay Signals</h3>
+                        <div class="list-card">
+                            <div class="list-item">
+                                <strong>"I'd easily pay $10-15/month for this solution"</strong>
+                                <small>Mentioned in 127 comments · High intent</small>
+                            </div>
+                            <div class="list-item">
+                                <strong>"Worth paying for if it saves time"</strong>
+                                <small>Mentioned in 89 comments · Medium intent</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <h3>Competitive Landscape</h3>
+                    <p><strong>Existing solutions mentioned:</strong></p>
+                    <ul style="margin: 12px 0 18px 20px;">
+                        <li>Google Calendar (manual entry) · 234 mentions</li>
+                        <li>Zocdoc (limited coverage) · 89 mentions</li>
+                        <li>Provider-specific apps · 156 mentions</li>
+                    </ul>
+                    <p><strong>Gap analysis:</strong> No tool aggregates appointments across disconnected healthcare systems. Existing solutions require manual entry or limited networks.</p>
+                </div>
+
+                <div class="panel-card" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+                    <div>
+                        <strong>Export this analysis</strong>
+                        <p class="subdued">Share with your team or plug into research workflows.</p>
+                    </div>
+                    <div class="command-actions">
+                        <button class="btn">📄 PDF</button>
+                        <button class="btn">📊 CSV</button>
+                        <button class="btn">🔗 Share</button>
+                        <button class="btn btn-primary">Add to Collection</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pricing -->
+            <section class="section-panel" id="pricing" role="tabpanel">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Pricing Tiers</h2>
+                        <span class="subdued">Access the world's largest opportunity graph</span>
+                    </div>
+                    <div class="pricing-grid">
+                        <div class="pricing-card">
+                            <strong>Free</strong>
+                            <div style="font-size: 36px;">$0</div>
+                            <small class="subdued">Forever free for sharing needs</small>
+                            <ul>
+                                <li>Share unlimited opportunities</li>
+                                <li>Browse all opportunities</li>
+                                <li>Basic search & comments</li>
+                                <li>Follow opportunities</li>
+                                <li>—</li>
+                            </ul>
+                            <button class="btn">Get started</button>
+                        </div>
+                        <div class="pricing-card highlight">
+                            <strong>Pro</strong>
+                            <div style="font-size: 36px;">$99</div>
+                            <small class="subdued">Per month · billed monthly</small>
+                            <div class="chip">Solo researchers find 3.2× more validated ideas</div>
+                            <ul>
+                                <li>Advanced search & filters</li>
+                                <li>3 watchlists with alerts</li>
+                                <li>Export 50 problems/month</li>
+                                <li>90-day history, validation scores</li>
+                                <li>Market size preview</li>
+                            </ul>
+                            <button class="btn btn-primary">Start free trial</button>
+                        </div>
+                        <div class="pricing-card">
+                            <strong>Business</strong>
+                            <div style="font-size: 36px;">$499</div>
+                            <small class="subdued">Teams · $99/seat</small>
+                            <div class="chip">Product teams cut research time by 60%</div>
+                            <ul>
+                                <li>Unlimited searches & exports</li>
+                                <li>Team collaboration (5 seats)</li>
+                                <li>API access (10k calls/month)</li>
+                                <li>1-year historical data</li>
+                                <li>Priority support & webhooks</li>
+                            </ul>
+                            <button class="btn">Start free trial</button>
+                        </div>
+                        <div class="pricing-card">
+                            <strong>Enterprise</strong>
+                            <div style="font-size: 36px;">Custom</div>
+                            <small class="subdued">Contact for pricing</small>
+                            <ul>
+                                <li>Unlimited seats & API calls</li>
+                                <li>Full historical archive</li>
+                                <li>White-label reports</li>
+                                <li>Custom ML models</li>
+                                <li>Dedicated success & SLA</li>
+                            </ul>
+                            <button class="btn">Contact sales</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-card" style="text-align: center;">
+                    <h3>All plans include</h3>
+                    <div class="chip-row" style="justify-content: center;">
+                        <span class="chip">🔒 Enterprise-grade security</span>
+                        <span class="chip">📊 Real-time data</span>
+                        <span class="chip">🌍 Global coverage</span>
+                        <span class="chip">💬 Community access</span>
+                        <span class="chip">📱 Mobile app</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const tabs = document.querySelectorAll('.tab-pill');
+        const sections = document.querySelectorAll('.section-panel');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                sections.forEach(section => section.classList.remove('active'));
+                document.getElementById(tab.dataset.target).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('[data-switch]').forEach(toggle => {
+            toggle.addEventListener('click', () => toggle.classList.toggle('active'));
+        });
+    </script>
+</body>
+</html>
