@@ -280,6 +280,98 @@
             margin-bottom: 6px;
         }
 
+        .hero-search {
+            position: relative;
+            margin-top: 24px;
+        }
+
+        .hero-search input {
+            width: 100%;
+            padding: 18px 60px 18px 24px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            background: rgba(2, 4, 10, 0.7);
+            backdrop-filter: blur(20px);
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .hero-search input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(123, 139, 255, 0.2);
+        }
+
+        .hero-search svg {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 22px;
+            stroke: var(--accent);
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: calc(100% + 12px);
+            left: 0;
+            right: 0;
+            background: rgba(9, 13, 24, 0.95);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 12px;
+            display: none;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .search-suggestions.active {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 14px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .suggestion-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(123, 139, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .suggestion-text {
+            flex: 1;
+        }
+
+        .suggestion-text strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .suggestion-text small {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
         .grid-two {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -294,6 +386,19 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-card:hover {
+            border-color: rgba(123, 139, 255, 0.3);
+            background: rgba(123, 139, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .category-card.active {
+            border-color: rgba(123, 139, 255, 0.6);
+            background: rgba(123, 139, 255, 0.15);
         }
 
         .category-card span {
@@ -311,11 +416,148 @@
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .list-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
         }
 
         .list-item small {
             color: var(--muted);
             font-size: 13px;
+        }
+
+        .trending-card {
+            position: relative;
+            padding: 18px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .trending-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(123, 139, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .trending-card .mini-chart {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 60px;
+            height: 30px;
+            opacity: 0.3;
+        }
+
+        .growth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .growth-badge.up {
+            background: rgba(76, 255, 190, 0.12);
+            color: #36f0b5;
+        }
+
+        .growth-badge.down {
+            background: rgba(255, 143, 107, 0.12);
+            color: #ff8f6b;
+        }
+
+        .realtime-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .realtime-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #36f0b5;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        .signal-item {
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .signal-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .signal-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+            border-radius: 16px 0 0 16px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .signal-item:hover::before {
+            opacity: 1;
+        }
+
+        .agree-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .agree-btn:hover {
+            background: rgba(123, 139, 255, 0.15);
+            border-color: rgba(123, 139, 255, 0.4);
+        }
+
+        .agree-btn.agreed {
+            background: rgba(123, 139, 255, 0.2);
+            border-color: rgba(123, 139, 255, 0.5);
+            color: var(--accent);
         }
 
         .form-grid {
@@ -570,21 +812,44 @@
                         <p class="subdued">Share unmet needs. Find community validation. Discover what the world is waiting for.</p>
                         <div class="hero-metrics">
                             <div><strong>2.3M</strong><br><span>opportunities indexed</span></div>
-                            <div><strong>500+</strong><br><span>ideas validated</span></div>
+                            <div><strong>500K+</strong><br><span>ideas validated</span></div>
                             <div><strong>15%</strong><br><span>weekly growth</span></div>
                         </div>
-                        <div class="suggestion-stack">
-                            <div class="suggestion">
-                                <strong>Finding reliable childcare in my area</strong>
-                                <small class="subdued">2,847 people need this solution</small>
-                            </div>
-                            <div class="suggestion">
-                                <strong>Managing subscription services and cancellations</strong>
-                                <small class="subdued">5,923 people need this solution</small>
-                            </div>
-                            <div class="suggestion">
-                                <strong>Getting accurate restaurant wait times</strong>
-                                <small class="subdued">1,456 people need this solution</small>
+                        <div class="hero-search">
+                            <input type="text" placeholder="Search problems, industries, or trending opportunities..." id="hero-search-input" aria-label="AI-powered search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+                                <path d="M11 5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z" stroke="currentColor"/>
+                                <path d="m20 20-4.35-4.35" stroke="currentColor" stroke-linecap="round"/>
+                            </svg>
+                            <div class="search-suggestions" id="hero-suggestions">
+                                <div class="suggestion-item">
+                                    <div class="suggestion-icon">🏥</div>
+                                    <div class="suggestion-text">
+                                        <strong>Healthcare appointment scheduling</strong>
+                                        <small>4,523 validations · Trending</small>
+                                    </div>
+                                </div>
+                                <div class="suggestion-item">
+                                    <div class="suggestion-icon">💰</div>
+                                    <div class="suggestion-text">
+                                        <strong>Transparent small business banking</strong>
+                                        <small>3,891 validations · Rising fast</small>
+                                    </div>
+                                </div>
+                                <div class="suggestion-item">
+                                    <div class="suggestion-icon">🏠</div>
+                                    <div class="suggestion-text">
+                                        <strong>Finding reliable contractors</strong>
+                                        <small>6,234 validations · Popular</small>
+                                    </div>
+                                </div>
+                                <div class="suggestion-item">
+                                    <div class="suggestion-icon">💻</div>
+                                    <div class="suggestion-text">
+                                        <strong>Managing streaming subscriptions</strong>
+                                        <small>8,923 validations · Top result</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -593,24 +858,51 @@
                 <div class="panel-card">
                     <div class="panel-header">
                         <h2>Trending Opportunities</h2>
-                        <span class="subdued">Updated in real-time</span>
+                        <span class="realtime-indicator">
+                            <span class="realtime-dot"></span>
+                            Updated in real-time
+                        </span>
                     </div>
                     <div class="grid-two">
-                        <div class="list-item">
+                        <div class="trending-card">
                             <strong>Universal healthcare scheduling platform</strong>
-                            <small>↑ 18% this week · 4,523 people</small>
+                            <div style="margin-top: 8px;">
+                                <span class="growth-badge up">↑ 18% this week</span>
+                            </div>
+                            <small style="display: block; margin-top: 6px;">4,523 validations</small>
+                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
+                                <path d="M0,25 L15,20 L30,15 L45,12 L60,8" fill="none" stroke="#36f0b5" stroke-width="2"/>
+                            </svg>
                         </div>
-                        <div class="list-item">
+                        <div class="trending-card">
                             <strong>Transparent small business banking</strong>
-                            <small>↑ 12% this week · 3,891 people</small>
+                            <div style="margin-top: 8px;">
+                                <span class="growth-badge up">↑ 12% this week</span>
+                            </div>
+                            <small style="display: block; margin-top: 6px;">3,891 validations</small>
+                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
+                                <path d="M0,22 L15,18 L30,16 L45,14 L60,10" fill="none" stroke="#36f0b5" stroke-width="2"/>
+                            </svg>
                         </div>
-                        <div class="list-item">
+                        <div class="trending-card">
                             <strong>Finding reliable contractors for home repairs</strong>
-                            <small>↑ 8% this week · 6,234 people</small>
+                            <div style="margin-top: 8px;">
+                                <span class="growth-badge up">↑ 8% this week</span>
+                            </div>
+                            <small style="display: block; margin-top: 6px;">6,234 validations</small>
+                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
+                                <path d="M0,20 L15,18 L30,17 L45,15 L60,12" fill="none" stroke="#36f0b5" stroke-width="2"/>
+                            </svg>
                         </div>
-                        <div class="list-item">
+                        <div class="trending-card">
                             <strong>Managing multiple streaming subscriptions</strong>
-                            <small>↓ 3% this week · 8,923 people</small>
+                            <div style="margin-top: 8px;">
+                                <span class="growth-badge down">↓ 3% this week</span>
+                            </div>
+                            <small style="display: block; margin-top: 6px;">8,923 validations</small>
+                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
+                                <path d="M0,15 L15,16 L30,18 L45,20 L60,22" fill="none" stroke="#ff8f6b" stroke-width="2"/>
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -618,38 +910,38 @@
                 <div class="panel-card">
                     <div class="panel-header">
                         <h2>Categories</h2>
-                        <span class="subdued">Explore 8 core domains</span>
+                        <span class="subdued">Explore 8 core domains · Click to filter</span>
                     </div>
                     <div class="grid-two">
-                        <div class="category-card">
+                        <div class="category-card" data-category="work">
                             <strong>💼 Work & Productivity</strong>
                             <span>12,483 problems</span>
                         </div>
-                        <div class="category-card">
+                        <div class="category-card" data-category="finance">
                             <strong>💰 Money & Finance</strong>
                             <span>8,921 problems</span>
                         </div>
-                        <div class="category-card">
+                        <div class="category-card" data-category="health">
                             <strong>🏥 Health & Wellness</strong>
                             <span>15,672 problems</span>
                         </div>
-                        <div class="category-card">
+                        <div class="category-card" data-category="home">
                             <strong>🏠 Home & Living</strong>
                             <span>9,234 problems</span>
                         </div>
-                        <div class="category-card">
+                        <div class="category-card" data-category="tech">
                             <strong>💻 Technology</strong>
                             <span>11,456 problems</span>
                         </div>
-                        <div class="category-card">
+                        <div class="category-card" data-category="transport">
                             <strong>🚗 Transportation</strong>
                             <span>6,789 problems</span>
                         </div>
-                        <div class="category-card">
+                        <div class="category-card" data-category="education">
                             <strong>📚 Education</strong>
                             <span>7,345 problems</span>
                         </div>
-                        <div class="category-card">
+                        <div class="category-card" data-category="shopping">
                             <strong>🛒 Shopping & Services</strong>
                             <span>10,123 problems</span>
                         </div>
@@ -659,20 +951,47 @@
                 <div class="panel-card">
                     <div class="panel-header">
                         <h2>Recent Signals</h2>
-                        <button class="btn">View feed</button>
+                        <button class="btn">View all signals</button>
                     </div>
                     <div class="list-card">
-                        <div class="list-item">
-                            <strong>Better parking solutions near apartments</strong>
-                            <small>Transportation · 2 hours ago · 234 people agree</small>
+                        <div class="signal-item">
+                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <strong>Better parking solutions near apartments</strong>
+                                    <div style="margin-top: 6px;">
+                                        <small>🚗 Transportation · 2 hours ago</small>
+                                    </div>
+                                </div>
+                                <button class="agree-btn" data-agree>
+                                    👍 234
+                                </button>
+                            </div>
                         </div>
-                        <div class="list-item">
-                            <strong>Unified healthcare portal across providers</strong>
-                            <small>Health & Wellness · 5 hours ago · 1,023 people agree</small>
+                        <div class="signal-item">
+                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <strong>Unified healthcare portal across providers</strong>
+                                    <div style="margin-top: 6px;">
+                                        <small>🏥 Health & Wellness · 5 hours ago</small>
+                                    </div>
+                                </div>
+                                <button class="agree-btn" data-agree>
+                                    👍 1,023
+                                </button>
+                            </div>
                         </div>
-                        <div class="list-item">
-                            <strong>Affordable quality furniture marketplace</strong>
-                            <small>Home & Living · 1 day ago · 567 people agree</small>
+                        <div class="signal-item">
+                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
+                                <div style="flex: 1;">
+                                    <strong>Affordable quality furniture marketplace</strong>
+                                    <div style="margin-top: 6px;">
+                                        <small>🏠 Home & Living · 1 day ago</small>
+                                    </div>
+                                </div>
+                                <button class="agree-btn" data-agree>
+                                    👍 567
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1152,6 +1471,7 @@
     </div>
 
     <script>
+        // Tab navigation
         const tabs = document.querySelectorAll('.tab-pill');
         const sections = document.querySelectorAll('.section-panel');
         tabs.forEach(tab => {
@@ -1163,8 +1483,105 @@
             });
         });
 
+        // Toggle switches
         document.querySelectorAll('[data-switch]').forEach(toggle => {
             toggle.addEventListener('click', () => toggle.classList.toggle('active'));
+        });
+
+        // Hero search with AI-powered suggestions
+        const heroSearchInput = document.getElementById('hero-search-input');
+        const heroSuggestions = document.getElementById('hero-suggestions');
+
+        if (heroSearchInput && heroSuggestions) {
+            heroSearchInput.addEventListener('focus', () => {
+                heroSuggestions.classList.add('active');
+            });
+
+            heroSearchInput.addEventListener('input', (e) => {
+                if (e.target.value.length > 0) {
+                    heroSuggestions.classList.add('active');
+                } else {
+                    heroSuggestions.classList.remove('active');
+                }
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!heroSearchInput.contains(e.target) && !heroSuggestions.contains(e.target)) {
+                    heroSuggestions.classList.remove('active');
+                }
+            });
+
+            // Handle suggestion clicks
+            heroSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    heroSearchInput.value = item.querySelector('strong').textContent;
+                    heroSuggestions.classList.remove('active');
+                });
+            });
+        }
+
+        // Category filtering
+        const categoryCards = document.querySelectorAll('.category-card');
+        categoryCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Toggle active state
+                const isActive = card.classList.contains('active');
+
+                if (!isActive) {
+                    categoryCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+
+                    // Show visual feedback
+                    const category = card.dataset.category;
+                    console.log(`Filtering by category: ${category}`);
+
+                    // In a real implementation, this would filter the content
+                    // For now, just show visual feedback
+                } else {
+                    card.classList.remove('active');
+                    console.log('Filter cleared');
+                }
+            });
+        });
+
+        // Agree buttons in signals feed
+        const agreeButtons = document.querySelectorAll('[data-agree]');
+        agreeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent triggering parent click
+                btn.classList.toggle('agreed');
+
+                // Update count
+                const currentText = btn.textContent.trim();
+                const count = parseInt(currentText.match(/\d+/)[0]);
+
+                if (btn.classList.contains('agreed')) {
+                    btn.textContent = `👍 ${count + 1}`;
+                } else {
+                    btn.textContent = `👍 ${count - 1}`;
+                }
+            });
+        });
+
+        // Trending cards click to detail
+        const trendingCards = document.querySelectorAll('.trending-card');
+        trendingCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // In a real implementation, navigate to detail page
+                console.log('Navigate to:', card.querySelector('strong').textContent);
+            });
+        });
+
+        // Signal items click to detail
+        const signalItems = document.querySelectorAll('.signal-item');
+        signalItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                // Don't trigger if clicking the agree button
+                if (!e.target.closest('[data-agree]')) {
+                    console.log('Navigate to signal:', item.querySelector('strong').textContent);
+                }
+            });
         });
     </script>
 </body>
