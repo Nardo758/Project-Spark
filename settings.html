@@ -132,11 +132,17 @@
 
         .settings-section {
             background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
+            border: 1.5px solid var(--panel-border);
+            border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
             box-shadow: var(--shadow);
+            transition: all 0.25s ease;
+        }
+
+        .settings-section:hover {
+            border-color: rgba(217, 119, 87, 0.2);
+            box-shadow: 0 4px 12px rgba(45, 42, 38, 0.08);
         }
 
         .settings-section h2 {
@@ -253,6 +259,11 @@
         .danger-zone {
             border-color: var(--danger);
             background: var(--danger-bg);
+            border-width: 1.5px;
+        }
+
+        .danger-zone:hover {
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);
         }
 
         .notification-item {
