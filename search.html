@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results · Friction</title>
+    <style>
+        :root {
+            --bg: #F8F9FA;
+            --surface: #FFFFFF;
+            --panel-border: #E8EAED;
+            --text: #202124;
+            --text-secondary: #5F6368;
+            --muted: #80868B;
+            --accent: #1A73E8;
+            --accent-2: #1557B0;
+            --accent-light: #E8F0FE;
+            --success: #0D9488;
+            --success-bg: #D1FAE5;
+            --pill: #F1F3F4;
+            --shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 40px 10px 16px;
+            border: 1.5px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            background: var(--surface);
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .search-bar svg {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            stroke: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--panel-border);
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: var(--pill);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-2);
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .search-header {
+            margin-bottom: 24px;
+        }
+
+        .search-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .search-meta h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .search-meta span {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: 16px;
+            background: var(--pill);
+            border: 1px solid var(--panel-border);
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .filter-chip.active {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .result-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .result-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .result-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .growth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .growth-badge.up {
+            background: var(--success-bg);
+            color: #065F46;
+        }
+
+        .category-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: var(--pill);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 80px;
+        }
+
+        .sidebar-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .related-item {
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .related-item:hover {
+            background: var(--pill);
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 32px;
+        }
+
+        @media (max-width: 968px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span>⚡</span>
+                Friction
+            </a>
+
+            <div class="search-bar">
+                <input type="text" placeholder="Search opportunities..." value="healthcare scheduling" id="search-input">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                    <path d="M11 5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z" stroke="currentColor"/>
+                    <path d="m20 20-4.35-4.35" stroke="currentColor" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div class="header-actions">
+                <a href="login.html" class="btn">Sign In</a>
+                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="layout-grid">
+            <div>
+                <div class="search-header">
+                    <div class="search-meta">
+                        <h1>Search Results</h1>
+                        <span>234 opportunities found</span>
+                    </div>
+
+                    <div class="filters">
+                        <div class="filter-chip active">All</div>
+                        <div class="filter-chip">🏥 Healthcare</div>
+                        <div class="filter-chip">💰 Finance</div>
+                        <div class="filter-chip">💻 Technology</div>
+                        <div class="filter-chip">🏠 Home & Living</div>
+                        <div class="filter-chip">Trending ↑</div>
+                        <div class="filter-chip">High Validation (1000+)</div>
+                    </div>
+                </div>
+
+                <div class="results-list">
+                    <div class="result-card">
+                        <div class="result-title">Universal Healthcare Appointment Scheduling Platform</div>
+                        <div class="result-description">
+                            People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction.
+                        </div>
+                        <div class="result-meta">
+                            <span class="category-tag">🏥 Healthcare</span>
+                            <span>👍 4,523 validations</span>
+                            <span class="growth-badge up">↑ 18% this week</span>
+                            <span>💰 $2.3B market</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-title">Prescription Refill Automation Platform</div>
+                        <div class="result-description">
+                            Managing prescription refills across multiple pharmacies and providers is time-consuming. Patients need reminders, easy refill requests, and cross-pharmacy price comparison in one place.
+                        </div>
+                        <div class="result-meta">
+                            <span class="category-tag">🏥 Healthcare</span>
+                            <span>👍 2,891 validations</span>
+                            <span class="growth-badge up">↑ 12% this week</span>
+                            <span>💰 $890M market</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-title">Medical Records Portability Solution</div>
+                        <div class="result-description">
+                            Patients switching healthcare providers struggle to transfer medical records. A seamless, secure platform for medical record portability would save time and improve care continuity.
+                        </div>
+                        <div class="result-meta">
+                            <span class="category-tag">🏥 Healthcare</span>
+                            <span>👍 3,456 validations</span>
+                            <span class="growth-badge up">↑ 9% this week</span>
+                            <span>💰 $1.2B market</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-title">Healthcare Price Transparency Tool</div>
+                        <div class="result-description">
+                            Understanding healthcare costs before treatment is nearly impossible. Patients need a tool to compare prices across providers and understand insurance coverage in advance.
+                        </div>
+                        <div class="result-meta">
+                            <span class="category-tag">🏥 Healthcare</span>
+                            <span>👍 5,234 validations</span>
+                            <span class="growth-badge up">↑ 22% this week</span>
+                            <span>💰 $1.8B market</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-title">Telehealth Integration Platform</div>
+                        <div class="result-description">
+                            Managing appointments across in-person and telehealth visits is confusing. A unified platform for booking and tracking both types of appointments would improve patient experience.
+                        </div>
+                        <div class="result-meta">
+                            <span class="category-tag">🏥 Healthcare</span>
+                            <span>👍 2,234 validations</span>
+                            <span class="growth-badge up">↑ 15% this week</span>
+                            <span>💰 $950M market</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-title">Healthcare Provider Rating & Review System</div>
+                        <div class="result-description">
+                            Finding quality healthcare providers based on patient reviews is difficult. A transparent, verified rating system for doctors and healthcare facilities would help patients make informed decisions.
+                        </div>
+                        <div class="result-meta">
+                            <span class="category-tag">🏥 Healthcare</span>
+                            <span>👍 4,123 validations</span>
+                            <span class="growth-badge up">↑ 11% this week</span>
+                            <span>💰 $560M market</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="sidebar">
+                <div class="sidebar-card">
+                    <h3>Refine Your Search</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" checked> Trending opportunities
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox"> High validation (1000+)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox"> Recent (7 days)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox"> Large market ($1B+)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>Related Searches</h3>
+                    <div class="related-item">Medical appointment booking</div>
+                    <div class="related-item">Healthcare technology</div>
+                    <div class="related-item">Patient scheduling software</div>
+                    <div class="related-item">Telehealth platforms</div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3>Trending Categories</h3>
+                    <div class="related-item">🏥 Healthcare</div>
+                    <div class="related-item">💰 Finance</div>
+                    <div class="related-item">💻 Technology</div>
+                    <div class="related-item">🏠 Home & Living</div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        // Result card clicks
+        document.querySelectorAll('.result-card').forEach(card => {
+            card.addEventListener('click', () => {
+                window.location.href = 'index.html#detail';
+            });
+        });
+
+        // Filter chips
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+
+        // Search input
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                // In a real app, this would trigger a new search
+                console.log('Search for:', e.target.value);
+            }
+        });
+    </script>
+</body>
+</html>
