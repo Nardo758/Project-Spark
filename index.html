@@ -118,12 +118,22 @@
 
         .chip {
             padding: 6px 14px;
-            border-radius: 16px;
-            background: var(--pill);
-            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            background: transparent;
+            border: 1.5px solid var(--panel-border);
             font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chip:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(217, 119, 87, 0.15);
         }
 
         .sidebar-card {
@@ -237,10 +247,16 @@
 
         .panel-card {
             background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
+            border: 1.5px solid var(--panel-border);
+            border-radius: 12px;
             padding: 24px;
             box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+
+        .panel-card:hover {
+            border-color: rgba(217, 119, 87, 0.2);
+            box-shadow: 0 4px 12px rgba(45, 42, 38, 0.08);
         }
 
         .panel-header {
@@ -443,28 +459,50 @@
 
         .category-card {
             padding: 20px;
-            border-radius: var(--border-radius);
-            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            border: 1.5px solid var(--panel-border);
             background: var(--surface);
             display: flex;
             flex-direction: column;
             gap: 6px;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
         .category-card:hover {
             border-color: var(--accent);
             background: var(--accent-light);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(217, 119, 87, 0.12);
+        }
+
+        .category-card:hover::before {
+            transform: scaleX(1);
         }
 
         .category-card.active {
             border-color: var(--accent);
             background: var(--accent-light);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15);
+        }
+
+        .category-card.active::before {
+            transform: scaleX(1);
         }
 
         .category-card strong {
@@ -505,18 +543,36 @@
         .trending-card {
             position: relative;
             padding: 20px;
-            border-radius: var(--border-radius);
+            border-radius: 12px;
             background: var(--surface);
-            border: 1px solid var(--panel-border);
+            border: 1.5px solid var(--panel-border);
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .trending-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
         }
 
         .trending-card:hover {
             border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(217, 119, 87, 0.15);
+        }
+
+        .trending-card:hover::after {
+            transform: scaleX(1);
         }
 
         .trending-card .mini-chart {
@@ -576,32 +632,33 @@
         }
 
         .signal-item {
-            padding: 16px;
-            border-radius: var(--border-radius);
+            padding: 18px;
+            border-radius: 12px;
             background: var(--surface);
-            border: 1px solid var(--panel-border);
+            border: 1.5px solid var(--panel-border);
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: var(--shadow);
         }
 
         .signal-item:hover {
-            border-color: var(--muted);
-            box-shadow: var(--shadow-md);
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px rgba(217, 119, 87, 0.1);
+            transform: translateX(4px);
         }
 
         .agree-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            background: var(--pill);
-            border: 1px solid var(--panel-border);
+            padding: 8px 14px;
+            border-radius: 20px;
+            background: transparent;
+            border: 1.5px solid var(--panel-border);
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             color: var(--text-secondary);
         }
 
@@ -609,12 +666,15 @@
             background: var(--accent-light);
             border-color: var(--accent);
             color: var(--accent);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(217, 119, 87, 0.2);
         }
 
         .agree-btn.agreed {
             background: var(--accent-light);
             border-color: var(--accent);
             color: var(--accent);
+            font-weight: 700;
         }
 
         /* Detail Page Styles */

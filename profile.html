@@ -232,18 +232,37 @@
 
         .content-card {
             background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
+            border: 1.5px solid var(--panel-border);
+            border-radius: 12px;
             padding: 20px;
             margin-bottom: 16px;
             box-shadow: var(--shadow);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
         }
 
         .content-card:hover {
             border-color: var(--accent);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 6px 20px rgba(217, 119, 87, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .content-card:hover::before {
+            transform: scaleY(1);
         }
 
         .content-title {
