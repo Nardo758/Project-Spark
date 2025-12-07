@@ -172,27 +172,31 @@
         }
 
         .filter-chip {
-            padding: 6px 14px;
-            border-radius: 16px;
-            background: var(--pill);
-            border: 1px solid var(--panel-border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: transparent;
+            border: 1.5px solid var(--panel-border);
             font-size: 13px;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
         }
 
         .filter-chip:hover {
             background: var(--accent-light);
             border-color: var(--accent);
             color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15);
         }
 
         .filter-chip.active {
             background: var(--accent-light);
             border-color: var(--accent);
             color: var(--accent);
-            font-weight: 500;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(217, 119, 87, 0.12);
         }
 
         .results-list {
@@ -203,18 +207,36 @@
 
         .result-card {
             background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 20px;
+            border: 1.5px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 22px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--accent);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
         }
 
         .result-card:hover {
             border-color: var(--accent);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(217, 119, 87, 0.12);
+            transform: translateY(-3px);
+        }
+
+        .result-card:hover::before {
+            transform: scaleY(1);
         }
 
         .result-title {
