@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Opportunities · Friction</title>
+    <style>
+        :root {
+            --bg: #F8F9FA;
+            --surface: #FFFFFF;
+            --panel-border: #E8EAED;
+            --text: #202124;
+            --text-secondary: #5F6368;
+            --muted: #80868B;
+            --accent: #1A73E8;
+            --accent-2: #1557B0;
+            --accent-light: #E8F0FE;
+            --success: #0D9488;
+            --success-bg: #D1FAE5;
+            --pill: #F1F3F4;
+            --shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: var(--pill);
+            color: var(--text);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--panel-border);
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: var(--pill);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-2);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #E8F0FE 0%, #F8F9FA 100%);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 64px 24px;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin-bottom: 24px;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+        }
+
+        .hero-stat strong {
+            display: block;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .hero-stat span {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--panel-border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--pill);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .opportunity-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .opportunity-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .opportunity-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .opportunity-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .opportunity-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .opportunity-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .growth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--success-bg);
+            color: #065F46;
+        }
+
+        .subcategories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .subcategory-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .subcategory-card:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            transform: translateY(-2px);
+        }
+
+        .subcategory-card strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .subcategory-card span {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div style="display: flex; align-items: center; gap: 24px;">
+                <a href="index.html" class="logo">
+                    <span>⚡</span>
+                    Friction
+                </a>
+                <nav class="header-nav">
+                    <a href="index.html" class="nav-link">Discover</a>
+                    <a href="search.html" class="nav-link">Search</a>
+                    <a href="index.html#pricing" class="nav-link">Pricing</a>
+                </nav>
+            </div>
+
+            <div class="header-actions">
+                <a href="login.html" class="btn">Sign In</a>
+                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero">
+        <div class="hero-content">
+            <h1>🏥 Healthcare & Wellness</h1>
+            <p>Discover validated opportunities in healthcare technology, patient care, wellness, and medical services. These problems represent real needs from patients, providers, and healthcare professionals.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <strong>15,672</strong>
+                    <span>opportunities</span>
+                </div>
+                <div class="hero-stat">
+                    <strong>234K+</strong>
+                    <span>validations</span>
+                </div>
+                <div class="hero-stat">
+                    <strong>$47B</strong>
+                    <span>total addressable market</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <h2 style="margin-bottom: 16px;">Subcategories</h2>
+        <div class="subcategories">
+            <div class="subcategory-card">
+                <strong>🗓️ Appointment Management</strong>
+                <span>2,341 opportunities</span>
+            </div>
+            <div class="subcategory-card">
+                <strong>💊 Prescription & Pharmacy</strong>
+                <span>1,892 opportunities</span>
+            </div>
+            <div class="subcategory-card">
+                <strong>📋 Medical Records</strong>
+                <span>1,567 opportunities</span>
+            </div>
+            <div class="subcategory-card">
+                <strong>💰 Insurance & Billing</strong>
+                <span>2,123 opportunities</span>
+            </div>
+            <div class="subcategory-card">
+                <strong>🏃 Fitness & Wellness</strong>
+                <span>3,234 opportunities</span>
+            </div>
+            <div class="subcategory-card">
+                <strong>🧠 Mental Health</strong>
+                <span>2,891 opportunities</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active">Trending</button>
+            <button class="tab">Most Validated</button>
+            <button class="tab">Recent</button>
+            <button class="tab">Largest Market</button>
+        </div>
+
+        <div class="opportunity-grid">
+            <div class="opportunity-card">
+                <div class="opportunity-title">Universal Healthcare Appointment Scheduling Platform</div>
+                <div class="opportunity-description">
+                    People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction.
+                </div>
+                <div class="opportunity-meta">
+                    <span>👍 4,523 validations</span>
+                    <span class="growth-badge">↑ 18% this week</span>
+                    <span>💰 $2.3B market</span>
+                    <span>📅 3 months ago</span>
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opportunity-title">Healthcare Price Transparency Tool</div>
+                <div class="opportunity-description">
+                    Understanding healthcare costs before treatment is nearly impossible. Patients need a tool to compare prices across providers and understand insurance coverage in advance to make informed decisions.
+                </div>
+                <div class="opportunity-meta">
+                    <span>👍 5,234 validations</span>
+                    <span class="growth-badge">↑ 22% this week</span>
+                    <span>💰 $1.8B market</span>
+                    <span>📅 2 months ago</span>
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opportunity-title">Medical Records Portability Solution</div>
+                <div class="opportunity-description">
+                    Patients switching healthcare providers struggle to transfer medical records. A seamless, secure platform for medical record portability would save time and improve care continuity across different healthcare systems.
+                </div>
+                <div class="opportunity-meta">
+                    <span>👍 3,456 validations</span>
+                    <span class="growth-badge">↑ 9% this week</span>
+                    <span>💰 $1.2B market</span>
+                    <span>📅 4 months ago</span>
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opportunity-title">Prescription Refill Automation Platform</div>
+                <div class="opportunity-description">
+                    Managing prescription refills across multiple pharmacies and providers is time-consuming. Patients need reminders, easy refill requests, and cross-pharmacy price comparison in one unified platform.
+                </div>
+                <div class="opportunity-meta">
+                    <span>👍 2,891 validations</span>
+                    <span class="growth-badge">↑ 12% this week</span>
+                    <span>💰 $890M market</span>
+                    <span>📅 5 months ago</span>
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opportunity-title">Mental Health Support Accessibility</div>
+                <div class="opportunity-description">
+                    Finding affordable, quality mental health support is difficult. Long wait times, high costs, and limited insurance coverage create barriers. A platform connecting patients with verified, affordable therapists would help.
+                </div>
+                <div class="opportunity-meta">
+                    <span>👍 6,123 validations</span>
+                    <span class="growth-badge">↑ 28% this week</span>
+                    <span>💰 $3.1B market</span>
+                    <span>📅 1 month ago</span>
+                </div>
+            </div>
+
+            <div class="opportunity-card">
+                <div class="opportunity-title">Telehealth Integration Platform</div>
+                <div class="opportunity-description">
+                    Managing appointments across in-person and telehealth visits is confusing. A unified platform for booking and tracking both types of appointments with seamless care coordination would improve patient experience.
+                </div>
+                <div class="opportunity-meta">
+                    <span>👍 2,234 validations</span>
+                    <span class="growth-badge">↑ 15% this week</span>
+                    <span>💰 $950M market</span>
+                    <span>📅 2 months ago</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                // In a real app, this would filter/sort the opportunities
+            });
+        });
+
+        // Opportunity card clicks
+        document.querySelectorAll('.opportunity-card').forEach(card => {
+            card.addEventListener('click', () => {
+                window.location.href = 'index.html#detail';
+            });
+        });
+
+        // Subcategory clicks
+        document.querySelectorAll('.subcategory-card').forEach(card => {
+            card.addEventListener('click', () => {
+                // In a real app, this would filter by subcategory
+                console.log('Filter by:', card.querySelector('strong').textContent);
+            });
+        });
+    </script>
+</body>
+</html>

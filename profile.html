@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile · Friction</title>
+    <style>
+        :root {
+            --bg: #F8F9FA;
+            --surface: #FFFFFF;
+            --panel-border: #E8EAED;
+            --text: #202124;
+            --text-secondary: #5F6368;
+            --muted: #80868B;
+            --accent: #1A73E8;
+            --accent-2: #1557B0;
+            --accent-light: #E8F0FE;
+            --success: #0D9488;
+            --success-bg: #D1FAE5;
+            --pill: #F1F3F4;
+            --shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--panel-border);
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: var(--pill);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-2);
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .profile-header {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-top {
+            display: flex;
+            gap: 24px;
+            align-items: start;
+            margin-bottom: 24px;
+        }
+
+        .avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-info h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .profile-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .profile-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: #065F46;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.gold {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .badge.blue {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            background: var(--pill);
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .stat-card strong {
+            display: block;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-card span {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--panel-border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--text);
+            background: var(--pill);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .content-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .content-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+        }
+
+        .content-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .content-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .section-panel {
+            display: none;
+        }
+
+        .section-panel.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span>⚡</span>
+                Friction
+            </a>
+
+            <div class="header-actions">
+                <a href="settings.html" class="btn">⚙️ Settings</a>
+                <a href="index.html" class="btn btn-primary">Discover</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="profile-header">
+            <div class="profile-top">
+                <div class="avatar">JD</div>
+                <div class="profile-info">
+                    <h1>Jane Doe</h1>
+                    <p>Product innovator passionate about solving real problems in healthcare and fintech. Early adopter, active validator, problem solver.</p>
+                    <div class="profile-badges">
+                        <span class="badge gold">🏆 Top Validator</span>
+                        <span class="badge blue">💡 Problem Solver</span>
+                        <span class="badge">🚀 Early Adopter</span>
+                    </div>
+                </div>
+                <a href="settings.html" class="btn">Edit Profile</a>
+            </div>
+
+            <div class="profile-stats">
+                <div class="stat-card">
+                    <strong>234</strong>
+                    <span>Validations Given</span>
+                </div>
+                <div class="stat-card">
+                    <strong>12</strong>
+                    <span>Problems Shared</span>
+                </div>
+                <div class="stat-card">
+                    <strong>45</strong>
+                    <span>Watchlist Items</span>
+                </div>
+                <div class="stat-card">
+                    <strong>1,892</strong>
+                    <span>Impact Points</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="activity">Activity</button>
+            <button class="tab" data-tab="validated">Validated (234)</button>
+            <button class="tab" data-tab="shared">Shared (12)</button>
+            <button class="tab" data-tab="watchlist">Watchlist (45)</button>
+        </div>
+
+        <section class="section-panel active" id="activity">
+            <div class="content-card">
+                <div class="content-title">✋ Validated "Universal Healthcare Appointment Scheduling"</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>2 hours ago</span>
+                    <span>+10 impact points</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">📝 Shared "Better parking solutions near apartments"</div>
+                <div class="content-meta">
+                    <span>🚗 Transportation</span>
+                    <span>1 day ago</span>
+                    <span>234 validations received</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">⭐ Added to watchlist "Mental Health Support Accessibility"</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>3 days ago</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">💬 Commented on "Prescription Refill Automation"</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>5 days ago</span>
+                    <span>18 likes</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">✋ Validated "Healthcare Price Transparency Tool"</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>1 week ago</span>
+                    <span>+10 impact points</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-panel" id="validated">
+            <div class="content-card">
+                <div class="content-title">Universal Healthcare Appointment Scheduling Platform</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>4,523 validations</span>
+                    <span>Validated 2 hours ago</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">Healthcare Price Transparency Tool</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>5,234 validations</span>
+                    <span>Validated 1 week ago</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">Transparent Small Business Banking</div>
+                <div class="content-meta">
+                    <span>💰 Finance</span>
+                    <span>3,891 validations</span>
+                    <span>Validated 2 weeks ago</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-panel" id="shared">
+            <div class="content-card">
+                <div class="content-title">Better parking solutions near apartments</div>
+                <div class="content-meta">
+                    <span>🚗 Transportation</span>
+                    <span>234 validations</span>
+                    <span>Shared 1 day ago</span>
+                    <span>↑ 15% growth</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">Simplified tax filing for freelancers</div>
+                <div class="content-meta">
+                    <span>💰 Finance</span>
+                    <span>567 validations</span>
+                    <span>Shared 1 month ago</span>
+                    <span>↑ 8% growth</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-panel" id="watchlist">
+            <div class="content-card">
+                <div class="content-title">Mental Health Support Accessibility</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>6,123 validations</span>
+                    <span>↑ 28% this week</span>
+                    <span>Added 3 days ago</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">EV Charging Infrastructure in Apartments</div>
+                <div class="content-meta">
+                    <span>🚗 Transportation</span>
+                    <span>2,156 validations</span>
+                    <span>↑ 25% this week</span>
+                    <span>Added 1 week ago</span>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="content-title">Medical Records Portability Solution</div>
+                <div class="content-meta">
+                    <span>🏥 Healthcare</span>
+                    <span>3,456 validations</span>
+                    <span>↑ 9% this week</span>
+                    <span>Added 2 weeks ago</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Tab switching
+        const tabs = document.querySelectorAll('.tab');
+        const sections = document.querySelectorAll('.section-panel');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                sections.forEach(section => section.classList.remove('active'));
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Content card clicks
+        document.querySelectorAll('.content-card').forEach(card => {
+            card.addEventListener('click', () => {
+                window.location.href = 'index.html#detail';
+            });
+        });
+    </script>
+</body>
+</html>
