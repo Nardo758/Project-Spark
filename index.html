@@ -6,23 +6,26 @@
     <title>Friction · Problem Discovery Engine</title>
     <style>
         :root {
-            /* Perplexity-inspired color palette */
-            --bg: #FAFAFA;
+            /* Perplexity Finance inspired palette */
+            --bg: #F8F9FA;
             --surface: #FFFFFF;
             --panel: #FFFFFF;
-            --panel-border: #E5E7EB;
-            --text: #111827;
-            --text-secondary: #6B7280;
-            --muted: #9CA3AF;
-            --accent: #7C3AED;
-            --accent-2: #9333EA;
-            --accent-light: #F3E8FF;
-            --accent-hot: #EC4899;
-            --pill: #F3F4F6;
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --border-radius: 12px;
+            --panel-border: #E8EAED;
+            --text: #202124;
+            --text-secondary: #5F6368;
+            --muted: #80868B;
+            --accent: #1A73E8;
+            --accent-2: #1557B0;
+            --accent-light: #E8F0FE;
+            --success: #0D9488;
+            --success-bg: #D1FAE5;
+            --danger: #DC2626;
+            --danger-bg: #FEE2E2;
+            --pill: #F1F3F4;
+            --shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --border-radius: 8px;
         }
 
         * {
@@ -49,19 +52,19 @@
             min-height: 100vh;
         }
 
-        /* Header (replaces sidebar) */
+        /* Header */
         .header {
             background: var(--surface);
             border-bottom: 1px solid var(--panel-border);
-            padding: 16px 24px;
+            padding: 12px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .header-left {
@@ -192,34 +195,34 @@
 
         .mode-tabs {
             display: flex;
-            gap: 4px;
-            padding: 4px;
-            background: var(--pill);
-            border-radius: 10px;
-            margin-bottom: 32px;
-            width: fit-content;
+            gap: 0;
+            border-bottom: 1px solid var(--panel-border);
+            margin-bottom: 24px;
+            width: 100%;
         }
 
         .tab-pill {
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 12px 20px;
             border: none;
             background: transparent;
             color: var(--text-secondary);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+            position: relative;
         }
 
         .tab-pill:hover {
             color: var(--text);
+            background: var(--pill);
         }
 
         .tab-pill.active {
-            background: var(--surface);
-            color: var(--text);
-            box-shadow: var(--shadow);
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: transparent;
         }
 
         .section-panel {
