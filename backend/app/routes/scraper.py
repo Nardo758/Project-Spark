@@ -10,7 +10,8 @@ from datetime import datetime
 router = APIRouter()
 
 # Simple API key authentication for scrapers
-# In production, use proper authentication
+# In production, change this key or move to environment variable
+# Generate key: openssl rand -base64 32
 SCRAPER_API_KEY = "your-scraper-api-key-change-in-production"
 
 
