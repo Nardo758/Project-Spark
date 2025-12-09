@@ -58,7 +58,7 @@ def init_db():
         for user in users:
             db.refresh(user)
 
-        # Create sample opportunities
+        # Create sample opportunities with geographic data
         opportunities = [
             Opportunity(
                 title="Difficult to track freelance invoices and payments",
@@ -69,7 +69,9 @@ def init_db():
                 validation_count=234,
                 growth_rate=15.3,
                 market_size="$50M-$100M",
+                geographic_scope="online",
                 author_id=users[0].id,
+                completion_status="open",
                 status="active"
             ),
             Opportunity(
@@ -81,7 +83,12 @@ def init_db():
                 validation_count=189,
                 growth_rate=8.7,
                 market_size="$10M-$50M",
+                geographic_scope="local",
+                country="United States",
+                region="California",
+                city="San Francisco",
                 author_id=users[1].id,
+                completion_status="open",
                 status="active"
             ),
             Opportunity(
@@ -93,7 +100,11 @@ def init_db():
                 validation_count=156,
                 growth_rate=12.1,
                 market_size="$10M-$50M",
+                geographic_scope="local",
+                country="United States",
+                region="New York",
                 author_id=users[0].id,
+                completion_status="open",
                 status="active"
             ),
             Opportunity(
@@ -105,7 +116,9 @@ def init_db():
                 validation_count=312,
                 growth_rate=22.5,
                 market_size="$100M-$500M",
+                geographic_scope="online",
                 author_id=users[2].id,
+                completion_status="open",
                 status="active"
             ),
             Opportunity(
@@ -117,8 +130,26 @@ def init_db():
                 validation_count=445,
                 growth_rate=18.9,
                 market_size="$100M-$500M",
+                geographic_scope="regional",
+                country="United States",
+                region="California",
                 author_id=None,  # Anonymous
                 is_anonymous=True,
+                completion_status="open",
+                status="active"
+            ),
+            Opportunity(
+                title="International shipping costs are too high for small businesses",
+                description="As a small e-commerce business, international shipping eats into our margins. Need affordable international shipping solutions.",
+                category="Shopping & Services",
+                subcategory="E-commerce",
+                severity=4,
+                validation_count=278,
+                growth_rate=14.2,
+                market_size="$500M+",
+                geographic_scope="international",
+                author_id=users[1].id,
+                completion_status="open",
                 status="active"
             )
         ]
