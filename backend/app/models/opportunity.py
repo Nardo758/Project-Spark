@@ -21,6 +21,22 @@ class Opportunity(Base):
     growth_rate = Column(Float, default=0.0)  # Week-over-week percentage
     market_size = Column(String(50), nullable=True)  # e.g., "$10M-$100M"
 
+    # Geographic Information
+    geographic_scope = Column(String(50), default="online")  # local, regional, national, international, online
+    country = Column(String(100), nullable=True)  # Country name or code
+    region = Column(String(100), nullable=True)  # State/Province/Region
+    city = Column(String(100), nullable=True)  # City name
+
+    # Completion Tracking
+    completion_status = Column(String(50), default="open")  # open, in_progress, solved, abandoned
+    solution_description = Column(Text, nullable=True)  # Description of solution if solved
+    solved_at = Column(DateTime(timezone=True), nullable=True)  # When was it solved
+    solved_by = Column(String(255), nullable=True)  # Company/person who solved it
+
+    # Feasibility Metrics
+    feasibility_score = Column(Float, nullable=True)  # Calculated feasibility score (0-100)
+    duplicate_of = Column(Integer, ForeignKey("opportunities.id"), nullable=True)  # Link to original if duplicate
+
     # Author
     author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     is_anonymous = Column(Boolean, default=False)

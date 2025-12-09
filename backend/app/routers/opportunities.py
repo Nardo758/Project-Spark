@@ -37,7 +37,10 @@ def get_opportunities(
     limit: int = Query(20, ge=1, le=100),
     category: Optional[str] = None,
     status: str = "active",
-    sort_by: str = Query("recent", regex="^(recent|trending|validated|market)$"),
+    sort_by: str = Query("recent", regex="^(recent|trending|validated|market|feasibility)$"),
+    geographic_scope: Optional[str] = None,
+    country: Optional[str] = None,
+    completion_status: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """Get list of opportunities with filtering and pagination"""
@@ -46,6 +49,18 @@ def get_opportunities(
     # Filter by category
     if category:
         query = query.filter(Opportunity.category == category)
+
+    # Filter by geographic scope
+    if geographic_scope:
+        query = query.filter(Opportunity.geographic_scope == geographic_scope)
+
+    # Filter by country
+    if country:
+        query = query.filter(Opportunity.country.ilike(f"%{country}%"))
+
+    # Filter by completion status
+    if completion_status:
+        query = query.filter(Opportunity.completion_status == completion_status)
 
     # Sorting
     if sort_by == "recent":
@@ -56,6 +71,8 @@ def get_opportunities(
         query = query.order_by(desc(Opportunity.validation_count))
     elif sort_by == "market":
         query = query.order_by(desc(Opportunity.market_size))
+    elif sort_by == "feasibility":
+        query = query.order_by(desc(Opportunity.feasibility_score))
 
     total = query.count()
     opportunities = query.offset(skip).limit(limit).all()
