@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 import json
 
 
@@ -9,6 +9,11 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+
+    # Supabase (optional - for REST API access)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_ANON_KEY: Optional[str] = None
+    SUPABASE_SERVICE_KEY: Optional[str] = None
 
     # Security
     SECRET_KEY: str
