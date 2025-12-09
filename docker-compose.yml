@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Local PostgreSQL (Optional - for local development without Supabase)
+  db:
+    image: postgres:16-alpine
+    container_name: friction_postgres
+    environment:
+      POSTGRES_USER: friction_user
+      POSTGRES_PASSWORD: friction_password
+      POSTGRES_DB: friction_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U friction_user -d friction_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - local  # Only start with: docker compose --profile local up
+
+  # Backend API (works with both local DB and Supabase)
+  backend:
+    build: ./backend
+    container_name: friction_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      # This will be overridden by .env file
+      - DATABASE_URL=${DATABASE_URL}
+    env_file:
+      - ./backend/.env
+
+volumes:
+  postgres_data:
