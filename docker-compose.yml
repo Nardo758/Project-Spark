@@ -30,9 +30,6 @@ services:
       - ./backend:/app
     ports:
       - "8000:8000"
-    environment:
-      # This will be overridden by .env file
-      - DATABASE_URL=${DATABASE_URL}
     env_file:
       - ./backend/.env
 
