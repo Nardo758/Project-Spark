@@ -1,0 +1,10 @@
+{
+  "name": "Friction",
+  "short_name": "Friction",
+  "description": "Share real problems. Validate ideas. Build solutions that matter.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e53e3e",
+  "icons": []
+}
