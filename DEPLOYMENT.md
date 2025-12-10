@@ -60,8 +60,11 @@ BACKEND_CORS_ORIGINS=["https://friction-app.netlify.app","https://localhost:5500
 Make sure these are set in Render:
 
 ```env
-# Database - Your Supabase connection
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres
+# Database - Your Supabase connection (USE POOLED CONNECTION FOR RENDER)
+# Pooled (Port 6543 - RECOMMENDED for serverless/Render):
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:6543/postgres?pgbouncer=true&sslmode=require
+# Direct (Port 5432 - NOT recommended for Render):
+# DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres
 
 # Security - IMPORTANT: Use a strong secret key
 SECRET_KEY=your-production-secret-key-here
@@ -112,6 +115,71 @@ Netlify will automatically redeploy.
 - [ ] Push code to Git
 - [ ] Wait for Netlify to redeploy
 - [ ] Test login on your Netlify site
+
+---
+
+## 🔍 Verifying Database Connection
+
+### Using the Verification Script
+
+A comprehensive verification script is provided to test your Supabase connection:
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Set your DATABASE_URL
+export DATABASE_URL="postgresql://postgres:your_password@db.xxxxx.supabase.co:6543/postgres?pgbouncer=true&sslmode=require"
+
+# Run verification script
+python verify_db_connection.py
+```
+
+### What Gets Tested
+
+The script runs 5 comprehensive tests:
+
+1. **Basic Connectivity** - Establishes connection to Supabase
+2. **SSL Connection** - Verifies encryption is active
+3. **Database Queries** - Tests SELECT, version check, table listing
+4. **Connection Pooling** - Validates pool configuration
+5. **Write Operations** - Tests CREATE, INSERT, DROP operations
+
+### Expected Output
+
+```
+==============================================================
+VERIFICATION SUMMARY
+==============================================================
+✓ Basic Connectivity: PASSED
+✓ SSL Connection: PASSED
+✓ Database Queries: PASSED
+✓ Connection Pooling: PASSED
+✓ Write Operations: PASSED
+
+Results: 5/5 tests passed
+✓ All tests passed! Database connection is fully operational.
+```
+
+### Supabase Connection Format
+
+**For Render (Serverless) - Use Pooled Connection:**
+
+```
+postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:6543/postgres?pgbouncer=true&sslmode=require
+```
+
+**Key Points:**
+- **Port 6543**: PgBouncer pooled connection (recommended for Render)
+- **pgbouncer=true**: Enables connection pooling
+- **sslmode=require**: Forces SSL encryption
+- Get your connection string from: Supabase Dashboard → Settings → Database → Connection pooling
+
+**Why Pooled Connection?**
+- ✅ Better for serverless environments (Render, Vercel, AWS Lambda)
+- ✅ Handles many concurrent connections efficiently
+- ✅ Prevents "too many connections" errors
+- ✅ Automatically manages connection lifecycle
 
 ---
 
@@ -215,7 +283,7 @@ OperationalError: could not connect to server
 
 **Render Environment Variables:**
 ```env
-DATABASE_URL=postgresql://postgres:mypass123@db.abcdefg.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:mypass123@db.abcdefg.supabase.co:6543/postgres?pgbouncer=true&sslmode=require
 SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -263,6 +331,13 @@ This means you can still develop locally without changing anything!
 ---
 
 ## 📋 Quick Commands
+
+**Verify database connection:**
+```bash
+cd backend
+export DATABASE_URL="your-supabase-connection-string"
+python verify_db_connection.py
+```
 
 **Update and deploy:**
 ```bash
