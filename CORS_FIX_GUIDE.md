@@ -1,20 +1,18 @@
 # CORS Configuration Guide for Production
 
 ## Problem
-Your Netlify frontend cannot communicate with your Render backend due to CORS (Cross-Origin Resource Sharing) restrictions. The browser blocks requests from your Netlify domain because the backend doesn't list it as an allowed origin.
+Your frontend (hosted on basekite.com, Netlify, or other hosting services) cannot communicate with your Render backend due to CORS (Cross-Origin Resource Sharing) restrictions. The browser blocks requests from your frontend domain because the backend doesn't list it as an allowed origin.
 
 ## Quick Fix - Update Render Environment Variables
 
-### Step 1: Find Your Netlify URL
+### Step 1: Identify Your Frontend URL
 
-Your Netlify app URL is typically one of:
-- `https://your-app-name.netlify.app`
-- `https://your-custom-domain.com` (if you configured a custom domain)
+Your frontend URL could be:
+- **basekite.com**: `https://basekite.com` and `https://www.basekite.com`
+- **Netlify**: `https://your-app-name.netlify.app`
+- **Custom domain**: `https://your-custom-domain.com`
 
-To find it:
-1. Go to Netlify Dashboard
-2. Click on your site
-3. Copy the URL shown at the top
+Make sure to include both the www and non-www versions if applicable.
 
 ### Step 2: Update CORS in Render
 
@@ -27,13 +25,20 @@ To find it:
    - Find or add `BACKEND_CORS_ORIGINS`
    - Set the value to (replace with your actual domains):
 
+   **For basekite.com:**
+   ```json
+   ["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com","http://localhost:3000"]
+   ```
+
+   **For Netlify:**
    ```json
    ["https://your-app.netlify.app","https://project-spark.onrender.com","http://localhost:3000"]
    ```
 
    **Important:**
    - Use the exact format with square brackets and quotes
-   - Include your Netlify URL (starts with https://)
+   - Include both www and non-www versions if your site uses both
+   - Include your frontend URL (starts with https://)
    - Include your Render backend URL
    - Include localhost for local development (optional)
    - No spaces after commas
@@ -41,12 +46,12 @@ To find it:
 3. **Example Values:**
 
    ```json
-   ["https://friction-app.netlify.app","https://project-spark.onrender.com","http://localhost:3000"]
+   ["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com","http://localhost:3000"]
    ```
 
-   Or if you have a custom domain:
+   Or for Netlify:
    ```json
-   ["https://www.myfrictionapp.com","https://friction-app.netlify.app","https://project-spark.onrender.com"]
+   ["https://friction-app.netlify.app","https://project-spark.onrender.com","http://localhost:3000"]
    ```
 
 4. **Save Changes:**
@@ -59,13 +64,11 @@ To find it:
 - Wait for "Your service is live 🎉"
 - Usually takes 2-3 minutes
 
-### Step 4: Test Your Login
+### Step 4: Test Your Application
 
 1. Clear your browser cache (or use incognito mode)
-2. Go to your Netlify app
-3. Try logging in with demo credentials:
-   - Email: `demo@example.com`
-   - Password: `demo123`
+2. Go to your frontend application (e.g., https://basekite.com)
+3. Try accessing the API endpoints (opportunities, authentication, etc.)
 4. Check browser console (F12) - CORS errors should be gone!
 
 ## Verification Steps
@@ -82,9 +85,16 @@ https://project-spark.onrender.com/docs
 
 ### 2. Test CORS Headers
 
-Open browser console on your Netlify app and run:
+Open browser console on your frontend application and run:
 
 ```javascript
+// Test opportunities endpoint
+fetch('https://project-spark.onrender.com/api/v1/opportunities/?limit=20&sort_by=recent')
+.then(res => res.json())
+.then(data => console.log('Success:', data))
+.catch(err => console.error('Error:', err));
+
+// Or test authentication endpoint
 fetch('https://project-spark.onrender.com/api/v1/auth/login', {
   method: 'POST',
   headers: {
@@ -97,19 +107,20 @@ fetch('https://project-spark.onrender.com/api/v1/auth/login', {
 .catch(err => console.error('Error:', err));
 ```
 
-If CORS is configured correctly, you should see a response with an access token.
+If CORS is configured correctly, you should see a response without CORS errors.
 
 ### 3. Check Browser Network Tab
 
 1. Open Developer Tools (F12)
 2. Go to Network tab
 3. Try to log in
-4. Look for the login request
+4. Look for the API request
 5. Check Response Headers - should include:
    ```
-   Access-Control-Allow-Origin: https://your-app.netlify.app
+   Access-Control-Allow-Origin: https://basekite.com
    Access-Control-Allow-Credentials: true
    ```
+   (Replace basekite.com with your actual frontend domain)
 
 ## Common Issues & Solutions
 
@@ -122,10 +133,11 @@ Access to XMLHttpRequest has been blocked by CORS policy
 
 **Solutions:**
 1. Double-check the BACKEND_CORS_ORIGINS format (must be valid JSON)
-2. Ensure your Netlify URL is exactly correct (https, no trailing slash)
-3. Clear browser cache and try incognito mode
-4. Check Render logs for any errors during startup
-5. Verify the environment variable saved correctly in Render
+2. Ensure your frontend URL is exactly correct (https, no trailing slash)
+3. Include both www and non-www versions if your site uses both
+4. Clear browser cache and try incognito mode
+5. Check Render logs for any errors during startup
+6. Verify the environment variable saved correctly in Render
 
 ### Issue 2: Wildcard Origin Not Working
 
@@ -133,7 +145,7 @@ Access to XMLHttpRequest has been blocked by CORS policy
 
 **Solution:** List specific domains explicitly:
 ```json
-["https://your-app.netlify.app","https://project-spark.onrender.com"]
+["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com"]
 ```
 
 ### Issue 3: Multiple Domains Not Working
@@ -142,7 +154,7 @@ Access to XMLHttpRequest has been blocked by CORS policy
 
 **Solution:** Add all domains to the array:
 ```json
-["https://app1.netlify.app","https://app2.netlify.app","https://custom-domain.com"]
+["https://basekite.com","https://www.basekite.com","https://app.netlify.app","https://custom-domain.com"]
 ```
 
 ### Issue 4: Environment Variable Not Updating
@@ -160,12 +172,17 @@ Access to XMLHttpRequest has been blocked by CORS policy
 Test CORS preflight from command line:
 
 ```bash
-# Test OPTIONS request (CORS preflight)
+# Test OPTIONS request (CORS preflight) - replace with your frontend domain
 curl -X OPTIONS \
-  -H "Origin: https://your-app.netlify.app" \
-  -H "Access-Control-Request-Method: POST" \
+  -H "Origin: https://basekite.com" \
+  -H "Access-Control-Request-Method: GET" \
   -H "Access-Control-Request-Headers: Content-Type" \
-  -i https://project-spark.onrender.com/api/v1/auth/login
+  -i https://project-spark.onrender.com/api/v1/opportunities/
+
+# Test actual GET request for opportunities
+curl -X GET \
+  -H "Origin: https://basekite.com" \
+  https://project-spark.onrender.com/api/v1/opportunities/?limit=20&sort_by=recent
 
 # Test actual login request
 curl -X POST \
@@ -182,7 +199,7 @@ Here are all the critical environment variables you need in Render:
 |----------|---------------|----------|
 | `DATABASE_URL` | `postgres://postgres:password@db.xxx.supabase.co:6543/postgres?pgbouncer=true&sslmode=require` | ✅ Yes |
 | `SECRET_KEY` | `your-super-secret-key-min-32-characters-long` | ✅ Yes |
-| `BACKEND_CORS_ORIGINS` | `["https://your-app.netlify.app","https://project-spark.onrender.com"]` | ✅ Yes |
+| `BACKEND_CORS_ORIGINS` | `["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com"]` | ✅ Yes |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | ❌ No (defaults to 30) |
 | `ALGORITHM` | `HS256` | ❌ No (defaults to HS256) |
 | `PROJECT_NAME` | `Friction API` | ❌ No (defaults to "Friction API") |
