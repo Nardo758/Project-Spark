@@ -324,13 +324,54 @@
         </div>
     </div>
 
+    <!-- API Integration -->
+    <script src="js/api.js"></script>
     <script>
-        document.getElementById('signin-form').addEventListener('submit', (e) => {
+        const form = document.getElementById('signin-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            // In a real app, this would authenticate the user
-            alert('Sign in functionality would be implemented here');
-            // For demo purposes, redirect to homepage
-            window.location.href = 'index.html';
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+
+            try {
+                // Disable button and show loading
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Signing in...';
+
+                // Get form data
+                const email = emailInput.value;
+                const password = passwordInput.value;
+
+                // Call API login
+                const response = await api.login(email, password);
+
+                // Success! Token is automatically stored by api.login()
+                console.log('Login successful!', response);
+
+                // Redirect to homepage
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                console.error('Login error:', error);
+
+                // Show error message
+                alert('Login failed: ' + error.message + '\n\nPlease check your credentials and try again.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
+
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+
+        // Social login placeholders
+        document.querySelectorAll('.btn-social').forEach(btn => {
+            btn.addEventListener('click', () => {
+                alert('Social login not yet implemented. Please use email/password.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
+            });
         });
     </script>
 </body>
