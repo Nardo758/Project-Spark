@@ -16,11 +16,12 @@ logger = logging.getLogger(__name__)
 
 def wait_for_db(max_retries=5, delay=2):
     """Wait for database to be available"""
+    from sqlalchemy import text
     for attempt in range(max_retries):
         try:
             logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{max_retries})...")
             db = SessionLocal()
-            db.execute("SELECT 1")
+            db.execute(text("SELECT 1"))
             db.close()
             logger.info("Database connection successful!")
             return True

@@ -58,9 +58,10 @@ async def startup_event():
 def health_check():
     """Health check endpoint"""
     from app.db.database import SessionLocal
+    from sqlalchemy import text
     try:
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         db_status = "connected"
     except Exception as e:
