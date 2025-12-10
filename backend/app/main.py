@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.db.database import engine, Base
 from app.routers import auth, opportunities, validations, comments, users, analytics
+import logging
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -42,6 +41,19 @@ def root():
     }
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database tables on startup"""
+    try:
+        from app.db.database import engine, Base
+        logger.info("Creating database tables...")
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {e}")
+        logger.warning("Application starting without database connection. Tables will be created on first request.")
+
+
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
@@ -52,8 +64,9 @@ def health_check():
         db.close()
         db_status = "connected"
     except Exception as e:
+        logger.error(f"Database health check failed: {e}")
         db_status = f"error: {str(e)}"
-    
+
     return {
         "status": "healthy",
         "database": db_status
