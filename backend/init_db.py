@@ -3,16 +3,55 @@ Initialize the database with sample data
 Run this script after starting the database to populate it with test data
 """
 
+import sys
+import time
+import logging
 from app.db.database import SessionLocal, engine, Base
 from app.models.user import User
 from app.models.opportunity import Opportunity
 from app.core.security import get_password_hash
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def wait_for_db(max_retries=5, delay=2):
+    """Wait for database to be available"""
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Attempting to connect to database (attempt {attempt + 1}/{max_retries})...")
+            db = SessionLocal()
+            db.execute("SELECT 1")
+            db.close()
+            logger.info("Database connection successful!")
+            return True
+        except Exception as e:
+            logger.warning(f"Database connection failed: {e}")
+            if attempt < max_retries - 1:
+                logger.info(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                logger.error("Max retries reached. Database is not available.")
+                return False
+    return False
+
 def init_db():
     """Initialize database with sample data"""
 
-    # Create tables
-    Base.metadata.create_all(bind=engine)
+    # Wait for database to be available
+    if not wait_for_db():
+        logger.warning("Skipping database initialization - database not available")
+        logger.info("Database will be initialized on first API request")
+        return
+
+    try:
+        # Create tables
+        logger.info("Creating database tables...")
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully!")
+    except Exception as e:
+        logger.error(f"Failed to create tables: {e}")
+        logger.warning("Tables will be created on first API request")
+        return
 
     db = SessionLocal()
 

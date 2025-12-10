@@ -164,7 +164,7 @@ async function showOpportunityDetail(oppId) {
 // Fetch feasibility analysis
 async function fetchFeasibilityAnalysis(oppId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/analytics/feasibility/${oppId}`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/feasibility/${oppId}`);
         return await response.json();
     } catch (error) {
         console.error('Error fetching feasibility:', error);
@@ -176,7 +176,7 @@ async function fetchFeasibilityAnalysis(oppId) {
 async function submitOpportunity(formData) {
     try {
         // First, check for duplicates
-        const duplicateCheck = await fetch(`${API_BASE_URL}/analytics/check-duplicate`, {
+        const duplicateCheck = await fetch(`${CONFIG.API_BASE_URL}/analytics/check-duplicate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -323,7 +323,7 @@ function setupEventListeners() {
 // Load top feasible opportunities
 async function loadTopFeasible() {
     try {
-        const response = await fetch(`${API_BASE_URL}/analytics/top-feasible?limit=10&min_score=60`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/top-feasible?limit=10&min_score=60`);
         const opportunities = await response.json();
 
         displayTopFeasible(opportunities);
@@ -360,7 +360,7 @@ function displayTopFeasible(opportunities) {
 // Load geographic distribution
 async function loadGeographicDistribution() {
     try {
-        const response = await fetch(`${API_BASE_URL}/analytics/geographic/distribution`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/geographic/distribution`);
         const data = await response.json();
 
         displayGeographicDistribution(data);
@@ -409,7 +409,7 @@ function displayGeographicDistribution(data) {
 // Load completion statistics
 async function loadCompletionStats() {
     try {
-        const response = await fetch(`${API_BASE_URL}/analytics/completion-stats`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/completion-stats`);
         const stats = await response.json();
 
         displayCompletionStats(stats);
