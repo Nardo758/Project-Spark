@@ -3,7 +3,10 @@
  * Connects the frontend to the backend API
  */
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+// Use environment-specific API URL
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api/v1'  // Local development
+    : 'https://YOUR-RENDER-APP.onrender.com/api/v1';  // Production (replace with your Render URL)
 
 class FrictionAPI {
     constructor() {
