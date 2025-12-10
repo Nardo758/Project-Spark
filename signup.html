@@ -327,13 +327,62 @@
         </div>
     </div>
 
+    <!-- API Integration -->
+    <script src="js/api.js"></script>
     <script>
-        document.getElementById('signup-form').addEventListener('submit', (e) => {
+        const form = document.getElementById('signup-form');
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            // In a real app, this would create the user account
-            alert('Account creation functionality would be implemented here');
-            // For demo purposes, redirect to homepage
-            window.location.href = 'index.html';
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+
+            try {
+                // Get form data
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+
+                // Validate passwords match
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match!');
+                    return;
+                }
+
+                // Disable button and show loading
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating account...';
+
+                // Call API register
+                const response = await api.register(email, password, name);
+
+                console.log('Registration successful!', response);
+
+                // Show success message
+                alert('Account created successfully! You can now sign in.');
+
+                // Redirect to login
+                window.location.href = 'login.html';
+
+            } catch (error) {
+                console.error('Registration error:', error);
+
+                // Show error message
+                alert('Registration failed: ' + error.message + '\n\nPlease try again or use different credentials.');
+
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+
+        // Social signup placeholders
+        document.querySelectorAll('.btn-social').forEach(btn => {
+            btn.addEventListener('click', () => {
+                alert('Social signup not yet implemented. Please use email/password registration.');
+            });
         });
     </script>
 </body>
