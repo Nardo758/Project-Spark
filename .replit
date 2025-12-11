@@ -1,10 +1,11 @@
-modules = ["python-3.11", "postgresql-15", "nodejs-20"]
+modules = ["python-3.11", "nodejs-20", "postgresql-16"]
 run = "python server.py"
 hidden = [".pythonlibs", "venv", ".cache", "**/__pycache__", "**/.pytest_cache", ".replit"]
 entrypoint = "server.py"
 
 [agent]
 expertMode = true
+integrations = ["python_database:1.0.0"]
 
 [nix]
 channel = "stable-24_05"
@@ -92,3 +93,8 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[userenv]
+
+[userenv.shared]
+USE_POSTGRES_SECRETS = "true"

@@ -7,20 +7,34 @@ import logging
 logger = logging.getLogger(__name__)
 
 def get_database_url():
-    """Construct PostgreSQL URL from environment variables"""
-    pg_host = os.getenv("PGHOST")
-    pg_port = os.getenv("PGPORT", "5432")
-    pg_user = os.getenv("PGUSER")
-    pg_password = os.getenv("PGPASSWORD")
-    pg_database = os.getenv("PGDATABASE")
+    """Construct PostgreSQL URL from environment variables
     
-    if all([pg_host, pg_user, pg_password, pg_database]):
-        return f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}?sslmode=require"
-    
+    Priority order:
+    1. DATABASE_URL if it starts with postgresql:// or postgres://
+    2. Build URL from PG* env vars if PGHOST is not localhost
+    3. Fallback to localhost (will fail if no local postgres)
+    """
     db_url = os.getenv("DATABASE_URL", "")
-    if db_url.startswith("postgresql://") or db_url.startswith("postgres://"):
-        return db_url.replace("postgres://", "postgresql://")
     
+    if db_url and (db_url.startswith("postgresql://") or db_url.startswith("postgres://")):
+        url = db_url.replace("postgres://", "postgresql://")
+        if "sslmode" not in url:
+            url = url + ("&" if "?" in url else "?") + "sslmode=require"
+        logger.info(f"Using DATABASE_URL for PostgreSQL connection")
+        return url
+    
+    pg_host = os.getenv("PGHOST", "")
+    pg_port = os.getenv("PGPORT", "5432")
+    pg_user = os.getenv("PGUSER", "")
+    pg_password = os.getenv("PGPASSWORD", "")
+    pg_database = os.getenv("PGDATABASE", "")
+    
+    if all([pg_host, pg_user, pg_password, pg_database]) and pg_host not in ["localhost", "127.0.0.1", "::1"]:
+        url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}?sslmode=require"
+        logger.info(f"Using PostgreSQL connection from PG* env vars: {pg_host}")
+        return url
+    
+    logger.warning(f"No valid PostgreSQL configuration found. DATABASE_URL={db_url[:50] if db_url else 'empty'}... PGHOST={pg_host}")
     return "postgresql://user:password@localhost:5432/friction_db"
 
 connect_args = {}
