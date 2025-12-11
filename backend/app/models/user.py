@@ -40,6 +40,9 @@ class User(Base):
     # Account settings
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False)
+    is_banned = Column(Boolean, default=False)
+    ban_reason = Column(Text, nullable=True)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

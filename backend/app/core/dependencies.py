@@ -40,4 +40,18 @@ async def get_current_active_user(
     """Get the current active user"""
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    if current_user.is_banned:
+        raise HTTPException(status_code=403, detail="User is banned")
+    return current_user
+
+
+async def get_current_admin_user(
+    current_user: User = Depends(get_current_active_user)
+) -> User:
+    """Get the current admin user"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
     return current_user

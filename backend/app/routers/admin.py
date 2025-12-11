@@ -1,0 +1,382 @@
+"""
+Admin Router
+
+Administrative endpoints for managing users, content, and platform
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import func, desc
+from typing import List, Optional
+
+from app.db.database import get_db
+from app.models.user import User
+from app.models.opportunity import Opportunity
+from app.models.validation import Validation
+from app.models.comment import Comment
+from app.models.notification import Notification
+from app.schemas.admin import (
+    AdminUserListItem,
+    AdminUserDetail,
+    AdminUserUpdate,
+    AdminBanUser,
+    AdminStats,
+    AdminOpportunityListItem
+)
+from app.core.dependencies import get_current_admin_user
+
+router = APIRouter()
+
+
+@router.get("/stats", response_model=AdminStats)
+def get_admin_stats(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get platform statistics for admin dashboard"""
+    total_users = db.query(User).count()
+    active_users = db.query(User).filter(User.is_active == True).count()
+    verified_users = db.query(User).filter(User.is_verified == True).count()
+    banned_users = db.query(User).filter(User.is_banned == True).count()
+
+    total_opportunities = db.query(Opportunity).count()
+    total_validations = db.query(Validation).count()
+    total_comments = db.query(Comment).count()
+    total_notifications = db.query(Notification).count()
+
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "verified_users": verified_users,
+        "banned_users": banned_users,
+        "total_opportunities": total_opportunities,
+        "total_validations": total_validations,
+        "total_comments": total_comments,
+        "total_notifications": total_notifications
+    }
+
+
+@router.get("/users", response_model=List[AdminUserListItem])
+def list_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    is_banned: Optional[bool] = Query(None),
+    is_admin: Optional[bool] = Query(None),
+    is_verified: Optional[bool] = Query(None),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """List users with filtering and search"""
+    query = db.query(User)
+
+    # Apply filters
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            (User.email.ilike(search_pattern)) |
+            (User.name.ilike(search_pattern))
+        )
+
+    if is_banned is not None:
+        query = query.filter(User.is_banned == is_banned)
+
+    if is_admin is not None:
+        query = query.filter(User.is_admin == is_admin)
+
+    if is_verified is not None:
+        query = query.filter(User.is_verified == is_verified)
+
+    # Order by created_at desc and paginate
+    users = query.order_by(desc(User.created_at)).offset(skip).limit(limit).all()
+
+    return users
+
+
+@router.get("/users/{user_id}", response_model=AdminUserDetail)
+def get_user_detail(
+    user_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get detailed user information"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Get counts
+    opportunity_count = db.query(Opportunity).filter(Opportunity.author_id == user_id).count()
+    validation_count = db.query(Validation).filter(Validation.user_id == user_id).count()
+    comment_count = db.query(Comment).filter(Comment.user_id == user_id).count()
+
+    # Add computed fields
+    user_dict = {
+        **user.__dict__,
+        "opportunity_count": opportunity_count,
+        "validation_count": validation_count,
+        "comment_count": comment_count
+    }
+
+    return user_dict
+
+
+@router.patch("/users/{user_id}", response_model=AdminUserDetail)
+def update_user(
+    user_id: int,
+    user_update: AdminUserUpdate,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Update user settings (admin only)"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Prevent admins from removing their own admin status
+    if user_id == admin_user.id and user_update.is_admin is False:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove your own admin status"
+        )
+
+    # Update fields
+    update_data = user_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+
+    # Get counts for response
+    opportunity_count = db.query(Opportunity).filter(Opportunity.author_id == user_id).count()
+    validation_count = db.query(Validation).filter(Validation.user_id == user_id).count()
+    comment_count = db.query(Comment).filter(Comment.user_id == user_id).count()
+
+    user_dict = {
+        **user.__dict__,
+        "opportunity_count": opportunity_count,
+        "validation_count": validation_count,
+        "comment_count": comment_count
+    }
+
+    return user_dict
+
+
+@router.post("/users/{user_id}/ban")
+def ban_user(
+    user_id: int,
+    ban_data: AdminBanUser,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Ban a user"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Prevent admins from banning themselves
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot ban yourself"
+        )
+
+    # Prevent banning other admins
+    if user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot ban admin users"
+        )
+
+    user.is_banned = True
+    user.ban_reason = ban_data.ban_reason
+    user.is_active = False
+    db.commit()
+
+    return {"message": "User banned successfully"}
+
+
+@router.post("/users/{user_id}/unban")
+def unban_user(
+    user_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Unban a user"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    user.is_banned = False
+    user.ban_reason = None
+    user.is_active = True
+    db.commit()
+
+    return {"message": "User unbanned successfully"}
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a user (dangerous operation)"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Prevent admins from deleting themselves
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete yourself"
+        )
+
+    # Prevent deleting other admins
+    if user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete admin users"
+        )
+
+    db.delete(user)
+    db.commit()
+
+    return {"message": "User deleted successfully"}
+
+
+@router.get("/opportunities", response_model=List[AdminOpportunityListItem])
+def list_opportunities(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    status_filter: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """List opportunities with filtering"""
+    query = db.query(
+        Opportunity.id,
+        Opportunity.title,
+        Opportunity.author_id,
+        User.name.label("author_name"),
+        Opportunity.status,
+        Opportunity.validation_count,
+        Opportunity.comment_count,
+        Opportunity.created_at
+    ).join(User, Opportunity.author_id == User.id)
+
+    # Apply filters
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(Opportunity.title.ilike(search_pattern))
+
+    if status_filter:
+        query = query.filter(Opportunity.status == status_filter)
+
+    # Order by created_at desc and paginate
+    opportunities = query.order_by(desc(Opportunity.created_at)).offset(skip).limit(limit).all()
+
+    return [
+        {
+            "id": opp.id,
+            "title": opp.title,
+            "author_id": opp.author_id,
+            "author_name": opp.author_name,
+            "status": opp.status,
+            "validation_count": opp.validation_count,
+            "comment_count": opp.comment_count,
+            "created_at": opp.created_at
+        }
+        for opp in opportunities
+    ]
+
+
+@router.delete("/opportunities/{opportunity_id}")
+def delete_opportunity(
+    opportunity_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Delete an opportunity"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+
+    if not opportunity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Opportunity not found"
+        )
+
+    db.delete(opportunity)
+    db.commit()
+
+    return {"message": "Opportunity deleted successfully"}
+
+
+@router.delete("/comments/{comment_id}")
+def delete_comment(
+    comment_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a comment"""
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+
+    db.delete(comment)
+    db.commit()
+
+    return {"message": "Comment deleted successfully"}
+
+
+@router.post("/users/{user_id}/promote")
+def promote_to_admin(
+    user_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Promote a user to admin"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    if user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already an admin"
+        )
+
+    user.is_admin = True
+    db.commit()
+
+    return {"message": f"User {user.name} promoted to admin"}
