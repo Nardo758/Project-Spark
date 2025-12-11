@@ -2,18 +2,102 @@
 Stripe Payment Service
 
 Handles Stripe integration for subscriptions and payments
+Uses Replit Stripe connector integration when available
 """
 
 import stripe
 import os
-from typing import Optional, Dict, Any
+import logging
+import requests
+from typing import Optional, Dict, Any, Tuple
 from datetime import datetime, timedelta
 
 from app.models.subscription import SubscriptionTier
 
+logger = logging.getLogger(__name__)
 
-# Initialize Stripe
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+def get_stripe_credentials() -> Tuple[Optional[str], Optional[str]]:
+    """
+    Get Stripe API keys from Replit connector or environment.
+    
+    Returns:
+        Tuple of (secret_key, publishable_key)
+    """
+    hostname = os.getenv("REPLIT_CONNECTORS_HOSTNAME")
+    repl_identity = os.getenv("REPL_IDENTITY")
+    web_repl_renewal = os.getenv("WEB_REPL_RENEWAL")
+    
+    if hostname and (repl_identity or web_repl_renewal):
+        try:
+            x_replit_token = f"repl {repl_identity}" if repl_identity else f"depl {web_repl_renewal}"
+            is_production = os.getenv("REPLIT_DEPLOYMENT") == "1"
+            target_env = "production" if is_production else "development"
+            
+            response = requests.get(
+                f"https://{hostname}/api/v2/connection?include_secrets=true&connector_names=stripe&environment={target_env}",
+                headers={
+                    "Accept": "application/json",
+                    "X_REPLIT_TOKEN": x_replit_token
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            items = data.get("items", [])
+            if items:
+                settings_data = items[0].get("settings", {})
+                secret_key = settings_data.get("secret")
+                publishable_key = settings_data.get("publishable")
+                if secret_key:
+                    logger.info("Using Stripe credentials from Replit connector")
+                    return secret_key, publishable_key
+        except Exception as e:
+            logger.warning(f"Failed to get Stripe credentials from connector: {e}")
+    
+    secret_key = os.getenv("STRIPE_SECRET_KEY")
+    publishable_key = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    if secret_key:
+        logger.info("Using Stripe credentials from environment variables")
+    return secret_key, publishable_key
+
+
+def get_stripe_client():
+    """
+    Get a configured Stripe client with fresh credentials.
+    Call this before each Stripe API operation to ensure valid credentials.
+    
+    Returns:
+        The stripe module with api_key set
+    
+    Raises:
+        ValueError: If Stripe credentials are not configured
+    """
+    secret_key, _ = get_stripe_credentials()
+    if not secret_key:
+        raise ValueError(
+            "Stripe API key not configured. "
+            "Set up the Stripe connector in Replit or set STRIPE_SECRET_KEY environment variable."
+        )
+    stripe.api_key = secret_key
+    return stripe
+
+
+def init_stripe():
+    """Initialize Stripe with credentials from connector or environment"""
+    try:
+        secret_key, _ = get_stripe_credentials()
+        if secret_key:
+            stripe.api_key = secret_key
+            logger.info("Stripe initialized successfully")
+        else:
+            logger.warning("Stripe API key not configured - payment features will not work until configured")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Stripe: {e} - payment features will not work until configured")
+
+
+# Try to initialize on module load, but don't fail if not configured
+init_stripe()
 
 
 class StripeService:
@@ -75,7 +159,8 @@ class StripeService:
         Returns:
             Stripe Customer object
         """
-        customer = stripe.Customer.create(
+        client = get_stripe_client()
+        customer = client.Customer.create(
             email=email,
             name=name,
             metadata=metadata or {}
@@ -103,7 +188,8 @@ class StripeService:
         Returns:
             Stripe Checkout Session
         """
-        session = stripe.checkout.Session.create(
+        client = get_stripe_client()
+        session = client.checkout.Session.create(
             customer=customer_id,
             mode="subscription",
             payment_method_types=["card"],
@@ -132,7 +218,8 @@ class StripeService:
         Returns:
             Stripe Portal Session
         """
-        session = stripe.billing_portal.Session.create(
+        client = get_stripe_client()
+        session = client.billing_portal.Session.create(
             customer=customer_id,
             return_url=return_url,
         )
@@ -150,13 +237,14 @@ class StripeService:
         Returns:
             Updated Stripe Subscription
         """
+        client = get_stripe_client()
         if at_period_end:
-            subscription = stripe.Subscription.modify(
+            subscription = client.Subscription.modify(
                 subscription_id,
                 cancel_at_period_end=True
             )
         else:
-            subscription = stripe.Subscription.delete(subscription_id)
+            subscription = client.Subscription.delete(subscription_id)
         return subscription
 
     @staticmethod
@@ -170,7 +258,8 @@ class StripeService:
         Returns:
             Updated Stripe Subscription
         """
-        subscription = stripe.Subscription.modify(
+        client = get_stripe_client()
+        subscription = client.Subscription.modify(
             subscription_id,
             cancel_at_period_end=False
         )
@@ -179,12 +268,14 @@ class StripeService:
     @staticmethod
     def get_subscription(subscription_id: str) -> stripe.Subscription:
         """Get subscription details from Stripe"""
-        return stripe.Subscription.retrieve(subscription_id)
+        client = get_stripe_client()
+        return client.Subscription.retrieve(subscription_id)
 
     @staticmethod
     def get_customer(customer_id: str) -> stripe.Customer:
         """Get customer details from Stripe"""
-        return stripe.Customer.retrieve(customer_id)
+        client = get_stripe_client()
+        return client.Customer.retrieve(customer_id)
 
     @staticmethod
     def construct_webhook_event(payload: bytes, sig_header: str) -> stripe.Event:
@@ -201,10 +292,11 @@ class StripeService:
         Raises:
             ValueError: If signature verification fails
         """
+        client = get_stripe_client()
         webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
         if not webhook_secret:
             raise ValueError("STRIPE_WEBHOOK_SECRET not configured")
-        return stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+        return client.Webhook.construct_event(payload, sig_header, webhook_secret)
 
     @staticmethod
     def get_tier_limits(tier: SubscriptionTier) -> Dict[str, Any]:

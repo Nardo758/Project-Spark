@@ -2,9 +2,11 @@
 
 ## Recent Changes (December 2024)
 
-- **Database Connection Fix**: Added POSTGRES_URL secret to bypass .replit configuration conflict
-- **Resend Integration**: Email service already implemented in `backend/app/services/email.py`
-- **Stripe Integration**: Payment processing already implemented in `backend/app/services/stripe_service.py`
+- **Database Connection Fix**: Added POSTGRES_URL secret to bypass .replit configuration conflict that was pointing to KV store instead of PostgreSQL
+- **Resend Integration**: Email service configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables
+- **Stripe Integration**: Payment processing configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables  
+- **Database Migration**: Added missing user columns (oauth_provider, oauth_id, bio, avatar_url, is_admin, etc.)
+- **Model Import Fix**: Fixed WatchlistItem mapper error by updating models/__init__.py import order
 
 ## 🚀 Quick Start on Replit
 
