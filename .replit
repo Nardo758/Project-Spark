@@ -1,50 +1,63 @@
-modules = ["web", "nodejs-20", "python-3.11"]
+modules = ["python-3.11", "postgresql-15", "nodejs-20"]
+run = "python server.py"
+hidden = [".pythonlibs", "venv", ".cache", "**/__pycache__", "**/.pytest_cache", ".replit"]
+entrypoint = "server.py"
+
 [agent]
 expertMode = true
 
 [nix]
-channel = "stable-25_05"
-packages = ["cargo", "libiconv", "libxcrypt", "rustc"]
+channel = "stable-24_05"
 
-[userenv]
+[env]
+PYTHON_LD_LIBRARY_PATH = "/nix/store/*-python3-*/lib"
+PYTHONPATH = "${REPL_HOME}/backend:${PYTHONPATH}"
 
-[userenv.shared]
+# Database Configuration (Replit PostgreSQL)
+DATABASE_URL = "${REPLIT_DB_URL}"
 
-[userenv.development]
+# Security
 SECRET_KEY = "73bd4698e414f4367c261655e963bb0414e0fa8076b1222b47a4e4d6d75e7dcd"
-BACKEND_CORS_ORIGINS = "[\"*\"]"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = "30"
 
-[userenv.production]
-SECRET_KEY = "73bd4698e414f4367c261655e963bb0414e0fa8076b1222b47a4e4d6d75e7dcd"
-BACKEND_CORS_ORIGINS = "[\"*\"]"
+# API Configuration
+PROJECT_NAME = "Friction API"
+API_V1_PREFIX = "/api/v1"
 
-[workflows]
-runButton = "Project"
+# CORS - Allow all origins for Replit preview
+BACKEND_CORS_ORIGINS = '["*"]'
 
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
+# Frontend/Backend URLs (will be set by Replit)
+FRONTEND_URL = "${REPL_SLUG}.${REPL_OWNER}.repl.co"
+BACKEND_URL = "${REPL_SLUG}.${REPL_OWNER}.repl.co"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
+[unitTest]
+language = "python3"
 
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix"]
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python server.py"
-waitForPort = 5000
+[packager]
+language = "python3"
+ignoredPackages = ["unit_tests"]
 
-[workflows.workflow.metadata]
-outputType = "webview"
+[packager.features]
+enabledForHosting = false
+packageSearch = true
+guessImports = true
+
+[languages.python3]
+pattern = "**/*.py"
+syntax = "python"
+
+[languages.python3.languageServer]
+start = "pylsp"
 
 [[ports]]
 localPort = 5000
 externalPort = 80
+exposeLocalhost = true
 
 [[ports]]
 localPort = 8000
@@ -52,6 +65,6 @@ externalPort = 8000
 exposeLocalhost = true
 
 [deployment]
-deploymentTarget = "autoscale"
-run = ["python", "server.py"]
-build = ["pip", "install", "-r", "requirements.txt"]
+run = ["sh", "-c", "pip install -r requirements.txt && python server.py"]
+deploymentTarget = "cloudrun"
+ignorePorts = false
