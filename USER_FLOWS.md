@@ -1,0 +1,765 @@
+# Project-Spark User Flows Documentation
+
+## Core User Flows
+
+### 1. User Registration & Authentication Flow
+
+#### 1A. New User Registration
+```
+START → Landing Page (index.html)
+  ↓
+Click "Sign Up" → Signup Page (signup.html)
+  ↓
+Enter Details:
+  - Name
+  - Email
+  - Password (min 8 chars)
+  ↓
+Submit Form → POST /api/auth/register
+  ↓
+[SUCCESS] → Auto-login with JWT token
+  ↓
+Redirect to Dashboard (index.html)
+  ↓
+Show Welcome Message
+END
+```
+
+**Error Handling:**
+- Email already exists → Show error "Email already registered"
+- Weak password → Show error "Password must be at least 8 characters"
+- Network error → Show retry option
+
+#### 1B. User Login
+```
+START → Landing Page
+  ↓
+Click "Login" → Login Page (login.html)
+  ↓
+Enter Credentials:
+  - Email
+  - Password
+  ↓
+Submit Form → POST /api/auth/login
+  ↓
+[SUCCESS] → Receive JWT token
+  ↓
+Store token in localStorage
+  ↓
+Redirect to Dashboard
+END
+```
+
+**Error Handling:**
+- Invalid credentials → Show "Invalid email or password"
+- Account not verified → (Future) Prompt email verification
+
+#### 1C. Password Reset Flow (Partial - Backend Missing)
+```
+START → Login Page
+  ↓
+Click "Forgot Password?" → Reset Password Page (reset-password.html)
+  ↓
+Enter Email Address
+  ↓
+[MISSING] Submit → POST /api/auth/request-reset
+  ↓
+[MISSING] Send email with reset token
+  ↓
+[MISSING] User clicks email link
+  ↓
+[MISSING] Enter new password → POST /api/auth/reset-password
+  ↓
+Redirect to Login
+END
+```
+
+---
+
+### 2. Opportunity Discovery & Search Flow
+
+#### 2A. Browse Opportunities (Main Dashboard)
+```
+START → Dashboard (index.html)
+  ↓
+Page loads → GET /api/opportunities
+  ↓
+Display opportunities as cards with:
+  - Title, Description
+  - Category badge
+  - Validation count
+  - Feasibility score badge
+  - Geographic scope badge
+  - "I Need This Too" button
+  ↓
+USER ACTIONS:
+  ├─ Click card → View full details (modal/detail page)
+  ├─ Click "I Need This Too" → Validation Flow (see 3A)
+  ├─ Apply filters → Filtered Results Flow (see 2B)
+  └─ Search → Search Flow (see 2C)
+END
+```
+
+#### 2B. Filter Opportunities
+```
+START → Dashboard with filters visible
+  ↓
+USER SELECTS FILTERS:
+  ├─ Geographic Scope (local/regional/national/international/online)
+  ├─ Country (dropdown)
+  ├─ Sort (newest/most validated/highest feasibility)
+  ├─ Category (from predefined list)
+  └─ Completion Status (open/in_progress/solved/abandoned)
+  ↓
+Apply Filters → GET /api/opportunities?filters
+  ↓
+Display filtered results
+  ↓
+Show result count "Showing X opportunities"
+END
+```
+
+#### 2C. Search Opportunities
+```
+START → Click search icon/input
+  ↓
+Navigate to Search Page (search.html)
+  ↓
+Enter search query
+  ↓
+Submit → POST /api/opportunities/search
+  ↓
+Backend searches:
+  - Title (weighted)
+  - Description
+  - Category/Subcategory
+  ↓
+Display ranked results
+  ↓
+USER ACTIONS:
+  ├─ Click result → View details
+  ├─ Refine search → New query
+  └─ Clear search → Return to dashboard
+END
+```
+
+#### 2D. Browse by Category
+```
+START → Click category filter OR category.html
+  ↓
+Display category grid with counts
+  ↓
+Select category → Filter opportunities
+  ↓
+GET /api/opportunities?category={category}
+  ↓
+Display category-specific opportunities
+END
+```
+
+---
+
+### 3. Opportunity Interaction Flows
+
+#### 3A. Validate Opportunity ("I Need This Too")
+```
+START → Viewing opportunity card/details
+  ↓
+Click "I Need This Too" button
+  ↓
+[CHECK] User authenticated?
+  ├─ NO → Redirect to login
+  └─ YES → Continue
+  ↓
+POST /api/validations
+  - opportunity_id
+  - user_id (from JWT)
+  ↓
+[SUCCESS]
+  ↓
+Update validation count (+1)
+  ↓
+Change button to "Validated ✓"
+  ↓
+Update feasibility score (backend recalculates)
+END
+```
+
+**Remove Validation:**
+```
+Click "Validated ✓" button
+  ↓
+DELETE /api/validations/{validation_id}
+  ↓
+Update count (-1)
+  ↓
+Revert button to "I Need This Too"
+END
+```
+
+#### 3B. Comment on Opportunity
+```
+START → View opportunity details
+  ↓
+Scroll to comments section
+  ↓
+Click "Add Comment"
+  ↓
+[CHECK] User authenticated?
+  ├─ NO → Redirect to login
+  └─ YES → Continue
+  ↓
+Enter comment text
+  ↓
+Submit → POST /api/comments
+  ↓
+Display new comment with:
+  - User avatar/name
+  - Comment content
+  - Timestamp
+  - Like button
+  ↓
+Update comment count
+END
+```
+
+**Like Comment:**
+```
+Click like button → PUT /api/comments/{id}/like
+  ↓
+Increment like count
+  ↓
+Disable button (one like per user)
+END
+```
+
+#### 3C. Create New Opportunity
+```
+START → Dashboard
+  ↓
+Click "Share a Friction" / "Submit Opportunity"
+  ↓
+[CHECK] User authenticated?
+  ├─ NO → Redirect to login
+  └─ YES → Continue
+  ↓
+FORM APPEARS:
+  ↓
+Enter Details:
+  ├─ Title (required)
+  ├─ Description (required)
+  ├─ Category (dropdown)
+  ├─ Subcategory (conditional dropdown)
+  ├─ Severity (1-5 scale)
+  ├─ Geographic Scope (required)
+  ├─ Country (conditional)
+  ├─ Region (conditional)
+  ├─ City (conditional)
+  └─ Anonymous submission? (checkbox)
+  ↓
+[DUPLICATE DETECTION]
+  ↓
+Backend checks similarity
+  ↓
+POST /api/analytics/check-duplicate
+  ↓
+IF similarity > 50%:
+  ├─ Show duplicate warning modal
+  ├─ Display top 5 similar opportunities
+  ├─ USER CHOICE:
+  │   ├─ "Validate Existing" → Validation Flow (3A)
+  │   └─ "Submit Anyway" → Continue
+  └─ Continue
+  ↓
+Submit → POST /api/opportunities
+  ↓
+[SUCCESS]
+  ↓
+Opportunity created with:
+  - Status: "open"
+  - Validation count: 1 (auto-validation)
+  - Initial feasibility score calculated
+  ↓
+Redirect to opportunity details
+  ↓
+Show success message "Opportunity shared!"
+END
+```
+
+---
+
+### 4. Profile & Settings Management
+
+#### 4A. View Profile
+```
+START → Dashboard
+  ↓
+Click user avatar/name → Profile Page (profile.html)
+  ↓
+[CURRENT STATE - Static]
+Display sections:
+  ├─ User Info (avatar, name, bio, joined date)
+  ├─ Stats (opportunities, validations, impact points)
+  ├─ Activity Feed (recent actions)
+  ├─ Validated Opportunities (list)
+  ├─ Shared Items (user's opportunities)
+  └─ Watchlist (saved opportunities)
+  ↓
+[NEEDED - Dynamic]
+GET /api/users/me
+  ↓
+Fetch real user data
+  ↓
+GET /api/opportunities?user_id={user_id}
+  ↓
+Display user's opportunities
+END
+```
+
+#### 4B. Edit Profile
+```
+START → Profile Page
+  ↓
+Click "Edit Profile"
+  ↓
+Navigate to Settings (settings.html)
+  ↓
+PROFILE INFORMATION FORM:
+  ├─ Name
+  ├─ Email (readonly)
+  ├─ Bio
+  └─ Avatar URL
+  ↓
+Make changes
+  ↓
+Click "Save Changes"
+  ↓
+[CURRENT - Partial]
+Form submission handler exists
+  ↓
+[NEEDED]
+PUT /api/users/me
+  - name
+  - bio
+  - avatar_url
+  ↓
+[SUCCESS]
+  ↓
+Update localStorage user data
+  ↓
+Show success toast "Profile updated"
+  ↓
+Redirect to profile
+END
+```
+
+#### 4C. Settings Management
+```
+START → Settings Page (settings.html)
+  ↓
+TABS AVAILABLE:
+  ├─ Profile Information (see 4B)
+  ├─ Notification Preferences [UI ONLY]
+  ├─ Account Settings [PARTIAL]
+  └─ Connected Accounts [UI ONLY]
+  ↓
+NOTIFICATION PREFERENCES [MISSING]:
+  [NEEDED]
+  ├─ Email notifications toggle
+  ├─ Push notifications toggle
+  └─ PUT /api/users/me/preferences
+  ↓
+ACCOUNT SETTINGS:
+  ├─ Change Password [EXISTS]
+  │   ├─ Enter current password
+  │   ├─ Enter new password
+  │   └─ PUT /api/users/me/password
+  ├─ Enable 2FA [MISSING]
+  ├─ Data Export [MISSING]
+  └─ Delete Account [MISSING]
+  ↓
+CONNECTED ACCOUNTS [MISSING]:
+  └─ OAuth providers (Google, GitHub)
+END
+```
+
+---
+
+### 5. Analytics & Research Dashboard Flow
+
+#### 5A. View Research Dashboard
+```
+START → Dashboard (index.html)
+  ↓
+Click "Research Dashboard" tab
+  ↓
+[CURRENT - Static SVG]
+Display placeholder charts
+  ↓
+[NEEDED - Dynamic]
+PARALLEL API CALLS:
+  ├─ GET /api/analytics/completion-stats
+  ├─ GET /api/analytics/top-feasible
+  ├─ GET /api/analytics/geographic/distribution
+  └─ GET /api/analytics/feasibility/{id} (for selected opportunity)
+  ↓
+RENDER INTERACTIVE CHARTS:
+  ├─ Validation trends over time
+  ├─ Completion status distribution
+  ├─ Geographic heatmap
+  ├─ Top feasible opportunities list
+  └─ Category breakdown
+  ↓
+USER INTERACTIONS:
+  ├─ Click chart segment → Filter dashboard
+  ├─ Hover → Show tooltips
+  └─ Select date range → Refresh data
+END
+```
+
+#### 5B. View Feasibility Analysis
+```
+START → Viewing opportunity
+  ↓
+Click "View Feasibility Analysis"
+  ↓
+GET /api/analytics/feasibility/{opportunity_id}
+  ↓
+Display analysis modal/page:
+  ├─ Overall Score (0-100)
+  ├─ Score Breakdown:
+  │   ├─ Validation Count (0-30 pts)
+  │   ├─ Severity (0-20 pts)
+  │   ├─ Growth Rate (0-25 pts)
+  │   ├─ Problem Age (0-15 pts)
+  │   └─ Market Size (0-10 pts)
+  ├─ Recommendations (text analysis)
+  └─ Action Items
+END
+```
+
+#### 5C. Browse Top Feasible Opportunities
+```
+START → Dashboard or Research tab
+  ↓
+Click "Most Feasible" filter/tab
+  ↓
+GET /api/analytics/top-feasible?min_score=50&limit=20
+  ↓
+Display ranked list with:
+  - Rank number
+  - Opportunity details
+  - Feasibility score badge
+  - Validation count
+  ↓
+USER ACTIONS:
+  ├─ Click opportunity → View details
+  └─ Validate → Validation Flow (3A)
+END
+```
+
+---
+
+### 6. Geographic Filtering & Discovery
+
+#### 6A. Filter by Geographic Scope
+```
+START → Dashboard filters
+  ↓
+Select scope from dropdown:
+  ├─ Local
+  ├─ Regional
+  ├─ National
+  ├─ International
+  └─ Online
+  ↓
+GET /api/analytics/geographic/by-scope?scope={scope}
+  ↓
+Display filtered opportunities
+  ↓
+Show scope badge on cards
+END
+```
+
+#### 6B. Filter by Location
+```
+START → Dashboard filters
+  ↓
+Enter/select:
+  ├─ Country (dropdown)
+  ├─ Region (conditional)
+  └─ City (conditional)
+  ↓
+GET /api/analytics/geographic/by-location?country={country}&region={region}&city={city}
+  ↓
+Display location-specific opportunities
+  ↓
+Show location badge on cards
+END
+```
+
+---
+
+### 7. Completion Tracking Flow
+
+#### 7A. Mark Opportunity as In Progress
+```
+START → Opportunity details
+  ↓
+[CHECK] User is owner OR has permission
+  ↓
+Click "Mark as In Progress"
+  ↓
+PUT /api/opportunities/{id}
+  - completion_status: "in_progress"
+  ↓
+Update status badge
+  ↓
+Show in "In Progress" filter
+END
+```
+
+#### 7B. Mark Opportunity as Solved
+```
+START → Opportunity details (status: "in_progress")
+  ↓
+Click "Mark as Solved"
+  ↓
+MODAL APPEARS:
+  ↓
+Enter solution details:
+  ├─ Solution Description (required)
+  └─ Solved By (user/organization)
+  ↓
+Submit → PUT /api/opportunities/{id}
+  - completion_status: "solved"
+  - solution_description
+  - solved_by
+  - solved_at (auto-timestamp)
+  ↓
+Update status badge to "Solved ✓"
+  ↓
+Display solution description
+  ↓
+Remove from "Open" filter
+  ↓
+Add to "Solved" showcase
+END
+```
+
+---
+
+### 8. User Journey Maps
+
+#### 8A. First-Time User Journey
+```
+DAY 1: Discovery & Registration
+  ↓
+Land on site → Browse public opportunities → See value
+  ↓
+Sign up → Confirm email [MISSING] → Profile setup
+  ↓
+DAY 1-3: Exploration
+  ↓
+Validate 3-5 opportunities → Earn first badge [MISSING]
+  ↓
+Browse by category → Discover pain points
+  ↓
+DAY 4-7: Engagement
+  ↓
+Submit first opportunity → Duplicate detection guides user
+  ↓
+Receive validations → See impact points grow [MISSING]
+  ↓
+Comment on similar opportunities
+  ↓
+WEEK 2+: Regular User
+  ↓
+Check dashboard weekly → Track validated opportunities
+  ↓
+Use research dashboard → Identify trends
+  ↓
+Share success stories → Community building
+```
+
+#### 8B. Researcher/Analyst Journey
+```
+START → Research Dashboard
+  ↓
+Filter by feasibility score → Identify high-potential opportunities
+  ↓
+Analyze geographic distribution → Market insights
+  ↓
+Track completion rates → Success metrics
+  ↓
+Export data [MISSING] → External analysis
+  ↓
+Share findings → Community feedback
+END
+```
+
+#### 8C. Entrepreneur Journey
+```
+START → Browse validated opportunities
+  ↓
+Filter by feasibility + validation count → Find viable ideas
+  ↓
+Read comments → Understand pain points
+  ↓
+Contact validators [MISSING] → Market research
+  ↓
+Mark as "In Progress" → Build solution
+  ↓
+Update with progress → Community engagement
+  ↓
+Mark as "Solved" → Success story
+END
+```
+
+---
+
+## Missing Flow Components to Implement
+
+### Priority 1: Critical Flows (Enable Core Value)
+1. **Dynamic Profile Data Loading** (4A)
+   - GET /api/users/me integration
+   - Display real activity feed
+
+2. **Settings Backend Integration** (4C)
+   - Profile updates
+   - Notification preferences
+   - Password changes
+
+3. **Analytics Dashboard Data Binding** (5A)
+   - Connect charts to real API data
+   - Interactive visualizations
+
+4. **Watchlist Functionality** (4A)
+   - Add/remove opportunities to watchlist
+   - Backend endpoint + frontend UI
+
+### Priority 2: Enhanced User Experience
+5. **Email Verification** (1A, 1C)
+   - POST /api/auth/verify-email
+   - Email sending service integration
+
+6. **Password Reset Backend** (1C)
+   - POST /api/auth/request-reset
+   - POST /api/auth/reset-password
+
+7. **Impact Points System** (4A, 8A)
+   - Calculate points for actions
+   - Display leaderboard
+
+8. **Badges System** (4A, 8A)
+   - Define badge criteria
+   - Award badges automatically
+
+### Priority 3: Advanced Features
+9. **Notifications** (4C)
+   - Email notifications
+   - In-app notifications
+   - Push notifications
+
+10. **OAuth Login** (1B)
+    - Google OAuth integration
+    - GitHub OAuth integration
+
+11. **Admin Flows**
+    - User management dashboard
+    - Content moderation
+    - Analytics for admins
+
+12. **Payment/Subscription** (Future)
+    - Stripe integration
+    - Subscription tiers
+    - Usage limits
+
+---
+
+## API Endpoint Coverage Map
+
+| User Flow | Required Endpoints | Status |
+|-----------|-------------------|--------|
+| Registration | POST /api/auth/register | ✅ |
+| Login | POST /api/auth/login | ✅ |
+| Browse Opportunities | GET /api/opportunities | ✅ |
+| Filter Opportunities | GET /api/opportunities?filters | ✅ |
+| Search | POST /api/opportunities/search | ✅ |
+| Create Opportunity | POST /api/opportunities | ✅ |
+| Duplicate Check | POST /api/analytics/check-duplicate | ✅ |
+| Validate | POST /api/validations | ✅ |
+| Remove Validation | DELETE /api/validations/{id} | ✅ |
+| Comment | POST /api/comments | ✅ |
+| Like Comment | PUT /api/comments/{id}/like | ✅ |
+| Feasibility Analysis | GET /api/analytics/feasibility/{id} | ✅ |
+| Top Feasible | GET /api/analytics/top-feasible | ✅ |
+| Geographic Filter | GET /api/analytics/geographic/* | ✅ |
+| Completion Stats | GET /api/analytics/completion-stats | ✅ |
+| Get Profile | GET /api/users/me | ✅ |
+| Update Profile | PUT /api/users/me | ✅ |
+| Password Reset Request | POST /api/auth/request-reset | ❌ |
+| Password Reset | POST /api/auth/reset-password | ❌ |
+| Email Verification | POST /api/auth/verify-email | ❌ |
+| Watchlist Add | POST /api/users/me/watchlist | ❌ |
+| Watchlist Remove | DELETE /api/users/me/watchlist/{id} | ❌ |
+| Notifications | GET /api/notifications | ❌ |
+| OAuth Login | POST /api/auth/oauth/{provider} | ❌ |
+
+---
+
+## Frontend Component Coverage Map
+
+| User Flow | Required Components | Status |
+|-----------|-------------------|--------|
+| Registration | signup.html + form handler | ✅ |
+| Login | login.html + form handler | ✅ |
+| Dashboard | index.html + app.js | ✅ |
+| Filters | Filter UI + event handlers | ✅ |
+| Search | search.html + search logic | ✅ |
+| Opportunity Cards | createOpportunityCard() | ✅ |
+| Duplicate Warning | showDuplicateWarning() | ✅ |
+| Validation Button | validateExisting() | ✅ |
+| Comments | Comment section UI | ✅ |
+| Profile Display | profile.html | ⚠️ Static |
+| Profile Edit | settings.html profile section | ⚠️ Partial |
+| Settings Tabs | settings.html tabs | ⚠️ UI only |
+| Analytics Dashboard | Research Dashboard tab | ⚠️ Placeholder |
+| Feasibility Charts | Chart components | ❌ |
+| Watchlist UI | Watchlist section | ❌ |
+| Notifications UI | Notification center | ❌ |
+| Badges Display | Badge components | ❌ |
+
+---
+
+## Next Steps for Implementation
+
+### Phase 1: Complete Partially Implemented Flows (Week 1-2)
+1. Wire up settings page to backend APIs
+2. Make profile page dynamic with real data
+3. Connect analytics dashboard to live endpoints
+4. Implement watchlist functionality
+
+### Phase 2: Critical Missing Flows (Week 3-4)
+5. Add email verification system
+6. Implement password reset backend
+7. Build impact points calculation
+8. Create badges system
+
+### Phase 3: Enhanced Features (Week 5-8)
+9. Add notifications system
+10. Implement OAuth login
+11. Build admin dashboard
+12. Add social features (following, sharing)
+
+### Phase 4: Premium Features (Future)
+13. Payment/subscription system
+14. Real-time updates with WebSockets
+15. Advanced analytics
+16. Mobile app considerations
+
+---
+
+**Document Version:** 1.0
+**Last Updated:** 2025-12-11
+**Status:** Living Document - Update as flows evolve

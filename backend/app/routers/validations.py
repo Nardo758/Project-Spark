@@ -8,6 +8,7 @@ from app.models.opportunity import Opportunity
 from app.models.user import User
 from app.schemas.validation import ValidationCreate, Validation as ValidationSchema
 from app.core.dependencies import get_current_active_user
+from app.services.badges import BadgeService, award_impact_points
 
 router = APIRouter()
 
@@ -41,6 +42,13 @@ def create_validation(
 
         # Update opportunity validation count
         opportunity.validation_count = opportunity.validation_count + 1
+
+        # Award impact points for validating
+        award_impact_points(current_user, 10, db)
+
+        # Also award points to the opportunity author
+        if opportunity.author:
+            award_impact_points(opportunity.author, 5, db)
 
         db.commit()
         db.refresh(new_validation)

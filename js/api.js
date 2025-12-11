@@ -219,6 +219,110 @@ class FrictionAPI {
         return this.handleResponse(response);
     }
 
+    // Analytics
+    async checkDuplicate(title, description) {
+        const response = await fetch(`${this.baseURL}/analytics/check-duplicate`, {
+            method: 'POST',
+            headers: this.getHeaders(false),
+            body: JSON.stringify({ title, description })
+        });
+        return this.handleResponse(response);
+    }
+
+    async getFeasibilityAnalysis(opportunityId) {
+        const response = await fetch(`${this.baseURL}/analytics/feasibility/${opportunityId}`, {
+            headers: this.getHeaders(false)
+        });
+        return this.handleResponse(response);
+    }
+
+    async getTopFeasible(minScore = 50.0, limit = 20) {
+        const queryParams = new URLSearchParams({ min_score: minScore, limit }).toString();
+        const response = await fetch(`${this.baseURL}/analytics/top-feasible?${queryParams}`, {
+            headers: this.getHeaders(false)
+        });
+        return this.handleResponse(response);
+    }
+
+    async getCompletionStats() {
+        const response = await fetch(`${this.baseURL}/analytics/completion-stats`, {
+            headers: this.getHeaders(false)
+        });
+        return this.handleResponse(response);
+    }
+
+    async getGeographicByScope(scope) {
+        const queryParams = new URLSearchParams({ scope }).toString();
+        const response = await fetch(`${this.baseURL}/analytics/geographic/by-scope?${queryParams}`, {
+            headers: this.getHeaders(false)
+        });
+        return this.handleResponse(response);
+    }
+
+    async getGeographicByLocation(country, region = null, city = null) {
+        const params = { country };
+        if (region) params.region = region;
+        if (city) params.city = city;
+        const queryParams = new URLSearchParams(params).toString();
+        const response = await fetch(`${this.baseURL}/analytics/geographic/by-location?${queryParams}`, {
+            headers: this.getHeaders(false)
+        });
+        return this.handleResponse(response);
+    }
+
+    async getGeographicDistribution() {
+        const response = await fetch(`${this.baseURL}/analytics/geographic/distribution`, {
+            headers: this.getHeaders(false)
+        });
+        return this.handleResponse(response);
+    }
+
+    // Watchlist
+    async addToWatchlist(opportunityId) {
+        const response = await fetch(`${this.baseURL}/watchlist/`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ opportunity_id: opportunityId })
+        });
+        return this.handleResponse(response);
+    }
+
+    async removeFromWatchlist(watchlistItemId) {
+        const response = await fetch(`${this.baseURL}/watchlist/${watchlistItemId}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+        if (response.status === 204) {
+            return { success: true };
+        }
+        return this.handleResponse(response);
+    }
+
+    async removeFromWatchlistByOpportunity(opportunityId) {
+        const response = await fetch(`${this.baseURL}/watchlist/opportunity/${opportunityId}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+        if (response.status === 204) {
+            return { success: true };
+        }
+        return this.handleResponse(response);
+    }
+
+    async getWatchlist() {
+        const response = await fetch(`${this.baseURL}/watchlist/`, {
+            headers: this.getHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    async checkInWatchlist(opportunityId) {
+        const response = await fetch(`${this.baseURL}/watchlist/check/${opportunityId}`, {
+            headers: this.getHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
     // Helper: Check if user is authenticated
     isAuthenticated() {
         return !!this.token;

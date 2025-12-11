@@ -489,7 +489,251 @@
         </section>
     </main>
 
+    <script src="js/api.js"></script>
     <script>
+        let currentUser = null;
+        let userOpportunities = [];
+        let userValidations = [];
+        let userWatchlist = [];
+
+        // Load user profile data
+        async function loadProfile() {
+            try {
+                if (!api.isAuthenticated()) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Load current user data
+                currentUser = await api.getCurrentUser();
+
+                // Update profile header
+                updateProfileHeader();
+
+                // Load user's opportunities, validations, and watchlist in parallel
+                await Promise.all([
+                    loadUserOpportunities(),
+                    loadUserValidations(),
+                    loadUserWatchlist()
+                ]);
+
+                // Update profile stats
+                updateProfileStats();
+
+                // Load activity feed
+                loadActivityFeed();
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+
+        // Load user's watchlist
+        async function loadUserWatchlist() {
+            try {
+                userWatchlist = await api.getWatchlist();
+            } catch (error) {
+                console.error('Error loading watchlist:', error);
+                userWatchlist = [];
+            }
+        }
+
+        // Update profile header with user data
+        function updateProfileHeader() {
+            const avatar = document.querySelector('.avatar');
+            const nameEl = document.querySelector('.profile-info h1');
+            const bioEl = document.querySelector('.profile-info p');
+            const badgesContainer = document.querySelector('.profile-badges');
+
+            // Set avatar initials
+            const initials = currentUser.name
+                ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase()
+                : currentUser.email[0].toUpperCase();
+            avatar.textContent = initials;
+
+            // Set name and bio
+            nameEl.textContent = currentUser.name || 'Anonymous User';
+            bioEl.textContent = currentUser.bio || 'No bio provided yet.';
+
+            // Update badges
+            if (badgesContainer && currentUser.badges && currentUser.badges.length > 0) {
+                badgesContainer.innerHTML = currentUser.badges.map(badge => {
+                    const badgeClass = getBadgeClass(badge.id);
+                    return `<span class="badge ${badgeClass}" title="${badge.description}">${badge.icon} ${badge.name}</span>`;
+                }).join('');
+            } else if (badgesContainer) {
+                badgesContainer.innerHTML = '<span class="badge">🆕 New Member</span>';
+            }
+        }
+
+        // Get badge CSS class based on badge type
+        function getBadgeClass(badgeId) {
+            if (badgeId.includes('validator_100') || badgeId.includes('impact_1000') || badgeId.includes('leader')) {
+                return 'gold';
+            } else if (badgeId.includes('validator') || badgeId.includes('impact') || badgeId.includes('contributor')) {
+                return 'blue';
+            }
+            return '';
+        }
+
+        // Load user's opportunities
+        async function loadUserOpportunities() {
+            try {
+                const opportunities = await api.getOpportunities();
+                // Filter opportunities by current user (backend should support this with user_id param)
+                userOpportunities = opportunities.filter(opp =>
+                    opp.author_id === currentUser.id || opp.author_email === currentUser.email
+                );
+            } catch (error) {
+                console.error('Error loading opportunities:', error);
+                userOpportunities = [];
+            }
+        }
+
+        // Load user's validations
+        async function loadUserValidations() {
+            try {
+                // Note: Backend doesn't have a direct endpoint for user's validations
+                // This would need to be added or we can track from opportunities
+                const opportunities = await api.getOpportunities();
+
+                // For now, we'll use placeholder data
+                // TODO: Add GET /validations/user/me endpoint to backend
+                userValidations = [];
+            } catch (error) {
+                console.error('Error loading validations:', error);
+                userValidations = [];
+            }
+        }
+
+        // Update profile stats
+        function updateProfileStats() {
+            const statCards = document.querySelectorAll('.stat-card');
+
+            // Update stats
+            statCards[0].querySelector('strong').textContent = currentUser.validation_count || 0;
+            statCards[1].querySelector('strong').textContent = userOpportunities.length;
+            statCards[2].querySelector('strong').textContent = userWatchlist.length;
+            statCards[3].querySelector('strong').textContent = currentUser.impact_points || 0;
+        }
+
+        // Load activity feed
+        function loadActivityFeed() {
+            const activitySection = document.getElementById('activity');
+
+            // Clear existing content
+            activitySection.innerHTML = '';
+
+            // Combine recent activities
+            const activities = [];
+
+            // Add recent opportunities
+            userOpportunities.slice(0, 5).forEach(opp => {
+                activities.push({
+                    type: 'shared',
+                    title: `📝 Shared "${opp.title}"`,
+                    meta: [
+                        getCategoryIcon(opp.category) + ' ' + opp.category,
+                        formatDate(opp.created_at),
+                        `${opp.validation_count} validations received`
+                    ],
+                    date: new Date(opp.created_at)
+                });
+            });
+
+            // Sort by date (newest first)
+            activities.sort((a, b) => b.date - a.date);
+
+            // Display activities
+            if (activities.length === 0) {
+                activitySection.innerHTML = '<div class="empty-state"><p>No activity yet</p></div>';
+            } else {
+                activities.forEach(activity => {
+                    const card = createActivityCard(activity);
+                    activitySection.appendChild(card);
+                });
+            }
+        }
+
+        // Create activity card
+        function createActivityCard(activity) {
+            const card = document.createElement('div');
+            card.className = 'content-card';
+            card.innerHTML = `
+                <div class="content-title">${activity.title}</div>
+                <div class="content-meta">
+                    ${activity.meta.map(m => `<span>${m}</span>`).join('\n')}
+                </div>
+            `;
+            return card;
+        }
+
+        // Load shared opportunities tab
+        function loadSharedTab() {
+            const sharedSection = document.getElementById('shared');
+            sharedSection.innerHTML = '';
+
+            if (userOpportunities.length === 0) {
+                sharedSection.innerHTML = '<div class="empty-state"><p>You haven\'t shared any opportunities yet</p></div>';
+                return;
+            }
+
+            userOpportunities.forEach(opp => {
+                const card = createOpportunityCard(opp, 'Shared');
+                sharedSection.appendChild(card);
+            });
+        }
+
+        // Create opportunity card
+        function createOpportunityCard(opp, action) {
+            const card = document.createElement('div');
+            card.className = 'content-card';
+            card.innerHTML = `
+                <div class="content-title">${opp.title}</div>
+                <div class="content-meta">
+                    <span>${getCategoryIcon(opp.category)} ${opp.category}</span>
+                    <span>${opp.validation_count} validations</span>
+                    <span>${action} ${formatDate(opp.created_at)}</span>
+                    ${opp.growth_rate ? `<span>↑ ${Math.round(opp.growth_rate)}% growth</span>` : ''}
+                </div>
+            `;
+            card.addEventListener('click', () => {
+                window.location.href = `index.html#opportunity-${opp.id}`;
+            });
+            return card;
+        }
+
+        // Get category icon
+        function getCategoryIcon(category) {
+            const icons = {
+                'Healthcare': '🏥',
+                'Finance': '💰',
+                'Transportation': '🚗',
+                'Technology': '💻',
+                'Education': '📚',
+                'Home': '🏠'
+            };
+            return icons[category] || '📌';
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return '1 day ago';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+            if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+            return `${Math.floor(diffDays / 365)} years ago`;
+        }
+
         // Tab switching
         const tabs = document.querySelectorAll('.tab');
         const sections = document.querySelectorAll('.section-panel');
@@ -500,16 +744,91 @@
                 tab.classList.add('active');
 
                 sections.forEach(section => section.classList.remove('active'));
-                document.getElementById(tab.dataset.tab).classList.add('active');
+                const targetSection = document.getElementById(tab.dataset.tab);
+                targetSection.classList.add('active');
+
+                // Load data for specific tabs
+                if (tab.dataset.tab === 'shared') {
+                    loadSharedTab();
+                } else if (tab.dataset.tab === 'validated') {
+                    loadValidatedTab();
+                } else if (tab.dataset.tab === 'watchlist') {
+                    loadWatchlistTab();
+                }
             });
         });
 
-        // Content card clicks
-        document.querySelectorAll('.content-card').forEach(card => {
-            card.addEventListener('click', () => {
-                window.location.href = 'index.html#detail';
+        // Load validated tab
+        function loadValidatedTab() {
+            const validatedSection = document.getElementById('validated');
+            validatedSection.innerHTML = '<div class="empty-state"><p>Validation history will be available soon</p></div>';
+        }
+
+        // Load watchlist tab
+        function loadWatchlistTab() {
+            const watchlistSection = document.getElementById('watchlist');
+            watchlistSection.innerHTML = '';
+
+            if (userWatchlist.length === 0) {
+                watchlistSection.innerHTML = '<div class="empty-state"><p>Your watchlist is empty. Add opportunities you\'re interested in!</p></div>';
+                return;
+            }
+
+            userWatchlist.forEach(item => {
+                const opp = item.opportunity;
+                if (!opp) return;
+
+                const card = createWatchlistCard(opp, item);
+                watchlistSection.appendChild(card);
             });
-        });
+        }
+
+        // Create watchlist card
+        function createWatchlistCard(opp, watchlistItem) {
+            const card = document.createElement('div');
+            card.className = 'content-card';
+            card.style.position = 'relative';
+            card.innerHTML = `
+                <div class="content-title">${opp.title}</div>
+                <div class="content-meta">
+                    <span>${getCategoryIcon(opp.category)} ${opp.category}</span>
+                    <span>${opp.validation_count} validations</span>
+                    <span>Added ${formatDate(watchlistItem.created_at)}</span>
+                    ${opp.growth_rate ? `<span>↑ ${Math.round(opp.growth_rate)}% growth</span>` : ''}
+                </div>
+            `;
+
+            // Add remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn';
+            removeBtn.textContent = '✕ Remove';
+            removeBtn.style.cssText = 'position: absolute; top: 16px; right: 16px; padding: 4px 12px; font-size: 12px;';
+            removeBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    await api.removeFromWatchlist(watchlistItem.id);
+                    userWatchlist = userWatchlist.filter(item => item.id !== watchlistItem.id);
+                    updateProfileStats();
+                    loadWatchlistTab();
+                } catch (error) {
+                    console.error('Error removing from watchlist:', error);
+                    alert('Failed to remove from watchlist');
+                }
+            });
+            card.appendChild(removeBtn);
+
+            // Add click handler for the card (excluding remove button)
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    window.location.href = `index.html#opportunity-${opp.id}`;
+                }
+            });
+
+            return card;
+        }
+
+        // Load profile data when page loads
+        document.addEventListener('DOMContentLoaded', loadProfile);
     </script>
 </body>
 </html>

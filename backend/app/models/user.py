@@ -32,3 +32,4 @@ class User(Base):
     opportunities = relationship("Opportunity", back_populates="author")
     validations = relationship("Validation", back_populates="user")
     comments = relationship("Comment", back_populates="user")
+    watchlist_items = relationship("WatchlistItem", back_populates="user", cascade="all, delete-orphan")
