@@ -14,6 +14,7 @@ from app.models.user import User
 from app.services.oauth import oauth_service
 from app.core.security import create_access_token
 from app.core.config import settings
+from app.core.dependencies import get_current_user
 
 router = APIRouter()
 

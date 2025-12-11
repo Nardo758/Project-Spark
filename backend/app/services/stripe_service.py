@@ -201,7 +201,9 @@ class StripeService:
         Raises:
             ValueError: If signature verification fails
         """
-        webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+        webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+        if not webhook_secret:
+            raise ValueError("STRIPE_WEBHOOK_SECRET not configured")
         return stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
 
     @staticmethod
