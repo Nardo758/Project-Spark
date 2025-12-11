@@ -7,41 +7,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 def get_database_url():
-    """Construct PostgreSQL URL from environment variables
+    """Get PostgreSQL connection URL
     
-    Priority order:
-    1. POSTGRES_URL (custom secret to bypass .replit override)
-    2. DATABASE_URL if it starts with postgresql:// or postgres://
-    3. Build URL from PG* env vars if PGHOST is not localhost
-    4. Fallback to localhost (will fail if no local postgres)
+    Uses POSTGRES_URL secret (to bypass .replit override) or DATABASE_URL if valid.
     """
     postgres_url = os.getenv("POSTGRES_URL", "")
-    if postgres_url and (postgres_url.startswith("postgresql://") or postgres_url.startswith("postgres://")):
+    if postgres_url.startswith(("postgresql://", "postgres://")):
         url = postgres_url.replace("postgres://", "postgresql://")
         logger.info("Using POSTGRES_URL for PostgreSQL connection")
         return url
     
     db_url = os.getenv("DATABASE_URL", "")
-    if db_url and (db_url.startswith("postgresql://") or db_url.startswith("postgres://")):
+    if db_url.startswith(("postgresql://", "postgres://")):
         url = db_url.replace("postgres://", "postgresql://")
         if "sslmode" not in url:
             url = url + ("&" if "?" in url else "?") + "sslmode=require"
         logger.info("Using DATABASE_URL for PostgreSQL connection")
         return url
     
-    pg_host = os.getenv("PGHOST", "")
-    pg_port = os.getenv("PGPORT", "5432")
-    pg_user = os.getenv("PGUSER", "")
-    pg_password = os.getenv("PGPASSWORD", "")
-    pg_database = os.getenv("PGDATABASE", "")
-    
-    if all([pg_host, pg_user, pg_password, pg_database]) and pg_host not in ["localhost", "127.0.0.1", "::1"]:
-        url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_database}?sslmode=require"
-        logger.info(f"Using PostgreSQL connection from PG* env vars: {pg_host}")
-        return url
-    
-    logger.warning(f"No valid PostgreSQL configuration found. POSTGRES_URL={'set' if postgres_url else 'empty'}, DATABASE_URL={db_url[:30] if db_url else 'empty'}...")
-    return "postgresql://user:password@localhost:5432/friction_db"
+    logger.error("No valid PostgreSQL URL found. Set POSTGRES_URL secret.")
+    raise ValueError("Database not configured. Please set POSTGRES_URL secret with your PostgreSQL connection string.")
 
 connect_args = {}
 

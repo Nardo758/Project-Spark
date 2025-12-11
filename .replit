@@ -61,6 +61,11 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+localPort = 5432
+externalPort = 3000
+exposeLocalhost = true
+
+[[ports]]
 localPort = 8000
 externalPort = 8000
 exposeLocalhost = true
@@ -97,4 +102,3 @@ outputType = "webview"
 [userenv]
 
 [userenv.shared]
-POSTGRES_URL = "postgresql://neondb_owner:npg_HvDA2gaT1hdR@ep-winter-field-ahxiv4cw.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
