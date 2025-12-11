@@ -1,0 +1,390 @@
+Demo Account Login Issue - Diagnosis Report
+
+Problem Summary
+
+Issue: Cannot login to demo account Environment: Current workspace (not Replit environment)
+
+Root Cause Analysis
+
+🎯 PRIMARY ISSUE: No Database Connection
+
+The main issue preventing demo account login is that there is no PostgreSQL database running or configured in the current environment.
+
+Evidence:
+
+❌ Database connection failed: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: Connection refused
+
+
+Application Code Analysis ✅
+
+The authentication system itself is correctly implemented:
+
+
+
+
+
+Demo Account Setup (in backend/init_db.py):
+
+User(
+    email="demo@example.com",
+    name="Demo User", 
+    bio="Demo account for testing",
+    hashed_password=get_password_hash("demo123"),
+    impact_points=50,
+    is_verified=True  # ✅ Account is verified
+)
+
+
+
+
+Login Endpoint (in backend/app/routers/auth.py):
+
+
+
+
+
+✅ Correctly validates email and password
+
+
+
+✅ Checks user account status (active, not banned)
+
+
+
+✅ Handles 2FA properly
+
+
+
+✅ Returns proper JWT tokens
+
+
+
+Password Hashing (in backend/app/core/security.py):
+
+
+
+
+
+✅ Uses bcrypt for secure password hashing
+
+
+
+✅ Password verification works correctly (tested: demo123 ✅)
+
+Environment Analysis
+
+Missing Components
+
+1. PostgreSQL Database Server
+
+
+
+
+
+❌ No PostgreSQL service running on localhost:5432
+
+
+
+❌ No REPLIT_DB_URL environment variable set
+
+
+
+❌ No DATABASE_URL environment variable configured
+
+2. Database Initialization
+
+
+
+
+
+❌ Database tables not created
+
+
+
+❌ Demo user not inserted into database
+
+
+
+❌ Sample data not populated
+
+Solutions
+
+Option 1: Set Up Local PostgreSQL (For Local Development)
+
+Install PostgreSQL:
+
+# Ubuntu/Debian
+sudo apt update && sudo apt install postgresql postgresql-contrib
+
+# Start service
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Create database and user
+sudo -u postgres psql -c "CREATE DATABASE friction_db;"
+sudo -u postgres psql -c "CREATE USER friction_user WITH PASSWORD 'your_password';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE friction_db TO friction_user;"
+
+
+Configure Environment:
+
+export DATABASE_URL="postgresql://friction_user:your_password@localhost:5432/friction_db"
+export SECRET_KEY="your-secret-key-here"
+
+
+Initialize Database:
+
+cd /project/workspace/Project-Spark
+python backend/init_db.py
+
+
+Option 2: Use Docker PostgreSQL (Recommended)
+
+Create docker-compose.yml:
+
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: friction_db
+      POSTGRES_USER: friction_user
+      POSTGRES_PASSWORD: friction_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
+
+Start Database:
+
+docker-compose up -d db
+export DATABASE_URL="postgresql://friction_user:friction_pass@localhost:5432/friction_db"
+export SECRET_KEY="your-secret-key-here"
+python backend/init_db.py
+
+
+Option 3: Use SQLite for Testing (Quickest)
+
+Modify database URL:
+
+export DATABASE_URL="sqlite:///./friction_app.db"
+export SECRET_KEY="test-secret-key"
+
+
+Note: Would need to modify SQLAlchemy configuration for SQLite compatibility
+
+Option 4: Configure for Replit Environment
+
+Deploy to Replit:
+
+
+
+
+
+Import project to Replit
+
+
+
+Enable PostgreSQL in Tools → Database
+
+
+
+Environment variables will be auto-configured
+
+
+
+Database will be automatically initialized
+
+Verification Steps
+
+Once database is set up, verify login works:
+
+1. Check Database Connection:
+
+python backend/verify_db_connection.py
+
+
+2. Test Demo Account:
+
+python debug_login.py
+
+
+3. Test via API:
+
+curl -X POST "http://localhost:8000/api/v1/auth/login" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "username=demo@example.com&password=demo123"
+
+
+Expected Response:
+
+{
+  "access_token": "eyJ...",
+  "token_type": "bearer",
+  "requires_2fa": false
+}
+
+
+Demo Account Credentials (Once Database is Set Up)
+
+Email: demo@example.com
+Password: demo123
+Status: Verified and active
+2FA: Disabled
+
+
+Current State Summary
+
+
+
+
+
+
+
+Component
+
+
+
+Status
+
+
+
+Issue
+
+
+
+
+
+Authentication Code
+
+
+
+✅ Working
+
+
+
+None
+
+
+
+
+
+Password Hashing
+
+
+
+✅ Working
+
+
+
+None
+
+
+
+
+
+Login Endpoint
+
+
+
+✅ Working
+
+
+
+None
+
+
+
+
+
+Database Server
+
+
+
+❌ Missing
+
+
+
+No PostgreSQL running
+
+
+
+
+
+Database Schema
+
+
+
+❌ Missing
+
+
+
+Tables not created
+
+
+
+
+
+Demo User
+
+
+
+❌ Missing
+
+
+
+Not in database
+
+
+
+
+
+Environment Config
+
+
+
+❌ Missing
+
+
+
+No DATABASE_URL set
+
+Recommended Next Steps
+
+
+
+
+
+Immediate: Set up PostgreSQL using Option 2 (Docker) - fastest approach
+
+
+
+Initialize: Run database initialization script
+
+
+
+Test: Verify demo account login works
+
+
+
+Deploy: Consider moving to Replit for persistent database
+
+Files Modified for Diagnosis
+
+
+
+
+
+Created: debug_login.py - Diagnostic script for testing login functionality
+
+
+
+Created: LOGIN_ISSUE_DIAGNOSIS.md - This analysis report
+
+
+
+TL;DR: The demo account login code is correct, but there's no database running. Set up PostgreSQL, initialize the database, and the demo account will work with credentials: demo@example.com 
