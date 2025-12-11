@@ -130,20 +130,23 @@ def init_database():
     """Initialize database tables on startup"""
     try:
         print("Initializing database...")
+        env = os.environ.copy()
         result = subprocess.run(
             [sys.executable, 'backend/init_db.py'],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
+            env=env,
+            cwd=os.path.dirname(os.path.abspath(__file__))
         )
+        print(result.stdout)
         if result.returncode == 0:
             print("Database initialized successfully")
         else:
-            print(f"Database init output: {result.stdout}")
             if result.stderr:
                 print(f"Database init errors: {result.stderr}")
     except Exception as e:
-        print(f"Database initialization error: {e}")
+        print(f"Database initialization error (will retry on first request): {e}")
 
 if __name__ == '__main__':
     init_database()

@@ -9,6 +9,12 @@ packages = ["cargo", "libiconv", "libxcrypt", "rustc"]
 [userenv]
 
 [userenv.shared]
+
+[userenv.development]
+SECRET_KEY = "73bd4698e414f4367c261655e963bb0414e0fa8076b1222b47a4e4d6d75e7dcd"
+BACKEND_CORS_ORIGINS = "[\"*\"]"
+
+[userenv.production]
 SECRET_KEY = "73bd4698e414f4367c261655e963bb0414e0fa8076b1222b47a4e4d6d75e7dcd"
 BACKEND_CORS_ORIGINS = "[\"*\"]"
 
