@@ -13,6 +13,12 @@ BACKEND_PORT = 8000
 FRONTEND_PORT = 5000
 
 class ProxyHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+    
     def do_GET(self):
         if self.path.startswith('/api/') or self.path == '/docs' or self.path == '/openapi.json' or self.path == '/redoc' or self.path == '/health':
             self.proxy_request('GET')

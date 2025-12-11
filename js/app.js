@@ -3,10 +3,7 @@
  * Connects UI to backend API with all features
  */
 
-// API Configuration - automatically switches between local and production
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000/api/v1'  // Local development
-    : 'https://YOUR-RENDER-APP.onrender.com/api/v1';  // Production (replace with your Render URL)
+// API Configuration - uses CONFIG from config.js via api.js
 
 let currentUser = null;
 
@@ -67,6 +64,15 @@ function displayOpportunities(opportunities) {
         const card = createOpportunityCard(opp);
         container.appendChild(card);
     });
+}
+
+// Update pagination display
+function updatePagination(data) {
+    const paginationContainer = document.getElementById('pagination');
+    if (!paginationContainer) return;
+    
+    const totalPages = Math.ceil(data.total / data.page_size);
+    paginationContainer.innerHTML = `Page ${data.page} of ${totalPages} (${data.total} total)`;
 }
 
 // Create opportunity card with feasibility score
