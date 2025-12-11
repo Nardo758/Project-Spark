@@ -277,6 +277,52 @@ class FrictionAPI {
         return this.handleResponse(response);
     }
 
+    // Watchlist
+    async addToWatchlist(opportunityId) {
+        const response = await fetch(`${this.baseURL}/watchlist/`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ opportunity_id: opportunityId })
+        });
+        return this.handleResponse(response);
+    }
+
+    async removeFromWatchlist(watchlistItemId) {
+        const response = await fetch(`${this.baseURL}/watchlist/${watchlistItemId}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+        if (response.status === 204) {
+            return { success: true };
+        }
+        return this.handleResponse(response);
+    }
+
+    async removeFromWatchlistByOpportunity(opportunityId) {
+        const response = await fetch(`${this.baseURL}/watchlist/opportunity/${opportunityId}`, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
+        if (response.status === 204) {
+            return { success: true };
+        }
+        return this.handleResponse(response);
+    }
+
+    async getWatchlist() {
+        const response = await fetch(`${this.baseURL}/watchlist/`, {
+            headers: this.getHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
+    async checkInWatchlist(opportunityId) {
+        const response = await fetch(`${this.baseURL}/watchlist/check/${opportunityId}`, {
+            headers: this.getHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
     // Helper: Check if user is authenticated
     isAuthenticated() {
         return !!this.token;

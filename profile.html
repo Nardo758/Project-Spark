@@ -494,6 +494,7 @@
         let currentUser = null;
         let userOpportunities = [];
         let userValidations = [];
+        let userWatchlist = [];
 
         // Load user profile data
         async function loadProfile() {
@@ -509,10 +510,11 @@
                 // Update profile header
                 updateProfileHeader();
 
-                // Load user's opportunities and validations in parallel
+                // Load user's opportunities, validations, and watchlist in parallel
                 await Promise.all([
                     loadUserOpportunities(),
-                    loadUserValidations()
+                    loadUserValidations(),
+                    loadUserWatchlist()
                 ]);
 
                 // Update profile stats
@@ -526,6 +528,16 @@
                 if (error.message.includes('401') || error.message.includes('403')) {
                     window.location.href = 'login.html';
                 }
+            }
+        }
+
+        // Load user's watchlist
+        async function loadUserWatchlist() {
+            try {
+                userWatchlist = await api.getWatchlist();
+            } catch (error) {
+                console.error('Error loading watchlist:', error);
+                userWatchlist = [];
             }
         }
 
@@ -604,7 +616,7 @@
             // Update stats
             statCards[0].querySelector('strong').textContent = currentUser.validation_count || 0;
             statCards[1].querySelector('strong').textContent = userOpportunities.length;
-            statCards[2].querySelector('strong').textContent = '0'; // Watchlist (not implemented)
+            statCards[2].querySelector('strong').textContent = userWatchlist.length;
             statCards[3].querySelector('strong').textContent = currentUser.impact_points || 0;
         }
 
@@ -755,7 +767,64 @@
         // Load watchlist tab
         function loadWatchlistTab() {
             const watchlistSection = document.getElementById('watchlist');
-            watchlistSection.innerHTML = '<div class="empty-state"><p>Watchlist feature coming soon</p></div>';
+            watchlistSection.innerHTML = '';
+
+            if (userWatchlist.length === 0) {
+                watchlistSection.innerHTML = '<div class="empty-state"><p>Your watchlist is empty. Add opportunities you\'re interested in!</p></div>';
+                return;
+            }
+
+            userWatchlist.forEach(item => {
+                const opp = item.opportunity;
+                if (!opp) return;
+
+                const card = createWatchlistCard(opp, item);
+                watchlistSection.appendChild(card);
+            });
+        }
+
+        // Create watchlist card
+        function createWatchlistCard(opp, watchlistItem) {
+            const card = document.createElement('div');
+            card.className = 'content-card';
+            card.style.position = 'relative';
+            card.innerHTML = `
+                <div class="content-title">${opp.title}</div>
+                <div class="content-meta">
+                    <span>${getCategoryIcon(opp.category)} ${opp.category}</span>
+                    <span>${opp.validation_count} validations</span>
+                    <span>Added ${formatDate(watchlistItem.created_at)}</span>
+                    ${opp.growth_rate ? `<span>↑ ${Math.round(opp.growth_rate)}% growth</span>` : ''}
+                </div>
+            `;
+
+            // Add remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn';
+            removeBtn.textContent = '✕ Remove';
+            removeBtn.style.cssText = 'position: absolute; top: 16px; right: 16px; padding: 4px 12px; font-size: 12px;';
+            removeBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    await api.removeFromWatchlist(watchlistItem.id);
+                    userWatchlist = userWatchlist.filter(item => item.id !== watchlistItem.id);
+                    updateProfileStats();
+                    loadWatchlistTab();
+                } catch (error) {
+                    console.error('Error removing from watchlist:', error);
+                    alert('Failed to remove from watchlist');
+                }
+            });
+            card.appendChild(removeBtn);
+
+            // Add click handler for the card (excluding remove button)
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    window.location.href = `index.html#opportunity-${opp.id}`;
+                }
+            });
+
+            return card;
         }
 
         // Load profile data when page loads
