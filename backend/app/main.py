@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor
+from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ app.include_router(users.router, prefix=f"{settings.API_V1_PREFIX}/users", tags=
 app.include_router(analytics.router, prefix=f"{settings.API_V1_PREFIX}/analytics", tags=["Analytics"])
 app.include_router(watchlist.router, prefix=f"{settings.API_V1_PREFIX}/watchlist", tags=["Watchlist"])
 app.include_router(two_factor.router, prefix=f"{settings.API_V1_PREFIX}/2fa", tags=["Two-Factor Auth"])
+app.include_router(oauth.router, prefix=f"{settings.API_V1_PREFIX}/oauth", tags=["OAuth"])
 
 
 @app.get("/")

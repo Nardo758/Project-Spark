@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # URLs
+    BACKEND_URL: str = "http://localhost:8000"
+    FRONTEND_URL: str = "http://localhost:3000"
+
     # CORS - allow all origins by default for development
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
 
