@@ -62,9 +62,10 @@ Make sure these are set in Render:
 ```env
 # Database - Your Supabase connection (USE POOLED CONNECTION FOR RENDER)
 # Pooled (Port 6543 - RECOMMENDED for serverless/Render):
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:6543/postgres?pgbouncer=true&sslmode=require
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:6543/postgres?sslmode=require
 # Direct (Port 5432 - NOT recommended for Render):
 # DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxxxx.supabase.co:5432/postgres
+# NOTE: Do NOT include pgbouncer=true parameter - it's not supported by psycopg2
 
 # Security - IMPORTANT: Use a strong secret key
 SECRET_KEY=your-production-secret-key-here
@@ -129,7 +130,7 @@ A comprehensive verification script is provided to test your Supabase connection
 cd backend
 
 # Set your DATABASE_URL
-export DATABASE_URL="postgresql://postgres:your_password@db.xxxxx.supabase.co:6543/postgres?pgbouncer=true&sslmode=require"
+export DATABASE_URL="postgresql://postgres:your_password@db.xxxxx.supabase.co:6543/postgres?sslmode=require"
 
 # Run verification script
 python verify_db_connection.py
@@ -166,13 +167,13 @@ Results: 5/5 tests passed
 **For Render (Serverless) - Use Pooled Connection:**
 
 ```
-postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:6543/postgres?pgbouncer=true&sslmode=require
+postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:6543/postgres?sslmode=require
 ```
 
 **Key Points:**
 - **Port 6543**: PgBouncer pooled connection (recommended for Render)
-- **pgbouncer=true**: Enables connection pooling
 - **sslmode=require**: Forces SSL encryption
+- **Do NOT include** `pgbouncer=true` - This parameter is not supported by psycopg2
 - Get your connection string from: Supabase Dashboard → Settings → Database → Connection pooling
 
 **Why Pooled Connection?**
@@ -283,7 +284,7 @@ OperationalError: could not connect to server
 
 **Render Environment Variables:**
 ```env
-DATABASE_URL=postgresql://postgres:mypass123@db.abcdefg.supabase.co:6543/postgres?pgbouncer=true&sslmode=require
+DATABASE_URL=postgresql://postgres:mypass123@db.abcdefg.supabase.co:6543/postgres?sslmode=require
 SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30

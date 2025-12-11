@@ -10,7 +10,11 @@ Usage:
 
 Environment Variables:
     DATABASE_URL - PostgreSQL connection string (required)
-                   Format: postgresql://user:password@host:port/database?params
+                   Format: postgresql://user:password@host:port/database?sslmode=require
+
+IMPORTANT: Do NOT include pgbouncer=true parameter in your connection string.
+           This parameter is not supported by psycopg2 and will cause errors.
+           Use port 6543 to indicate PgBouncer connection.
 """
 
 import os
@@ -26,6 +30,25 @@ try:
 except ImportError:
     print("❌ Error: SQLAlchemy not installed. Run: pip install sqlalchemy psycopg2-binary")
     sys.exit(1)
+
+
+def clean_database_url(url: str) -> str:
+    """
+    Remove unsupported parameters from DATABASE_URL.
+
+    The pgbouncer=true parameter is not supported by psycopg2 and must be removed.
+    Port 6543 itself indicates PgBouncer is being used.
+    """
+    if "pgbouncer=true" in url:
+        print(get_colored_output("warning", "Detected 'pgbouncer=true' parameter in DATABASE_URL"))
+        print(get_colored_output("info", "Removing it - this parameter is not supported by psycopg2"))
+        print(get_colored_output("info", "Port 6543 indicates PgBouncer connection (no parameter needed)\n"))
+        url = url.replace("pgbouncer=true&", "").replace("&pgbouncer=true", "").replace("?pgbouncer=true", "")
+        # Clean up double & or trailing ?
+        url = url.replace("&&", "&").replace("?&", "?")
+        if url.endswith("?"):
+            url = url[:-1]
+    return url
 
 
 def get_colored_output(status: str, message: str) -> str:
@@ -348,6 +371,9 @@ def main():
         print("  export DATABASE_URL='postgresql://user:password@host:port/database?params'")
         print("  python verify_db_connection.py")
         sys.exit(1)
+
+    # Clean DATABASE_URL (remove unsupported parameters)
+    database_url = clean_database_url(database_url)
 
     # Parse connection details
     conn_details = parse_connection_url(database_url)
