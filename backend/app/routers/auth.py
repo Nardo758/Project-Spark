@@ -13,6 +13,8 @@ from app.core.config import settings
 from app.core.tokens import (
     generate_verification_token,
     get_verification_token_expiry,
+    generate_password_reset_token,
+    get_password_reset_token_expiry,
     is_token_expired
 )
 from app.services.email import email_service
@@ -26,6 +28,15 @@ class VerifyEmailRequest(BaseModel):
 
 class ResendVerificationRequest(BaseModel):
     email: str
+
+
+class RequestPasswordResetRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
@@ -180,4 +191,80 @@ def resend_verification(request: ResendVerificationRequest, db: Session = Depend
 
     return {
         "message": "Verification email sent successfully"
+    }
+
+
+@router.post("/request-password-reset")
+def request_password_reset(request: RequestPasswordResetRequest, db: Session = Depends(get_db)):
+    """Request password reset email"""
+    user = db.query(User).filter(User.email == request.email).first()
+
+    if not user:
+        # Don't reveal if email exists or not for security
+        return {
+            "message": "If the email exists, a password reset link will be sent"
+        }
+
+    # Generate password reset token
+    reset_token = generate_password_reset_token()
+    token_expiry = get_password_reset_token_expiry()
+
+    user.password_reset_token = reset_token
+    user.password_reset_token_expires = token_expiry
+
+    db.commit()
+
+    # Send password reset email
+    try:
+        email_service.send_password_reset_email(
+            to_email=user.email,
+            reset_token=reset_token,
+            user_name=user.name
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send password reset email"
+        )
+
+    return {
+        "message": "Password reset email sent successfully"
+    }
+
+
+@router.post("/reset-password")
+def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Reset password using token"""
+    user = db.query(User).filter(User.password_reset_token == request.token).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid password reset token"
+        )
+
+    # Check if token is expired
+    if is_token_expired(user.password_reset_token_expires):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password reset token has expired. Please request a new one."
+        )
+
+    # Validate new password length
+    if len(request.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters long"
+        )
+
+    # Update password
+    user.hashed_password = get_password_hash(request.new_password)
+    user.password_reset_token = None
+    user.password_reset_token_expires = None
+
+    db.commit()
+
+    return {
+        "message": "Password reset successfully",
+        "email": user.email
     }
