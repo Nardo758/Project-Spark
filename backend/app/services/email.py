@@ -1,20 +1,73 @@
 """
 Email service using Resend API
+Uses Replit Resend connector integration when available
 """
 
 import os
-from typing import Optional
+import logging
+from typing import Optional, Tuple
 import requests
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+def get_resend_credentials() -> Tuple[Optional[str], Optional[str]]:
+    """
+    Get Resend API key and from_email from Replit connector or environment.
+    
+    Returns:
+        Tuple of (api_key, from_email)
+    """
+    hostname = os.getenv("REPLIT_CONNECTORS_HOSTNAME")
+    repl_identity = os.getenv("REPL_IDENTITY")
+    web_repl_renewal = os.getenv("WEB_REPL_RENEWAL")
+    
+    if hostname and (repl_identity or web_repl_renewal):
+        try:
+            x_replit_token = f"repl {repl_identity}" if repl_identity else f"depl {web_repl_renewal}"
+            response = requests.get(
+                f"https://{hostname}/api/v2/connection?include_secrets=true&connector_names=resend",
+                headers={
+                    "Accept": "application/json",
+                    "X_REPLIT_TOKEN": x_replit_token
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            items = data.get("items", [])
+            if items:
+                settings_data = items[0].get("settings", {})
+                api_key = settings_data.get("api_key")
+                from_email = settings_data.get("from_email")
+                if api_key:
+                    logger.info("Using Resend credentials from Replit connector")
+                    return api_key, from_email
+        except Exception as e:
+            logger.warning(f"Failed to get Resend credentials from connector: {e}")
+    
+    api_key = os.getenv("RESEND_API_KEY")
+    from_email = os.getenv("FROM_EMAIL", "noreply@friction.app")
+    if api_key:
+        logger.info("Using Resend credentials from environment variables")
+    return api_key, from_email
 
 
 class EmailService:
     """Email service for sending emails via Resend"""
 
     def __init__(self):
-        self.api_key = os.getenv("RESEND_API_KEY")
+        self._api_key = None
+        self._from_email = None
         self.api_url = "https://api.resend.com/emails"
-        self.from_email = os.getenv("FROM_EMAIL", "noreply@friction.app")
+    
+    def _get_credentials(self) -> Tuple[str, str]:
+        """Get fresh credentials (connector tokens may rotate)"""
+        api_key, from_email = get_resend_credentials()
+        if not api_key:
+            raise ValueError("Resend API key not configured. Set up Resend connector or RESEND_API_KEY environment variable.")
+        return api_key, from_email or "noreply@friction.app"
 
     def send_email(
         self,
@@ -35,16 +88,15 @@ class EmailService:
         Returns:
             dict: Response from Resend API
         """
-        if not self.api_key:
-            raise ValueError("RESEND_API_KEY environment variable not set")
+        api_key, from_email = self._get_credentials()
 
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
         payload = {
-            "from": self.from_email,
+            "from": from_email,
             "to": [to_email],
             "subject": subject,
             "html": html_content
