@@ -20,6 +20,10 @@ class User(Base):
     # Badges (stored as comma-separated values)
     badges = Column(Text, nullable=True)
 
+    # Verification
+    verification_token = Column(String(255), nullable=True)
+    verification_token_expires = Column(DateTime(timezone=True), nullable=True)
+
     # Account settings
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
