@@ -322,6 +322,142 @@ class EmailService:
             html_content=html_content,
             text_content=text_content
         )
+    def send_notification_email(
+        self,
+        to_email: str,
+        user_name: str,
+        notification_title: str,
+        notification_message: str,
+        notification_link: Optional[str] = None
+    ) -> dict:
+        """
+        Send notification email to user
+
+        Args:
+            to_email: User's email address
+            user_name: User's name
+            notification_title: Notification title
+            notification_message: Notification message
+            notification_link: Optional link to view notification
+
+        Returns:
+            dict: Response from Resend API
+        """
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        view_link = f"{frontend_url}{notification_link}" if notification_link else f"{frontend_url}/notifications"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #D97757 0%, #C96646 100%);
+                    padding: 30px;
+                    text-align: center;
+                    border-radius: 10px 10px 0 0;
+                }}
+                .header h1 {{
+                    color: white;
+                    margin: 0;
+                    font-size: 28px;
+                }}
+                .content {{
+                    background: #ffffff;
+                    padding: 40px 30px;
+                    border: 1px solid #E8E4DF;
+                    border-top: none;
+                }}
+                .notification-box {{
+                    background: #F0EDE8;
+                    border-left: 4px solid #D97757;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-radius: 4px;
+                }}
+                .notification-box h3 {{
+                    margin-top: 0;
+                    color: #D97757;
+                }}
+                .button {{
+                    display: inline-block;
+                    padding: 14px 32px;
+                    background: #D97757;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                    font-weight: 600;
+                }}
+                .footer {{
+                    background: #F5F3EF;
+                    padding: 20px 30px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #6B6560;
+                    border-radius: 0 0 10px 10px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>⚡ Friction</h1>
+            </div>
+            <div class="content">
+                <h2>Hi {user_name}!</h2>
+                <p>You have a new notification:</p>
+
+                <div class="notification-box">
+                    <h3>{notification_title}</h3>
+                    <p>{notification_message}</p>
+                </div>
+
+                <div style="text-align: center;">
+                    <a href="{view_link}" class="button">View Details</a>
+                </div>
+
+                <p style="margin-top: 30px; font-size: 14px; color: #6B6560;">
+                    You can manage your notification preferences in your account settings.
+                </p>
+            </div>
+            <div class="footer">
+                <p>© 2024 Friction. All rights reserved.</p>
+                <p>This is an automated message, please do not reply.</p>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+        Hi {user_name}!
+
+        You have a new notification:
+
+        {notification_title}
+        {notification_message}
+
+        View details: {view_link}
+
+        You can manage your notification preferences in your account settings.
+
+        © 2024 Friction
+        """
+
+        return self.send_email(
+            to_email=to_email,
+            subject=f"Friction: {notification_title}",
+            html_content=html_content,
+            text_content=text_content
+        )
 
 
 # Create a global instance

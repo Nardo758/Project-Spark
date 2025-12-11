@@ -228,6 +228,19 @@ class BadgeService:
                 newly_awarded.append("trending")
                 break  # Only award once
 
+        # Send notifications for newly awarded badges
+        if newly_awarded:
+            from app.services.notification import notification_service
+            for badge_id in newly_awarded:
+                badge = AVAILABLE_BADGES.get(badge_id)
+                if badge:
+                    notification_service.notify_badge_earned(
+                        db=db,
+                        user_id=user.id,
+                        badge_name=badge.name,
+                        badge_description=badge.description
+                    )
+
         return newly_awarded
 
     @staticmethod

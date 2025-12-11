@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.validation import ValidationCreate, Validation as ValidationSchema
 from app.core.dependencies import get_current_active_user
 from app.services.badges import BadgeService, award_impact_points
+from app.services.notification import notification_service
 
 router = APIRouter()
 
@@ -52,6 +53,17 @@ def create_validation(
 
         db.commit()
         db.refresh(new_validation)
+
+        # Send notification to opportunity author
+        notification_service.notify_new_validation(
+            db=db,
+            opportunity_author_id=opportunity.author_id,
+            validator_id=current_user.id,
+            validator_name=current_user.name,
+            opportunity_id=opportunity.id,
+            opportunity_title=opportunity.title,
+            validation_type="validated"
+        )
 
         return new_validation
 

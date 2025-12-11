@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentUpdate, Comment as CommentSchema
 from app.core.dependencies import get_current_active_user
 from app.services.badges import award_impact_points
+from app.services.notification import notification_service
 
 router = APIRouter()
 
@@ -44,6 +45,16 @@ def create_comment(
 
     db.commit()
     db.refresh(new_comment)
+
+    # Send notification to opportunity author
+    notification_service.notify_new_comment(
+        db=db,
+        opportunity_author_id=opportunity.author_id,
+        commenter_id=current_user.id,
+        commenter_name=current_user.name,
+        opportunity_id=opportunity.id,
+        opportunity_title=opportunity.title
+    )
 
     return new_comment
 
