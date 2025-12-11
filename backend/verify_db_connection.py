@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-Postgres Connection Verification Script for Render → Supabase
+Postgres Connection Verification Script (Replit-ready)
 
-This script verifies the DATABASE_URL connection from Render to Supabase Postgres,
-including SSL, PgBouncer, and connection pooling tests.
+This script verifies that your environment exposes a valid PostgreSQL connection
+string (from POSTGRES_URL, REPLIT_DB_URL, or DATABASE_URL) and that the database
+accepts standard queries, SSL, and write operations.
 
 Usage:
-    python verify_db_connection.py
+    python backend/verify_db_connection.py
 
-Environment Variables:
-    DATABASE_URL - PostgreSQL connection string (required)
-                   Format: postgresql://user:password@host:port/database?params
+Environment Variables (checked in order):
+    1. POSTGRES_URL   - Recommended for production / external providers
+    2. DATABASE_URL   - Common fallback
+    3. REPLIT_DB_URL  - Provided by Replit PostgreSQL integration
 """
 
 import os
@@ -332,6 +334,31 @@ def test_write_operations(database_url: str) -> bool:
         return False
 
 
+def resolve_database_url() -> str:
+    """Return the first valid-looking Postgres URL from known env vars."""
+    candidates = [
+        ("POSTGRES_URL", os.getenv("POSTGRES_URL")),
+        ("DATABASE_URL", os.getenv("DATABASE_URL")),
+        ("REPLIT_DB_URL", os.getenv("REPLIT_DB_URL")),
+    ]
+
+    for name, value in candidates:
+        if not value:
+            continue
+        if value.startswith(("postgresql://", "postgres://")):
+            print(get_colored_output("info", f"Using {name}"))
+            return value.replace("postgres://", "postgresql://")
+        else:
+            print(
+                get_colored_output(
+                    "warning",
+                    f"{name} is set but does not look like a PostgreSQL connection string",
+                )
+            )
+
+    return ""
+
+
 def main():
     """Main verification function"""
     print("\n" + "="*60)
@@ -339,14 +366,17 @@ def main():
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*60)
 
-    # Get DATABASE_URL from environment
-    database_url = os.getenv("DATABASE_URL")
+    database_url = resolve_database_url()
 
     if not database_url:
-        print(get_colored_output("error", "DATABASE_URL environment variable not set"))
-        print("\nUsage:")
-        print("  export DATABASE_URL='postgresql://user:password@host:port/database?params'")
-        print("  python verify_db_connection.py")
+        print(get_colored_output("error", "No PostgreSQL connection string found."))
+        print("\nSet one of these environment variables and try again:")
+        print("  • POSTGRES_URL")
+        print("  • DATABASE_URL")
+        print("  • REPLIT_DB_URL (enabled via Tools → Database → PostgreSQL)")
+        print("\nExample:")
+        print("  export POSTGRES_URL='postgresql://user:password@host:port/database?sslmode=require'")
+        print("  python backend/verify_db_connection.py")
         sys.exit(1)
 
     # Parse connection details
@@ -378,7 +408,7 @@ def main():
 
     if passed == total:
         print(get_colored_output("success", "All tests passed! Database connection is fully operational."))
-        print("\n✓ Your Render → Supabase connection is configured correctly!")
+        print("\n✓ Your Replit deployment can reach PostgreSQL")
         print("✓ SSL is enabled and working")
         print("✓ Connection pooling is operational")
         print("✓ Read/write operations are functional")
