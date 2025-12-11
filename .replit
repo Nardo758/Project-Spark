@@ -98,3 +98,4 @@ outputType = "webview"
 
 [userenv.shared]
 USE_POSTGRES_SECRETS = "true"
+POSTGRES_URL = "postgresql://neondb_owner:npg_HvDA2gaT1hdR@ep-winter-field-ahxiv4cw.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"

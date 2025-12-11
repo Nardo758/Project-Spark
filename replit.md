@@ -1,5 +1,11 @@
 # Friction - Problem Discovery Engine
 
+## Recent Changes (December 2024)
+
+- **Database Connection Fix**: Added POSTGRES_URL secret to bypass .replit configuration conflict
+- **Resend Integration**: Email service already implemented in `backend/app/services/email.py`
+- **Stripe Integration**: Payment processing already implemented in `backend/app/services/stripe_service.py`
+
 ## 🚀 Quick Start on Replit
 
 This project is fully configured for Replit deployment!
@@ -96,13 +102,16 @@ Access Swagger docs at `/docs` or ReDoc at `/redoc` when running.
 
 ## Environment Variables
 
+**Required (add via Secrets):**
+- `POSTGRES_URL` - PostgreSQL connection string (copy from Database tab > Production Database > Settings)
+
 **Auto-configured on Replit:**
-- `REPLIT_DB_URL` - PostgreSQL connection (managed by Replit)
 - `REPL_SLUG`, `REPL_OWNER` - For URL generation
 - `SECRET_KEY` - JWT signing (set in .replit, change for production)
 
 **Optional (add via Secrets):**
 - `RESEND_API_KEY` - Email service API key
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` - Payment processing
 - OAuth credentials for Google/GitHub
 
 See [REPLIT_DEPLOYMENT.md](./REPLIT_DEPLOYMENT.md) for complete details.

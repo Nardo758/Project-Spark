@@ -10,17 +10,23 @@ def get_database_url():
     """Construct PostgreSQL URL from environment variables
     
     Priority order:
-    1. DATABASE_URL if it starts with postgresql:// or postgres://
-    2. Build URL from PG* env vars if PGHOST is not localhost
-    3. Fallback to localhost (will fail if no local postgres)
+    1. POSTGRES_URL (custom secret to bypass .replit override)
+    2. DATABASE_URL if it starts with postgresql:// or postgres://
+    3. Build URL from PG* env vars if PGHOST is not localhost
+    4. Fallback to localhost (will fail if no local postgres)
     """
-    db_url = os.getenv("DATABASE_URL", "")
+    postgres_url = os.getenv("POSTGRES_URL", "")
+    if postgres_url and (postgres_url.startswith("postgresql://") or postgres_url.startswith("postgres://")):
+        url = postgres_url.replace("postgres://", "postgresql://")
+        logger.info("Using POSTGRES_URL for PostgreSQL connection")
+        return url
     
+    db_url = os.getenv("DATABASE_URL", "")
     if db_url and (db_url.startswith("postgresql://") or db_url.startswith("postgres://")):
         url = db_url.replace("postgres://", "postgresql://")
         if "sslmode" not in url:
             url = url + ("&" if "?" in url else "?") + "sslmode=require"
-        logger.info(f"Using DATABASE_URL for PostgreSQL connection")
+        logger.info("Using DATABASE_URL for PostgreSQL connection")
         return url
     
     pg_host = os.getenv("PGHOST", "")
@@ -34,7 +40,7 @@ def get_database_url():
         logger.info(f"Using PostgreSQL connection from PG* env vars: {pg_host}")
         return url
     
-    logger.warning(f"No valid PostgreSQL configuration found. DATABASE_URL={db_url[:50] if db_url else 'empty'}... PGHOST={pg_host}")
+    logger.warning(f"No valid PostgreSQL configuration found. POSTGRES_URL={'set' if postgres_url else 'empty'}, DATABASE_URL={db_url[:30] if db_url else 'empty'}...")
     return "postgresql://user:password@localhost:5432/friction_db"
 
 connect_args = {}
