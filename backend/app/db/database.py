@@ -3,8 +3,55 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 import logging
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 
 logger = logging.getLogger(__name__)
+
+LOCAL_HOSTS = {
+    "localhost",
+    "127.0.0.1",
+    "::1",
+    "db",
+    "db.internal",
+    "db.replit.internal",
+}
+LOCAL_SUFFIXES = (".internal", ".local")
+
+
+def _is_local_host(hostname: str) -> bool:
+    """Return True when the host points to a local/Postgres instance without SSL."""
+    if not hostname:
+        return False
+    hostname = hostname.lower()
+    if hostname in LOCAL_HOSTS or hostname.startswith("127."):
+        return True
+    return any(hostname.endswith(suffix) for suffix in LOCAL_SUFFIXES)
+
+
+def _prepare_postgres_url(raw_url: str) -> str:
+    """Normalize postgres URL and append sslmode when needed."""
+    if not raw_url:
+        return raw_url
+
+    normalized = raw_url.replace("postgres://", "postgresql://", 1)
+    parsed = urlparse(normalized)
+
+    if not parsed.scheme.startswith("postgres"):
+        return normalized
+
+    query_params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    host = parsed.hostname or ""
+
+    if "sslmode" not in query_params:
+        if _is_local_host(host):
+            logger.info(
+                "Detected local PostgreSQL host (%s); skipping sslmode enforcement", host
+            )
+        else:
+            query_params["sslmode"] = "require"
+
+    new_query = urlencode(query_params, doseq=True)
+    return urlunparse(parsed._replace(query=new_query))
 
 def get_database_url():
     """Get PostgreSQL connection URL
@@ -16,15 +63,13 @@ def get_database_url():
     """
     postgres_url = os.getenv("POSTGRES_URL", "")
     if postgres_url.startswith(("postgresql://", "postgres://")):
-        url = postgres_url.replace("postgres://", "postgresql://")
+        url = _prepare_postgres_url(postgres_url)
         logger.info("Using POSTGRES_URL for PostgreSQL connection")
         return url
     
     db_url = os.getenv("DATABASE_URL", "")
     if db_url.startswith(("postgresql://", "postgres://")):
-        url = db_url.replace("postgres://", "postgresql://")
-        if "sslmode" not in url:
-            url = url + ("&" if "?" in url else "?") + "sslmode=require"
+        url = _prepare_postgres_url(db_url)
         logger.info("Using DATABASE_URL for PostgreSQL connection")
         return url
     
@@ -35,7 +80,8 @@ def get_database_url():
     pg_port = os.getenv("PGPORT", "5432")
     
     if pg_host and pg_db and pg_user and pg_password:
-        url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}?sslmode=require"
+        raw_url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+        url = _prepare_postgres_url(raw_url)
         logger.info(f"Using PG* variables for PostgreSQL connection ({pg_host}:{pg_port}/{pg_db})")
         return url
     
