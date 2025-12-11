@@ -2,5 +2,19 @@
 name = "repl-nix-workspace"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.12"
-dependencies = []
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "pydantic",
+    "pydantic-settings",
+    "python-jose",
+    "passlib",
+    "python-multipart",
+    "alembic",
+    "python-dotenv",
+    "email-validator",
+    "bcrypt",
+]
