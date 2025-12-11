@@ -48,3 +48,4 @@ exposeLocalhost = true
 [deployment]
 deploymentTarget = "autoscale"
 run = ["python", "server.py"]
+build = ["pip", "install", "fastapi", "uvicorn", "sqlalchemy", "psycopg2-binary", "pydantic", "pydantic-settings", "python-jose", "passlib", "python-multipart", "alembic", "python-dotenv", "email-validator", "bcrypt"]
