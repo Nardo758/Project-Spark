@@ -2193,6 +2193,165 @@
                 }
             });
         }
+
+        // Analytics Dashboard Integration
+        async function loadAnalyticsDashboard() {
+            try {
+                // Load analytics data in parallel
+                const [completionStats, topFeasible, geoDistribution] = await Promise.all([
+                    api.getCompletionStats(),
+                    api.getTopFeasible(50.0, 20),
+                    api.getGeographicDistribution()
+                ]);
+
+                // Update dashboard stats
+                updateDashboardStats(completionStats);
+
+                // Update opportunity highlights (using top feasible data)
+                updateOpportunityHighlights(topFeasible);
+
+                // Update trending opportunities list
+                updateTrendingOpportunitiesList(topFeasible);
+
+            } catch (error) {
+                console.error('Error loading analytics dashboard:', error);
+            }
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats(stats) {
+            const statCards = document.querySelectorAll('#dashboard .stats-grid .stat-card');
+            if (statCards.length >= 4 && stats) {
+                // Total opportunities
+                const totalOpps = (stats.open || 0) + (stats.in_progress || 0) + (stats.solved || 0) + (stats.abandoned || 0);
+                statCards[0].querySelector('strong').textContent = totalOpps.toLocaleString();
+
+                // New this week (use open opportunities as proxy)
+                statCards[1].querySelector('strong').textContent = (stats.open || 0).toLocaleString();
+
+                // High validation (use solved as high validation proxy)
+                statCards[2].querySelector('strong').textContent = (stats.solved || 0).toLocaleString();
+
+                // In progress
+                statCards[3].querySelector('strong').textContent = (stats.in_progress || 0).toLocaleString();
+                statCards[3].querySelector('.subdued').textContent = 'In progress';
+            }
+        }
+
+        // Update opportunity highlights
+        function updateOpportunityHighlights(opportunities) {
+            if (!opportunities || opportunities.length === 0) return;
+
+            const highlightsGrid = document.querySelector('#dashboard .panel-card:nth-of-type(2) .grid-two');
+            if (!highlightsGrid) return;
+
+            // Use the top opportunity for highlights
+            const topOpp = opportunities[0];
+
+            highlightsGrid.innerHTML = `
+                <div class="list-item">
+                    <small class="subdued">Top Opportunity</small>
+                    <strong>${topOpp.title}</strong>
+                    <small>${topOpp.category || 'Uncategorized'}</small>
+                </div>
+                <div class="list-item">
+                    <small class="subdued">Feasibility Score</small>
+                    <strong>${topOpp.feasibility_score ? Math.round(topOpp.feasibility_score) : 'N/A'}</strong>
+                    <small>Out of 100</small>
+                </div>
+                <div class="list-item">
+                    <small class="subdued">Validation Count</small>
+                    <strong>${topOpp.validation_count || 0}</strong>
+                    <small>${topOpp.growth_rate ? `↑ ${Math.round(topOpp.growth_rate)}% growth` : 'Stable'}</small>
+                </div>
+                <div class="list-item">
+                    <small class="subdued">Geographic Scope</small>
+                    <strong>${formatGeographicScope(topOpp.geographic_scope)}</strong>
+                    <small>${topOpp.country || 'Global'}</small>
+                </div>
+            `;
+        }
+
+        // Update trending opportunities list in dashboard
+        function updateTrendingOpportunitiesList(opportunities) {
+            if (!opportunities || opportunities.length === 0) return;
+
+            const trendingPanel = document.querySelector('#dashboard .panel-card:nth-of-type(3)');
+            if (!trendingPanel) return;
+
+            // Find or create the table card
+            let tableCard = trendingPanel.querySelector('.table-card');
+            if (!tableCard) {
+                tableCard = document.createElement('div');
+                tableCard.className = 'table-card';
+                trendingPanel.appendChild(tableCard);
+            }
+
+            // Clear existing content
+            tableCard.innerHTML = '';
+
+            // Add top 5 opportunities
+            opportunities.slice(0, 5).forEach(opp => {
+                const row = document.createElement('div');
+                row.className = 'table-row';
+                row.style.cursor = 'pointer';
+
+                const categoryIcon = getCategoryIcon(opp.category);
+                const growthIndicator = opp.growth_rate && opp.growth_rate > 0 ? '📈' : '📊';
+                const growthText = opp.growth_rate
+                    ? `${growthIndicator} ${opp.growth_rate > 0 ? '+' : ''}${Math.round(opp.growth_rate)}% growth`
+                    : '📊 Stable';
+
+                row.innerHTML = `
+                    <strong>${opp.title}</strong>
+                    <small>${categoryIcon} ${opp.category || 'Uncategorized'} · ${formatGeographicScope(opp.geographic_scope)} · ${opp.validation_count || 0} validations · ${growthText}</small>
+                `;
+
+                row.addEventListener('click', () => {
+                    console.log('Navigate to opportunity:', opp.id);
+                    // TODO: Navigate to opportunity detail
+                });
+
+                tableCard.appendChild(row);
+            });
+        }
+
+        // Format geographic scope
+        function formatGeographicScope(scope) {
+            if (!scope) return 'Global';
+            const formatted = {
+                'local': 'Local',
+                'regional': 'Regional',
+                'national': 'National',
+                'international': 'International',
+                'online': 'Online'
+            };
+            return formatted[scope] || scope;
+        }
+
+        // Get category icon
+        function getCategoryIcon(category) {
+            const icons = {
+                'Healthcare': '🏥',
+                'Finance': '💰',
+                'Transportation': '🚗',
+                'Technology': '💻',
+                'Education': '📚',
+                'Home': '🏠',
+                'Work': '💼'
+            };
+            return icons[category] || '📌';
+        }
+
+        // Load analytics when dashboard tab is clicked
+        tabs.forEach(tab => {
+            const originalClickHandler = tab.onclick;
+            tab.addEventListener('click', () => {
+                if (tab.dataset.target === 'dashboard') {
+                    loadAnalyticsDashboard();
+                }
+            });
+        });
     </script>
 
     <!-- API Integration -->
