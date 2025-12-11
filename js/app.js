@@ -488,15 +488,36 @@ function debounce(func, wait) {
 }
 
 function showError(message) {
-    // Implement your error notification
     console.error(message);
-    alert(message);
+    showToast(message, 'error');
+}
+
+function showToast(message, type = 'info') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    const bgColor = type === 'error' ? '#e74c3c' : type === 'success' ? '#27ae60' : '#3498db';
+    toast.style.cssText = `background:${bgColor};color:white;padding:12px 20px;border-radius:6px;margin-bottom:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.3s ease;font-size:14px;`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => toast.style.opacity = '1');
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
 }
 
 function showSuccess(message) {
-    // Implement your success notification
     console.log(message);
-    alert(message);
+    showToast(message, 'success');
 }
 
 function showLoginPrompt() {
