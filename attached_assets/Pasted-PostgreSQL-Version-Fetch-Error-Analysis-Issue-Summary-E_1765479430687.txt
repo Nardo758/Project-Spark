@@ -1,0 +1,300 @@
+PostgreSQL Version Fetch Error Analysis
+
+Issue Summary
+
+Error: "Failed to fetch PostgreSQL major version for development database"
+
+Context:
+
+
+
+
+
+Database hosted on Replit (not Supabase)
+
+
+
+Python FastAPI application with SQLAlchemy
+
+
+
+Alembic included in requirements
+
+Root Cause Analysis
+
+Based on my comprehensive scan of your codebase, the error "Failed to fetch PostgreSQL major version for development database" is NOT originating from your application code. Your codebase does not contain any explicit PostgreSQL version checking logic.
+
+What I Found
+
+
+
+
+
+No Direct Version Checking: Your application code doesn't contain any direct PostgreSQL version fetch operations
+
+
+
+Standard SQLAlchemy Setup: Your database configuration uses standard SQLAlchemy patterns without version checking
+
+
+
+Alembic Present: You have Alembic in requirements.txt, which is the most likely source of this error
+
+Most Likely Sources
+
+1. Alembic Migration Tool (Primary Suspect)
+
+
+
+
+
+Alembic is included in your requirements.txt (version 1.13.1)
+
+
+
+Alembic automatically checks PostgreSQL versions during initialization
+
+
+
+This error commonly occurs when Alembic cannot connect to or query the database server
+
+
+
+No alembic.ini or migration files found, suggesting Alembic may not be properly initialized
+
+2. Web Framework Startup (Secondary Suspect)
+
+
+
+
+
+Some web frameworks check database versions during startup
+
+
+
+Your FastAPI application includes database table creation on startup
+
+
+
+Could be triggered during the Base.metadata.create_all(bind=engine) operation
+
+3. Development Tools (Possible)
+
+
+
+
+
+IDE extensions or development tools
+
+
+
+Automatic database introspection tools
+
+
+
+Database connection pooling libraries
+
+Current Database Configuration
+
+Your application uses this database setup:
+
+# Configuration priority
+1. REPLIT_DB_URL (if available on Replit)
+2. DATABASE_URL environment variable
+3. Fallback: postgresql://user:password@localhost:5432/friction_db
+
+
+Connection String: The app correctly uses ${REPLIT_DB_URL} from .replit config.
+
+Diagnostic Recommendations
+
+1. Check Replit Database Status
+
+# In Replit Shell, verify database is running
+psql $REPLIT_DB_URL -c "SELECT version();"
+
+
+2. Test Direct Connection
+
+# Create a test script to verify connection
+import os
+import psycopg2
+
+try:
+    conn = psycopg2.connect(os.getenv('REPLIT_DB_URL'))
+    cur = conn.cursor()
+    cur.execute('SELECT version();')
+    print(cur.fetchone())
+    conn.close()
+    print("✅ Direct connection successful")
+except Exception as e:
+    print(f"❌ Direct connection failed: {e}")
+
+
+3. Check for Alembic Initialization
+
+# Look for alembic configuration
+find . -name "alembic.ini" -o -name "alembic" -type d
+
+
+4. Review Startup Logs
+
+
+
+
+
+Check the complete error traceback to identify the exact source
+
+
+
+Look for references to Alembic, SQLAlchemy, or migration tools
+
+Immediate Solutions
+
+Option 1: Disable Alembic (If Not Needed)
+
+If you're not using database migrations:
+
+pip uninstall alembic
+# Remove alembic from requirements.txt
+
+
+Option 2: Properly Initialize Alembic
+
+If you need migrations:
+
+# In backend directory
+alembic init migrations
+# Then configure alembic.ini with your DATABASE_URL
+
+
+Option 3: Add Connection Timeout and Error Handling
+
+Update your backend/app/db/database.py:
+
+try:
+    logger.info(f"Connecting to database...")
+    engine = create_engine(
+        settings.DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
+        connect_args={
+            "connect_timeout": 10,
+            "application_name": "friction_api"
+        }
+    )
+    
+    # Test the connection
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT 1"))
+        logger.info("Database connection test successful")
+    
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    logger.info("Database engine created successfully")
+except Exception as e:
+    logger.error(f"Failed to create database engine: {e}")
+    # Create a dummy engine for graceful degradation
+    engine = None
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False)
+
+
+Option 4: Environment Variable Check
+
+Add this to verify your database URL:
+
+# Add to backend/app/core/config.py
+def validate_database_url(self):
+    if not self.DATABASE_URL:
+        raise ValueError("DATABASE_URL not set")
+    
+    if not self.DATABASE_URL.startswith(('postgresql://', 'postgres://')):
+        raise ValueError("DATABASE_URL must be a PostgreSQL connection string")
+    
+    print(f"Database URL configured: {self.DATABASE_URL[:30]}...")
+
+
+Replit-Specific Considerations
+
+Database Service Status
+
+
+
+
+
+Ensure PostgreSQL service is enabled in Replit
+
+
+
+Check if REPLIT_DB_URL is properly set in environment
+
+
+
+Verify the database service hasn't been suspended
+
+Connection Permissions
+
+
+
+
+
+Replit PostgreSQL might have connection limits
+
+
+
+Database user permissions may be restricted
+
+
+
+Network connectivity issues between app and database
+
+Next Steps
+
+
+
+
+
+Run the diagnostic commands above to identify the exact error source
+
+
+
+Check Replit database status and connection string
+
+
+
+Review complete error logs with full stack trace
+
+
+
+Consider removing Alembic if not using database migrations
+
+
+
+Add better error handling to database connection code
+
+Files to Monitor for Error Source
+
+
+
+
+
+/backend/app/main.py - Startup event handler
+
+
+
+/backend/init_db.py - Database initialization
+
+
+
+Any Alembic configuration files
+
+
+
+Replit startup logs
+
+
+
+FastAPI application logs
+
+The error is likely occurring during application startup when either Alembic or your application tries to connect to the PostgreSQL database and perform version checking.
