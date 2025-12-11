@@ -115,8 +115,9 @@ def run_backend():
         bufsize=1,
         universal_newlines=True
     )
-    for line in process.stdout:
-        print(f"[Backend] {line}", end='')
+    if process.stdout is not None:
+        for line in process.stdout:
+            print(f"[Backend] {line}", end='')
     return process
 
 def run_frontend():

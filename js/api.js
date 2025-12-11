@@ -3,14 +3,11 @@
  * Connects the frontend to the backend API
  */
 
-// Use config if available, otherwise fallback to default
-var API_BASE_URL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) 
-    ? CONFIG.API_BASE_URL 
-    : '/api/v1';
-
 class FrictionAPI {
     constructor() {
-        this.baseURL = API_BASE_URL;
+        this.baseURL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) 
+            ? CONFIG.API_BASE_URL 
+            : '/api/v1';
         this.token = localStorage.getItem('access_token');
     }
 
@@ -38,7 +35,7 @@ class FrictionAPI {
 
     // Authentication
     async register(email, password, name, bio = '') {
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        const response = await fetch(`${this.baseURL}/auth/register`, {
             method: 'POST',
             headers: this.getHeaders(false),
             body: JSON.stringify({ email, password, name, bio })
@@ -51,7 +48,7 @@ class FrictionAPI {
         formData.append('username', email);  // OAuth2 uses 'username' field
         formData.append('password', password);
 
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        const response = await fetch(`${this.baseURL}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -72,14 +69,14 @@ class FrictionAPI {
 
     // Users
     async getCurrentUser() {
-        const response = await fetch(`${API_BASE_URL}/users/me`, {
+        const response = await fetch(`${this.baseURL}/users/me`, {
             headers: this.getHeaders()
         });
         return this.handleResponse(response);
     }
 
     async updateCurrentUser(userData) {
-        const response = await fetch(`${API_BASE_URL}/users/me`, {
+        const response = await fetch(`${this.baseURL}/users/me`, {
             method: 'PUT',
             headers: this.getHeaders(),
             body: JSON.stringify(userData)
@@ -88,7 +85,7 @@ class FrictionAPI {
     }
 
     async getUser(userId) {
-        const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        const response = await fetch(`${this.baseURL}/users/${userId}`, {
             headers: this.getHeaders(false)
         });
         return this.handleResponse(response);
@@ -96,7 +93,7 @@ class FrictionAPI {
 
     // Opportunities
     async createOpportunity(opportunityData) {
-        const response = await fetch(`${API_BASE_URL}/opportunities/`, {
+        const response = await fetch(`${this.baseURL}/opportunities/`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify(opportunityData)
@@ -106,7 +103,7 @@ class FrictionAPI {
 
     async getOpportunities(params = {}) {
         const queryParams = new URLSearchParams(params).toString();
-        const url = `${API_BASE_URL}/opportunities/${queryParams ? '?' + queryParams : ''}`;
+        const url = `${this.baseURL}/opportunities/${queryParams ? '?' + queryParams : ''}`;
 
         const response = await fetch(url, {
             headers: this.getHeaders(false)
@@ -115,14 +112,14 @@ class FrictionAPI {
     }
 
     async getOpportunity(opportunityId) {
-        const response = await fetch(`${API_BASE_URL}/opportunities/${opportunityId}`, {
+        const response = await fetch(`${this.baseURL}/opportunities/${opportunityId}`, {
             headers: this.getHeaders(false)
         });
         return this.handleResponse(response);
     }
 
     async updateOpportunity(opportunityId, opportunityData) {
-        const response = await fetch(`${API_BASE_URL}/opportunities/${opportunityId}`, {
+        const response = await fetch(`${this.baseURL}/opportunities/${opportunityId}`, {
             method: 'PUT',
             headers: this.getHeaders(),
             body: JSON.stringify(opportunityData)
@@ -131,7 +128,7 @@ class FrictionAPI {
     }
 
     async deleteOpportunity(opportunityId) {
-        const response = await fetch(`${API_BASE_URL}/opportunities/${opportunityId}`, {
+        const response = await fetch(`${this.baseURL}/opportunities/${opportunityId}`, {
             method: 'DELETE',
             headers: this.getHeaders()
         });
@@ -143,7 +140,7 @@ class FrictionAPI {
 
     async searchOpportunities(query, params = {}) {
         const queryParams = new URLSearchParams({ q: query, ...params }).toString();
-        const response = await fetch(`${API_BASE_URL}/opportunities/search/?${queryParams}`, {
+        const response = await fetch(`${this.baseURL}/opportunities/search/?${queryParams}`, {
             headers: this.getHeaders(false)
         });
         return this.handleResponse(response);
@@ -151,7 +148,7 @@ class FrictionAPI {
 
     // Validations
     async createValidation(opportunityId) {
-        const response = await fetch(`${API_BASE_URL}/validations/`, {
+        const response = await fetch(`${this.baseURL}/validations/`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ opportunity_id: opportunityId })
@@ -160,7 +157,7 @@ class FrictionAPI {
     }
 
     async deleteValidation(validationId) {
-        const response = await fetch(`${API_BASE_URL}/validations/${validationId}`, {
+        const response = await fetch(`${this.baseURL}/validations/${validationId}`, {
             method: 'DELETE',
             headers: this.getHeaders()
         });
@@ -171,7 +168,7 @@ class FrictionAPI {
     }
 
     async getOpportunityValidations(opportunityId) {
-        const response = await fetch(`${API_BASE_URL}/validations/opportunity/${opportunityId}`, {
+        const response = await fetch(`${this.baseURL}/validations/opportunity/${opportunityId}`, {
             headers: this.getHeaders(false)
         });
         return this.handleResponse(response);
@@ -179,7 +176,7 @@ class FrictionAPI {
 
     // Comments
     async createComment(opportunityId, content) {
-        const response = await fetch(`${API_BASE_URL}/comments/`, {
+        const response = await fetch(`${this.baseURL}/comments/`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ opportunity_id: opportunityId, content })
@@ -188,14 +185,14 @@ class FrictionAPI {
     }
 
     async getOpportunityComments(opportunityId) {
-        const response = await fetch(`${API_BASE_URL}/comments/opportunity/${opportunityId}`, {
+        const response = await fetch(`${this.baseURL}/comments/opportunity/${opportunityId}`, {
             headers: this.getHeaders(false)
         });
         return this.handleResponse(response);
     }
 
     async updateComment(commentId, content) {
-        const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+        const response = await fetch(`${this.baseURL}/comments/${commentId}`, {
             method: 'PUT',
             headers: this.getHeaders(),
             body: JSON.stringify({ content })
@@ -204,7 +201,7 @@ class FrictionAPI {
     }
 
     async deleteComment(commentId) {
-        const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
+        const response = await fetch(`${this.baseURL}/comments/${commentId}`, {
             method: 'DELETE',
             headers: this.getHeaders()
         });
@@ -215,7 +212,7 @@ class FrictionAPI {
     }
 
     async likeComment(commentId) {
-        const response = await fetch(`${API_BASE_URL}/comments/${commentId}/like`, {
+        const response = await fetch(`${this.baseURL}/comments/${commentId}/like`, {
             method: 'POST',
             headers: this.getHeaders()
         });
