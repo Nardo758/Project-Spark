@@ -534,6 +534,7 @@
             const avatar = document.querySelector('.avatar');
             const nameEl = document.querySelector('.profile-info h1');
             const bioEl = document.querySelector('.profile-info p');
+            const badgesContainer = document.querySelector('.profile-badges');
 
             // Set avatar initials
             const initials = currentUser.name
@@ -544,6 +545,26 @@
             // Set name and bio
             nameEl.textContent = currentUser.name || 'Anonymous User';
             bioEl.textContent = currentUser.bio || 'No bio provided yet.';
+
+            // Update badges
+            if (badgesContainer && currentUser.badges && currentUser.badges.length > 0) {
+                badgesContainer.innerHTML = currentUser.badges.map(badge => {
+                    const badgeClass = getBadgeClass(badge.id);
+                    return `<span class="badge ${badgeClass}" title="${badge.description}">${badge.icon} ${badge.name}</span>`;
+                }).join('');
+            } else if (badgesContainer) {
+                badgesContainer.innerHTML = '<span class="badge">🆕 New Member</span>';
+            }
+        }
+
+        // Get badge CSS class based on badge type
+        function getBadgeClass(badgeId) {
+            if (badgeId.includes('validator_100') || badgeId.includes('impact_1000') || badgeId.includes('leader')) {
+                return 'gold';
+            } else if (badgeId.includes('validator') || badgeId.includes('impact') || badgeId.includes('contributor')) {
+                return 'blue';
+            }
+            return '';
         }
 
         // Load user's opportunities

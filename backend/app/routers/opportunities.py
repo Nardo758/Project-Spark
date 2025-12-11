@@ -8,6 +8,7 @@ from app.models.opportunity import Opportunity
 from app.models.user import User
 from app.schemas.opportunity import OpportunityCreate, OpportunityUpdate, Opportunity as OpportunitySchema, OpportunityList
 from app.core.dependencies import get_current_active_user
+from app.services.badges import award_impact_points
 
 router = APIRouter()
 
@@ -25,6 +26,11 @@ def create_opportunity(
     )
 
     db.add(new_opportunity)
+
+    # Award impact points for creating an opportunity (not for anonymous submissions)
+    if not opportunity_data.is_anonymous:
+        award_impact_points(current_user, 20, db)
+
     db.commit()
     db.refresh(new_opportunity)
 

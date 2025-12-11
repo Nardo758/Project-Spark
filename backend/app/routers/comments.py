@@ -8,6 +8,7 @@ from app.models.opportunity import Opportunity
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentUpdate, Comment as CommentSchema
 from app.core.dependencies import get_current_active_user
+from app.services.badges import award_impact_points
 
 router = APIRouter()
 
@@ -37,6 +38,10 @@ def create_comment(
     )
 
     db.add(new_comment)
+
+    # Award impact points for commenting
+    award_impact_points(current_user, 5, db)
+
     db.commit()
     db.refresh(new_comment)
 
