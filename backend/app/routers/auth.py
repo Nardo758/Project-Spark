@@ -84,7 +84,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
@@ -105,12 +105,24 @@ def login(
             detail="Inactive user"
         )
 
+    # Check if 2FA is enabled
+    if user.otp_enabled:
+        return {
+            "requires_2fa": True,
+            "email": user.email,
+            "message": "Please provide your 2FA code"
+        }
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "requires_2fa": False
+    }
 
 
 @router.post("/verify-email")

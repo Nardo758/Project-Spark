@@ -28,6 +28,11 @@ class User(Base):
     password_reset_token = Column(String(255), nullable=True)
     password_reset_token_expires = Column(DateTime(timezone=True), nullable=True)
 
+    # Two-Factor Authentication
+    otp_secret = Column(String(32), nullable=True)
+    otp_enabled = Column(Boolean, default=False)
+    backup_codes = Column(Text, nullable=True)  # Comma-separated encrypted backup codes
+
     # Account settings
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
