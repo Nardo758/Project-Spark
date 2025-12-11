@@ -4,9 +4,9 @@
  */
 
 // Use config if available, otherwise fallback to default
-const API_BASE_URL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) 
+var API_BASE_URL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) 
     ? CONFIG.API_BASE_URL 
-    : 'http://localhost:8000/api/v1';
+    : '/api/v1';
 
 class FrictionAPI {
     constructor() {

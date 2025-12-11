@@ -6,11 +6,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Add connection arguments for Supabase/PostgreSQL
+# Add connection arguments for PostgreSQL
 connect_args = {}
-if settings.DATABASE_URL.startswith("postgresql"):
-    # Add SSL mode for cloud databases
-    connect_args = {"connect_args": {"sslmode": "require"}}
 
 try:
     logger.info(f"Connecting to database: {settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else 'database'}")

@@ -4,10 +4,8 @@
  */
 
 const CONFIG = {
-    // Backend API URL
-    // Development: Use http://localhost:8000 when running backend locally
-    // Production: Replace with your deployed backend URL
-    API_BASE_URL: 'https://project-spark.onrender.com/api/v1',
+    // Backend API URL - uses relative path for same-origin requests
+    API_BASE_URL: '/api/v1',
     
     // Application Settings
     APP_NAME: 'Friction',
