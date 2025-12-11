@@ -102,4 +102,5 @@ outputType = "webview"
 [userenv]
 
 [userenv.shared]
-POSTGRES_URL = "postgresql://neondb_owner:npg_HvDA2gaT1hdR@ep-winter-field-ahxiv4cw.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
+# POSTGRES_URL removed - using Replit's native PostgreSQL via DATABASE_URL
+# If you need to override, set POSTGRES_URL in Secrets (not here)

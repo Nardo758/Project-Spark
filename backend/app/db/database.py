@@ -54,7 +54,7 @@ def _prepare_postgres_url(raw_url: str) -> str:
     return urlunparse(parsed._replace(query=new_query))
 
 def get_database_url():
-    """Get PostgreSQL connection URL
+    """Get PostgreSQL connection URL dynamically at runtime
     
     Priority:
     1. POSTGRES_URL secret (to bypass .replit override)
@@ -67,12 +67,16 @@ def get_database_url():
         logger.info("Using POSTGRES_URL for PostgreSQL connection")
         return url
     
+    Note: Reads environment variables at runtime, not import time
+    """
+    # First try DATABASE_URL (Replit's standard)
     db_url = os.getenv("DATABASE_URL", "")
     if db_url.startswith(("postgresql://", "postgres://")):
         url = _prepare_postgres_url(db_url)
         logger.info("Using DATABASE_URL for PostgreSQL connection")
         return url
     
+    # Try PG* variables (Replit native PostgreSQL)
     pg_host = os.getenv("PGHOST")
     pg_db = os.getenv("PGDATABASE")
     pg_user = os.getenv("PGUSER")
@@ -85,31 +89,53 @@ def get_database_url():
         logger.info(f"Using PG* variables for PostgreSQL connection ({pg_host}:{pg_port}/{pg_db})")
         return url
     
-    logger.error("No valid PostgreSQL URL found. Set POSTGRES_URL secret.")
-    raise ValueError("Database not configured. Please set POSTGRES_URL secret with your PostgreSQL connection string.")
+    # Fallback to POSTGRES_URL only if explicitly set
+    postgres_url = os.getenv("POSTGRES_URL", "")
+    if postgres_url.startswith(("postgresql://", "postgres://")):
+        url = postgres_url.replace("postgres://", "postgresql://")
+        logger.warning("Using POSTGRES_URL - consider using DATABASE_URL instead")
+        return url
+    
+    logger.error("No valid PostgreSQL URL found. Set DATABASE_URL in Replit Secrets.")
+    raise ValueError("Database not configured. Please set DATABASE_URL in Replit Secrets.")
 
-connect_args = {}
-
-try:
-    database_url = get_database_url()
-    logger.info(f"Connecting to database: {database_url.split('@')[-1] if '@' in database_url else 'database'}")
-
-    engine = create_engine(
-        database_url,
-        pool_pre_ping=True,
-        pool_recycle=300,
-        pool_size=5,
-        max_overflow=10,
-        **connect_args,
-    )
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    logger.info("Database engine created successfully")
-except Exception as e:
-    logger.error(f"Failed to create database engine: {e}")
-    engine = None
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False)
-
+# Lazy initialization - don't create engine at import time
+engine = None
+SessionLocal = None
 Base = declarative_base()
+
+def initialize_database():
+    """Initialize database connection - call this at runtime, not import time"""
+    global engine, SessionLocal
+    
+    if engine is not None:
+        return engine
+    
+    try:
+        database_url = get_database_url()
+        logger.info(f"Connecting to database: {database_url.split('@')[-1] if '@' in database_url else 'database'}")
+
+        engine = create_engine(
+            database_url,
+            pool_pre_ping=True,
+            pool_recycle=300,
+            pool_size=5,
+            max_overflow=10,
+        )
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        logger.info("Database engine created successfully")
+        return engine
+    except Exception as e:
+        logger.error(f"Failed to create database engine: {e}")
+        raise
+
+# Initialize on first import (but read env vars at runtime)
+try:
+    initialize_database()
+except Exception as e:
+    logger.warning(f"Database initialization deferred: {e}")
+    # Create dummy sessionmaker for now
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
 
 def get_db():

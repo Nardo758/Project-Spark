@@ -52,13 +52,15 @@ def root():
 async def startup_event():
     """Initialize database tables on startup"""
     try:
-        from app.db.database import engine, Base
+        from app.db.database import initialize_database, Base
+        logger.info("Initializing database connection...")
+        engine = initialize_database()
         logger.info("Creating database tables...")
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
     except Exception as e:
-        logger.error(f"Failed to create database tables: {e}")
-        logger.warning("Application starting without database connection. Tables will be created on first request.")
+        logger.error(f"Failed to initialize database: {e}")
+        logger.warning("Application starting without database connection. Check DATABASE_URL in Secrets.")
 
 
 @app.get("/health")
