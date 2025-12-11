@@ -9,8 +9,19 @@ from urllib.error import URLError, HTTPError
 import threading
 import json
 
-BACKEND_PORT = 8000
-FRONTEND_PORT = 5000
+def get_frontend_port(default_port: int = 5000) -> int:
+    """Return public HTTP port (deployment uses PORT env)."""
+    if os.getenv("REPLIT_DEPLOYMENT") == "1":
+        port = os.getenv("PORT")
+        if port:
+            try:
+                return int(port)
+            except ValueError:
+                print(f"[Frontend] Invalid PORT value '{port}', falling back to {default_port}")
+    return int(os.getenv("FRONTEND_PORT", default_port))
+
+BACKEND_PORT = int(os.getenv("BACKEND_PORT", "8000"))
+FRONTEND_PORT = get_frontend_port()
 
 class ProxyHandler(SimpleHTTPRequestHandler):
     def end_headers(self):

@@ -1,84 +1,44 @@
-# Quick Start Guide - Frontend + Backend + Database Connection
+# Quick Start – Replit Only
 
-## ⚡ Fastest Way to Get Started
+This project is designed to run end-to-end on Replit: static frontend, FastAPI backend, and the managed PostgreSQL database. Follow these steps to get a working environment in a couple of minutes.
 
-### Step 1: Configure Database (Choose One)
+## 1. Import and open the Repl
+1. Go to [replit.com](https://replit.com)
+2. Click **Create Repl → Import from GitHub**
+3. Paste your repository URL and wait for Replit to finish cloning
 
-#### Option A: Supabase (Recommended)
-1. Go to https://app.supabase.com and create a project
-2. Copy your connection string from Settings > Database
-3. Edit `backend/.env` and update:
-   ```
-   DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres
-   ```
+## 2. Enable the managed PostgreSQL database
+1. In the Replit sidebar choose **Tools → Database → PostgreSQL**
+2. Click **Enable**
+3. Replit will provision a database and expose the connection string via `REPLIT_DB_URL` (no manual edits required)
 
-#### Option B: Local Docker Database
-```powershell
-docker compose --profile local up -d
-```
-Then edit `backend/.env`:
-```
-DATABASE_URL=postgresql://friction_user:friction_password@localhost:5432/friction_db
-```
+## 3. Check the required secrets
+| Key | Purpose | Default |
+| --- | --- | --- |
+| `SECRET_KEY` | JWT signing | Pre-filled in `.replit`; replace for production |
+| `RESEND_API_KEY` | Email (optional) | Only set if you need email notifications |
+| `STRIPE_SECRET_KEY` | Billing (optional) | Leave unset unless billing is enabled |
 
-### Step 2: Generate Secret Key
-```powershell
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-Copy the output and update `SECRET_KEY` in `backend/.env`
+Use **Tools → Secrets** to add or update the variables above. Everything else is preconfigured through `.replit`.
 
-### Step 3: Start Everything
-```powershell
-.\start-app.ps1
-```
+## 4. Run the project
+Click the green **Run** button. The workflow does the following:
+1. Installs backend requirements
+2. Initializes the PostgreSQL schema
+3. Starts the FastAPI backend on port 8000
+4. Proxies traffic through `server.py`, exposing the frontend on Replit’s public URL
 
-This opens two windows:
-- Backend API: http://localhost:8000
-- Frontend: http://localhost:5500
+When the logs show `Serving on http://0.0.0.0:5000`, open the preview window. Replit automatically maps that to `https://<repl-slug>.<username>.repl.co`.
 
-### Step 4: Test the Connection
-1. Open http://localhost:5500
-2. Open browser console (F12)
-3. Run: `fetch('http://localhost:8000/health').then(r => r.json()).then(console.log)`
-4. Should see: `{status: "healthy"}`
+## 5. Verify everything is healthy
+1. Visit `https://<repl-url>/docs` to confirm the API is live
+2. Visit `https://<repl-url>/api/v1/health` (proxied) to make sure the DB connection succeeded
+3. Use the UI to log in with the demo credentials created by `init_db.py`
 
-## 🔧 Manual Startup
+## 6. Deploy
+When you are ready for an always-on deployment:
+1. Click **Deploy** in the Replit sidebar
+2. Choose **Autoscale** (recommended) or **Reserved VM**
+3. Replit automatically sets the `PORT` variable; `server.py` already picks it up
 
-### Start Backend Only:
-```powershell
-.\start-backend.ps1
-```
-
-### Start Frontend Only:
-```powershell
-.\start-frontend.ps1
-```
-
-## 📚 More Details
-
-See `CONNECTION_GUIDE.md` for complete documentation including:
-- API endpoints
-- Authentication flow
-- Troubleshooting
-- Production deployment
-
-## 🎯 What's Been Configured
-
-✅ Backend API with FastAPI  
-✅ PostgreSQL database (Supabase or local)  
-✅ CORS configured for frontend  
-✅ JWT authentication  
-✅ Frontend API client (`js/api.js`)  
-✅ Startup scripts  
-
-## 🔑 Default Credentials (Local DB)
-
-Database User: `friction_user`  
-Database Password: `friction_password`  
-Database Name: `friction_db`
-
-## ⚠️ Important
-
-- MUST update `SECRET_KEY` in `backend/.env` before production use
-- MUST configure `DATABASE_URL` in `backend/.env`
-- Frontend must be served via HTTP server (not file://)
+That’s it—you now have a single-Replit stack with no external hosting dependencies.

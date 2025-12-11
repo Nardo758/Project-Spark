@@ -1,240 +1,64 @@
-# CORS Configuration Guide for Production
+# CORS Configuration Guide (Replit)
 
-## Problem
-Your frontend (hosted on basekite.com, Netlify, or other hosting services) cannot communicate with your Render backend due to CORS (Cross-Origin Resource Sharing) restrictions. The browser blocks requests from your frontend domain because the backend doesn't list it as an allowed origin.
+The application now runs entirely inside Replit, so the default configuration allows all origins for development. You only need to change anything if you attach a **custom domain** or expose the API publicly outside the default Replit URL.
 
-## Quick Fix - Update Render Environment Variables
+---
 
-### Step 1: Identify Your Frontend URL
+## 1. Default behavior
 
-Your frontend URL could be:
-- **basekite.com**: `https://basekite.com` and `https://www.basekite.com`
-- **Netlify**: `https://your-app-name.netlify.app`
-- **Custom domain**: `https://your-custom-domain.com`
+- `server.py` serves both the frontend and a proxy to the backend, so requests originate from the same host (e.g., `https://my-app.username.repl.co`).
+- `backend/app/main.py` loads `BACKEND_CORS_ORIGINS` from your environment. `.replit` sets it to `"*"`, which is acceptable for internal preview URLs.
 
-Make sure to include both the www and non-www versions if applicable.
+No additional configuration is required while you stay inside the standard Replit domain.
 
-### Step 2: Update CORS in Render
+---
 
-1. **Go to Render Dashboard:**
-   - Navigate to https://dashboard.render.com
-   - Select your `friction-api` service
+## 2. When to restrict origins
 
-2. **Update Environment Variables:**
-   - Click "Environment" tab
-   - Find or add `BACKEND_CORS_ORIGINS`
-   - Set the value to (replace with your actual domains):
+Switch to an explicit list if:
 
-   **For basekite.com:**
-   ```json
-   ["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com","http://localhost:3000"]
-   ```
+- You connected a custom domain (e.g., `https://app.yourdomain.com`)
+- You expose the API to another site or native client
+- You want to enforce strict production rules
 
-   **For Netlify:**
-   ```json
-   ["https://your-app.netlify.app","https://project-spark.onrender.com","http://localhost:3000"]
-   ```
-
-   **Important:**
-   - Use the exact format with square brackets and quotes
-   - Include both www and non-www versions if your site uses both
-   - Include your frontend URL (starts with https://)
-   - Include your Render backend URL
-   - Include localhost for local development (optional)
-   - No spaces after commas
-
-3. **Example Values:**
-
-   ```json
-   ["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com","http://localhost:3000"]
-   ```
-
-   Or for Netlify:
-   ```json
-   ["https://friction-app.netlify.app","https://project-spark.onrender.com","http://localhost:3000"]
-   ```
-
-4. **Save Changes:**
-   - Click "Save Changes"
-   - Render will automatically redeploy your service
-
-### Step 3: Wait for Deployment
-
-- Watch the deployment logs in Render
-- Wait for "Your service is live 🎉"
-- Usually takes 2-3 minutes
-
-### Step 4: Test Your Application
-
-1. Clear your browser cache (or use incognito mode)
-2. Go to your frontend application (e.g., https://basekite.com)
-3. Try accessing the API endpoints (opportunities, authentication, etc.)
-4. Check browser console (F12) - CORS errors should be gone!
-
-## Verification Steps
-
-### 1. Check Backend Health
-
-Visit these URLs to verify backend is running:
+Update the `BACKEND_CORS_ORIGINS` secret in Replit. Example:
 
 ```
-https://project-spark.onrender.com/
-https://project-spark.onrender.com/health
-https://project-spark.onrender.com/docs
+BACKEND_CORS_ORIGINS=["https://app.yourdomain.com","https://api.yourdomain.com"]
 ```
 
-### 2. Test CORS Headers
+Guidelines:
+- Always include the full scheme (`https://`)
+- Include every origin that will call the API
+- Separate entries with commas and wrap the list in square brackets
 
-Open browser console on your frontend application and run:
+---
 
-```javascript
-// Test opportunities endpoint
-fetch('https://project-spark.onrender.com/api/v1/opportunities/?limit=20&sort_by=recent')
-.then(res => res.json())
-.then(data => console.log('Success:', data))
-.catch(err => console.error('Error:', err));
+## 3. How to update the value
 
-// Or test authentication endpoint
-fetch('https://project-spark.onrender.com/api/v1/auth/login', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/x-www-form-urlencoded',
-  },
-  body: 'username=demo@example.com&password=demo123'
-})
-.then(res => res.json())
-.then(data => console.log('Success:', data))
-.catch(err => console.error('Error:', err));
-```
+1. In your Repl, open **Tools → Secrets**
+2. Add or edit `BACKEND_CORS_ORIGINS`
+3. Click **Run** (or redeploy) so FastAPI picks up the new setting
+4. Reload your frontend and retest the API calls
 
-If CORS is configured correctly, you should see a response without CORS errors.
+---
 
-### 3. Check Browser Network Tab
+## 4. Testing the configuration
 
-1. Open Developer Tools (F12)
-2. Go to Network tab
-3. Try to log in
-4. Look for the API request
-5. Check Response Headers - should include:
-   ```
-   Access-Control-Allow-Origin: https://basekite.com
-   Access-Control-Allow-Credentials: true
-   ```
-   (Replace basekite.com with your actual frontend domain)
+- Open your site and perform the action that previously failed
+- Watch the browser console for CORS messages
+- Use `curl -H "Origin: https://app.yourdomain.com" https://<repl-url>/api/v1/health -v` to confirm allowed origins are echoed back in the `access-control-allow-origin` header
 
-## Common Issues & Solutions
+If the header does not match your Origin, verify the JSON array is valid and that the string matches exactly.
 
-### Issue 1: Still Getting CORS Errors
+---
 
-**Symptoms:**
-```
-Access to XMLHttpRequest has been blocked by CORS policy
-```
+## 5. Troubleshooting
 
-**Solutions:**
-1. Double-check the BACKEND_CORS_ORIGINS format (must be valid JSON)
-2. Ensure your frontend URL is exactly correct (https, no trailing slash)
-3. Include both www and non-www versions if your site uses both
-4. Clear browser cache and try incognito mode
-5. Check Render logs for any errors during startup
-6. Verify the environment variable saved correctly in Render
+| Symptom | Fix |
+| --- | --- |
+| `No Access-Control-Allow-Origin header` | Ensure `BACKEND_CORS_ORIGINS` contains the requesting domain |
+| `CORS origin denied` | JSON list may be malformed—make sure you use double quotes and brackets |
+| Works locally but not on custom domain | Add the custom domain to the list and redeploy |
 
-### Issue 2: Wildcard Origin Not Working
-
-**Problem:** Using `"*"` for BACKEND_CORS_ORIGINS doesn't work with credentials.
-
-**Solution:** List specific domains explicitly:
-```json
-["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com"]
-```
-
-### Issue 3: Multiple Domains Not Working
-
-**Problem:** Need to allow multiple frontend domains.
-
-**Solution:** Add all domains to the array:
-```json
-["https://basekite.com","https://www.basekite.com","https://app.netlify.app","https://custom-domain.com"]
-```
-
-### Issue 4: Environment Variable Not Updating
-
-**Problem:** Changes to environment variables don't seem to apply.
-
-**Solution:**
-1. Make sure you clicked "Save Changes" in Render
-2. Wait for the automatic redeploy to complete
-3. Check the deployment logs to confirm new settings loaded
-4. Look for log message: "Database engine created successfully"
-
-## Testing with cURL
-
-Test CORS preflight from command line:
-
-```bash
-# Test OPTIONS request (CORS preflight) - replace with your frontend domain
-curl -X OPTIONS \
-  -H "Origin: https://basekite.com" \
-  -H "Access-Control-Request-Method: GET" \
-  -H "Access-Control-Request-Headers: Content-Type" \
-  -i https://project-spark.onrender.com/api/v1/opportunities/
-
-# Test actual GET request for opportunities
-curl -X GET \
-  -H "Origin: https://basekite.com" \
-  https://project-spark.onrender.com/api/v1/opportunities/?limit=20&sort_by=recent
-
-# Test actual login request
-curl -X POST \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=demo@example.com&password=demo123" \
-  https://project-spark.onrender.com/api/v1/auth/login
-```
-
-## Environment Variables Summary
-
-Here are all the critical environment variables you need in Render:
-
-| Variable | Example Value | Required |
-|----------|---------------|----------|
-| `DATABASE_URL` | `postgres://postgres:password@db.xxx.supabase.co:6543/postgres?pgbouncer=true&sslmode=require` | ✅ Yes |
-| `SECRET_KEY` | `your-super-secret-key-min-32-characters-long` | ✅ Yes |
-| `BACKEND_CORS_ORIGINS` | `["https://basekite.com","https://www.basekite.com","https://project-spark.onrender.com"]` | ✅ Yes |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | ❌ No (defaults to 30) |
-| `ALGORITHM` | `HS256` | ❌ No (defaults to HS256) |
-| `PROJECT_NAME` | `Friction API` | ❌ No (defaults to "Friction API") |
-
-## Security Best Practices
-
-1. **Never use `"*"` for CORS origins in production** - Always list specific domains
-2. **Always use HTTPS** in production - Never allow HTTP origins for production
-3. **Keep SECRET_KEY secure** - Generate a strong random key:
-   ```bash
-   openssl rand -hex 32
-   ```
-4. **Limit token expiry** - Set ACCESS_TOKEN_EXPIRE_MINUTES to 30-60 minutes
-5. **Monitor CORS errors** - Set up logging to catch unauthorized access attempts
-
-## Local Development
-
-For local development, your CORS origins should include localhost:
-
-```json
-["http://localhost:3000","http://localhost:8000","http://127.0.0.1:3000"]
-```
-
-## Need Help?
-
-If you're still experiencing issues:
-
-1. Check Render deployment logs for errors
-2. Check browser console for specific error messages
-3. Verify all environment variables are set correctly
-4. Try the verification steps above
-5. Clear browser cache completely
-
-## Additional Resources
-
-- [MDN: CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
-- [Render Environment Variables](https://render.com/docs/environment-variables)
-- [FastAPI CORS Middleware](https://fastapi.tiangolo.com/tutorial/cors/)
+By keeping everything hosted on Replit and controlling CORS through a single environment variable, you can tighten or loosen access without touching the codebase.
