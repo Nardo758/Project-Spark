@@ -48,4 +48,4 @@ exposeLocalhost = true
 [deployment]
 deploymentTarget = "autoscale"
 run = ["python", "server.py"]
-build = ["bash", "-c", "pip install fastapi uvicorn sqlalchemy psycopg2-binary pydantic pydantic-settings python-jose passlib python-multipart alembic python-dotenv email-validator bcrypt && cd backend && python init_db.py"]
+build = ["pip", "install", "-r", "requirements.txt"]

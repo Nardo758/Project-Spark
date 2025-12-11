@@ -126,7 +126,28 @@ def run_frontend():
     print(f"[Frontend] Serving on http://0.0.0.0:{FRONTEND_PORT}")
     server.serve_forever()
 
+def init_database():
+    """Initialize database tables on startup"""
+    try:
+        print("Initializing database...")
+        result = subprocess.run(
+            [sys.executable, 'backend/init_db.py'],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        if result.returncode == 0:
+            print("Database initialized successfully")
+        else:
+            print(f"Database init output: {result.stdout}")
+            if result.stderr:
+                print(f"Database init errors: {result.stderr}")
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+
 if __name__ == '__main__':
+    init_database()
+    
     backend_thread = threading.Thread(target=run_backend, daemon=True)
     backend_thread.start()
     
