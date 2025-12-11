@@ -54,3 +54,5 @@ class User(Base):
     comments = relationship("Comment", back_populates="user")
     watchlist_items = relationship("WatchlistItem", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", foreign_keys="Notification.user_id", back_populates="user", cascade="all, delete-orphan")
+    subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    usage_records = relationship("UsageRecord", back_populates="user", cascade="all, delete-orphan")
