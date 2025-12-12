@@ -60,16 +60,17 @@ def get_database_url():
     1. POSTGRES_URL secret (to bypass .replit override)
     2. DATABASE_URL if it's a valid PostgreSQL URL
     3. Construct from PG* environment variables (Replit native PostgreSQL)
+    
+    Note: Reads environment variables at runtime, not import time
     """
+    # First try POSTGRES_URL from Secrets (highest priority override)
     postgres_url = os.getenv("POSTGRES_URL", "")
     if postgres_url.startswith(("postgresql://", "postgres://")):
         url = _prepare_postgres_url(postgres_url)
         logger.info("Using POSTGRES_URL for PostgreSQL connection")
         return url
     
-    Note: Reads environment variables at runtime, not import time
-    """
-    # First try DATABASE_URL (Replit's standard)
+    # Try DATABASE_URL (Replit's standard)
     db_url = os.getenv("DATABASE_URL", "")
     if db_url.startswith(("postgresql://", "postgres://")):
         url = _prepare_postgres_url(db_url)
@@ -83,21 +84,20 @@ def get_database_url():
     pg_password = os.getenv("PGPASSWORD")
     pg_port = os.getenv("PGPORT", "5432")
     
+    logger.info(f"PG* variables: PGHOST={pg_host}, PGDATABASE={pg_db}, PGUSER={pg_user}, PGPORT={pg_port}")
+    
     if pg_host and pg_db and pg_user and pg_password:
         raw_url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
         url = _prepare_postgres_url(raw_url)
         logger.info(f"Using PG* variables for PostgreSQL connection ({pg_host}:{pg_port}/{pg_db})")
         return url
     
-    # Fallback to POSTGRES_URL only if explicitly set
-    postgres_url = os.getenv("POSTGRES_URL", "")
-    if postgres_url.startswith(("postgresql://", "postgres://")):
-        url = postgres_url.replace("postgres://", "postgresql://")
-        logger.warning("Using POSTGRES_URL - consider using DATABASE_URL instead")
-        return url
-    
-    logger.error("No valid PostgreSQL URL found. Set DATABASE_URL in Replit Secrets.")
-    raise ValueError("Database not configured. Please set DATABASE_URL in Replit Secrets.")
+    logger.error("No valid PostgreSQL URL found. Missing: PGHOST, PGDATABASE, PGUSER, or PGPASSWORD")
+    logger.error("DATABASE_URL value: %s", db_url[:50] if db_url else "not set")
+    raise ValueError(
+        "Database not configured. Please enable PostgreSQL in Replit Tools → Database. "
+        "Ensure PGHOST, PGDATABASE, PGUSER, and PGPASSWORD are set."
+    )
 
 # Lazy initialization - don't create engine at import time
 engine = None

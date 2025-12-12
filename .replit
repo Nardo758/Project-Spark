@@ -16,7 +16,8 @@ PYTHON_LD_LIBRARY_PATH = "/nix/store/*-python3-*/lib"
 PYTHONPATH = "${REPL_HOME}/backend:${PYTHONPATH}"
 
 # Database Configuration (Replit PostgreSQL)
-DATABASE_URL = "${REPLIT_DB_URL}"
+# Using PG* environment variables (PGHOST, PGDATABASE, PGUSER, PGPASSWORD)
+# These are automatically set by Replit when PostgreSQL module is enabled
 
 # Security
 SECRET_KEY = "73bd4698e414f4367c261655e963bb0414e0fa8076b1222b47a4e4d6d75e7dcd"
