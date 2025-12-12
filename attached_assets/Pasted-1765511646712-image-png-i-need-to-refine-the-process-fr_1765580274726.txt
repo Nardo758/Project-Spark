@@ -1,0 +1,4481 @@
+1765511646712_image.png
+i need to refine the process from idea discover to Deep dive so this can be structed in a way that makes sense.  the process should be more in-depth the father a user decides to dig in
+
+Dec 11
+I'll help you refine the process flow from idea discovery through to deep dive. Let me analyze the current navigation and propose a more structured, progressive depth model.
+
+Current State Analysis
+Your navigation shows three stages:
+
+Problem Detail - Initial discovery
+Research Dashboard - Mid-level exploration
+Deep Dive - Comprehensive analysis
+Proposed Refined Process Structure
+Tier 1: Discovery (Problem Detail)
+Quick validation - Free tier access
+
+Purpose: Help users quickly assess if an idea is worth pursuing
+
+Content:
+
+Problem statement & context
+Basic metrics (submission count, validation score)
+Top 3 consumer pain points (quotes)
+Quick market size indicator
+Related problems/clusters
+CTA: "See Full Research" → Research Dashboard
+Tier 2: Research Dashboard (Validation)
+Structured analysis - Pro tier
+
+Purpose: Provide comprehensive validation data for decision-making
+
+Organized into 4 key sections:
+
+A. Market Validation
+
+Demand signals (volume, trend data)
+User demographics breakdown
+Geographic distribution
+Competitive landscape overview
+B. Problem Analysis
+
+Categorized pain points
+Frequency & severity scoring
+User journey mapping
+Edge cases & constraints
+C. Opportunity Sizing
+
+TAM/SAM/SOM estimates
+Willingness to pay indicators
+Market timing signals
+Adjacent opportunities
+D. Solution Pathways
+
+Common solution approaches mentioned
+Feature prioritization from user feedback
+Technical feasibility indicators
+CTA: "Deep Dive Analysis" → Full report
+Tier 3: Deep Dive (Execution)
+Actionable intelligence - Business/Enterprise tier
+
+Purpose: Provide everything needed to move from insight to action
+
+Comprehensive sections:
+
+A. Executive Summary
+
+Investment thesis
+Key risks & mitigations
+Go-to-market recommendation
+B. Detailed Market Intelligence
+
+Full competitive analysis with SWOT
+Customer segmentation models
+Pricing strategy recommendations
+Distribution channel analysis
+C. Product Strategy
+
+Detailed feature roadmap
+MVP scope definition
+User stories & acceptance criteria
+Technical architecture considerations
+D. Financial Modeling
+
+Revenue projections
+Unit economics
+Customer acquisition cost estimates
+Funding requirements
+E. Execution Playbook
+
+90-day launch plan
+Success metrics & KPIs
+Team composition needs
+Risk mitigation strategies
+F. Raw Data & Appendix
+
+Full consumer verbatims
+Statistical analysis
+Methodology notes
+Export options (PDF, CSV, API access)
+Progressive Disclosure Pattern
+Each tier should have clear upgrade prompts showing what additional insights await:
+
+Problem Detail → Research Dashboard: "Unlock detailed market analysis, user demographics, and opportunity sizing"
+
+Research Dashboard → Deep Dive:
+"Get actionable execution playbook, financial models, and full competitive intelligence"
+
+Information Architecture Flow
+Problem Detail (1 page)
+    ↓
+Research Dashboard (4 sections, tabbed interface)
+    ↓  
+Deep Dive (6 comprehensive sections, full report format)
+Would you like me to create detailed wireframes showing how this progressive depth structure would work visually? Or would you prefer to focus on refining the specific content within any particular tier?
+
+yes
+
+Dec 11
+I'll create detailed wireframes showing the progressive depth structure. Let me start by reading the relevant design skill to ensure production-quality output.
+
+Reading the frontend design skill to create high-quality wireframes for the progressive depth structure
+Now I'll create an interactive wireframe showing all three tiers with progressive disclosure. I'll use a clean, editorial aesthetic that matches your Perplexity Finance reference with Spectral serif headlines.
+
+
+Creating an interactive React wireframe showing the progressive depth structure from Problem Detail → Research Dashboard → Deep Dive with clean editorial aesthetic
+katalyst-progressive-depth.jsx
+
+Presented file
+Perfect! I've created an interactive wireframe that demonstrates the complete progressive depth structure. Here's what I've built:
+
+Key Features:
+Visual Hierarchy
+Clean editorial aesthetic with Spectral serif headlines (matching your Perplexity Finance reference)
+Progress indicator bar at the top showing how deep you are in the journey
+Smooth animations that guide the eye through each tier
+Tier 1: Problem Detail (Free)
+Quick validation metrics at a glance
+Concise problem statement
+Top 3 consumer pain points with severity ratings
+Related opportunities
+Clear upgrade CTA to Research Dashboard
+Tier 2: Research Dashboard (Pro)
+4 tabbed sections for organized exploration:
+Market Validation (demand signals, demographics, competitive landscape)
+Problem Analysis (categorized pain points with severity scores)
+Opportunity Sizing (TAM/SAM/SOM, willingness to pay)
+Solution Pathways (prioritized feature requests)
+Each tab reveals substantial data without overwhelming
+Upgrade CTA to Deep Dive
+Tier 3: Deep Dive (Business/Enterprise)
+Executive Summary with investment thesis
+6 comprehensive sections presented as scannable cards:
+Detailed Market Intelligence
+Product Strategy
+Financial Modeling (with key metrics)
+Execution Playbook (90-day phases)
+Raw Data & Exports
+Export options (PDF, CSV, API)
+Try clicking through the tier navigation to see how information progressively reveals itself. The structure ensures users only see complexity when they're ready for it, with clear value propositions at each upgrade point.
+
+Katalyst progressive depth
+Code · JSX 
+deep dive should have an AI feature to help dive into the opportunity more
+
+Dec 11
+
+4 steps
+
+Adding AI feature highlight card to Deep Dive section to introduce the capability
++33
+-11
+katalyst-progressive-depth.jsx
+
+Presented file
+Perfect! I've added a sophisticated AI Assistant feature to the Deep Dive tier. Here's what I've implemented:
+
+AI Assistant Features:
+1. Floating Action Button
+Appears in bottom-right corner when viewing Deep Dive
+Eye-catching gradient design with sparkle icon
+Hover effects and smooth animations
+2. Interactive Chat Panel
+Clean, modern interface with gradient header
+480px width, 600px height - optimal for detailed responses
+Smart conversation starter with suggested questions to get users started
+3. Intelligent Responses
+The AI can answer questions about:
+
+Business Model Risks - Identifies top 3 risks with mitigation strategies
+Pricing Strategy - Recommends tier structure based on data
+MVP Feature Set - Prioritizes features based on user research
+Competitive Analysis - Compares against top competitors
+4. Contextual Intelligence
+AI references actual data points from the research (e.g., "1,247 mentions")
+Provides specific recommendations tied to the opportunity
+Uses the validated research to back up all suggestions
+5. User Experience
+Suggested questions to kickstart the conversation
+Real-time typing experience
+Message history maintained throughout session
+Quick prompts users can click to ask common questions
+Try It:
+Navigate to the Deep Dive tier
+Click the floating "Ask AI Assistant" button (bottom-right)
+Try the suggested questions or ask your own
+Watch as the AI provides detailed, data-backed analysis
+The AI assistant transforms the Deep Dive from static report into an interactive exploration tool, letting users dig deeper into specific aspects of the opportunity that matter most to them.
+
+Katalyst progressive depth
+Code · JSX 
+This works, but what is the user flow that leads to this ?
+
+Dec 11
+Great question! Let me map out the complete user flow from initial discovery to Deep Dive. This will help us understand how users actually arrive at these different tiers.
+
+
+Creating a comprehensive user flow diagram showing the complete journey from discovery to deep dive, including entry points, decision moments, and conversion paths
+katalyst-user-flow.jsx
+
+Presented file
+Perfect! I've created a comprehensive user flow visualization showing three distinct paths that lead users to the Deep Dive tier:
+
+Three User Journeys:
+1. Browse Flow (Organic Discovery)
+Entry: Landing page → Value props → "Browse Opportunities"
+Discovery Feed: Curated cards with validation scores
+Click card → Problem Detail (Free)
+Upgrade CTA → Research Dashboard (Pro)
+Second upgrade → Deep Dive (Business) + AI Assistant
+Volume: Highest | Intent: Lowest | Conversion: Gradual
+2. Search Flow (Intent-Driven)
+Entry: Search bar with specific query ("home maintenance")
+Results: Filtered opportunities sorted by relevance
+Click result → Problem Detail (Free)
+Then follows same path as browse flow
+Volume: Medium | Intent: High | Conversion: Faster (skip discovery)
+3. Submission Flow (Problem Submitter)
+Entry: User submitted problem months ago
+Re-engagement: Email notification when problem validates
+Returns with emotional investment ("This was MY problem!")
+Views "their" opportunity → Higher engagement
+Strongest conversion → Wants to see all submissions
+Volume: Smallest | Intent: Highest | Conversion: Best (personal stake)
+Key Conversion Moments:
+Problem Detail → Research Dashboard: "Is this worth exploring deeper?"
+Research Dashboard → Deep Dive: "Ready to move from research to execution?"
+What Makes This Work:
+Progressive disclosure - Each tier reveals more, never overwhelming
+Clear value props at each upgrade point
+Emotional hooks especially for submitters
+AI Assistant as the premium differentiator in Deep Dive
+Multiple entry points capture different user types
+Click through the tabs to see how each flow differs in user psychology and conversion strategy!
+
+Katalyst user flow
+Code · JSX 
+there should be a feature that recognises the geographical area the idea can be applied to
+
+Dec 11
+
+8 steps
+
+Adding geographic question to AI Assistant initial suggestions
++9
+-9
+katalyst-progressive-depth.jsx
+
+Presented file
+Perfect! I've added comprehensive geographic intelligence throughout all three tiers. Here's what's now included:
+
+Geographic Features Added:
+Tier 1: Problem Detail (Free)
+Geographic Market Selector - Toggle between 6 markets:
+US National
+Southwest Region (recommended)
+Canada
+UK
+Australia
+Global
+Quick metrics per region: Market size, submissions, growth rate, competition
+Applicability score: Very High / High / Medium based on market fit
+Opportunity assessment: One-line recommendation for each market
+Tier 2: Research Dashboard (Pro)
+New "Geographic Distribution" Tab with:
+Full breakdown of all 6 markets side-by-side
+Top cities within each region
+Demographics, regulatory complexity, competitive density
+Recommended 3-Phase Launch Strategy:
+Phase 1: Southwest US (Austin → Phoenix)
+Phase 2: National Expansion (top 20 metros)
+Phase 3: International (Canada/Australia)
+Tier 3: Deep Dive (Business)
+Geographic Market Intelligence Section featuring:
+Priority-ranked market entry sequence
+Detailed playbooks for each phase
+Regulatory compliance guides by region
+Regional pricing analysis
+AI Assistant enhancement: Now answers geographic questions like:
+"Where should I launch this geographically?"
+Provides data-driven recommendations with specific reasoning
+References actual submission counts and growth rates per region
+Key Intelligence Delivered:
+The system now recognizes that this home maintenance opportunity is:
+
+Best suited for: Southwest US (highest growth +52%, favorable regulations)
+Scalable to: US National market ($8.4B)
+International potential: Canada & Australia (lower competition, similar demographics)
+Complex entry: UK (high competition, different certifications)
+Try clicking through the geographic selector in Tier 1, then explore the Geography tab in Tier 2, and finally ask the AI Assistant "Where should I launch?" in Tier 3!
+
+Katalyst progressive depth
+Code · JSX 
+buildout the pages i need to make a website around the current design.  Ensure the user flow from the landing page to  idea discovery to deep dive flow is laid out properly
+
+5:50 PM
+I'll build out all the pages you need for the complete website flow. Let me create a comprehensive set of pages from landing through to deep dive.
+
+
+Creating the landing page/homepage that serves as the entry point for all user flows
+01-landing-page.jsx
+
+Creating the discovery feed page where users browse opportunities in card format with filtering and sorting
+02-discovery-feed.jsx
+Now let me update the progressive depth file to work as a standalone opportunity detail page:
+
+
+Adding navigation header to make the progressive depth page work as a standalone opportunity detail page
++23
+-1
+katalyst-progressive-depth.jsx
+Now let me create a comprehensive site map document and routing guide:
+
+
+Creating a comprehensive site map and routing guide that shows the complete user flow structure
+SITE-MAP.md
+Now let me create one more critical page - the Problem Submission page:
+
+
+Creating the problem submission page where consumers can submit their frustrations and unmet needs
+04-problem-submission.jsx
+Perfect! Now let me rename the progressive depth file to match the numbering system and present everything:
+
+
+2 steps
+
+Presented 4 files
+
+Presented file
+Perfect! I've built out the complete website with all core pages and comprehensive documentation. Here's what you now have:
+
+Complete Website Structure:
+✅ Page 1: Landing Page (01-landing-page.jsx)
+Hero section with value proposition
+"How It Works" 3-tier explanation
+Value propositions (Validated insights, Geographic intelligence)
+Social proof (2,847 ideas, $47B+ market)
+CTA sections
+Full navigation
+Entry points:
+
+"Browse Opportunities" → Discovery Feed
+"Get Started" → Sign up
+"Submit Your Problem" → Submission page
+✅ Page 2: Discovery Feed (02-discovery-feed.jsx)
+Browse 2,847+ opportunities in card grid
+Search bar for keyword filtering
+Category filter (12+ categories)
+Region filter (6 global markets)
+Sort options (trending, validation, market size, growth)
+Sticky filters below navigation
+Each card shows:
+
+Category & trending badge
+Title & validation score
+Description
+4 key metrics (submissions, market size, growth, region)
+Top 2 pain points
+"View full analysis" CTA
+Flows to: Click any card → Opportunity Detail (Tier 1)
+
+✅ Page 3: Opportunity Detail (03-opportunity-detail.jsx)
+The progressive depth system with 3 tiers:
+
+Tier 1: Problem Detail (FREE)
+Geographic market selector (6 regions)
+Quick validation metrics
+Problem statement
+Top 3 pain points
+Related opportunities
+Upgrade CTA → Research Dashboard
+Tier 2: Research Dashboard (PRO - $99/mo)
+5 tabs with comprehensive analysis:
+
+Market Validation
+Geographic Distribution (NEW - your feature)
+Problem Analysis
+Opportunity Sizing
+Solution Pathways
+Upgrade CTA → Deep Dive
+
+Tier 3: Deep Dive (BUSINESS - $499/mo)
+Executive summary with investment thesis
+Geographic Market Intelligence section (NEW)
+6 comprehensive sections (market, product, financial, execution, exports)
+AI Research Assistant (floating chat interface)
+Answers geographic questions, risks, pricing, MVP, competition
+✅ Page 4: Problem Submission (04-problem-submission.jsx)
+Form for submitting problems/frustrations
+Category selection (12 categories)
+Similar problem detection (prevents duplicates)
+Success state with gamification (points, badges)
+"What happens next" explainer
+This closes the loop: Consumer → Submit → Validate → Discover → Execute
+
+✅ Documentation: Complete Site Map (SITE-MAP.md)
+Comprehensive guide covering:
+
+All page routes and purposes
+Detailed user flows (Browse, Search, Submission)
+Tier-by-tier feature breakdowns
+Conversion funnels
+Technical implementation notes
+Navigation hierarchy
+Next steps for development
+Complete User Flows:
+1. Browse Flow (Organic)
+Landing → "Browse Opportunities" → Discovery Feed → 
+Filter/Search → Click Card → Problem Detail (Free) → 
+Upgrade → Research Dashboard (Pro) → 
+Upgrade → Deep Dive + AI (Business)
+2. Search Flow (Intent-Driven)
+Landing → Search → Discovery Feed (Filtered) → 
+Click Result → [Same as Browse]
+3. Submission Flow (Problem Submitter)
+Landing → "Submit Problem" → Form → Success → 
+[Weeks Later] Email → Problem Detail → 
+Higher Conversion → Research → Deep Dive
+Key Features Implemented:
+✅ Geographic Intelligence (Your request)
+
+6-market analysis (US National, Southwest, Canada, UK, Australia, Global)
+Applicability scoring
+Market size, growth, competition per region
+Regulatory complexity assessment
+Top cities identification
+3-phase launch strategy recommendations
+AI Assistant answers geographic questions
+✅ Progressive Disclosure
+
+Free tier reveals just enough to validate
+Pro tier unlocks comprehensive research
+Business tier provides execution playbooks
+✅ AI Assistant (Deep Dive)
+
+Interactive chat interface
+Pre-loaded question suggestions
+Answers about risks, pricing, MVP, geography, competition
+Data-driven recommendations
+✅ Consumer Loop
+
+Problem submission page
+Gamification (points, badges)
+Email notifications
+Similar problem detection
+✅ Conversion Optimization
+
+Clear upgrade CTAs at each tier
+Preview of locked content
+Value-based pricing tiers
+What You Can Do Now:
+View each page - They're fully interactive React components
+Follow the user flows - See how users navigate from landing to deep dive
+Test the geographic feature - Click regions, explore intelligence
+Try the AI Assistant - Ask about geography, risks, pricing, MVP
+Everything flows together properly with consistent navigation, design system (Spectral + Inter fonts), and progressive depth structure!
+
+01 landing page
+Code · JSX 
+02 discovery feed
+Code · JSX 
+03 opportunity detail
+Code · JSX 
+04 problem submission
+Code · JSX 
+Site map
+Document · MD 
+
+
+
+
+
+
+
+
+Project Spark
+
+Claude is AI and can make mistakes. Please double-check responses.
+
+
+01 landing page · JSX
+Copy
+
+import
+ 
+React
+,
+ 
+{
+ useState 
+}
+ 
+from
+ 
+'react'
+;
+
+import
+ 
+{
+ 
+Search
+,
+ 
+TrendingUp
+,
+ 
+Users
+,
+ 
+Sparkles
+,
+ 
+ArrowRight
+,
+ 
+CheckCircle
+,
+ 
+BarChart3
+,
+ 
+Globe
+,
+ 
+Zap
+,
+ 
+Target
+,
+ 
+Shield
+ 
+}
+ 
+from
+ 
+'lucide-react'
+;
+
+export
+ 
+default
+ 
+function
+ 
+LandingPage
+(
+)
+ 
+{
+
+  
+const
+ 
+[
+email
+,
+ setEmail
+]
+ 
+=
+ 
+useState
+(
+''
+)
+;
+
+  
+return
+ 
+(
+
+    
+<
+div
+ 
+className
+=
+"
+min-h-screen bg-stone-50
+"
+>
+
+      
+<
+style
+>
+{`
+        @import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+        .spektral { font-family: 'Spectral', serif; }
+        .inter { font-family: 'Inter', sans-serif; }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
+        }
+        .fade-in-up {
+          animation: fadeInUp 0.8s ease-out forwards;
+        }
+        .float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+        .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+        .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+        .stagger-4 { animation-delay: 0.4s; opacity: 0; }
+        .stagger-5 { animation-delay: 0.5s; opacity: 0; }
+      `}
+</
+style
+>
+
+      
+{
+/* Navigation */
+}
+
+      
+<
+nav
+ 
+className
+=
+"
+bg-white border-b border-stone-200
+"
+>
+
+        
+<
+div
+ 
+className
+=
+"
+max-w-7xl mx-auto px-8 py-4
+"
+>
+
+          
+<
+div
+ 
+className
+=
+"
+flex items-center justify-between
+"
+>
+
+            
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+              
+<
+div
+ 
+className
+=
+"
+w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center
+"
+>
+
+                
+<
+Sparkles
+ 
+className
+=
+"
+w-5 h-5 text-white
+"
+ 
+/>
+
+              
+</
+div
+>
+
+              
+<
+span
+ 
+className
+=
+"
+text-2xl spektral font-bold text-stone-900
+"
+>
+Katalyst
+</
+span
+>
+
+            
+</
+div
+>
+
+            
+<
+div
+ 
+className
+=
+"
+flex items-center gap-8
+"
+>
+
+              
+<
+a
+ 
+href
+=
+"
+#how-it-works
+"
+ 
+className
+=
+"
+inter text-sm text-stone-600 hover:text-stone-900 transition-colors
+"
+>
+How It Works
+</
+a
+>
+
+              
+<
+a
+ 
+href
+=
+"
+#pricing
+"
+ 
+className
+=
+"
+inter text-sm text-stone-600 hover:text-stone-900 transition-colors
+"
+>
+Pricing
+</
+a
+>
+
+              
+<
+a
+ 
+href
+=
+"
+#browse-opportunities
+"
+ 
+className
+=
+"
+inter text-sm text-stone-600 hover:text-stone-900 transition-colors
+"
+>
+Browse Ideas
+</
+a
+>
+
+              
+<
+button
+ 
+className
+=
+"
+inter text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors
+"
+>
+Sign In
+</
+button
+>
+
+              
+<
+button
+ 
+className
+=
+"
+bg-stone-900 text-white px-4 py-2 rounded-lg inter text-sm font-medium hover:bg-stone-800 transition-colors
+"
+>
+
+                Get Started
+              
+</
+button
+>
+
+            
+</
+div
+>
+
+          
+</
+div
+>
+
+        
+</
+div
+>
+
+      
+</
+nav
+>
+
+      
+{
+/* Hero Section */
+}
+
+      
+<
+section
+ 
+className
+=
+"
+relative overflow-hidden bg-gradient-to-br from-stone-50 via-stone-100 to-stone-50
+"
+>
+
+        
+<
+div
+ 
+className
+=
+"
+absolute inset-0 opacity-30
+"
+>
+
+          
+<
+div
+ 
+className
+=
+"
+absolute top-20 left-20 w-72 h-72 bg-violet-200 rounded-full blur-3xl
+"
+>
+</
+div
+>
+
+          
+<
+div
+ 
+className
+=
+"
+absolute bottom-20 right-20 w-96 h-96 bg-emerald-200 rounded-full blur-3xl
+"
+>
+</
+div
+>
+
+        
+</
+div
+>
+
+        
+<
+div
+ 
+className
+=
+"
+relative max-w-7xl mx-auto px-8 py-24
+"
+>
+
+          
+<
+div
+ 
+className
+=
+"
+grid grid-cols-2 gap-16 items-center
+"
+>
+
+            
+<
+div
+>
+
+              
+<
+div
+ 
+className
+=
+"
+inline-block bg-violet-100 text-violet-700 px-4 py-2 rounded-full text-sm inter font-medium mb-6 fade-in-up
+"
+>
+
+                2,847+ Validated Opportunities
+              
+</
+div
+>
+
+              
+<
+h1
+ 
+className
+=
+"
+text-6xl spektral font-bold text-stone-900 mb-6 leading-tight fade-in-up stagger-1
+"
+>
+
+                Transform Consumer Problems into 
+                
+<
+span
+ 
+className
+=
+"
+text-violet-600
+"
+>
+ Business Opportunities
+</
+span
+>
+
+              
+</
+h1
+>
+
+              
+<
+p
+ 
+className
+=
+"
+text-xl inter text-stone-600 mb-8 leading-relaxed fade-in-up stagger-2
+"
+>
+
+                Discover validated market opportunities backed by real consumer insights. From idea validation to execution playbooks, everything you need to build what people actually want.
+              
+</
+p
+>
+
+              
+<
+div
+ 
+className
+=
+"
+flex items-center gap-4 fade-in-up stagger-3
+"
+>
+
+                
+<
+a
+ 
+                  
+href
+=
+"
+/discover
+"
+
+                  
+className
+=
+"
+bg-stone-900 text-white px-8 py-4 rounded-lg inter font-medium text-lg hover:bg-stone-800 transition-all hover:shadow-xl flex items-center gap-2
+"
+
+                
+>
+
+                  Browse Opportunities
+                  
+<
+ArrowRight
+ 
+className
+=
+"
+w-5 h-5
+"
+ 
+/>
+
+                
+</
+a
+>
+
+                
+<
+button
+ 
+className
+=
+"
+border-2 border-stone-900 text-stone-900 px-8 py-4 rounded-lg inter font-medium text-lg hover:bg-stone-900 hover:text-white transition-all
+"
+>
+
+                  Watch Demo
+                
+</
+button
+>
+
+              
+</
+div
+>
+
+              
+{
+/* Social Proof */
+}
+
+              
+<
+div
+ 
+className
+=
+"
+flex items-center gap-8 mt-12 fade-in-up stagger-4
+"
+>
+
+                
+<
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-3xl spektral font-bold text-stone-900
+"
+>
+2,847
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+Validated Ideas
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+w-px h-12 bg-stone-300
+"
+>
+</
+div
+>
+
+                
+<
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-3xl spektral font-bold text-stone-900
+"
+>
+$47B+
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+Market Opportunity
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+w-px h-12 bg-stone-300
+"
+>
+</
+div
+>
+
+                
+<
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-3xl spektral font-bold text-stone-900
+"
+>
+6
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+Global Markets
+</
+div
+>
+
+                
+</
+div
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+            
+{
+/* Hero Visual */
+}
+
+            
+<
+div
+ 
+className
+=
+"
+fade-in-up stagger-2
+"
+>
+
+              
+<
+div
+ 
+className
+=
+"
+relative
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+bg-white rounded-2xl shadow-2xl border border-stone-200 p-8
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-start justify-between mb-6
+"
+>
+
+                    
+<
+div
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-xs inter font-medium text-stone-500 mb-2
+"
+>
+TRENDING OPPORTUNITY
+</
+div
+>
+
+                      
+<
+h3
+ 
+className
+=
+"
+text-2xl spektral font-bold text-stone-900 mb-2
+"
+>
+
+                        On-Demand Home Maintenance
+                      
+</
+h3
+>
+
+                      
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+Subscription-based preventive care for homeowners
+</
+p
+>
+
+                    
+</
+div
+>
+
+                    
+<
+div
+ 
+className
+=
+"
+bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full
+"
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-2xl spektral font-bold
+"
+>
+87
+</
+div
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-xs inter
+"
+>
+Score
+</
+div
+>
+
+                    
+</
+div
+>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+grid grid-cols-3 gap-4 mb-6
+"
+>
+
+                    
+<
+div
+ 
+className
+=
+"
+bg-stone-50 rounded-lg p-3
+"
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-xs inter text-stone-500 mb-1
+"
+>
+Market Size
+</
+div
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-lg spektral font-bold text-stone-900
+"
+>
+$8.4B
+</
+div
+>
+
+                    
+</
+div
+>
+
+                    
+<
+div
+ 
+className
+=
+"
+bg-stone-50 rounded-lg p-3
+"
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-xs inter text-stone-500 mb-1
+"
+>
+Submissions
+</
+div
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-lg spektral font-bold text-stone-900
+"
+>
+2,847
+</
+div
+>
+
+                    
+</
+div
+>
+
+                    
+<
+div
+ 
+className
+=
+"
+bg-stone-50 rounded-lg p-3
+"
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-xs inter text-stone-500 mb-1
+"
+>
+Growth
+</
+div
+>
+
+                      
+<
+div
+ 
+className
+=
+"
+text-lg spektral font-bold text-emerald-600
+"
+>
++34%
+</
+div
+>
+
+                    
+</
+div
+>
+
+                  
+</
+div
+>
+
+                  
+<
+button
+ 
+className
+=
+"
+w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white py-3 rounded-lg inter font-medium hover:shadow-lg transition-all
+"
+>
+
+                    View Full Analysis →
+                  
+</
+button
+>
+
+                
+</
+div
+>
+
+                
+{
+/* Floating elements */
+}
+
+                
+<
+div
+ 
+className
+=
+"
+absolute -top-6 -right-6 bg-white rounded-xl shadow-lg border border-stone-200 p-4 float
+"
+ 
+style
+=
+{
+{
+animationDelay
+:
+ 
+'0s'
+}
+}
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+Users
+ 
+className
+=
+"
+w-4 h-4 text-violet-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter font-medium text-stone-900
+"
+>
+2,847 users want this
+</
+span
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg border border-stone-200 p-4 float
+"
+ 
+style
+=
+{
+{
+animationDelay
+:
+ 
+'1s'
+}
+}
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+TrendingUp
+ 
+className
+=
+"
+w-4 h-4 text-emerald-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter font-medium text-stone-900
+"
+>
++34% monthly growth
+</
+span
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+          
+</
+div
+>
+
+        
+</
+div
+>
+
+      
+</
+section
+>
+
+      
+{
+/* How It Works */
+}
+
+      
+<
+section
+ 
+id
+=
+"
+how-it-works
+"
+ 
+className
+=
+"
+py-24 bg-white
+"
+>
+
+        
+<
+div
+ 
+className
+=
+"
+max-w-7xl mx-auto px-8
+"
+>
+
+          
+<
+div
+ 
+className
+=
+"
+text-center mb-16
+"
+>
+
+            
+<
+h2
+ 
+className
+=
+"
+text-5xl spektral font-bold text-stone-900 mb-4
+"
+>
+
+              From Problem to Execution in Three Steps
+            
+</
+h2
+>
+
+            
+<
+p
+ 
+className
+=
+"
+text-xl inter text-stone-600 max-w-2xl mx-auto
+"
+>
+
+              Progressive depth gives you exactly what you need, when you need it
+            
+</
+p
+>
+
+          
+</
+div
+>
+
+          
+<
+div
+ 
+className
+=
+"
+grid grid-cols-3 gap-8
+"
+>
+
+            
+{
+/* Step 1 */
+}
+
+            
+<
+div
+ 
+className
+=
+"
+relative fade-in-up stagger-1
+"
+>
+
+              
+<
+div
+ 
+className
+=
+"
+bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border-2 border-green-200 h-full
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-6
+"
+>
+
+                  
+<
+span
+ 
+className
+=
+"
+text-3xl spektral font-bold text-white
+"
+>
+1
+</
+span
+>
+
+                
+</
+div
+>
+
+                
+<
+h3
+ 
+className
+=
+"
+text-2xl spektral font-bold text-stone-900 mb-4
+"
+>
+
+                  Discover & Validate
+                
+</
+h3
+>
+
+                
+<
+p
+ 
+className
+=
+"
+inter text-stone-700 mb-6
+"
+>
+
+                  Browse validated opportunities with quick validation metrics. See submissions, market size, and urgency at a glance.
+                
+</
+p
+>
+
+                
+<
+div
+ 
+className
+=
+"
+space-y-2
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-green-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+Validation scores (0-100)
+</
+span
+>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-green-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+Top consumer pain points
+</
+span
+>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-green-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+Market size estimates
+</
+span
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+mt-6 pt-6 border-t border-green-200
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-xs inter font-medium text-green-700 mb-1
+"
+>
+ACCESS TIER
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-lg spektral font-bold text-stone-900
+"
+>
+Free
+</
+div
+>
+
+                
+</
+div
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+            
+{
+/* Step 2 */
+}
+
+            
+<
+div
+ 
+className
+=
+"
+relative fade-in-up stagger-2
+"
+>
+
+              
+<
+div
+ 
+className
+=
+"
+bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-8 border-2 border-purple-200 h-full
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mb-6
+"
+>
+
+                  
+<
+span
+ 
+className
+=
+"
+text-3xl spektral font-bold text-white
+"
+>
+2
+</
+span
+>
+
+                
+</
+div
+>
+
+                
+<
+h3
+ 
+className
+=
+"
+text-2xl spektral font-bold text-stone-900 mb-4
+"
+>
+
+                  Research & Analyze
+                
+</
+h3
+>
+
+                
+<
+p
+ 
+className
+=
+"
+inter text-stone-700 mb-6
+"
+>
+
+                  Deep dive into market validation, demographics, competition, and opportunity sizing across multiple dimensions.
+                
+</
+p
+>
+
+                
+<
+div
+ 
+className
+=
+"
+space-y-2
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-purple-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+Full competitive analysis
+</
+span
+>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-purple-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+Geographic market intelligence
+</
+span
+>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-purple-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+TAM/SAM/SOM estimates
+</
+span
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+mt-6 pt-6 border-t border-purple-200
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-xs inter font-medium text-purple-700 mb-1
+"
+>
+ACCESS TIER
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-lg spektral font-bold text-stone-900
+"
+>
+Pro ($99/mo)
+</
+div
+>
+
+                
+</
+div
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+            
+{
+/* Step 3 */
+}
+
+            
+<
+div
+ 
+className
+=
+"
+relative fade-in-up stagger-3
+"
+>
+
+              
+<
+div
+ 
+className
+=
+"
+bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl p-8 border-2 border-indigo-200 h-full
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+w-16 h-16 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-full flex items-center justify-center mb-6
+"
+>
+
+                  
+<
+Sparkles
+ 
+className
+=
+"
+w-8 h-8 text-white
+"
+ 
+/>
+
+                
+</
+div
+>
+
+                
+<
+h3
+ 
+className
+=
+"
+text-2xl spektral font-bold text-stone-900 mb-4
+"
+>
+
+                  Execute with AI
+                
+</
+h3
+>
+
+                
+<
+p
+ 
+className
+=
+"
+inter text-stone-700 mb-6
+"
+>
+
+                  Get actionable execution playbooks, financial models, and an AI assistant to guide your strategy decisions.
+                
+</
+p
+>
+
+                
+<
+div
+ 
+className
+=
+"
+space-y-2
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-indigo-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+90-day execution playbook
+</
+span
+>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-indigo-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+AI research assistant
+</
+span
+>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-indigo-600
+"
+ 
+/>
+
+                    
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-700
+"
+>
+Financial modeling & exports
+</
+span
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+mt-6 pt-6 border-t border-indigo-200
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-xs inter font-medium text-indigo-700 mb-1
+"
+>
+ACCESS TIER
+</
+div
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+text-lg spektral font-bold text-stone-900
+"
+>
+Business ($499/mo)
+</
+div
+>
+
+                
+</
+div
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+          
+</
+div
+>
+
+        
+</
+div
+>
+
+      
+</
+section
+>
+
+      
+{
+/* Value Props */
+}
+
+      
+<
+section
+ 
+className
+=
+"
+py-24 bg-stone-50
+"
+>
+
+        
+<
+div
+ 
+className
+=
+"
+max-w-7xl mx-auto px-8
+"
+>
+
+          
+<
+div
+ 
+className
+=
+"
+grid grid-cols-2 gap-16 items-center mb-24
+"
+>
+
+            
+<
+div
+>
+
+              
+<
+div
+ 
+className
+=
+"
+w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center mb-6
+"
+>
+
+                
+<
+Target
+ 
+className
+=
+"
+w-6 h-6 text-violet-600
+"
+ 
+/>
+
+              
+</
+div
+>
+
+              
+<
+h2
+ 
+className
+=
+"
+text-4xl spektral font-bold text-stone-900 mb-6
+"
+>
+
+                Validated Consumer Insights, Not Scrapes
+              
+</
+h2
+>
+
+              
+<
+p
+ 
+className
+=
+"
+text-lg inter text-stone-600 mb-6
+"
+>
+
+                Every opportunity is backed by real consumer submissions, not algorithmic guesses. We curate and verify insights so you get signal, not noise.
+              
+</
+p
+>
+
+              
+<
+div
+ 
+className
+=
+"
+space-y-4
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+flex items-start gap-3
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-emerald-600
+"
+ 
+/>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+>
+
+                    
+<
+div
+ 
+className
+=
+"
+inter font-semibold text-stone-900 mb-1
+"
+>
+Human-Verified Problems
+</
+div
+>
+
+                    
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+Real people sharing real frustrations, not bot-generated content
+</
+p
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+flex items-start gap-3
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-emerald-600
+"
+ 
+/>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+>
+
+                    
+<
+div
+ 
+className
+=
+"
+inter font-semibold text-stone-900 mb-1
+"
+>
+Clustered by Intelligence
+</
+div
+>
+
+                    
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+AI groups similar problems to reveal patterns and opportunities
+</
+p
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+                
+<
+div
+ 
+className
+=
+"
+flex items-start gap-3
+"
+>
+
+                  
+<
+div
+ 
+className
+=
+"
+w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1
+"
+>
+
+                    
+<
+CheckCircle
+ 
+className
+=
+"
+w-4 h-4 text-emerald-600
+"
+ 
+/>
+
+                  
+</
+div
+>
+
+                  
+<
+div
+>
+
+                    
+<
+div
+ 
+className
+=
+"
+inter font-semibold text-stone-900 mb-1
+"
+>
+Continuously Updated
+</
+div
+>
+
+                    
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+New submissions flow in daily, keeping opportunities fresh
+</
+p
+>
+
+                  
+</
+div
+>
+
+                
+</
+div
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+            
+<
+div
+ 
+className
+=
+"
+bg-white rounded-2xl shadow-xl p-8 border border-stone-200
+"
+>
+
+              
+<
+div
+ 
+className
+=
+"
+text-xs inter font-medium text-stone-500 mb-3
+"
+>
+EXAMPLE SUBMISSION CLUSTER
+</
+div
+>
+
+              
+<
+div
+ 
+className
+=
+"
+space-y-3
+"
+>
+
+                
+{
+[
+
+                  
+"I never know when my HVAC is about to fail until it's a $5K emergency"
+,
+
+                  
+"Finding trustworthy contractors is impossible - I've been burned 3 times"
+,
+
+                  
+"I wish there was a subscription for preventive home maintenance"
+,
+
+                  
+"Home warranties are a scam - they never actually cover what breaks"
+
+                
+]
+.
+map
+(
+(
+quote
+,
+ idx
+)
+ 
+=>
+ 
+(
+
+                  
+<
+div
+ 
+key
+=
+{
+idx
+}
+ 
+className
+=
+"
+border-l-4 border-violet-500 pl-4 py-2 bg-stone-50 rounded-r
+"
+>
+
+                    
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-700 italic
+"
+>
+"{quote}"
+</
+p
+>
+
+                  
+</
+div
+>
+
+                
+)
+)
+}
+
+              
+</
+div
+>
+
+              
+<
+div
+ 
+className
+=
+"
+mt-6 pt-6 border-t border-stone-200
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+flex items-center justify-between
+"
+>
+
+                  
+<
+span
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+Clustered into
+</
+span
+>
+
+                  
+<
+span
+ 
+className
+=
+"
+inter font-bold text-stone-900
+"
+>
+On-Demand Home Maintenance
+</
+span
+>
+
+                
+</
+div
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+          
+</
+div
+>
+
+          
+{
+/* Geographic Intelligence */
+}
+
+          
+<
+div
+ 
+className
+=
+"
+grid grid-cols-2 gap-16 items-center
+"
+>
+
+            
+<
+div
+ 
+className
+=
+"
+bg-white rounded-2xl shadow-xl p-8 border border-stone-200
+"
+>
+
+              
+<
+div
+ 
+className
+=
+"
+flex items-center gap-3 mb-6
+"
+>
+
+                
+<
+Globe
+ 
+className
+=
+"
+w-6 h-6 text-stone-600
+"
+ 
+/>
+
+                
+<
+h3
+ 
+className
+=
+"
+text-xl spektral font-bold text-stone-900
+"
+>
+Geographic Market Analysis
+</
+h3
+>
+
+              
+</
+div
+>
+
+              
+<
+div
+ 
+className
+=
+"
+space-y-3
+"
+>
+
+                
+{
+[
+
+                  
+{
+ 
+region
+:
+ 
+'Southwest US'
+,
+ 
+applicability
+:
+ 
+'Very High'
+,
+ 
+color
+:
+ 
+'emerald'
+ 
+}
+,
+
+                  
+{
+ 
+region
+:
+ 
+'US National'
+,
+ 
+applicability
+:
+ 
+'High'
+,
+ 
+color
+:
+ 
+'green'
+ 
+}
+,
+
+                  
+{
+ 
+region
+:
+ 
+'Canada'
+,
+ 
+applicability
+:
+ 
+'High'
+,
+ 
+color
+:
+ 
+'green'
+ 
+}
+,
+
+                  
+{
+ 
+region
+:
+ 
+'Australia'
+,
+ 
+applicability
+:
+ 
+'Medium'
+,
+ 
+color
+:
+ 
+'amber'
+ 
+}
+
+                
+]
+.
+map
+(
+(
+item
+,
+ idx
+)
+ 
+=>
+ 
+(
+
+                  
+<
+div
+ 
+key
+=
+{
+idx
+}
+ 
+className
+=
+"
+flex items-center justify-between p-4 bg-stone-50 rounded-lg
+"
+>
+
+                    
+<
+span
+ 
+className
+=
+"
+inter font-medium text-stone-900
+"
+>
+{
+item
+.
+region
+}
+</
+span
+>
+
+                    
+<
+span
+ 
+className
+=
+{
+`
+px-3 py-1 rounded-full text-xs inter font-medium bg-
+${
+item
+.
+color
+}
+-100 text-
+${
+item
+.
+color
+}
+-700
+`
+}
+>
+
+                      
+{
+item
+.
+applicability
+}
+
+                    
+</
+span
+>
+
+                  
+</
+div
+>
+
+                
+)
+)
+}
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+            
+<
+div
+>
+
+              
+<
+div
+ 
+className
+=
+"
+w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-6
+"
+>
+
+                
+<
+Globe
+ 
+className
+=
+"
+w-6 h-6 text-emerald-600
+"
+ 
+/>
+
+              
+</
+div
+>
+
+              
+<
+h2
+ 
+className
+=
+"
+text-4xl spektral font-bold text-stone-900 mb-6
+"
+>
+
+                Know Where to Launch Before You Build
+              
+</
+h2
+>
+
+              
+<
+p
+ 
+className
+=
+"
+text-lg inter text-stone-600 mb-6
+"
+>
+
+                Every opportunity includes geographic market intelligence across 6 global regions. Understand market size, competition, and regulatory complexity before you commit.
+              
+</
+p
+>
+
+              
+<
+div
+ 
+className
+=
+"
+bg-blue-50 border-2 border-blue-200 rounded-lg p-6
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+text-sm inter font-semibold text-blue-900 mb-2
+"
+>
+Example: Home Maintenance
+</
+div
+>
+
+                
+<
+p
+ 
+className
+=
+"
+text-sm inter text-blue-800
+"
+>
+
+                  Launch in Southwest US first (Austin, Phoenix) - highest growth +52%, business-friendly regulations, medium competition. Expand nationally once proven.
+                
+</
+p
+>
+
+              
+</
+div
+>
+
+            
+</
+div
+>
+
+          
+</
+div
+>
+
+        
+</
+div
+>
+
+      
+</
+section
+>
+
+      
+{
+/* CTA Section */
+}
+
+      
+<
+section
+ 
+className
+=
+"
+py-24 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 text-white
+"
+>
+
+        
+<
+div
+ 
+className
+=
+"
+max-w-4xl mx-auto px-8 text-center
+"
+>
+
+          
+<
+h2
+ 
+className
+=
+"
+text-5xl spektral font-bold mb-6
+"
+>
+
+            Stop Guessing. Start Building.
+          
+</
+h2
+>
+
+          
+<
+p
+ 
+className
+=
+"
+text-xl inter text-stone-200 mb-12
+"
+>
+
+            Join hundreds of founders, VCs, and product teams discovering validated opportunities
+          
+</
+p
+>
+
+          
+<
+div
+ 
+className
+=
+"
+flex flex-col items-center gap-4
+"
+>
+
+            
+<
+div
+ 
+className
+=
+"
+flex gap-4 w-full max-w-md
+"
+>
+
+              
+<
+input
+
+                
+type
+=
+"
+email
+"
+
+                
+value
+=
+{
+email
+}
+
+                
+onChange
+=
+{
+(
+e
+)
+ 
+=>
+ 
+setEmail
+(
+e
+.
+target
+.
+value
+)
+}
+
+                
+placeholder
+=
+"
+Enter your email
+"
+
+                
+className
+=
+"
+flex-1 px-6 py-4 rounded-lg inter text-stone-900 focus:outline-none focus:ring-2 focus:ring-violet-400
+"
+
+              
+/>
+
+              
+<
+button
+ 
+className
+=
+"
+bg-violet-600 hover:bg-violet-700 px-8 py-4 rounded-lg inter font-medium transition-colors whitespace-nowrap
+"
+>
+
+                Get Started
+              
+</
+button
+>
+
+            
+</
+div
+>
+
+            
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-400
+"
+>
+Free tier available. No credit card required.
+</
+p
+>
+
+          
+</
+div
+>
+
+        
+</
+div
+>
+
+      
+</
+section
+>
+
+      
+{
+/* Footer */
+}
+
+      
+<
+footer
+ 
+className
+=
+"
+bg-white border-t border-stone-200 py-12
+"
+>
+
+        
+<
+div
+ 
+className
+=
+"
+max-w-7xl mx-auto px-8
+"
+>
+
+          
+<
+div
+ 
+className
+=
+"
+grid grid-cols-4 gap-8 mb-8
+"
+>
+
+            
+<
+div
+>
+
+              
+<
+div
+ 
+className
+=
+"
+flex items-center gap-2 mb-4
+"
+>
+
+                
+<
+div
+ 
+className
+=
+"
+w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center
+"
+>
+
+                  
+<
+Sparkles
+ 
+className
+=
+"
+w-5 h-5 text-white
+"
+ 
+/>
+
+                
+</
+div
+>
+
+                
+<
+span
+ 
+className
+=
+"
+text-xl spektral font-bold text-stone-900
+"
+>
+Katalyst
+</
+span
+>
+
+              
+</
+div
+>
+
+              
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-600
+"
+>
+
+                Transform consumer problems into validated business opportunities
+              
+</
+p
+>
+
+            
+</
+div
+>
+
+            
+<
+div
+>
+
+              
+<
+h4
+ 
+className
+=
+"
+inter font-semibold text-stone-900 mb-4
+"
+>
+Product
+</
+h4
+>
+
+              
+<
+ul
+ 
+className
+=
+"
+space-y-2 text-sm inter text-stone-600
+"
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+/discover
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+Browse Ideas
+</
+a
+>
+</
+li
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#pricing
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+Pricing
+</
+a
+>
+</
+li
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+API
+</
+a
+>
+</
+li
+>
+
+              
+</
+ul
+>
+
+            
+</
+div
+>
+
+            
+<
+div
+>
+
+              
+<
+h4
+ 
+className
+=
+"
+inter font-semibold text-stone-900 mb-4
+"
+>
+Company
+</
+h4
+>
+
+              
+<
+ul
+ 
+className
+=
+"
+space-y-2 text-sm inter text-stone-600
+"
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+About
+</
+a
+>
+</
+li
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+Blog
+</
+a
+>
+</
+li
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+Careers
+</
+a
+>
+</
+li
+>
+
+              
+</
+ul
+>
+
+            
+</
+div
+>
+
+            
+<
+div
+>
+
+              
+<
+h4
+ 
+className
+=
+"
+inter font-semibold text-stone-900 mb-4
+"
+>
+Legal
+</
+h4
+>
+
+              
+<
+ul
+ 
+className
+=
+"
+space-y-2 text-sm inter text-stone-600
+"
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+Privacy
+</
+a
+>
+</
+li
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+Terms
+</
+a
+>
+</
+li
+>
+
+                
+<
+li
+>
+<
+a
+ 
+href
+=
+"
+#
+"
+ 
+className
+=
+"
+hover:text-stone-900
+"
+>
+Security
+</
+a
+>
+</
+li
+>
+
+              
+</
+ul
+>
+
+            
+</
+div
+>
+
+          
+</
+div
+>
+
+          
+<
+div
+ 
+className
+=
+"
+pt-8 border-t border-stone-200
+"
+>
+
+            
+<
+p
+ 
+className
+=
+"
+text-sm inter text-stone-600 text-center
+"
+>
+
+              © 2024 Katalyst. All rights reserved.
+            
+</
+p
+>
+
+          
+</
+div
+>
+
+        
+</
+div
+>
+
+      
+</
+footer
+>
+
+    
+</
+div
+>
+
+  
+)
+;
+
+}

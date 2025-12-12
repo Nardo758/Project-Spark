@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friction · Problem Discovery Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Friction - Transform Problems into Opportunities</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --stone-50: #fafaf9;
@@ -17,20 +17,35 @@
             --stone-700: #44403c;
             --stone-800: #292524;
             --stone-900: #1c1917;
+            --emerald-50: #ecfdf5;
             --emerald-100: #d1fae5;
+            --emerald-200: #a7f3d0;
             --emerald-600: #059669;
             --emerald-700: #047857;
+            --violet-50: #f5f3ff;
             --violet-100: #ede9fe;
+            --violet-200: #ddd6fe;
+            --violet-600: #7c3aed;
             --violet-700: #6d28d9;
-            --blue-100: #dbeafe;
-            --blue-500: #3b82f6;
-            --blue-700: #1d4ed8;
+            --indigo-50: #eef2ff;
+            --indigo-100: #e0e7ff;
+            --indigo-200: #c7d2fe;
+            --indigo-600: #4f46e5;
+            --indigo-700: #4338ca;
+            --green-50: #f0fdf4;
             --green-100: #dcfce7;
+            --green-200: #bbf7d0;
             --green-500: #22c55e;
+            --green-600: #16a34a;
             --green-700: #15803d;
+            --purple-50: #faf5ff;
+            --purple-100: #f3e8ff;
+            --purple-200: #e9d5ff;
+            --purple-500: #a855f7;
+            --purple-600: #9333ea;
+            --purple-700: #7e22ce;
             --amber-50: #fffbeb;
             --amber-100: #fef3c7;
-            --amber-200: #fde68a;
             --amber-700: #b45309;
             --white: #ffffff;
         }
@@ -54,14 +69,10 @@
             font-family: 'Spectral', serif;
         }
 
-        .inter {
-            font-family: 'Inter', sans-serif;
-        }
-
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
@@ -69,31 +80,32 @@
             }
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
 
         .fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .float {
+            animation: float 6s ease-in-out infinite;
         }
 
         .stagger-1 { animation-delay: 0.1s; opacity: 0; }
         .stagger-2 { animation-delay: 0.2s; opacity: 0; }
         .stagger-3 { animation-delay: 0.3s; opacity: 0; }
         .stagger-4 { animation-delay: 0.4s; opacity: 0; }
+        .stagger-5 { animation-delay: 0.5s; opacity: 0; }
 
-        .animated-arrow {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        /* Header */
-        .header {
-            border-bottom: 1px solid var(--stone-200);
+        /* Navigation */
+        nav {
             background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
         }
 
-        .header-content {
+        .nav-content {
             max-width: 1280px;
             margin: 0 auto;
             padding: 16px 32px;
@@ -102,40 +114,46 @@
             justify-content: space-between;
         }
 
-        .header-left {
+        .logo {
             display: flex;
             align-items: center;
-            gap: 32px;
+            gap: 8px;
+            text-decoration: none;
         }
 
-        .logo {
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #d97757, #c96444);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 18px;
+        }
+
+        .logo-text {
             font-family: 'Spectral', serif;
             font-size: 24px;
             font-weight: 700;
             color: var(--stone-900);
-            text-decoration: none;
+        }
+
+        .nav-links {
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-
-        .logo-icon {
-            color: #d97757;
-        }
-
-        .header-nav {
-            display: flex;
             gap: 8px;
         }
 
         .nav-link {
             padding: 8px 16px;
-            border-radius: 8px;
-            color: var(--stone-500);
+            color: var(--stone-600);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
             transition: all 0.2s;
+            border-radius: 8px;
         }
 
         .nav-link:hover {
@@ -143,10 +161,10 @@
             color: var(--stone-900);
         }
 
-        .header-actions {
+        .nav-actions {
             display: flex;
-            gap: 12px;
             align-items: center;
+            gap: 12px;
         }
 
         .btn {
@@ -179,163 +197,816 @@
             background: var(--stone-800);
         }
 
-        /* Page Header */
-        .page-header {
-            border-bottom: 1px solid var(--stone-200);
-            background: var(--white);
-            padding: 24px 0;
+        .btn-large {
+            padding: 16px 32px;
+            font-size: 16px;
         }
 
-        .page-header-content {
+        /* Hero Section */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--stone-50) 0%, var(--stone-100) 50%, var(--stone-50) 100%);
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .hero-bg-circle-1 {
+            position: absolute;
+            top: 80px;
+            left: 80px;
+            width: 288px;
+            height: 288px;
+            background: var(--violet-200);
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+
+        .hero-bg-circle-2 {
+            position: absolute;
+            bottom: 80px;
+            right: 80px;
+            width: 384px;
+            height: 384px;
+            background: var(--emerald-200);
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+
+        .hero-content {
+            position: relative;
             max-width: 1280px;
             margin: 0 auto;
-            padding: 0 32px;
+            padding: 96px 32px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
         }
 
-        .page-header h1 {
+        .hero-badge {
+            display: inline-block;
+            background: var(--violet-100);
+            color: var(--violet-700);
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-family: 'Spectral', serif;
+            font-size: 56px;
+            font-weight: 700;
+            color: var(--stone-900);
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 span {
+            color: var(--violet-600);
+        }
+
+        .hero-description {
+            font-size: 20px;
+            color: var(--stone-600);
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .hero-stat {
+            text-align: left;
+        }
+
+        .hero-stat-value {
             font-family: 'Spectral', serif;
             font-size: 32px;
             font-weight: 700;
             color: var(--stone-900);
-            margin-bottom: 8px;
         }
 
-        .page-header p {
-            color: var(--stone-600);
-            font-size: 16px;
-        }
-
-        /* Flow Tabs */
-        .flow-tabs {
-            border-bottom: 1px solid var(--stone-200);
-            background: var(--white);
-        }
-
-        .flow-tabs-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 32px;
-            display: flex;
-            gap: 32px;
-        }
-
-        .flow-tab {
-            padding: 16px 0;
+        .hero-stat-label {
             font-size: 14px;
-            font-weight: 500;
-            color: var(--stone-500);
-            cursor: pointer;
-            border: none;
-            background: none;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
+            color: var(--stone-600);
         }
 
-        .flow-tab:hover {
-            color: var(--stone-700);
+        .hero-stat-divider {
+            width: 1px;
+            height: 48px;
+            background: var(--stone-300);
         }
 
-        .flow-tab.active {
-            color: var(--stone-900);
-            border-bottom-color: var(--stone-900);
+        /* Hero Card */
+        .hero-card {
+            position: relative;
         }
 
-        /* Main Content */
-        .main-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 48px 32px;
-        }
-
-        /* Stage Card */
-        .stage-card {
+        .hero-card-main {
             background: var(--white);
-            border-radius: 12px;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--stone-200);
             padding: 32px;
-            border: 2px solid var(--stone-200);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 24px;
         }
 
-        .stage-card.highlight {
-            border-color: var(--stone-900);
-        }
-
-        .stage-card.blue {
-            border-color: var(--blue-500);
-        }
-
-        .stage-card.green {
-            border-color: var(--green-500);
-        }
-
-        .stage-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
+        .hero-card-label {
+            font-size: 11px;
             font-weight: 600;
+            color: var(--stone-500);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .hero-card-title {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+        }
+
+        .hero-card-subtitle {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .hero-card-score {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+            padding: 8px 16px;
+            border-radius: 24px;
+            text-align: center;
+        }
+
+        .hero-card-score-value {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .hero-card-score-label {
+            font-size: 11px;
+        }
+
+        .hero-card-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .hero-card-metric {
+            background: var(--stone-50);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .hero-card-metric-label {
+            font-size: 11px;
+            color: var(--stone-500);
+            margin-bottom: 4px;
+        }
+
+        .hero-card-metric-value {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .hero-card-metric-value.growth {
+            color: var(--emerald-600);
+        }
+
+        .hero-card-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--violet-600), var(--purple-600));
+            color: var(--white);
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+
+        .hero-card-btn:hover {
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+        }
+
+        /* Floating elements */
+        .hero-float {
+            position: absolute;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--stone-200);
+            padding: 16px;
+        }
+
+        .hero-float-top {
+            top: -24px;
+            right: -24px;
+        }
+
+        .hero-float-bottom {
+            bottom: -24px;
+            left: -24px;
+            animation-delay: 1s;
+        }
+
+        .hero-float-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--stone-900);
+        }
+
+        .hero-float-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .hero-float-icon.violet {
+            color: var(--violet-600);
+        }
+
+        .hero-float-icon.emerald {
+            color: var(--emerald-600);
+        }
+
+        /* How It Works Section */
+        .how-it-works {
+            padding: 96px 0;
+            background: var(--white);
+        }
+
+        .section-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-family: 'Spectral', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--stone-900);
             margin-bottom: 16px;
         }
 
-        .stage-badge.violet {
-            background: var(--violet-100);
-            color: var(--violet-700);
+        .section-header p {
+            font-size: 20px;
+            color: var(--stone-600);
+            max-width: 640px;
+            margin: 0 auto;
         }
 
-        .stage-badge.blue {
-            background: var(--blue-100);
-            color: var(--blue-700);
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
         }
 
-        .stage-badge.green {
-            background: var(--green-100);
+        .step-card {
+            border-radius: 16px;
+            padding: 32px;
+            height: 100%;
+            border: 2px solid;
+        }
+
+        .step-card.green {
+            background: linear-gradient(135deg, var(--green-50), var(--emerald-50));
+            border-color: var(--green-200);
+        }
+
+        .step-card.purple {
+            background: linear-gradient(135deg, var(--purple-50), var(--violet-50));
+            border-color: var(--purple-200);
+        }
+
+        .step-card.indigo {
+            background: linear-gradient(135deg, var(--indigo-50), var(--violet-50));
+            border-color: var(--indigo-200);
+        }
+
+        .step-number {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .step-number.green {
+            background: var(--green-500);
+        }
+
+        .step-number.purple {
+            background: var(--purple-500);
+        }
+
+        .step-number.indigo {
+            background: linear-gradient(135deg, var(--violet-600), var(--indigo-600));
+        }
+
+        .step-number span {
+            font-family: 'Spectral', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .step-number svg {
+            width: 32px;
+            height: 32px;
+            color: var(--white);
+        }
+
+        .step-card h3 {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 16px;
+        }
+
+        .step-card > p {
+            color: var(--stone-700);
+            margin-bottom: 24px;
+        }
+
+        .step-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .step-features li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--stone-700);
+            padding: 4px 0;
+        }
+
+        .step-features li svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .step-features li svg.green {
+            color: var(--green-600);
+        }
+
+        .step-features li svg.purple {
+            color: var(--purple-600);
+        }
+
+        .step-features li svg.indigo {
+            color: var(--indigo-600);
+        }
+
+        .step-tier {
+            padding-top: 24px;
+            border-top: 1px solid;
+        }
+
+        .step-tier.green {
+            border-color: var(--green-200);
+        }
+
+        .step-tier.purple {
+            border-color: var(--purple-200);
+        }
+
+        .step-tier.indigo {
+            border-color: var(--indigo-200);
+        }
+
+        .step-tier-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .step-tier-label.green {
             color: var(--green-700);
         }
 
-        .stage-header {
-            display: flex;
-            align-items: flex-start;
-            gap: 24px;
+        .step-tier-label.purple {
+            color: var(--purple-700);
         }
 
-        .stage-icon {
-            width: 64px;
-            height: 64px;
+        .step-tier-label.indigo {
+            color: var(--indigo-700);
+        }
+
+        .step-tier-value {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        /* Value Props Section */
+        .value-props {
+            padding: 96px 0;
+            background: var(--stone-50);
+        }
+
+        .value-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+            margin-bottom: 96px;
+        }
+
+        .value-grid.reverse {
+            direction: rtl;
+        }
+
+        .value-grid.reverse > * {
+            direction: ltr;
+        }
+
+        .value-icon {
+            width: 48px;
+            height: 48px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .value-icon.violet {
+            background: var(--violet-100);
+            color: var(--violet-600);
+        }
+
+        .value-icon.emerald {
+            background: var(--emerald-100);
+            color: var(--emerald-600);
+        }
+
+        .value-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .value-content h2 {
+            font-family: 'Spectral', serif;
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+
+        .value-content > p {
+            font-size: 18px;
+            color: var(--stone-600);
+            margin-bottom: 24px;
+        }
+
+        .value-features {
+            list-style: none;
+        }
+
+        .value-feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .value-feature-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--emerald-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
+            margin-top: 2px;
         }
 
-        .stage-icon.dark {
-            background: var(--stone-900);
+        .value-feature-icon svg {
+            width: 14px;
+            height: 14px;
+            color: var(--emerald-600);
+        }
+
+        .value-feature-content h4 {
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+        }
+
+        .value-feature-content p {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .value-card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            border: 1px solid var(--stone-200);
+        }
+
+        .value-card-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--stone-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .quote-list {
+            list-style: none;
+        }
+
+        .quote-item {
+            border-left: 4px solid var(--violet-500);
+            padding: 12px 16px;
+            background: var(--stone-50);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 12px;
+        }
+
+        .quote-item p {
+            font-size: 14px;
+            color: var(--stone-700);
+            font-style: italic;
+        }
+
+        .value-card-footer {
+            padding-top: 24px;
+            margin-top: 24px;
+            border-top: 1px solid var(--stone-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .value-card-footer span:first-child {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .value-card-footer span:last-child {
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        /* Geographic Card */
+        .geo-card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            border: 1px solid var(--stone-200);
+        }
+
+        .geo-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .geo-card-header svg {
+            width: 24px;
+            height: 24px;
+            color: var(--stone-600);
+        }
+
+        .geo-card-header h3 {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .geo-list {
+            list-style: none;
+        }
+
+        .geo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--stone-50);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .geo-item span:first-child {
+            font-weight: 500;
+            color: var(--stone-900);
+        }
+
+        .geo-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .geo-badge.emerald {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+        }
+
+        .geo-badge.green {
+            background: var(--green-100);
+            color: var(--green-700);
+        }
+
+        .geo-badge.amber {
+            background: var(--amber-100);
+            color: var(--amber-700);
+        }
+
+        .geo-example {
+            background: var(--indigo-50);
+            border: 2px solid var(--indigo-200);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .geo-example h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--indigo-700);
+            margin-bottom: 8px;
+        }
+
+        .geo-example p {
+            font-size: 14px;
+            color: var(--indigo-700);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 96px 0;
+            background: linear-gradient(135deg, var(--stone-900), var(--stone-800), var(--stone-900));
             color: var(--white);
         }
 
-        .stage-icon.blue {
-            background: var(--blue-500);
-            color: var(--white);
+        .cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
         }
 
-        .stage-icon.green {
-            background: var(--green-500);
-            color: var(--white);
+        .cta-content h2 {
+            font-family: 'Spectral', serif;
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 24px;
         }
 
-        .stage-icon svg {
-            width: 32px;
-            height: 32px;
+        .cta-content > p {
+            font-size: 20px;
+            color: var(--stone-200);
+            margin-bottom: 48px;
         }
 
-        .stage-body {
+        .cta-form {
+            display: flex;
+            gap: 16px;
+            max-width: 500px;
+            margin: 0 auto 16px;
+        }
+
+        .cta-form input {
             flex: 1;
+            padding: 16px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            outline: none;
         }
 
-        .stage-body h2 {
+        .cta-form input:focus {
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.3);
+        }
+
+        .cta-form button {
+            background: var(--violet-600);
+            color: var(--white);
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .cta-form button:hover {
+            background: var(--violet-700);
+        }
+
+        .cta-note {
+            font-size: 14px;
+            color: var(--stone-400);
+        }
+
+        /* Pricing Section */
+        #pricing {
+            padding: 96px 0;
+            background: var(--white);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-top: 64px;
+        }
+
+        .pricing-card {
+            background: var(--white);
+            border: 2px solid var(--stone-200);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--stone-400);
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--violet-600);
+            position: relative;
+        }
+
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--violet-600);
+            color: var(--white);
+            padding: 4px 16px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .pricing-card h3 {
             font-family: 'Spectral', serif;
             font-size: 24px;
             font-weight: 700;
@@ -343,694 +1014,722 @@
             margin-bottom: 8px;
         }
 
-        .stage-body > p {
-            color: var(--stone-700);
-            margin-bottom: 24px;
-        }
-
-        /* Info Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .info-box {
-            background: var(--stone-50);
-            border-radius: 8px;
-            padding: 16px;
-        }
-
-        .info-box-label {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--stone-500);
+        .pricing-card .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--stone-900);
             margin-bottom: 8px;
         }
 
-        .info-box p {
+        .pricing-card .price span {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--stone-500);
+        }
+
+        .pricing-card .description {
+            font-size: 14px;
+            color: var(--stone-600);
+            margin-bottom: 24px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
             font-size: 14px;
             color: var(--stone-700);
         }
 
-        .info-box p.bold {
-            font-weight: 600;
+        .pricing-features li svg {
+            width: 16px;
+            height: 16px;
+            color: var(--emerald-600);
         }
 
-        /* Example Card */
-        .example-card {
-            background: var(--stone-50);
-            border-radius: 12px;
-            padding: 24px;
+        /* Footer */
+        footer {
+            background: var(--white);
+            border-top: 1px solid var(--stone-200);
+            padding: 64px 0;
+        }
+
+        .footer-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 16px;
         }
 
-        .example-card-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--stone-500);
-            margin-bottom: 12px;
-        }
-
-        .opportunity-card {
-            background: var(--white);
-            border: 1px solid var(--stone-200);
+        .footer-brand-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--stone-900);
             border-radius: 8px;
-            padding: 16px;
-        }
-
-        .opportunity-header {
             display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 8px;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 16px;
         }
 
-        .opportunity-category {
-            font-size: 11px;
-            color: var(--stone-500);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 4px;
-        }
-
-        .opportunity-title {
-            font-weight: 600;
+        .footer-brand-text {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 700;
             color: var(--stone-900);
         }
 
-        .validation-score {
-            background: var(--emerald-100);
-            color: var(--emerald-700);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        .opportunity-description {
+        .footer-about p {
             font-size: 14px;
             color: var(--stone-600);
-            margin-bottom: 12px;
         }
 
-        .opportunity-meta {
-            display: flex;
-            gap: 16px;
-            font-size: 12px;
-            color: var(--stone-500);
-        }
-
-        /* Tier Boxes */
-        .tier-boxes {
-            display: flex;
-            gap: 12px;
-        }
-
-        .tier-box {
-            flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-        }
-
-        .tier-box.amber {
-            background: var(--amber-50);
-            border: 1px solid var(--amber-200);
-        }
-
-        .tier-box.stone {
-            background: var(--stone-50);
-            border: 1px solid var(--stone-200);
-        }
-
-        .tier-box-label {
-            font-size: 11px;
+        .footer-column h4 {
             font-weight: 600;
-            margin-bottom: 4px;
+            color: var(--stone-900);
+            margin-bottom: 16px;
         }
 
-        .tier-box.amber .tier-box-label {
-            color: var(--amber-700);
-        }
-
-        .tier-box.stone .tier-box-label {
-            color: var(--stone-500);
-        }
-
-        .tier-box p {
-            font-size: 13px;
-            color: var(--stone-700);
-        }
-
-        /* Arrow Connector */
-        .arrow-connector {
-            display: flex;
-            justify-content: center;
-            padding: 16px 0;
-        }
-
-        .arrow-connector svg {
-            width: 24px;
-            height: 24px;
-            color: var(--stone-400);
-            transform: rotate(90deg);
-        }
-
-        /* Two Column Grid */
-        .two-col-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .check-list {
+        .footer-links {
             list-style: none;
         }
 
-        .check-list li {
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+
+        .footer-links a {
             font-size: 14px;
-            color: var(--stone-700);
-            padding: 4px 0;
+            color: var(--stone-600);
+            text-decoration: none;
+            transition: color 0.2s;
         }
 
-        /* CTA Banner */
-        .cta-banner {
-            background: linear-gradient(135deg, var(--stone-900) 0%, var(--stone-700) 100%);
-            border-radius: 12px;
-            padding: 24px;
-            color: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .cta-banner h3 {
-            font-family: 'Spectral', serif;
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .cta-banner p {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-
-        .btn-white {
-            background: var(--white);
+        .footer-links a:hover {
             color: var(--stone-900);
-            border: none;
         }
 
-        .btn-white:hover {
-            background: var(--stone-100);
+        .footer-bottom {
+            padding-top: 32px;
+            border-top: 1px solid var(--stone-200);
+            text-align: center;
+        }
+
+        .footer-bottom p {
+            font-size: 14px;
+            color: var(--stone-600);
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .info-grid {
+        @media (max-width: 1024px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .hero h1 {
+                font-size: 42px;
+            }
+
+            .steps-grid {
                 grid-template-columns: 1fr;
             }
 
-            .two-col-grid {
+            .value-grid {
                 grid-template-columns: 1fr;
             }
 
-            .stage-header {
-                flex-direction: column;
+            .value-grid.reverse {
+                direction: ltr;
             }
 
-            .tier-boxes {
-                flex-direction: column;
+            .pricing-grid {
+                grid-template-columns: 1fr;
             }
 
-            .cta-banner {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }
-
-            .flow-tabs-content {
-                flex-direction: column;
-                gap: 0;
-            }
-
-            .flow-tab {
-                padding: 12px 0;
-                border-bottom: none;
-                border-left: 2px solid transparent;
-                padding-left: 16px;
-            }
-
-            .flow-tab.active {
-                border-bottom: none;
-                border-left-color: var(--stone-900);
-            }
-
-            .header-nav {
-                display: none;
-            }
-
-            .header-content {
-                padding: 16px;
-            }
-
-            .page-header-content,
-            .main-content {
-                padding: 24px 16px;
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
             }
         }
 
-        @media (max-width: 640px) {
-            #pricing > div > div:last-child {
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-content {
+                padding: 48px 16px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero-stats {
+                flex-wrap: wrap;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .section-header h2 {
+                font-size: 32px;
+            }
+
+            .cta-form {
+                flex-direction: column;
+            }
+
+            .footer-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="header-left">
-                <a href="index.html" class="logo">
-                    <span class="logo-icon">⚡</span>
-                    Friction
-                </a>
-                <nav class="header-nav">
-                    <a href="search.html" class="nav-link">Search</a>
-                    <a href="category.html" class="nav-link">Categories</a>
-                    <a href="#submit" class="nav-link">Submit</a>
-                    <a href="#pricing" class="nav-link">Pricing</a>
-                </nav>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">⚡</div>
+                <span class="logo-text">Friction</span>
+            </a>
+            <div class="nav-links">
+                <a href="search.html" class="nav-link">Search</a>
+                <a href="category.html" class="nav-link">Categories</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <a href="opportunity.html" class="nav-link">Browse Ideas</a>
             </div>
-            <div class="header-actions" id="header-actions">
+            <div class="nav-actions" id="header-actions">
                 <a href="login.html" class="btn guest-only">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
                 <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
-                <div class="user-menu auth-required" style="display: none; cursor: pointer;" onclick="window.location.href='profile.html'">
-                    <span id="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--stone-900); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
-                </div>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-content">
-            <h1>Complete User Flow: Discovery → Deep Dive</h1>
-            <p>Understanding how users navigate from initial interest to actionable insights</p>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg">
+            <div class="hero-bg-circle-1"></div>
+            <div class="hero-bg-circle-2"></div>
         </div>
-    </div>
-
-    <!-- Flow Tabs -->
-    <div class="flow-tabs">
-        <div class="flow-tabs-content">
-            <button class="flow-tab active" data-flow="browse">Browse Flow (Organic Discovery)</button>
-            <button class="flow-tab" data-flow="search">Search Flow (Intent-Driven)</button>
-            <button class="flow-tab" data-flow="submission">Submission Flow (Problem Submitter)</button>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Browse Flow -->
-        <div id="browse-flow" class="flow-content">
-            <!-- Stage 1: Entry Point -->
-            <div class="fade-in-up stagger-1">
-                <div style="text-align: center;">
-                    <span class="stage-badge violet">STAGE 1: ENTRY POINT</span>
-                </div>
-                <div class="stage-card highlight">
-                    <div class="stage-header">
-                        <div class="stage-icon dark">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                <polyline points="17 6 23 6 23 12"></polyline>
-                            </svg>
-                        </div>
-                        <div class="stage-body">
-                            <h2>Landing Page / Homepage</h2>
-                            <p>User discovers Friction through marketing, word-of-mouth, or organic search</p>
-                            <div class="info-grid">
-                                <div class="info-box">
-                                    <div class="info-box-label">Hero Section</div>
-                                    <p>"Transform Consumer Friction into Validated Business Opportunities"</p>
-                                </div>
-                                <div class="info-box">
-                                    <div class="info-box-label">Value Props</div>
-                                    <p>2,847+ validated ideas • Real consumer insights • Market-ready data</p>
-                                </div>
-                                <div class="info-box">
-                                    <div class="info-box-label">CTA</div>
-                                    <p class="bold">"Browse Trending Opportunities" →</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Arrow -->
-            <div class="arrow-connector">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animated-arrow">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </div>
-
-            <!-- Stage 2: Discovery -->
-            <div class="fade-in-up stagger-2">
-                <div style="text-align: center;">
-                    <span class="stage-badge blue">STAGE 2: DISCOVERY</span>
-                </div>
-                <div class="stage-card blue">
-                    <div class="stage-header">
-                        <div class="stage-icon blue">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                            </svg>
-                        </div>
-                        <div class="stage-body">
-                            <h2>Idea Discovery Feed</h2>
-                            <p>User browses curated opportunities sorted by trending, validation score, or category</p>
-                            
-                            <div class="example-card">
-                                <div class="example-card-label">EXAMPLE CARD VIEW:</div>
-                                <div class="opportunity-card">
-                                    <div class="opportunity-header">
-                                        <div>
-                                            <div class="opportunity-category">Home Services</div>
-                                            <div class="opportunity-title">On-Demand Home Maintenance Subscription</div>
-                                        </div>
-                                        <div class="validation-score">87/100</div>
-                                    </div>
-                                    <div class="opportunity-description">
-                                        Homeowners struggle with reactive, expensive emergency repairs...
-                                    </div>
-                                    <div class="opportunity-meta">
-                                        <span>📊 2,847 submissions</span>
-                                        <span>💰 $8.4B market</span>
-                                        <span>📈 +34% growth</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="tier-boxes">
-                                <div class="tier-box amber">
-                                    <div class="tier-box-label">🔒 FREE TIER</div>
-                                    <p>Can see validation score, basic metrics, problem statement</p>
-                                </div>
-                                <div class="tier-box stone">
-                                    <div class="tier-box-label">USER ACTION</div>
-                                    <p class="bold">Click card → Problem Detail page</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Arrow -->
-            <div class="arrow-connector">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animated-arrow">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </div>
-
-            <!-- Stage 3: Problem Detail -->
-            <div class="fade-in-up stagger-3">
-                <div style="text-align: center;">
-                    <span class="stage-badge green">STAGE 3: TIER 1 - PROBLEM DETAIL (FREE)</span>
-                </div>
-                <div class="stage-card green">
-                    <div class="stage-header">
-                        <div class="stage-icon green">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </div>
-                        <div class="stage-body">
-                            <h2>Problem Detail Page</h2>
-                            <p>Quick validation view - helps user decide if this opportunity is worth deeper exploration</p>
-                            
-                            <div class="two-col-grid">
-                                <div class="info-box">
-                                    <div class="info-box-label">What They See</div>
-                                    <ul class="check-list">
-                                        <li>✓ Quick metrics (submissions, market size, urgency)</li>
-                                        <li>✓ Problem statement</li>
-                                        <li>✓ Top 3 consumer pain points</li>
-                                        <li>✓ Related opportunities</li>
-                                    </ul>
-                                </div>
-                                <div class="info-box">
-                                    <div class="info-box-label">What They Don't See</div>
-                                    <ul class="check-list">
-                                        <li>✗ Demographics breakdown</li>
-                                        <li>✗ Competitive landscape</li>
-                                        <li>✗ Financial modeling</li>
-                                        <li>✗ Execution playbook</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <div class="cta-banner">
-                                <div>
-                                    <h3>Ready to go deeper?</h3>
-                                    <p>Unlock Research Dashboard with full market analysis</p>
-                                </div>
-                                <a href="#pricing" class="btn btn-white">Unlock Research → $29</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Arrow -->
-            <div class="arrow-connector">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animated-arrow">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </div>
-
-            <!-- Stage 4: Research Dashboard -->
-            <div class="fade-in-up stagger-4">
-                <div style="text-align: center;">
-                    <span class="stage-badge" style="background: #fef3c7; color: #b45309;">STAGE 4: TIER 2 - RESEARCH DASHBOARD (PAID)</span>
-                </div>
-                <div class="stage-card" style="border-color: #f59e0b;">
-                    <div class="stage-header">
-                        <div class="stage-icon" style="background: #f59e0b;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
-                        </div>
-                        <div class="stage-body">
-                            <h2>Research Dashboard</h2>
-                            <p>Complete market analysis with demographics, competition, and financial projections</p>
-                            
-                            <div class="info-grid">
-                                <div class="info-box">
-                                    <div class="info-box-label">Market Analysis</div>
-                                    <p>TAM/SAM/SOM breakdown, growth trends, regional data</p>
-                                </div>
-                                <div class="info-box">
-                                    <div class="info-box-label">Demographics</div>
-                                    <p>Age, income, location, psychographics of target users</p>
-                                </div>
-                                <div class="info-box">
-                                    <div class="info-box-label">Competition</div>
-                                    <p>Competitor analysis, market gaps, differentiation opportunities</p>
-                                </div>
-                            </div>
-
-                            <div class="cta-banner">
-                                <div>
-                                    <h3>Want AI-powered insights?</h3>
-                                    <p>Unlock Deep Dive with AI research assistant</p>
-                                </div>
-                                <a href="#pricing" class="btn btn-white">Unlock Deep Dive → $99</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Search Flow (hidden by default) -->
-        <div id="search-flow" class="flow-content" style="display: none;">
-            <div class="stage-card highlight">
-                <div class="stage-header">
-                    <div class="stage-icon dark">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </div>
-                    <div class="stage-body">
-                        <h2>Search Flow (Intent-Driven)</h2>
-                        <p>User arrives with a specific problem or industry in mind</p>
-                        
-                        <div class="info-grid">
-                            <div class="info-box">
-                                <div class="info-box-label">Search Input</div>
-                                <p>Natural language query: "healthcare scheduling problems"</p>
-                            </div>
-                            <div class="info-box">
-                                <div class="info-box-label">Filters</div>
-                                <p>Category, validation score, market size, recency</p>
-                            </div>
-                            <div class="info-box">
-                                <div class="info-box-label">Results</div>
-                                <p>Ranked opportunities matching search intent</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Submission Flow (hidden by default) -->
-        <div id="submission-flow" class="flow-content" style="display: none;">
-            <div class="stage-card highlight">
-                <div class="stage-header">
-                    <div class="stage-icon dark">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
+        <div class="hero-content">
+            <div>
+                <div class="hero-badge fade-in-up">2,847+ Validated Opportunities</div>
+                <h1 class="fade-in-up stagger-1">
+                    Transform Consumer Problems into <span>Business Opportunities</span>
+                </h1>
+                <p class="hero-description fade-in-up stagger-2">
+                    Discover validated market opportunities backed by real consumer insights. From idea validation to execution playbooks, everything you need to build what people actually want.
+                </p>
+                <div class="hero-buttons fade-in-up stagger-3">
+                    <a href="opportunity.html" class="btn btn-primary btn-large">
+                        Browse Opportunities
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
                             <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                    <button class="btn btn-large">Watch Demo</button>
+                </div>
+                <div class="hero-stats fade-in-up stagger-4">
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">2,847</div>
+                        <div class="hero-stat-label">Validated Ideas</div>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">$47B+</div>
+                        <div class="hero-stat-label">Market Opportunity</div>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">6</div>
+                        <div class="hero-stat-label">Global Markets</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-card fade-in-up stagger-2">
+                <div class="hero-float hero-float-top float">
+                    <div class="hero-float-content">
+                        <svg class="hero-float-icon violet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>2,847 users want this</span>
+                    </div>
+                </div>
+                <div class="hero-float hero-float-bottom float">
+                    <div class="hero-float-content">
+                        <svg class="hero-float-icon emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                        <span>+34% monthly growth</span>
+                    </div>
+                </div>
+                <div class="hero-card-main">
+                    <div class="hero-card-header">
+                        <div>
+                            <div class="hero-card-label">Trending Opportunity</div>
+                            <div class="hero-card-title">On-Demand Home Maintenance</div>
+                            <div class="hero-card-subtitle">Subscription-based preventive care for homeowners</div>
+                        </div>
+                        <div class="hero-card-score">
+                            <div class="hero-card-score-value">87</div>
+                            <div class="hero-card-score-label">Score</div>
+                        </div>
+                    </div>
+                    <div class="hero-card-metrics">
+                        <div class="hero-card-metric">
+                            <div class="hero-card-metric-label">Market Size</div>
+                            <div class="hero-card-metric-value">$8.4B</div>
+                        </div>
+                        <div class="hero-card-metric">
+                            <div class="hero-card-metric-label">Submissions</div>
+                            <div class="hero-card-metric-value">2,847</div>
+                        </div>
+                        <div class="hero-card-metric">
+                            <div class="hero-card-metric-label">Growth</div>
+                            <div class="hero-card-metric-value growth">+34%</div>
+                        </div>
+                    </div>
+                    <a href="opportunity.html" class="hero-card-btn">View Full Analysis →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-content">
+            <div class="section-header">
+                <h2>From Problem to Execution in Three Steps</h2>
+                <p>Progressive depth gives you exactly what you need, when you need it</p>
+            </div>
+            <div class="steps-grid">
+                <!-- Step 1 -->
+                <div class="step-card green fade-in-up stagger-1">
+                    <div class="step-number green">
+                        <span>1</span>
+                    </div>
+                    <h3>Discover & Validate</h3>
+                    <p>Browse validated opportunities with quick validation metrics. See submissions, market size, and urgency at a glance.</p>
+                    <ul class="step-features">
+                        <li>
+                            <svg class="green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Validation scores (0-100)
+                        </li>
+                        <li>
+                            <svg class="green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Top consumer pain points
+                        </li>
+                        <li>
+                            <svg class="green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Market size estimates
+                        </li>
+                    </ul>
+                    <div class="step-tier green">
+                        <div class="step-tier-label green">Access Tier</div>
+                        <div class="step-tier-value">Free</div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card purple fade-in-up stagger-2">
+                    <div class="step-number purple">
+                        <span>2</span>
+                    </div>
+                    <h3>Research & Analyze</h3>
+                    <p>Deep dive into market validation, demographics, competition, and opportunity sizing across multiple dimensions.</p>
+                    <ul class="step-features">
+                        <li>
+                            <svg class="purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Full competitive analysis
+                        </li>
+                        <li>
+                            <svg class="purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Geographic market intelligence
+                        </li>
+                        <li>
+                            <svg class="purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            TAM/SAM/SOM estimates
+                        </li>
+                    </ul>
+                    <div class="step-tier purple">
+                        <div class="step-tier-label purple">Access Tier</div>
+                        <div class="step-tier-value">Pro ($29)</div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card indigo fade-in-up stagger-3">
+                    <div class="step-number indigo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
                     </div>
-                    <div class="stage-body">
-                        <h2>Submission Flow (Problem Submitter)</h2>
-                        <p>User wants to share a problem they've experienced</p>
-                        
-                        <div class="info-grid">
-                            <div class="info-box">
-                                <div class="info-box-label">Step 1</div>
-                                <p>Describe the problem in your own words</p>
-                            </div>
-                            <div class="info-box">
-                                <div class="info-box-label">Step 2</div>
-                                <p>Select category and add context</p>
-                            </div>
-                            <div class="info-box">
-                                <div class="info-box-label">Step 3</div>
-                                <p>AI validates and matches to existing opportunities</p>
-                            </div>
-                        </div>
+                    <h3>Execute with AI</h3>
+                    <p>Get actionable execution playbooks, financial models, and an AI assistant to guide your strategy decisions.</p>
+                    <ul class="step-features">
+                        <li>
+                            <svg class="indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            90-day execution playbook
+                        </li>
+                        <li>
+                            <svg class="indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            AI research assistant
+                        </li>
+                        <li>
+                            <svg class="indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Financial modeling & exports
+                        </li>
+                    </ul>
+                    <div class="step-tier indigo">
+                        <div class="step-tier-label indigo">Access Tier</div>
+                        <div class="step-tier-value">Business ($99)</div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </section>
+
+    <!-- Value Props Section -->
+    <section class="value-props">
+        <div class="section-content">
+            <!-- Value Prop 1: Validated Insights -->
+            <div class="value-grid">
+                <div class="value-content">
+                    <div class="value-icon violet">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="22" y1="12" x2="18" y2="12"></line>
+                            <line x1="6" y1="12" x2="2" y2="12"></line>
+                            <line x1="12" y1="6" x2="12" y2="2"></line>
+                            <line x1="12" y1="22" x2="12" y2="18"></line>
+                        </svg>
+                    </div>
+                    <h2>Validated Consumer Insights, Not Scrapes</h2>
+                    <p>Every opportunity is backed by real consumer submissions, not algorithmic guesses. We curate and verify insights so you get signal, not noise.</p>
+                    <ul class="value-features">
+                        <li class="value-feature">
+                            <div class="value-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="value-feature-content">
+                                <h4>Human-Verified Problems</h4>
+                                <p>Real people sharing real frustrations, not bot-generated content</p>
+                            </div>
+                        </li>
+                        <li class="value-feature">
+                            <div class="value-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="value-feature-content">
+                                <h4>Clustered by Intelligence</h4>
+                                <p>AI groups similar problems to reveal patterns and opportunities</p>
+                            </div>
+                        </li>
+                        <li class="value-feature">
+                            <div class="value-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="value-feature-content">
+                                <h4>Continuously Updated</h4>
+                                <p>New submissions flow in daily, keeping opportunities fresh</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="value-card">
+                    <div class="value-card-header">Example Submission Cluster</div>
+                    <ul class="quote-list">
+                        <li class="quote-item">
+                            <p>"I never know when my HVAC is about to fail until it's a $5K emergency"</p>
+                        </li>
+                        <li class="quote-item">
+                            <p>"Finding trustworthy contractors is impossible - I've been burned 3 times"</p>
+                        </li>
+                        <li class="quote-item">
+                            <p>"I wish there was a subscription for preventive home maintenance"</p>
+                        </li>
+                        <li class="quote-item">
+                            <p>"Home warranties are a scam - they never actually cover what breaks"</p>
+                        </li>
+                    </ul>
+                    <div class="value-card-footer">
+                        <span>Clustered into</span>
+                        <span>On-Demand Home Maintenance</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Value Prop 2: Geographic Intelligence -->
+            <div class="value-grid reverse">
+                <div class="value-content">
+                    <div class="value-icon emerald">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                    </div>
+                    <h2>Know Where to Launch Before You Build</h2>
+                    <p>Every opportunity includes geographic market intelligence across 6 global regions. Understand market size, competition, and regulatory complexity before you commit.</p>
+                    <div class="geo-example">
+                        <h4>Example: Home Maintenance</h4>
+                        <p>Launch in Southwest US first (Austin, Phoenix) - highest growth +52%, business-friendly regulations, medium competition. Expand nationally once proven.</p>
+                    </div>
+                </div>
+                <div class="geo-card">
+                    <div class="geo-card-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        <h3>Geographic Market Analysis</h3>
+                    </div>
+                    <ul class="geo-list">
+                        <li class="geo-item">
+                            <span>Southwest US</span>
+                            <span class="geo-badge emerald">Very High</span>
+                        </li>
+                        <li class="geo-item">
+                            <span>US National</span>
+                            <span class="geo-badge green">High</span>
+                        </li>
+                        <li class="geo-item">
+                            <span>Canada</span>
+                            <span class="geo-badge green">High</span>
+                        </li>
+                        <li class="geo-item">
+                            <span>Australia</span>
+                            <span class="geo-badge amber">Medium</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Pricing Section -->
-    <section id="pricing" style="background: var(--white); border-top: 1px solid var(--stone-200); padding: 80px 32px;">
-        <div style="max-width: 1280px; margin: 0 auto; text-align: center;">
-            <h2 class="spektral" style="font-size: 36px; margin-bottom: 16px;">Choose Your Research Depth</h2>
-            <p style="color: var(--stone-600); margin-bottom: 48px;">Start free, upgrade when you find opportunities worth pursuing</p>
-            
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto;">
-                <div style="background: var(--stone-50); border: 2px solid var(--stone-200); border-radius: 16px; padding: 32px; text-align: left;">
-                    <div style="font-size: 14px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">FREE</div>
-                    <div style="font-size: 36px; font-weight: 700; margin-bottom: 8px;">$0</div>
-                    <div style="color: var(--stone-600); margin-bottom: 24px;">Problem Detail access</div>
-                    <ul style="list-style: none; margin-bottom: 24px;">
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Browse all opportunities</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Validation scores</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Basic problem statements</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Top pain points</li>
+    <section id="pricing">
+        <div class="section-content">
+            <div class="section-header">
+                <h2>Simple, Transparent Pricing</h2>
+                <p>Start free, upgrade when you're ready to go deeper</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Free</h3>
+                    <div class="price">$0<span>/mo</span></div>
+                    <p class="description">Browse and discover validated opportunities</p>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Unlimited browsing
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Validation scores
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Top pain points
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Market size estimates
+                        </li>
                     </ul>
-                    <a href="signup.html" class="btn" style="width: 100%; justify-content: center;">Get Started Free</a>
+                    <a href="signup.html" class="btn" style="width: 100%; justify-content: center;">Get Started</a>
                 </div>
-                
-                <div style="background: var(--white); border: 2px solid var(--stone-900); border-radius: 16px; padding: 32px; text-align: left; position: relative;">
-                    <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--stone-900); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">POPULAR</div>
-                    <div style="font-size: 14px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">RESEARCH</div>
-                    <div style="font-size: 36px; font-weight: 700; margin-bottom: 8px;">$29<span style="font-size: 16px; font-weight: 400;">/idea</span></div>
-                    <div style="color: var(--stone-600); margin-bottom: 24px;">Full market analysis</div>
-                    <ul style="list-style: none; margin-bottom: 24px;">
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Everything in Free</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Demographics breakdown</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Competitive landscape</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Market size analysis</li>
+                <div class="pricing-card featured">
+                    <h3>Pro</h3>
+                    <div class="price">$29<span>/opportunity</span></div>
+                    <p class="description">Full research dashboard access</p>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Everything in Free
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Full competitive analysis
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Geographic distribution
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Launch strategy
+                        </li>
                     </ul>
                     <a href="signup.html" class="btn btn-primary" style="width: 100%; justify-content: center;">Unlock Research</a>
                 </div>
-                
-                <div style="background: var(--stone-50); border: 2px solid var(--stone-200); border-radius: 16px; padding: 32px; text-align: left;">
-                    <div style="font-size: 14px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">DEEP DIVE</div>
-                    <div style="font-size: 36px; font-weight: 700; margin-bottom: 8px;">$99<span style="font-size: 16px; font-weight: 400;">/idea</span></div>
-                    <div style="color: var(--stone-600); margin-bottom: 24px;">AI-powered insights</div>
-                    <ul style="list-style: none; margin-bottom: 24px;">
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Everything in Research</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ AI research assistant</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Financial projections</li>
-                        <li style="padding: 8px 0; font-size: 14px;">✓ Execution playbook</li>
+                <div class="pricing-card">
+                    <h3>Business</h3>
+                    <div class="price">$99<span>/opportunity</span></div>
+                    <p class="description">Complete deep dive with AI assistant</p>
+                    <ul class="pricing-features">
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Everything in Pro
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            AI research assistant
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            90-day execution playbook
+                        </li>
+                        <li>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Financial modeling
+                        </li>
                     </ul>
-                    <a href="signup.html" class="btn" style="width: 100%; justify-content: center;">Unlock Deep Dive</a>
+                    <a href="signup.html" class="btn" style="width: 100%; justify-content: center;">Get Deep Dive</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Submit Section -->
-    <section id="submit" style="background: var(--stone-50); border-top: 1px solid var(--stone-200); padding: 80px 32px;">
-        <div style="max-width: 600px; margin: 0 auto; text-align: center;">
-            <h2 class="spektral" style="font-size: 36px; margin-bottom: 16px;">Share a Problem</h2>
-            <p style="color: var(--stone-600); margin-bottom: 32px;">Help us discover opportunities by sharing friction you've experienced</p>
-            
-            <form style="background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 32px; text-align: left;">
-                <div style="margin-bottom: 24px;">
-                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">What problem did you experience?</label>
-                    <textarea style="width: 100%; padding: 12px; border: 1px solid var(--stone-200); border-radius: 8px; font-size: 14px; min-height: 120px; resize: vertical;" placeholder="Describe the frustration or unmet need..."></textarea>
-                </div>
-                <div style="margin-bottom: 24px;">
-                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Category</label>
-                    <select style="width: 100%; padding: 12px; border: 1px solid var(--stone-200); border-radius: 8px; font-size: 14px; background: white;">
-                        <option>Select a category...</option>
-                        <option>Healthcare</option>
-                        <option>Finance</option>
-                        <option>Home Services</option>
-                        <option>Technology</option>
-                        <option>Education</option>
-                        <option>Other</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Submit Problem</button>
-            </form>
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="section-content">
+            <div class="cta-content">
+                <h2>Stop Guessing. Start Building.</h2>
+                <p>Join hundreds of founders, VCs, and product teams discovering validated opportunities</p>
+                <form class="cta-form" onsubmit="event.preventDefault(); window.location.href='signup.html';">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit">Get Started</button>
+                </form>
+                <p class="cta-note">Free tier available. No credit card required.</p>
+            </div>
         </div>
     </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-brand">
+                        <div class="footer-brand-icon">⚡</div>
+                        <span class="footer-brand-text">Friction</span>
+                    </div>
+                    <p>Transform consumer problems into validated business opportunities</p>
+                </div>
+                <div class="footer-column">
+                    <h4>Product</h4>
+                    <ul class="footer-links">
+                        <li><a href="opportunity.html">Browse Ideas</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="search.html">Search</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Privacy</a></li>
+                        <li><a href="#">Terms</a></li>
+                        <li><a href="#">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 Friction. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
-        // Flow tab switching
-        document.querySelectorAll('.flow-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.flow-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                const flow = tab.dataset.flow;
-                document.querySelectorAll('.flow-content').forEach(content => {
-                    content.style.display = 'none';
-                });
-                document.getElementById(flow + '-flow').style.display = 'block';
-            });
-        });
-
-        // Auth-aware UI
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('access_token');
             if (token) {
@@ -1038,14 +1737,6 @@
                     const user = await api.getCurrentUser();
                     document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'flex');
                     document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'none');
-                    
-                    const avatar = document.getElementById('user-avatar');
-                    if (avatar && user) {
-                        const initials = user.name 
-                            ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                            : user.email[0].toUpperCase();
-                        avatar.textContent = initials;
-                    }
                 } catch (error) {
                     localStorage.removeItem('access_token');
                 }
