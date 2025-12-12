@@ -22,7 +22,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Load initial data
-    await loadOpportunities();
+    try {
+        await loadOpportunities();
+    } catch (error) {
+        console.error('Error loading initial opportunities:', error);
+    }
     setupEventListeners();
 });
 
@@ -170,8 +174,7 @@ async function showOpportunityDetail(oppId) {
 // Fetch feasibility analysis
 async function fetchFeasibilityAnalysis(oppId) {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/feasibility/${oppId}`);
-        return await response.json();
+        return await api.getFeasibilityAnalysis(oppId);
     } catch (error) {
         console.error('Error fetching feasibility:', error);
         return null;
@@ -182,18 +185,7 @@ async function fetchFeasibilityAnalysis(oppId) {
 async function submitOpportunity(formData) {
     try {
         // First, check for duplicates
-        const duplicateCheck = await fetch(`${CONFIG.API_BASE_URL}/analytics/check-duplicate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                title: formData.title,
-                description: formData.description
-            })
-        });
-
-        const duplicateData = await duplicateCheck.json();
+        const duplicateData = await api.checkDuplicate(formData.title, formData.description);
 
         if (duplicateData.is_duplicate && duplicateData.potential_duplicates.length > 0) {
             // Show duplicate warning
@@ -329,9 +321,7 @@ function setupEventListeners() {
 // Load top feasible opportunities
 async function loadTopFeasible() {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/top-feasible?limit=10&min_score=60`);
-        const opportunities = await response.json();
-
+        const opportunities = await api.getTopFeasible(60.0, 10);
         displayTopFeasible(opportunities);
     } catch (error) {
         console.error('Error loading top feasible:', error);
@@ -366,9 +356,7 @@ function displayTopFeasible(opportunities) {
 // Load geographic distribution
 async function loadGeographicDistribution() {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/geographic/distribution`);
-        const data = await response.json();
-
+        const data = await api.getGeographicDistribution();
         displayGeographicDistribution(data);
     } catch (error) {
         console.error('Error loading geographic distribution:', error);
@@ -415,9 +403,7 @@ function displayGeographicDistribution(data) {
 // Load completion statistics
 async function loadCompletionStats() {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/analytics/completion-stats`);
-        const stats = await response.json();
-
+        const stats = await api.getCompletionStats();
         displayCompletionStats(stats);
     } catch (error) {
         console.error('Error loading completion stats:', error);
