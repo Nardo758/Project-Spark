@@ -118,3 +118,16 @@ def get_opportunity_validations(
     ).all()
 
     return validations
+
+
+@router.get("/user/me", response_model=list[ValidationSchema])
+def get_my_validations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get all validations created by the current user"""
+    validations = db.query(Validation).filter(
+        Validation.user_id == current_user.id
+    ).all()
+
+    return validations

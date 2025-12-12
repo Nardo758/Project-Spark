@@ -27,6 +27,22 @@ class Settings(BaseSettings):
     # CORS - allow all origins by default for development
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
 
+    # Email Configuration
+    RESEND_API_KEY: Optional[str] = None
+    FROM_EMAIL: Optional[str] = None
+
+    # OAuth Configuration
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GITHUB_CLIENT_ID: Optional[str] = None
+    GITHUB_CLIENT_SECRET: Optional[str] = None
+
+    # Stripe Configuration
+    STRIPE_SECRET_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    STRIPE_PRICE_PRO: Optional[str] = None
+    STRIPE_PRICE_BUSINESS: Optional[str] = None
+
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
+from app.core.rate_limit import limiter, rate_limit_exceeded_handler
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router
 import logging
 
@@ -12,6 +15,13 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Configure rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Configure security headers
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Configure CORS
 app.add_middleware(
