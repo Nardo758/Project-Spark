@@ -81,22 +81,26 @@ def get_database_url():
     pg_host = os.getenv("PGHOST")
     pg_db = os.getenv("PGDATABASE")
     pg_user = os.getenv("PGUSER")
-    pg_password = os.getenv("PGPASSWORD")
+    pg_password = os.getenv("PGPASSWORD", "")  # May be empty for local Replit PostgreSQL
     pg_port = os.getenv("PGPORT", "5432")
     
     logger.info(f"PG* variables: PGHOST={pg_host}, PGDATABASE={pg_db}, PGUSER={pg_user}, PGPORT={pg_port}")
     
-    if pg_host and pg_db and pg_user and pg_password:
-        raw_url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+    if pg_host and pg_db and pg_user:
+        # Build URL with or without password
+        if pg_password:
+            raw_url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+        else:
+            raw_url = f"postgresql://{pg_user}@{pg_host}:{pg_port}/{pg_db}"
         url = _prepare_postgres_url(raw_url)
         logger.info(f"Using PG* variables for PostgreSQL connection ({pg_host}:{pg_port}/{pg_db})")
         return url
     
-    logger.error("No valid PostgreSQL URL found. Missing: PGHOST, PGDATABASE, PGUSER, or PGPASSWORD")
+    logger.error("No valid PostgreSQL URL found. Missing: PGHOST, PGDATABASE, or PGUSER")
     logger.error("DATABASE_URL value: %s", db_url[:50] if db_url else "not set")
     raise ValueError(
-        "Database not configured. Please enable PostgreSQL in Replit Tools → Database. "
-        "Ensure PGHOST, PGDATABASE, PGUSER, and PGPASSWORD are set."
+        "Database not configured. PostgreSQL module is in .replit but connection failed. "
+        "Check that PostgreSQL service is running. Try restarting your Repl."
     )
 
 # Lazy initialization - don't create engine at import time
