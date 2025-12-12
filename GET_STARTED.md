@@ -41,7 +41,7 @@ Use **Tools → Secrets** for anything sensitive. Recommended keys:
 | `SECRET_KEY` | ✅ | Pre-filled for convenience; replace in production |
 | `RESEND_API_KEY` | Optional | Needed only if you enable transactional email |
 | `STRIPE_SECRET_KEY` | Optional | Enable if you turn on billing features |
-| `POSTGRES_URL` | Optional | Overrides `REPLIT_DB_URL` when you migrate to another Postgres provider |
+
 
 All other configuration (ports, URLs, etc.) is driven by `.replit`.
 

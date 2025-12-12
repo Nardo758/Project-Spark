@@ -33,7 +33,7 @@ BACKEND_CORS_ORIGINS=["*"]              # or your custom domains
 RESEND_API_KEY=<optional>
 STRIPE_SECRET_KEY=<optional>
 STRIPE_WEBHOOK_SECRET=<optional>
-POSTGRES_URL=<optional override>
+# PostgreSQL configured via PG* variables in .replit file
 ```
 
 All secrets are available both during development and deployment. No `.env` files are required inside the repo.

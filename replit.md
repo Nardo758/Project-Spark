@@ -2,7 +2,7 @@
 
 ## Recent Changes (December 2024)
 
-- **Database Connection Fix**: Added POSTGRES_URL secret to bypass .replit configuration conflict that was pointing to KV store instead of PostgreSQL
+- **Database Configuration Simplified**: Now uses PG* variables from .replit file (PGHOST=db, PGDATABASE=replit, PGUSER=replit)
 - **Resend Integration**: Email service configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables
 - **Stripe Integration**: Payment processing configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables  
 - **Database Migration**: Added missing user columns (oauth_provider, oauth_id, bio, avatar_url, is_admin, etc.)
@@ -104,12 +104,12 @@ Access Swagger docs at `/docs` or ReDoc at `/redoc` when running.
 
 ## Environment Variables
 
-**Required (add via Secrets):**
-- `POSTGRES_URL` - PostgreSQL connection string (copy from Database tab > Production Database > Settings)
-
-**Auto-configured on Replit:**
+**Auto-configured in .replit:**
+- `PGHOST=db` - PostgreSQL host  
+- `PGDATABASE=replit` - Database name
+- `PGUSER=replit` - Database user
 - `REPL_SLUG`, `REPL_OWNER` - For URL generation
-- `SECRET_KEY` - JWT signing (set in .replit, change for production)
+- `SECRET_KEY` - JWT signing (change for production)
 
 **Optional (add via Secrets):**
 - `RESEND_API_KEY` - Email service API key

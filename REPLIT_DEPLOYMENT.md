@@ -59,7 +59,7 @@ The app will be accessible at: `https://[your-repl-name].[your-username].repl.co
 
 The application automatically detects the Replit environment and configures itself:
 
-1. **Database**: Uses `REPLIT_DB_URL` if available, falls back to `DATABASE_URL`
+1. **Database**: Uses PG* variables (PGHOST=db, PGDATABASE=replit, PGUSER=replit)
 2. **URLs**: Automatically sets frontend/backend URLs using Replit's domain
 3. **CORS**: Configured to allow all origins for development
 
@@ -144,7 +144,7 @@ To deploy to production:
 
 ### Database
 - `REPLIT_DB_URL`: PostgreSQL connection (auto-set by Replit)
-- `DATABASE_URL`: Fallback database connection
+
 
 ### Security
 - `SECRET_KEY`: JWT signing key (default provided, change for production)
