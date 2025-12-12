@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results · Friction</title>
+    <title>Search · Friction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Claude-inspired warm palette */
-            --bg: #F5F3EF;
-            --surface: #FDFCFB;
-            --panel-border: #E8E4DF;
-            --text: #2D2A26;
-            --text-secondary: #6B6560;
-            --muted: #9E9890;
-            --accent: #D97757;
-            --accent-2: #C96646;
-            --accent-light: #F4DDD4;
-            --success: #0D9488;
-            --success-bg: #D1FAE5;
-            --pill: #F0EDE8;
-            --shadow: 0 1px 2px 0 rgba(45, 42, 38, 0.05);
-            --shadow-md: 0 1px 3px 0 rgba(45, 42, 38, 0.1), 0 1px 2px 0 rgba(45, 42, 38, 0.06);
-            --border-radius: 10px;
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-100: #d1fae5;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --white: #ffffff;
         }
 
         * {
@@ -31,75 +30,72 @@
         }
 
         body {
-            font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
             min-height: 100vh;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
 
+        .spektral {
+            font-family: 'Spectral', serif;
+        }
+
+        /* Header */
         .header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--panel-border);
-            padding: 12px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid var(--stone-200);
+            background: var(--white);
         }
 
         .header-content {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
+            padding: 16px 32px;
             display: flex;
             align-items: center;
-            gap: 24px;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 32px;
         }
 
         .logo {
-            font-size: 20px;
+            font-family: 'Spectral', serif;
+            font-size: 24px;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--stone-900);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-shrink: 0;
         }
 
-        .search-bar {
-            flex: 1;
-            max-width: 600px;
-            position: relative;
+        .logo-icon {
+            color: #d97757;
         }
 
-        .search-bar input {
-            width: 100%;
-            padding: 10px 40px 10px 16px;
-            border: 1.5px solid var(--panel-border);
-            border-radius: var(--border-radius);
+        .header-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--stone-500);
+            text-decoration: none;
             font-size: 14px;
-            background: var(--surface);
-            color: var(--text);
+            font-weight: 500;
             transition: all 0.2s;
         }
 
-        .search-bar input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-light);
-        }
-
-        .search-bar svg {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 18px;
-            height: 18px;
-            stroke: var(--text-secondary);
+        .nav-link:hover {
+            background: var(--stone-100);
+            color: var(--stone-900);
         }
 
         .header-actions {
@@ -109,231 +105,258 @@
         }
 
         .btn {
-            padding: 8px 16px;
-            border-radius: var(--border-radius);
+            padding: 10px 20px;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            border: 1px solid var(--panel-border);
-            background: var(--surface);
-            color: var(--text);
+            border: 1px solid var(--stone-200);
+            background: var(--white);
+            color: var(--stone-700);
             text-decoration: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn:hover {
-            background: var(--pill);
+            background: var(--stone-100);
         }
 
         .btn-primary {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
+            background: var(--stone-900);
+            color: var(--white);
+            border-color: var(--stone-900);
         }
 
         .btn-primary:hover {
-            background: var(--accent-2);
+            background: var(--stone-800);
         }
 
-        .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 32px 24px;
-        }
-
+        /* Search Header */
         .search-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            padding: 32px 0;
+        }
+
+        .search-header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            max-width: 600px;
             margin-bottom: 24px;
         }
 
-        .search-meta {
+        .search-input {
+            width: 100%;
+            padding: 16px 48px 16px 20px;
+            border: 2px solid var(--stone-200);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--white);
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--stone-900);
+        }
+
+        .search-input-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--stone-400);
+        }
+
+        /* Filter Chips */
+        .filter-chips {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .search-meta h1 {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .search-meta span {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .filters {
-            display: flex;
-            gap: 12px;
             flex-wrap: wrap;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--panel-border);
+            gap: 8px;
         }
 
         .filter-chip {
             padding: 8px 16px;
             border-radius: 20px;
-            background: transparent;
-            border: 1.5px solid var(--panel-border);
+            background: var(--stone-100);
+            border: 1px solid var(--stone-200);
             font-size: 13px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 500;
-        }
-
-        .filter-chip:hover {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15);
-        }
-
-        .filter-chip.active {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(217, 119, 87, 0.12);
-        }
-
-        .results-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .result-card {
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 22px;
+            color: var(--stone-700);
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
+            transition: all 0.2s;
         }
 
-        .result-card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: var(--accent);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
+        .filter-chip:hover,
+        .filter-chip.active {
+            background: var(--stone-900);
+            color: var(--white);
+            border-color: var(--stone-900);
         }
 
-        .result-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 8px 24px rgba(217, 119, 87, 0.12);
-            transform: translateY(-3px);
+        /* Main Content */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 32px;
         }
 
-        .result-card:hover::before {
-            transform: scaleY(1);
+        /* Results */
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
         }
 
-        .result-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 8px;
+        .results-header h2 {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
         }
 
-        .result-description {
-            color: var(--text-secondary);
+        .results-count {
+            color: var(--stone-500);
             font-size: 14px;
-            line-height: 1.6;
+        }
+
+        /* Opportunity Card */
+        .opportunity-card {
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .opportunity-card:hover {
+            border-color: var(--stone-400);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .opportunity-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
             margin-bottom: 12px;
         }
 
-        .result-meta {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            font-size: 13px;
-            color: var(--text-secondary);
+        .opportunity-category {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--stone-500);
+            margin-bottom: 4px;
         }
 
-        .result-meta span {
+        .opportunity-title {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--stone-900);
+        }
+
+        .validation-score {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .opportunity-description {
+            color: var(--stone-600);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .opportunity-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: var(--stone-500);
+        }
+
+        .opportunity-meta span {
             display: flex;
             align-items: center;
             gap: 4px;
         }
 
         .growth-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .growth-badge.up {
-            background: var(--success-bg);
-            color: #065F46;
-        }
-
-        .category-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            background: var(--pill);
-            font-size: 12px;
+            color: var(--emerald-600);
             font-weight: 500;
         }
 
+        /* Sidebar */
         .sidebar {
             position: sticky;
-            top: 80px;
+            top: 32px;
         }
 
         .sidebar-card {
-            background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 20px;
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 12px;
+            padding: 24px;
             margin-bottom: 16px;
-            box-shadow: var(--shadow);
         }
 
         .sidebar-card h3 {
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 12px;
+            color: var(--stone-900);
+            margin-bottom: 16px;
         }
 
-        .related-item {
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
+        .sidebar-item {
+            padding: 8px 0;
             font-size: 14px;
-            margin-bottom: 8px;
+            color: var(--stone-600);
+            cursor: pointer;
+            transition: color 0.2s;
         }
 
-        .related-item:hover {
-            background: var(--pill);
+        .sidebar-item:hover {
+            color: var(--stone-900);
         }
 
-        .layout-grid {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 32px;
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 14px;
+            color: var(--stone-700);
+            cursor: pointer;
         }
 
+        .checkbox-label input {
+            accent-color: var(--stone-900);
+        }
+
+        /* Responsive */
         @media (max-width: 968px) {
-            .layout-grid {
+            .main-content {
                 grid-template-columns: 1fr;
             }
 
@@ -344,181 +367,181 @@
     </style>
 </head>
 <body>
+    <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <a href="index.html" class="logo">
-                <span>⚡</span>
-                Friction
-            </a>
-
-            <nav class="header-nav" style="display: flex; gap: 8px; margin-left: 24px;">
-                <a href="search.html" class="nav-link" style="padding: 8px 16px; border-radius: 10px; color: #6B6560; text-decoration: none; font-size: 14px; font-weight: 500;">Search</a>
-                <a href="category.html" class="nav-link" style="padding: 8px 16px; border-radius: 10px; color: #6B6560; text-decoration: none; font-size: 14px; font-weight: 500;">Categories</a>
-                <a href="index.html#submit" class="nav-link" style="padding: 8px 16px; border-radius: 10px; color: #6B6560; text-decoration: none; font-size: 14px; font-weight: 500;">Submit</a>
-                <a href="index.html#pricing" class="nav-link" style="padding: 8px 16px; border-radius: 10px; color: #6B6560; text-decoration: none; font-size: 14px; font-weight: 500;">Pricing</a>
-            </nav>
-
-            <div class="search-bar" style="flex: 1; max-width: 400px;">
-                <input type="text" placeholder="Search opportunities..." value="healthcare scheduling" id="search-input">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                    <path d="M11 5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z" stroke="currentColor"/>
-                    <path d="m20 20-4.35-4.35" stroke="currentColor" stroke-linecap="round"/>
-                </svg>
+            <div class="header-left">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">⚡</span>
+                    Friction
+                </a>
+                <nav class="header-nav">
+                    <a href="search.html" class="nav-link">Search</a>
+                    <a href="category.html" class="nav-link">Categories</a>
+                    <a href="index.html#submit" class="nav-link">Submit</a>
+                    <a href="index.html#pricing" class="nav-link">Pricing</a>
+                </nav>
             </div>
-
             <div class="header-actions" id="header-actions">
                 <a href="login.html" class="btn guest-only">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
                 <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
                 <div class="user-menu auth-required" style="display: none; cursor: pointer;" id="user-menu-btn">
-                    <span id="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
+                    <span id="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--stone-900); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
                 </div>
             </div>
         </div>
     </header>
 
+    <!-- Search Header -->
+    <div class="search-header">
+        <div class="search-header-content">
+            <div class="search-input-wrapper">
+                <input type="text" class="search-input" placeholder="Search for opportunities..." id="search-input" value="healthcare scheduling">
+                <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            <div class="filter-chips">
+                <span class="filter-chip active">All</span>
+                <span class="filter-chip">🏥 Healthcare</span>
+                <span class="filter-chip">💰 Finance</span>
+                <span class="filter-chip">💻 Technology</span>
+                <span class="filter-chip">🏠 Home & Living</span>
+                <span class="filter-chip">Trending ↑</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     <main class="main-content">
-        <div class="layout-grid">
-            <div>
-                <div class="search-header">
-                    <div class="search-meta">
-                        <h1>Search Results</h1>
-                        <span>234 opportunities found</span>
-                    </div>
+        <div class="results-section">
+            <div class="results-header">
+                <h2 class="spektral">Search Results</h2>
+                <span class="results-count">234 opportunities found</span>
+            </div>
 
-                    <div class="filters">
-                        <div class="filter-chip active">All</div>
-                        <div class="filter-chip">🏥 Healthcare</div>
-                        <div class="filter-chip">💰 Finance</div>
-                        <div class="filter-chip">💻 Technology</div>
-                        <div class="filter-chip">🏠 Home & Living</div>
-                        <div class="filter-chip">Trending ↑</div>
-                        <div class="filter-chip">High Validation (1000+)</div>
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Healthcare</div>
+                        <div class="opportunity-title">Universal Healthcare Appointment Scheduling Platform</div>
                     </div>
+                    <div class="validation-score">92/100</div>
                 </div>
-
-                <div class="results-list">
-                    <div class="result-card">
-                        <div class="result-title">Universal Healthcare Appointment Scheduling Platform</div>
-                        <div class="result-description">
-                            People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction.
-                        </div>
-                        <div class="result-meta">
-                            <span class="category-tag">🏥 Healthcare</span>
-                            <span>👍 4,523 validations</span>
-                            <span class="growth-badge up">↑ 18% this week</span>
-                            <span>💰 $2.3B market</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card">
-                        <div class="result-title">Prescription Refill Automation Platform</div>
-                        <div class="result-description">
-                            Managing prescription refills across multiple pharmacies and providers is time-consuming. Patients need reminders, easy refill requests, and cross-pharmacy price comparison in one place.
-                        </div>
-                        <div class="result-meta">
-                            <span class="category-tag">🏥 Healthcare</span>
-                            <span>👍 2,891 validations</span>
-                            <span class="growth-badge up">↑ 12% this week</span>
-                            <span>💰 $890M market</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card">
-                        <div class="result-title">Medical Records Portability Solution</div>
-                        <div class="result-description">
-                            Patients switching healthcare providers struggle to transfer medical records. A seamless, secure platform for medical record portability would save time and improve care continuity.
-                        </div>
-                        <div class="result-meta">
-                            <span class="category-tag">🏥 Healthcare</span>
-                            <span>👍 3,456 validations</span>
-                            <span class="growth-badge up">↑ 9% this week</span>
-                            <span>💰 $1.2B market</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card">
-                        <div class="result-title">Healthcare Price Transparency Tool</div>
-                        <div class="result-description">
-                            Understanding healthcare costs before treatment is nearly impossible. Patients need a tool to compare prices across providers and understand insurance coverage in advance.
-                        </div>
-                        <div class="result-meta">
-                            <span class="category-tag">🏥 Healthcare</span>
-                            <span>👍 5,234 validations</span>
-                            <span class="growth-badge up">↑ 22% this week</span>
-                            <span>💰 $1.8B market</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card">
-                        <div class="result-title">Telehealth Integration Platform</div>
-                        <div class="result-description">
-                            Managing appointments across in-person and telehealth visits is confusing. A unified platform for booking and tracking both types of appointments would improve patient experience.
-                        </div>
-                        <div class="result-meta">
-                            <span class="category-tag">🏥 Healthcare</span>
-                            <span>👍 2,234 validations</span>
-                            <span class="growth-badge up">↑ 15% this week</span>
-                            <span>💰 $950M market</span>
-                        </div>
-                    </div>
-
-                    <div class="result-card">
-                        <div class="result-title">Healthcare Provider Rating & Review System</div>
-                        <div class="result-description">
-                            Finding quality healthcare providers based on patient reviews is difficult. A transparent, verified rating system for doctors and healthcare facilities would help patients make informed decisions.
-                        </div>
-                        <div class="result-meta">
-                            <span class="category-tag">🏥 Healthcare</span>
-                            <span>👍 4,123 validations</span>
-                            <span class="growth-badge up">↑ 11% this week</span>
-                            <span>💰 $560M market</span>
-                        </div>
-                    </div>
+                <div class="opportunity-description">
+                    People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction.
+                </div>
+                <div class="opportunity-meta">
+                    <span>📊 4,523 submissions</span>
+                    <span class="growth-badge">↑ 18% this week</span>
+                    <span>💰 $2.3B market</span>
                 </div>
             </div>
 
-            <aside class="sidebar">
-                <div class="sidebar-card">
-                    <h3>Refine Your Search</h3>
-                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" checked> Trending opportunities
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox"> High validation (1000+)
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox"> Recent (7 days)
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox"> Large market ($1B+)
-                        </label>
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Healthcare</div>
+                        <div class="opportunity-title">Prescription Refill Automation Platform</div>
                     </div>
+                    <div class="validation-score">87/100</div>
                 </div>
+                <div class="opportunity-description">
+                    Managing prescription refills across multiple pharmacies and providers is time-consuming. Patients need reminders, easy refill requests, and cross-pharmacy price comparison in one place.
+                </div>
+                <div class="opportunity-meta">
+                    <span>📊 2,891 submissions</span>
+                    <span class="growth-badge">↑ 12% this week</span>
+                    <span>💰 $890M market</span>
+                </div>
+            </div>
 
-                <div class="sidebar-card">
-                    <h3>Related Searches</h3>
-                    <div class="related-item">Medical appointment booking</div>
-                    <div class="related-item">Healthcare technology</div>
-                    <div class="related-item">Patient scheduling software</div>
-                    <div class="related-item">Telehealth platforms</div>
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Healthcare</div>
+                        <div class="opportunity-title">Medical Records Portability Solution</div>
+                    </div>
+                    <div class="validation-score">84/100</div>
                 </div>
+                <div class="opportunity-description">
+                    Patients struggle to access and share their complete medical history across providers. Fragmented records lead to repeated tests, medication errors, and gaps in care coordination.
+                </div>
+                <div class="opportunity-meta">
+                    <span>📊 3,456 submissions</span>
+                    <span class="growth-badge">↑ 24% this week</span>
+                    <span>💰 $1.8B market</span>
+                </div>
+            </div>
 
-                <div class="sidebar-card">
-                    <h3>Trending Categories</h3>
-                    <div class="related-item">🏥 Healthcare</div>
-                    <div class="related-item">💰 Finance</div>
-                    <div class="related-item">💻 Technology</div>
-                    <div class="related-item">🏠 Home & Living</div>
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Healthcare</div>
+                        <div class="opportunity-title">Mental Health Support Accessibility</div>
+                    </div>
+                    <div class="validation-score">89/100</div>
                 </div>
-            </aside>
+                <div class="opportunity-description">
+                    Finding affordable, quality mental health support is difficult. Long wait times, high costs, and limited insurance coverage create barriers. A platform connecting patients with verified, affordable therapists would help.
+                </div>
+                <div class="opportunity-meta">
+                    <span>📊 6,123 submissions</span>
+                    <span class="growth-badge">↑ 28% this week</span>
+                    <span>💰 $3.1B market</span>
+                </div>
+            </div>
         </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-card">
+                <h3>Refine Your Search</h3>
+                <label class="checkbox-label">
+                    <input type="checkbox" checked> Trending opportunities
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox"> High validation (80+)
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox"> Recent (7 days)
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox"> Large market ($1B+)
+                </label>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>Related Searches</h3>
+                <div class="sidebar-item">Medical appointment booking</div>
+                <div class="sidebar-item">Healthcare technology</div>
+                <div class="sidebar-item">Patient scheduling software</div>
+                <div class="sidebar-item">Telehealth platforms</div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>Trending Categories</h3>
+                <div class="sidebar-item">🏥 Healthcare</div>
+                <div class="sidebar-item">💰 Finance</div>
+                <div class="sidebar-item">💻 Technology</div>
+                <div class="sidebar-item">🏠 Home & Living</div>
+            </div>
+        </aside>
     </main>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        // Filter chip toggle
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+
+        // Auth-aware UI
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('access_token');
             if (token) {
@@ -542,27 +565,6 @@
                 } catch (error) {
                     localStorage.removeItem('access_token');
                 }
-            }
-        });
-
-        // Result card clicks
-        document.querySelectorAll('.result-card').forEach(card => {
-            card.addEventListener('click', () => {
-                window.location.href = 'index.html#detail';
-            });
-        });
-
-        // Filter chips
-        document.querySelectorAll('.filter-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                chip.classList.toggle('active');
-            });
-        });
-
-        // Search input
-        document.getElementById('search-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                console.log('Search for:', e.target.value);
             }
         });
     </script>

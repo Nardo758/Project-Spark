@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Healthcare Opportunities · Friction</title>
+    <title>Categories · Friction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Claude-inspired warm palette */
-            --bg: #F5F3EF;
-            --surface: #FDFCFB;
-            --panel-border: #E8E4DF;
-            --text: #2D2A26;
-            --text-secondary: #6B6560;
-            --muted: #9E9890;
-            --accent: #D97757;
-            --accent-2: #C96646;
-            --accent-light: #F4DDD4;
-            --success: #0D9488;
-            --success-bg: #D1FAE5;
-            --pill: #F0EDE8;
-            --shadow: 0 1px 2px 0 rgba(45, 42, 38, 0.05);
-            --shadow-md: 0 1px 3px 0 rgba(45, 42, 38, 0.1), 0 1px 2px 0 rgba(45, 42, 38, 0.06);
-            --border-radius: 10px;
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-100: #d1fae5;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --white: #ffffff;
         }
 
         * {
@@ -31,41 +30,52 @@
         }
 
         body {
-            font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
             min-height: 100vh;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
 
+        .spektral {
+            font-family: 'Spectral', serif;
+        }
+
+        /* Header */
         .header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--panel-border);
-            padding: 12px 32px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid var(--stone-200);
+            background: var(--white);
         }
 
         .header-content {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
+            padding: 16px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
         .logo {
-            font-size: 20px;
+            font-family: 'Spectral', serif;
+            font-size: 24px;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--stone-900);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .logo-icon {
+            color: #d97757;
         }
 
         .header-nav {
@@ -75,8 +85,8 @@
 
         .nav-link {
             padding: 8px 16px;
-            border-radius: var(--border-radius);
-            color: var(--text-secondary);
+            border-radius: 8px;
+            color: var(--stone-500);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
@@ -84,252 +94,250 @@
         }
 
         .nav-link:hover {
-            background: var(--pill);
-            color: var(--text);
+            background: var(--stone-100);
+            color: var(--stone-900);
         }
 
         .header-actions {
             display: flex;
             gap: 12px;
+            align-items: center;
         }
 
         .btn {
-            padding: 8px 16px;
-            border-radius: var(--border-radius);
+            padding: 10px 20px;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            border: 1px solid var(--panel-border);
-            background: var(--surface);
-            color: var(--text);
+            border: 1px solid var(--stone-200);
+            background: var(--white);
+            color: var(--stone-700);
             text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn:hover {
-            background: var(--pill);
+            background: var(--stone-100);
         }
 
         .btn-primary {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
+            background: var(--stone-900);
+            color: var(--white);
+            border-color: var(--stone-900);
         }
 
         .btn-primary:hover {
-            background: var(--accent-2);
+            background: var(--stone-800);
         }
 
-        .hero {
-            background: linear-gradient(135deg, var(--accent-light) 0%, var(--bg) 100%);
-            border-bottom: 1px solid var(--panel-border);
-            padding: 64px 24px;
+        /* Page Header */
+        .page-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            padding: 48px 0;
         }
 
-        .hero-content {
-            max-width: 1200px;
+        .page-header-content {
+            max-width: 1280px;
             margin: 0 auto;
+            padding: 0 32px;
+            text-align: center;
         }
 
-        .hero h1 {
-            font-size: 48px;
+        .page-header h1 {
+            font-family: 'Spectral', serif;
+            font-size: 36px;
             font-weight: 700;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
+            color: var(--stone-900);
+            margin-bottom: 12px;
         }
 
-        .hero p {
+        .page-header p {
+            color: var(--stone-600);
             font-size: 18px;
-            color: var(--text-secondary);
-            max-width: 700px;
-            margin-bottom: 24px;
-        }
-
-        .hero-stats {
-            display: flex;
-            gap: 32px;
-        }
-
-        .hero-stat strong {
-            display: block;
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .hero-stat span {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .main-content {
-            max-width: 1200px;
+            max-width: 600px;
             margin: 0 auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 48px 32px;
+        }
+
+        /* Categories Grid */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+
+        .category-card {
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 16px;
             padding: 32px 24px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 0;
-            border-bottom: 1px solid var(--panel-border);
-            margin-bottom: 24px;
-        }
-
-        .tab {
-            padding: 12px 20px;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            font-size: 14px;
-            font-weight: 500;
+            text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-            border-bottom: 2px solid transparent;
         }
 
-        .tab:hover {
-            color: var(--text);
-            background: var(--pill);
+        .category-card:hover {
+            border-color: var(--stone-400);
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
         }
 
-        .tab.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
+        .category-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
         }
 
-        .opportunity-grid {
-            display: grid;
-            gap: 16px;
-        }
-
-        .opportunity-card {
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 22px;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .opportunity-card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: var(--accent);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-        }
-
-        .opportunity-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 8px 24px rgba(217, 119, 87, 0.12);
-            transform: translateY(-3px);
-        }
-
-        .opportunity-card:hover::before {
-            transform: scaleY(1);
-        }
-
-        .opportunity-title {
+        .category-name {
+            font-family: 'Spectral', serif;
             font-size: 18px;
             font-weight: 600;
+            color: var(--stone-900);
             margin-bottom: 8px;
         }
 
+        .category-count {
+            font-size: 14px;
+            color: var(--stone-500);
+        }
+
+        /* Trending Section */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .section-header h2 {
+            font-family: 'Spectral', serif;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .section-header a {
+            color: var(--stone-500);
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .section-header a:hover {
+            color: var(--stone-900);
+        }
+
+        /* Opportunity Cards */
+        .opportunities-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .opportunity-card {
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 12px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .opportunity-card:hover {
+            border-color: var(--stone-400);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .opportunity-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .opportunity-category {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--stone-500);
+            margin-bottom: 4px;
+        }
+
+        .opportunity-title {
+            font-family: 'Spectral', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--stone-900);
+        }
+
+        .validation-score {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
         .opportunity-description {
-            color: var(--text-secondary);
+            color: var(--stone-600);
             font-size: 14px;
             line-height: 1.6;
             margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .opportunity-meta {
             display: flex;
             gap: 16px;
-            flex-wrap: wrap;
-            font-size: 13px;
-            color: var(--text-secondary);
+            font-size: 12px;
+            color: var(--stone-500);
         }
 
         .growth-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            background: var(--success-bg);
-            color: #065F46;
+            color: var(--emerald-600);
+            font-weight: 500;
         }
 
-        .subcategories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .categories-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .opportunities-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .subcategory-card {
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 18px;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .subcategory-card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--accent);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .subcategory-card:hover {
-            border-color: var(--accent);
-            background: var(--accent-light);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(217, 119, 87, 0.15);
-        }
-
-        .subcategory-card:hover::after {
-            transform: scaleX(1);
-        }
-
-        .subcategory-card strong {
-            display: block;
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-
-        .subcategory-card span {
-            font-size: 13px;
-            color: var(--text-secondary);
+        @media (max-width: 640px) {
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <div style="display: flex; align-items: center; gap: 24px;">
+            <div class="header-left">
                 <a href="index.html" class="logo">
-                    <span>⚡</span>
+                    <span class="logo-icon">⚡</span>
                     Friction
                 </a>
                 <nav class="header-nav">
@@ -339,151 +347,147 @@
                     <a href="index.html#pricing" class="nav-link">Pricing</a>
                 </nav>
             </div>
-
             <div class="header-actions" id="header-actions">
                 <a href="login.html" class="btn guest-only">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
                 <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
                 <div class="user-menu auth-required" style="display: none; cursor: pointer;" id="user-menu-btn">
-                    <span id="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
+                    <span id="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--stone-900); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <div class="hero">
-        <div class="hero-content">
-            <h1>🏥 Healthcare & Wellness</h1>
-            <p>Discover validated opportunities in healthcare technology, patient care, wellness, and medical services. These problems represent real needs from patients, providers, and healthcare professionals.</p>
-            <div class="hero-stats">
-                <div class="hero-stat">
-                    <strong>15,672</strong>
-                    <span>opportunities</span>
-                </div>
-                <div class="hero-stat">
-                    <strong>234K+</strong>
-                    <span>validations</span>
-                </div>
-                <div class="hero-stat">
-                    <strong>$47B</strong>
-                    <span>total addressable market</span>
-                </div>
-            </div>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <h1>Browse by Category</h1>
+            <p>Explore validated opportunities across industries and verticals</p>
         </div>
     </div>
 
+    <!-- Main Content -->
     <main class="main-content">
-        <h2 style="margin-bottom: 16px;">Subcategories</h2>
-        <div class="subcategories">
-            <div class="subcategory-card">
-                <strong>🗓️ Appointment Management</strong>
-                <span>2,341 opportunities</span>
+        <!-- Categories Grid -->
+        <div class="categories-grid">
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">🏥</div>
+                <div class="category-name">Healthcare</div>
+                <div class="category-count">847 opportunities</div>
             </div>
-            <div class="subcategory-card">
-                <strong>💊 Prescription & Pharmacy</strong>
-                <span>1,892 opportunities</span>
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">💰</div>
+                <div class="category-name">Finance</div>
+                <div class="category-count">623 opportunities</div>
             </div>
-            <div class="subcategory-card">
-                <strong>📋 Medical Records</strong>
-                <span>1,567 opportunities</span>
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">🏠</div>
+                <div class="category-name">Home Services</div>
+                <div class="category-count">512 opportunities</div>
             </div>
-            <div class="subcategory-card">
-                <strong>💰 Insurance & Billing</strong>
-                <span>2,123 opportunities</span>
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">💻</div>
+                <div class="category-name">Technology</div>
+                <div class="category-count">934 opportunities</div>
             </div>
-            <div class="subcategory-card">
-                <strong>🏃 Fitness & Wellness</strong>
-                <span>3,234 opportunities</span>
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">🎓</div>
+                <div class="category-name">Education</div>
+                <div class="category-count">389 opportunities</div>
             </div>
-            <div class="subcategory-card">
-                <strong>🧠 Mental Health</strong>
-                <span>2,891 opportunities</span>
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">🍔</div>
+                <div class="category-name">Food & Dining</div>
+                <div class="category-count">276 opportunities</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">✈️</div>
+                <div class="category-name">Travel</div>
+                <div class="category-count">198 opportunities</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='search.html'">
+                <div class="category-icon">🏋️</div>
+                <div class="category-name">Fitness & Wellness</div>
+                <div class="category-count">234 opportunities</div>
             </div>
         </div>
 
-        <div class="tabs">
-            <button class="tab active">Trending</button>
-            <button class="tab">Most Validated</button>
-            <button class="tab">Recent</button>
-            <button class="tab">Largest Market</button>
+        <!-- Trending Section -->
+        <div class="section-header">
+            <h2 class="spektral">Trending This Week</h2>
+            <a href="search.html">View all →</a>
         </div>
 
-        <div class="opportunity-grid">
-            <div class="opportunity-card">
-                <div class="opportunity-title">Universal Healthcare Appointment Scheduling Platform</div>
+        <div class="opportunities-grid">
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Home Services</div>
+                        <div class="opportunity-title">On-Demand Home Maintenance Subscription</div>
+                    </div>
+                    <div class="validation-score">87/100</div>
+                </div>
                 <div class="opportunity-description">
-                    People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction.
+                    Homeowners struggle with reactive, expensive emergency repairs and lack a reliable way to maintain their homes proactively.
                 </div>
                 <div class="opportunity-meta">
-                    <span>👍 4,523 validations</span>
+                    <span>📊 2,847 submissions</span>
+                    <span class="growth-badge">↑ 34% this week</span>
+                    <span>💰 $8.4B market</span>
+                </div>
+            </div>
+
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Healthcare</div>
+                        <div class="opportunity-title">Universal Healthcare Scheduling</div>
+                    </div>
+                    <div class="validation-score">92/100</div>
+                </div>
+                <div class="opportunity-description">
+                    People managing healthcare appointments across multiple providers need a unified scheduling platform.
+                </div>
+                <div class="opportunity-meta">
+                    <span>📊 4,523 submissions</span>
                     <span class="growth-badge">↑ 18% this week</span>
                     <span>💰 $2.3B market</span>
-                    <span>📅 3 months ago</span>
                 </div>
             </div>
 
-            <div class="opportunity-card">
-                <div class="opportunity-title">Healthcare Price Transparency Tool</div>
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Finance</div>
+                        <div class="opportunity-title">Transparent Small Business Banking</div>
+                    </div>
+                    <div class="validation-score">85/100</div>
+                </div>
                 <div class="opportunity-description">
-                    Understanding healthcare costs before treatment is nearly impossible. Patients need a tool to compare prices across providers and understand insurance coverage in advance to make informed decisions.
+                    Small business owners are frustrated with hidden fees, complex pricing, and poor customer service from traditional banks.
                 </div>
                 <div class="opportunity-meta">
-                    <span>👍 5,234 validations</span>
+                    <span>📊 3,891 submissions</span>
                     <span class="growth-badge">↑ 22% this week</span>
-                    <span>💰 $1.8B market</span>
-                    <span>📅 2 months ago</span>
+                    <span>💰 $4.1B market</span>
                 </div>
             </div>
 
-            <div class="opportunity-card">
-                <div class="opportunity-title">Medical Records Portability Solution</div>
+            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
+                <div class="opportunity-header">
+                    <div>
+                        <div class="opportunity-category">Technology</div>
+                        <div class="opportunity-title">Subscription Management Dashboard</div>
+                    </div>
+                    <div class="validation-score">81/100</div>
+                </div>
                 <div class="opportunity-description">
-                    Patients switching healthcare providers struggle to transfer medical records. A seamless, secure platform for medical record portability would save time and improve care continuity across different healthcare systems.
+                    Consumers struggle to track and manage their growing list of digital subscriptions across streaming, software, and services.
                 </div>
                 <div class="opportunity-meta">
-                    <span>👍 3,456 validations</span>
-                    <span class="growth-badge">↑ 9% this week</span>
-                    <span>💰 $1.2B market</span>
-                    <span>📅 4 months ago</span>
-                </div>
-            </div>
-
-            <div class="opportunity-card">
-                <div class="opportunity-title">Prescription Refill Automation Platform</div>
-                <div class="opportunity-description">
-                    Managing prescription refills across multiple pharmacies and providers is time-consuming. Patients need reminders, easy refill requests, and cross-pharmacy price comparison in one unified platform.
-                </div>
-                <div class="opportunity-meta">
-                    <span>👍 2,891 validations</span>
-                    <span class="growth-badge">↑ 12% this week</span>
-                    <span>💰 $890M market</span>
-                    <span>📅 5 months ago</span>
-                </div>
-            </div>
-
-            <div class="opportunity-card">
-                <div class="opportunity-title">Mental Health Support Accessibility</div>
-                <div class="opportunity-description">
-                    Finding affordable, quality mental health support is difficult. Long wait times, high costs, and limited insurance coverage create barriers. A platform connecting patients with verified, affordable therapists would help.
-                </div>
-                <div class="opportunity-meta">
-                    <span>👍 6,123 validations</span>
-                    <span class="growth-badge">↑ 28% this week</span>
-                    <span>💰 $3.1B market</span>
-                    <span>📅 1 month ago</span>
-                </div>
-            </div>
-
-            <div class="opportunity-card">
-                <div class="opportunity-title">Telehealth Integration Platform</div>
-                <div class="opportunity-description">
-                    Managing appointments across in-person and telehealth visits is confusing. A unified platform for booking and tracking both types of appointments with seamless care coordination would improve patient experience.
-                </div>
-                <div class="opportunity-meta">
-                    <span>👍 2,234 validations</span>
+                    <span>📊 2,156 submissions</span>
                     <span class="growth-badge">↑ 15% this week</span>
-                    <span>💰 $950M market</span>
-                    <span>📅 2 months ago</span>
+                    <span>💰 $1.2B market</span>
                 </div>
             </div>
         </div>
@@ -492,6 +496,7 @@
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        // Auth-aware UI
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('access_token');
             if (token) {
@@ -516,28 +521,6 @@
                     localStorage.removeItem('access_token');
                 }
             }
-        });
-
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-            });
-        });
-
-        // Opportunity card clicks
-        document.querySelectorAll('.opportunity-card').forEach(card => {
-            card.addEventListener('click', () => {
-                window.location.href = 'index.html#detail';
-            });
-        });
-
-        // Subcategory clicks
-        document.querySelectorAll('.subcategory-card').forEach(card => {
-            card.addEventListener('click', () => {
-                console.log('Filter by:', card.querySelector('strong').textContent);
-            });
         });
     </script>
 </body>

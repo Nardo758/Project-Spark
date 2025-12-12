@@ -4,29 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Friction · Problem Discovery Engine</title>
-    <link rel="stylesheet" href="css/features.css">
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Claude-inspired warm palette */
-            --bg: #F5F3EF;
-            --surface: #FDFCFB;
-            --panel: #FDFCFB;
-            --panel-border: #E8E4DF;
-            --text: #2D2A26;
-            --text-secondary: #6B6560;
-            --muted: #9E9890;
-            --accent: #D97757;
-            --accent-2: #C96646;
-            --accent-light: #F4DDD4;
-            --success: #0D9488;
-            --success-bg: #D1FAE5;
-            --danger: #DC2626;
-            --danger-bg: #FEE2E2;
-            --pill: #F0EDE8;
-            --shadow: 0 1px 2px 0 rgba(45, 42, 38, 0.05);
-            --shadow-md: 0 1px 3px 0 rgba(45, 42, 38, 0.1), 0 1px 2px 0 rgba(45, 42, 38, 0.06);
-            --shadow-lg: 0 4px 6px -1px rgba(45, 42, 38, 0.1), 0 2px 4px -1px rgba(45, 42, 38, 0.06);
-            --border-radius: 10px;
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-100: #d1fae5;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --violet-100: #ede9fe;
+            --violet-700: #6d28d9;
+            --blue-100: #dbeafe;
+            --blue-500: #3b82f6;
+            --blue-700: #1d4ed8;
+            --green-100: #dcfce7;
+            --green-500: #22c55e;
+            --green-700: #15803d;
+            --amber-50: #fffbeb;
+            --amber-100: #fef3c7;
+            --amber-200: #fde68a;
+            --amber-700: #b45309;
+            --white: #ffffff;
         }
 
         * {
@@ -36,52 +42,85 @@
         }
 
         body {
-            font-family: "Inter", "SF Pro Display", "Segoe UI", system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
             min-height: 100vh;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
-        .layout-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+        .spektral {
+            font-family: 'Spectral', serif;
+        }
+
+        .inter {
+            font-family: 'Inter', sans-serif;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+        .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+        .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+        .stagger-4 { animation-delay: 0.4s; opacity: 0; }
+
+        .animated-arrow {
+            animation: pulse 2s ease-in-out infinite;
         }
 
         /* Header */
         .header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--panel-border);
-            padding: 12px 32px;
+            border-bottom: 1px solid var(--stone-200);
+            background: var(--white);
+        }
+
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.95);
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 32px;
         }
 
         .logo {
-            font-size: 20px;
+            font-family: 'Spectral', serif;
+            font-size: 24px;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--stone-900);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .logo-icon {
+            color: #d97757;
         }
 
         .header-nav {
@@ -92,7 +131,7 @@
         .nav-link {
             padding: 8px 16px;
             border-radius: 8px;
-            color: var(--text-secondary);
+            color: var(--stone-500);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
@@ -100,8 +139,8 @@
         }
 
         .nav-link:hover {
-            background: var(--pill);
-            color: var(--text);
+            background: var(--stone-100);
+            color: var(--stone-900);
         }
 
         .header-actions {
@@ -110,1056 +149,476 @@
             align-items: center;
         }
 
-        .chip-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 24px;
-        }
-
-        .chip {
-            padding: 6px 14px;
-            border-radius: 20px;
-            background: transparent;
-            border: 1.5px solid var(--panel-border);
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .chip:hover {
-            border-color: var(--accent);
-            background: var(--accent-light);
-            color: var(--accent);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(217, 119, 87, 0.15);
-        }
-
-        .sidebar-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--panel-border);
-            border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 16px;
-        }
-
-        .sidebar-card h3 {
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-
-        .sidebar-card strong {
-            font-size: 24px;
-        }
-
-        .workspace {
-            flex: 1;
-            padding: 48px 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .command-bar {
-            display: none;
-        }
-
         .btn {
+            padding: 10px 20px;
             border-radius: 8px;
-            padding: 10px 18px;
-            font-weight: 500;
-            font-size: 14px;
-            border: 1px solid var(--panel-border);
-            cursor: pointer;
-            background: var(--surface);
-            color: var(--text);
-            transition: all 0.15s ease;
-        }
-
-        .btn:hover {
-            background: var(--pill);
-            border-color: var(--muted);
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-2);
-            border-color: var(--accent-2);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-secondary {
-            background: var(--pill);
-            border-color: transparent;
-        }
-
-        .mode-tabs {
-            display: flex;
-            gap: 0;
-            border-bottom: 1px solid var(--panel-border);
-            margin-bottom: 24px;
-            width: 100%;
-        }
-
-        .tab-pill {
-            padding: 12px 20px;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
             font-size: 14px;
             font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-bottom: 2px solid transparent;
-            position: relative;
-        }
-
-        .tab-pill:hover {
-            color: var(--text);
-            background: var(--pill);
-        }
-
-        .tab-pill.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-            background: transparent;
-        }
-
-        .section-panel {
-            display: none;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .section-panel.active {
-            display: flex;
-        }
-
-        .panel-card {
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            transition: all 0.2s ease;
-        }
-
-        .panel-card:hover {
-            border-color: rgba(217, 119, 87, 0.2);
-            box-shadow: 0 4px 12px rgba(45, 42, 38, 0.08);
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .panel-header h2 {
-            font-size: 22px;
-        }
-
-        .subdued {
-            color: var(--text-secondary);
-        }
-
-        .hero-slab {
-            text-align: center;
-            padding: 80px 24px 64px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .hero-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .hero-content h2 {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .hero-content p {
-            max-width: 600px;
-            font-size: 18px;
-            color: var(--text-secondary);
-        }
-
-        .hero-metrics {
-            display: flex;
-            gap: 48px;
-            margin-top: 24px;
-            justify-content: center;
-        }
-
-        .hero-metrics > div {
-            text-align: center;
-        }
-
-        .hero-metrics strong {
-            display: block;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .hero-metrics span {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .suggestion-stack {
-            margin-top: 24px;
-            display: grid;
-            gap: 12px;
-        }
-
-        .suggestion {
-            padding: 14px;
-            border-radius: 16px;
-            background: rgba(2, 4, 10, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .suggestion strong {
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .hero-search {
-            position: relative;
-            margin-top: 32px;
-            width: 100%;
-            max-width: 720px;
-        }
-
-        .hero-search input {
-            width: 100%;
-            padding: 16px 56px 16px 20px;
-            border-radius: 12px;
-            border: 1.5px solid var(--panel-border);
-            background: var(--surface);
-            color: var(--text);
-            font-size: 16px;
-            font-weight: 400;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow);
-        }
-
-        .hero-search input:hover {
-            border-color: var(--muted);
-        }
-
-        .hero-search input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-light), var(--shadow-md);
-        }
-
-        .hero-search input::placeholder {
-            color: var(--muted);
-        }
-
-        .hero-search svg {
-            position: absolute;
-            right: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            stroke: var(--text-secondary);
-            opacity: 0.6;
-        }
-
-        .search-suggestions {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 8px;
-            display: none;
-            z-index: 100;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .search-suggestions.active {
-            display: block;
-        }
-
-        .suggestion-item {
-            padding: 12px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.15s ease;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .suggestion-item:hover {
-            background: var(--pill);
-        }
-
-        .suggestion-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: var(--accent-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .suggestion-text {
-            flex: 1;
-        }
-
-        .suggestion-text strong {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 2px;
-            color: var(--text);
-        }
-
-        .suggestion-text small {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .grid-two {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 18px;
-        }
-
-        .category-card {
-            padding: 20px;
-            border-radius: 12px;
-            border: 1.5px solid var(--panel-border);
-            background: var(--surface);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .category-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--accent);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .category-card:hover {
-            border-color: var(--accent);
-            background: var(--accent-light);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(217, 119, 87, 0.12);
-        }
-
-        .category-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .category-card.active {
-            border-color: var(--accent);
-            background: var(--accent-light);
-            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.15);
-        }
-
-        .category-card.active::before {
-            transform: scaleX(1);
-        }
-
-        .category-card strong {
-            color: var(--text);
-            font-weight: 600;
-        }
-
-        .category-card span {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .list-card {
-            display: grid;
-            gap: 12px;
-        }
-
-        .list-item {
-            padding: 18px;
-            border-radius: 12px;
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-        }
-
-        .list-item:hover {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.1);
-        }
-
-        .list-item small {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .trending-card {
-            position: relative;
-            padding: 20px;
-            border-radius: 12px;
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-
-        .trending-card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.3s ease;
-        }
-
-        .trending-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(217, 119, 87, 0.15);
-        }
-
-        .trending-card:hover::after {
-            transform: scaleX(1);
-        }
-
-        .trending-card .mini-chart {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 70px;
-            height: 35px;
-            opacity: 0.15;
-        }
-
-        .growth-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .growth-badge.up {
-            background: #D1FAE5;
-            color: #065F46;
-        }
-
-        .growth-badge.down {
-            background: #FEE2E2;
-            color: #991B1B;
-        }
-
-        .realtime-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .realtime-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #10B981;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.6;
-                transform: scale(1.1);
-            }
-        }
-
-        .signal-item {
-            padding: 18px;
-            border-radius: 12px;
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-        }
-
-        .signal-item:hover {
-            border-color: var(--accent);
-            box-shadow: 0 4px 16px rgba(217, 119, 87, 0.1);
-            transform: translateX(4px);
-        }
-
-        .agree-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            border-radius: 20px;
-            background: transparent;
-            border: 1.5px solid var(--panel-border);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--text-secondary);
-        }
-
-        .agree-btn:hover {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(217, 119, 87, 0.2);
-        }
-
-        .agree-btn.agreed {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
-            font-weight: 700;
-        }
-
-        /* Detail Page Styles */
-        .detail-layout {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 24px;
-        }
-
-        .detail-main {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .detail-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .validation-chart {
-            width: 100%;
-            height: 280px;
-            background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            position: relative;
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .chart-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .chart-change {
-            font-size: 14px;
-            font-weight: 600;
-            color: #10B981;
-        }
-
-        .chart-change.negative {
-            color: #DC2626;
-        }
-
-        .chart-canvas {
-            width: 100%;
-            height: 180px;
-            position: relative;
-        }
-
-        .chart-svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 16px;
-        }
-
-        .metric-item {
-            padding: 16px;
-            background: var(--pill);
-            border-radius: 8px;
-        }
-
-        .metric-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .metric-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        .need-this-btn {
-            width: 100%;
-            padding: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: var(--border-radius);
-            background: var(--accent);
-            color: white;
-            border: none;
             cursor: pointer;
             transition: all 0.2s;
-            display: flex;
+            border: 1px solid var(--stone-200);
+            background: var(--white);
+            color: var(--stone-700);
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
         }
 
-        .need-this-btn:hover {
-            background: var(--accent-2);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+        .btn:hover {
+            background: var(--stone-100);
         }
 
-        .need-this-btn.validated {
-            background: #10B981;
+        .btn-primary {
+            background: var(--stone-900);
+            color: var(--white);
+            border-color: var(--stone-900);
         }
 
-        .comment-section {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .btn-primary:hover {
+            background: var(--stone-800);
         }
 
-        .comment {
-            padding: 16px;
-            background: var(--pill);
-            border-radius: var(--border-radius);
+        /* Page Header */
+        .page-header {
+            border-bottom: 1px solid var(--stone-200);
+            background: var(--white);
+            padding: 24px 0;
         }
 
-        .comment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .page-header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .page-header h1 {
+            font-family: 'Spectral', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--stone-900);
             margin-bottom: 8px;
         }
 
-        .comment-author {
-            font-weight: 600;
-            color: var(--text);
+        .page-header p {
+            color: var(--stone-600);
+            font-size: 16px;
         }
 
-        .comment-badge {
-            font-size: 12px;
-            padding: 2px 8px;
-            background: var(--accent-light);
-            color: var(--accent);
-            border-radius: 4px;
-            margin-left: 8px;
+        /* Flow Tabs */
+        .flow-tabs {
+            border-bottom: 1px solid var(--stone-200);
+            background: var(--white);
         }
 
-        .comment-time {
-            font-size: 12px;
-            color: var(--text-secondary);
+        .flow-tabs-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px;
+            display: flex;
+            gap: 32px;
         }
 
-        .related-item {
-            padding: 14px;
-            background: var(--pill);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .related-item:hover {
-            background: var(--accent-light);
-        }
-
-        .related-title {
+        .flow-tab {
+            padding: 16px 0;
             font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 4px;
+            font-weight: 500;
+            color: var(--stone-500);
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
         }
 
-        .related-meta {
+        .flow-tab:hover {
+            color: var(--stone-700);
+        }
+
+        .flow-tab.active {
+            color: var(--stone-900);
+            border-bottom-color: var(--stone-900);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 48px 32px;
+        }
+
+        /* Stage Card */
+        .stage-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 32px;
+            border: 2px solid var(--stone-200);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .stage-card.highlight {
+            border-color: var(--stone-900);
+        }
+
+        .stage-card.blue {
+            border-color: var(--blue-500);
+        }
+
+        .stage-card.green {
+            border-color: var(--green-500);
+        }
+
+        .stage-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
             font-size: 12px;
-            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
         }
 
-        @media (max-width: 968px) {
-            .detail-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .detail-sidebar {
-                order: -1;
-            }
+        .stage-badge.violet {
+            background: var(--violet-100);
+            color: var(--violet-700);
         }
 
-        .form-grid {
-            display: grid;
+        .stage-badge.blue {
+            background: var(--blue-100);
+            color: var(--blue-700);
+        }
+
+        .stage-badge.green {
+            background: var(--green-100);
+            color: var(--green-700);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: flex-start;
             gap: 24px;
         }
 
-        textarea, select, input[type="text"] {
-            width: 100%;
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            border-radius: 10px;
-            color: var(--text);
-            padding: 12px 16px;
-            font-family: inherit;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow);
+        .stage-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
-        textarea:hover, select:hover, input[type="text"]:hover {
-            border-color: var(--muted);
+        .stage-icon.dark {
+            background: var(--stone-900);
+            color: var(--white);
         }
 
-        textarea:focus, select:focus, input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-light);
+        .stage-icon.blue {
+            background: var(--blue-500);
+            color: var(--white);
         }
 
-        textarea {
-            min-height: 140px;
-            resize: vertical;
+        .stage-icon.green {
+            background: var(--green-500);
+            color: var(--white);
+        }
+
+        .stage-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .stage-body {
+            flex: 1;
+        }
+
+        .stage-body h2 {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 8px;
+        }
+
+        .stage-body > p {
+            color: var(--stone-700);
+            margin-bottom: 24px;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-box {
+            background: var(--stone-50);
+            border-radius: 8px;
             padding: 16px;
         }
 
-        select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B6560' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 40px;
+        .info-box-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--stone-500);
+            margin-bottom: 8px;
         }
 
-        .tag-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .tag {
-            padding: 10px 16px;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
+        .info-box p {
             font-size: 14px;
-            color: var(--muted);
+            color: var(--stone-700);
         }
 
-        .tag.selected {
-            border-color: rgba(123, 139, 255, 0.6);
-            background: rgba(123, 139, 255, 0.2);
-            color: var(--text);
-        }
-
-        .toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .switch {
-            width: 48px;
-            height: 24px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
-            position: relative;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .switch::after {
-            content: "";
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #fff;
-            transition: transform 0.2s ease;
-        }
-
-        .switch.active {
-            background: linear-gradient(120deg, var(--accent) 0%, var(--accent-2) 100%);
-        }
-
-        .switch.active::after {
-            transform: translateX(22px);
-        }
-
-        .problem-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: rgba(76, 255, 190, 0.12);
-            color: #36f0b5;
-            font-size: 12px;
+        .info-box p.bold {
             font-weight: 600;
         }
 
-        .comment {
-            padding: 16px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .dashboard-grid {
-            display: grid;
-            gap: 20px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-        }
-
-        .stat-card {
-            padding: 20px;
+        /* Example Card */
+        .example-card {
+            background: var(--stone-50);
             border-radius: 12px;
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            text-align: center;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 16px;
         }
 
-        .stat-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.1);
-            transform: translateY(-2px);
+        .example-card-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--stone-500);
+            margin-bottom: 12px;
         }
 
-        .stat-card strong {
-            font-size: 28px;
-            display: block;
-            color: var(--accent);
+        .opportunity-card {
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .opportunity-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .opportunity-category {
+            font-size: 11px;
+            color: var(--stone-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .opportunity-title {
+            font-weight: 600;
+            color: var(--stone-900);
+        }
+
+        .validation-score {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
             font-weight: 700;
         }
 
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            padding: 20px;
-            background: var(--pill);
-            border-radius: 12px;
-            border: 1.5px solid var(--panel-border);
+        .opportunity-description {
+            font-size: 14px;
+            color: var(--stone-600);
+            margin-bottom: 12px;
         }
 
-        .table-card {
-            display: grid;
-            gap: 16px;
-        }
-
-        .table-row {
-            border-radius: 12px;
-            padding: 18px;
-            background: var(--surface);
-            border: 1.5px solid var(--panel-border);
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .table-row::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: var(--accent);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-        }
-
-        .table-row:hover {
-            border-color: var(--accent);
-            box-shadow: 0 4px 16px rgba(217, 119, 87, 0.12);
-            transform: translateX(4px);
-        }
-
-        .table-row:hover::before {
-            transform: scaleY(1);
-        }
-
-        .table-row strong {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 15px;
-        }
-
-        .table-row small {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 18px;
-        }
-
-        .pricing-card {
-            padding: 22px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            background: rgba(255, 255, 255, 0.02);
+        .opportunity-meta {
             display: flex;
-            flex-direction: column;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--stone-500);
+        }
+
+        /* Tier Boxes */
+        .tier-boxes {
+            display: flex;
             gap: 12px;
         }
 
-        .pricing-card.highlight {
-            border-color: rgba(123, 139, 255, 0.6);
-            background: rgba(123, 139, 255, 0.12);
+        .tier-box {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
         }
 
-        .pricing-card ul {
-            list-style: none;
+        .tier-box.amber {
+            background: var(--amber-50);
+            border: 1px solid var(--amber-200);
+        }
+
+        .tier-box.stone {
+            background: var(--stone-50);
+            border: 1px solid var(--stone-200);
+        }
+
+        .tier-box-label {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .tier-box.amber .tier-box-label {
+            color: var(--amber-700);
+        }
+
+        .tier-box.stone .tier-box-label {
+            color: var(--stone-500);
+        }
+
+        .tier-box p {
+            font-size: 13px;
+            color: var(--stone-700);
+        }
+
+        /* Arrow Connector */
+        .arrow-connector {
+            display: flex;
+            justify-content: center;
+            padding: 16px 0;
+        }
+
+        .arrow-connector svg {
+            width: 24px;
+            height: 24px;
+            color: var(--stone-400);
+            transform: rotate(90deg);
+        }
+
+        /* Two Column Grid */
+        .two-col-grid {
             display: grid;
-            gap: 6px;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
-        .pricing-card ul li {
-            color: var(--muted);
+        .check-list {
+            list-style: none;
+        }
+
+        .check-list li {
             font-size: 14px;
+            color: var(--stone-700);
+            padding: 4px 0;
         }
 
+        /* CTA Banner */
+        .cta-banner {
+            background: linear-gradient(135deg, var(--stone-900) 0%, var(--stone-700) 100%);
+            border-radius: 12px;
+            padding: 24px;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cta-banner h3 {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .cta-banner p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .btn-white {
+            background: var(--white);
+            color: var(--stone-900);
+            border: none;
+        }
+
+        .btn-white:hover {
+            background: var(--stone-100);
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .header {
-                padding: 12px 16px;
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .two-col-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stage-header {
+                flex-direction: column;
+            }
+
+            .tier-boxes {
+                flex-direction: column;
+            }
+
+            .cta-banner {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .flow-tabs-content {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .flow-tab {
+                padding: 12px 0;
+                border-bottom: none;
+                border-left: 2px solid transparent;
+                padding-left: 16px;
+            }
+
+            .flow-tab.active {
+                border-bottom: none;
+                border-left-color: var(--stone-900);
             }
 
             .header-nav {
                 display: none;
             }
 
-            .workspace {
+            .header-content {
+                padding: 16px;
+            }
+
+            .page-header-content,
+            .main-content {
                 padding: 24px 16px;
             }
+        }
 
-            .hero-slab {
-                padding: 48px 16px 40px;
-            }
-
-            .hero-content h2 {
-                font-size: clamp(32px, 10vw, 40px) !important;
-            }
-
-            .hero-metrics {
-                flex-direction: column;
-                gap: 24px;
-                margin-top: 32px;
-            }
-
-            .grid-two {
+        @media (max-width: 640px) {
+            #pricing > div > div:last-child {
                 grid-template-columns: 1fr;
-            }
-
-            .mode-tabs {
-                overflow-x: auto;
-                padding: 4px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="layout-grid">
-        <header class="header">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
             <div class="header-left">
-                <a href="#" class="logo">
-                    <span>⚡</span>
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">⚡</span>
                     Friction
                 </a>
                 <nav class="header-nav">
@@ -1170,1272 +629,428 @@
                 </nav>
             </div>
             <div class="header-actions" id="header-actions">
-                <a href="login.html" class="btn btn-secondary guest-only">Sign In</a>
+                <a href="login.html" class="btn guest-only">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
                 <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
                 <div class="user-menu auth-required" style="display: none; cursor: pointer;" onclick="window.location.href='profile.html'">
-                    <span id="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
+                    <span id="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--stone-900); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <main class="workspace">
-            <div class="command-bar">
-                <div class="search">
-                    <input type="text" placeholder="Search unmet needs, industries, signals..." aria-label="Search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
-                        <path d="M11 5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z" stroke="currentColor"/>
-                        <path d="m20 20-4.35-4.35" stroke="currentColor" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <div class="command-actions">
-                    <button class="btn">Share a Problem</button>
-                    <button class="btn btn-primary">Launch Research Workspace</button>
-                </div>
-            </div>
-
-            <div class="mode-tabs" role="tablist">
-                <button class="tab-pill active" data-target="consumer" role="tab">Opportunities</button>
-                <button class="tab-pill" data-target="detail" role="tab">Problem Detail</button>
-                <button class="tab-pill" data-target="dashboard" role="tab">Research Dashboard</button>
-                <button class="tab-pill" data-target="deepdive" role="tab">Deep Dive</button>
-            </div>
-
-            <!-- Consumer Homepage -->
-            <section class="section-panel active" id="consumer" role="tabpanel">
-                <div class="hero-slab">
-                    <div class="hero-content">
-                        <h2 style="font-size: clamp(40px, 6vw, 56px); margin: 0;">Discover What the World Needs</h2>
-                        <p>The largest problem discovery engine for founders, researchers, and innovators. Find validated opportunities, track emerging needs, and solve real problems.</p>
-
-                        <div class="hero-search">
-                            <input type="text" placeholder="Search for unmet needs, opportunities, or industries..." id="hero-search-input" aria-label="AI-powered search">
-                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                                <path d="M11 5a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z" stroke="currentColor"/>
-                                <path d="m20 20-4.35-4.35" stroke="currentColor" stroke-linecap="round"/>
-                            </svg>
-                            <div class="search-suggestions" id="hero-suggestions">
-                                <div class="suggestion-item">
-                                    <div class="suggestion-icon">🏥</div>
-                                    <div class="suggestion-text">
-                                        <strong>Healthcare appointment scheduling</strong>
-                                        <small>4,523 validations · Trending up 18%</small>
-                                    </div>
-                                </div>
-                                <div class="suggestion-item">
-                                    <div class="suggestion-icon">💰</div>
-                                    <div class="suggestion-text">
-                                        <strong>Transparent small business banking</strong>
-                                        <small>3,891 validations · Rising fast</small>
-                                    </div>
-                                </div>
-                                <div class="suggestion-item">
-                                    <div class="suggestion-icon">🏠</div>
-                                    <div class="suggestion-text">
-                                        <strong>Finding reliable contractors</strong>
-                                        <small>6,234 validations · Popular this week</small>
-                                    </div>
-                                </div>
-                                <div class="suggestion-item">
-                                    <div class="suggestion-icon">💻</div>
-                                    <div class="suggestion-text">
-                                        <strong>Managing streaming subscriptions</strong>
-                                        <small>8,923 validations · Most validated</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="hero-metrics">
-                            <div>
-                                <strong>2.3M+</strong>
-                                <span>opportunities indexed</span>
-                            </div>
-                            <div>
-                                <strong>500K+</strong>
-                                <span>validations given</span>
-                            </div>
-                            <div>
-                                <strong>15%</strong>
-                                <span>weekly growth</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Trending Opportunities</h2>
-                        <span class="realtime-indicator">
-                            <span class="realtime-dot"></span>
-                            Updated in real-time
-                        </span>
-                    </div>
-                    <div class="grid-two">
-                        <div class="trending-card">
-                            <strong>Universal healthcare scheduling platform</strong>
-                            <div style="margin-top: 8px;">
-                                <span class="growth-badge up">↑ 18% this week</span>
-                            </div>
-                            <small style="display: block; margin-top: 6px;">4,523 validations</small>
-                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
-                                <path d="M0,25 L15,20 L30,15 L45,12 L60,8" fill="none" stroke="#10B981" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        <div class="trending-card">
-                            <strong>Transparent small business banking</strong>
-                            <div style="margin-top: 8px;">
-                                <span class="growth-badge up">↑ 12% this week</span>
-                            </div>
-                            <small style="display: block; margin-top: 6px;">3,891 validations</small>
-                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
-                                <path d="M0,22 L15,18 L30,16 L45,14 L60,10" fill="none" stroke="#10B981" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        <div class="trending-card">
-                            <strong>Finding reliable contractors for home repairs</strong>
-                            <div style="margin-top: 8px;">
-                                <span class="growth-badge up">↑ 8% this week</span>
-                            </div>
-                            <small style="display: block; margin-top: 6px;">6,234 validations</small>
-                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
-                                <path d="M0,20 L15,18 L30,17 L45,15 L60,12" fill="none" stroke="#10B981" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        <div class="trending-card">
-                            <strong>Managing multiple streaming subscriptions</strong>
-                            <div style="margin-top: 8px;">
-                                <span class="growth-badge down">↓ 3% this week</span>
-                            </div>
-                            <small style="display: block; margin-top: 6px;">8,923 validations</small>
-                            <svg class="mini-chart" viewBox="0 0 60 30" preserveAspectRatio="none">
-                                <path d="M0,15 L15,16 L30,18 L45,20 L60,22" fill="none" stroke="#DC2626" stroke-width="2"/>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Categories</h2>
-                        <span class="subdued">Explore 8 core domains · Click to filter</span>
-                    </div>
-                    <div class="grid-two">
-                        <div class="category-card" data-category="work">
-                            <strong>💼 Work & Productivity</strong>
-                            <span>12,483 problems</span>
-                        </div>
-                        <div class="category-card" data-category="finance">
-                            <strong>💰 Money & Finance</strong>
-                            <span>8,921 problems</span>
-                        </div>
-                        <div class="category-card" data-category="health">
-                            <strong>🏥 Health & Wellness</strong>
-                            <span>15,672 problems</span>
-                        </div>
-                        <div class="category-card" data-category="home">
-                            <strong>🏠 Home & Living</strong>
-                            <span>9,234 problems</span>
-                        </div>
-                        <div class="category-card" data-category="tech">
-                            <strong>💻 Technology</strong>
-                            <span>11,456 problems</span>
-                        </div>
-                        <div class="category-card" data-category="transport">
-                            <strong>🚗 Transportation</strong>
-                            <span>6,789 problems</span>
-                        </div>
-                        <div class="category-card" data-category="education">
-                            <strong>📚 Education</strong>
-                            <span>7,345 problems</span>
-                        </div>
-                        <div class="category-card" data-category="shopping">
-                            <strong>🛒 Shopping & Services</strong>
-                            <span>10,123 problems</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Live Opportunities from Databases</h2>
-                        <span class="subdued">Real-time data from external APIs · Click to explore</span>
-                    </div>
-                    <div class="grid-two">
-                        <div class="trending-card">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                <div>
-                                    <span style="background: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">API Source</span>
-                                </div>
-                                <span class="growth-badge up" style="font-size: 11px;">High Impact</span>
-                            </div>
-                            <strong>Difficulty managing health insurance claims</strong>
-                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5;">Complex paperwork, unclear billing codes, and delayed reimbursements create friction for patients navigating the insurance landscape.</p>
-                            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                                <small style="color: var(--muted);">💰 Finance</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">1,247 confirmations</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">2 hrs ago</small>
-                            </div>
-                        </div>
-                        <div class="trending-card">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                <div>
-                                    <span style="background: #FEF3C7; color: #92400E; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">API Source</span>
-                                </div>
-                                <span class="growth-badge up" style="font-size: 11px;">High Impact</span>
-                            </div>
-                            <strong>Finding trustworthy local service providers</strong>
-                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5;">Inconsistent reviews, hidden pricing, and unreliable scheduling make it challenging to find dependable contractors and home service professionals.</p>
-                            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                                <small style="color: var(--muted);">🏠 Home & Living</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">3,892 confirmations</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">5 hrs ago</small>
-                            </div>
-                        </div>
-                        <div class="trending-card">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                <div>
-                                    <span style="background: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">Reddit</span>
-                                </div>
-                                <span class="growth-badge up" style="font-size: 11px;">Trending</span>
-                            </div>
-                            <strong>EV charging infrastructure in apartment complexes</strong>
-                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5;">Limited charging stations, unfair cost allocation, and lack of landlord incentives prevent EV adoption for apartment residents.</p>
-                            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                                <small style="color: var(--muted);">🚗 Transportation</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">891 confirmations</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">1 day ago</small>
-                            </div>
-                        </div>
-                        <div class="trending-card">
-                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                <div>
-                                    <span style="background: #E0E7FF; color: #3730A3; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">HN</span>
-                                </div>
-                                <span class="growth-badge up" style="font-size: 11px;">High Impact</span>
-                            </div>
-                            <strong>SMB subscription management for SaaS</strong>
-                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5;">Small businesses struggle to track multiple software subscriptions, leading to duplicate tools, unused licenses, and budget overruns.</p>
-                            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                                <small style="color: var(--muted);">💼 Work & Productivity</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">2,134 confirmations</small>
-                                <small style="color: var(--muted);">•</small>
-                                <small style="color: var(--muted);">6 hrs ago</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Recent Signals</h2>
-                        <button class="btn">View all signals</button>
-                    </div>
-                    <div class="list-card">
-                        <div class="signal-item">
-                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
-                                <div style="flex: 1;">
-                                    <strong>Better parking solutions near apartments</strong>
-                                    <div style="margin-top: 6px;">
-                                        <small>🚗 Transportation · 2 hours ago</small>
-                                    </div>
-                                </div>
-                                <button class="agree-btn" data-agree>
-                                    👍 234
-                                </button>
-                            </div>
-                        </div>
-                        <div class="signal-item">
-                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
-                                <div style="flex: 1;">
-                                    <strong>Unified healthcare portal across providers</strong>
-                                    <div style="margin-top: 6px;">
-                                        <small>🏥 Health & Wellness · 5 hours ago</small>
-                                    </div>
-                                </div>
-                                <button class="agree-btn" data-agree>
-                                    👍 1,023
-                                </button>
-                            </div>
-                        </div>
-                        <div class="signal-item">
-                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
-                                <div style="flex: 1;">
-                                    <strong>Affordable quality furniture marketplace</strong>
-                                    <div style="margin-top: 6px;">
-                                        <small>🏠 Home & Living · 1 day ago</small>
-                                    </div>
-                                </div>
-                                <button class="agree-btn" data-agree>
-                                    👍 567
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Submit Problem -->
-            <section class="section-panel" id="submit" role="tabpanel">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Share an Unmet Need</h2>
-                        <span class="chip">Step 2 of 4 · 2-3 mins</span>
-                    </div>
-                    <div class="form-grid">
-                        <label>
-                            <span>1. What's missing in the world?</span>
-                            <textarea placeholder="Describe the unmet need, when it matters, and who it affects..."></textarea>
-                            <small class="subdued">💡 The more detail you provide, the easier it is for others to validate and for innovators to act.</small>
-                        </label>
-
-                        <div class="panel-card" style="background: rgba(255, 143, 107, 0.08); border-color: rgba(255, 143, 107, 0.3);">
-                            <strong>Similar opportunities already shared</strong>
-                            <p class="subdued">Consider validating existing entries before creating duplicates.</p>
-                            <div class="list-item" style="background: rgba(0,0,0,0.2);">
-                                <strong>Simpler bank account switching process</strong>
-                                <small>2,341 people need this · Posted 3 days ago</small>
-                            </div>
-                        </div>
-
-                        <label>
-                            <span>2. Categorize your problem</span>
-                            <div class="tag-row">
-                                <span class="tag">💼 Work & Productivity</span>
-                                <span class="tag selected">💰 Money & Finance</span>
-                                <span class="tag">🏥 Health & Wellness</span>
-                                <span class="tag">🏠 Home & Living</span>
-                                <span class="tag">💻 Technology</span>
-                                <span class="tag">🚗 Transportation</span>
-                                <span class="tag">📚 Education</span>
-                                <span class="tag">🛒 Shopping</span>
-                            </div>
-                        </label>
-
-                        <label>
-                            <span>3. How significant is this opportunity?</span>
-                            <div class="tag-row" style="flex-direction: column; align-items: flex-start;">
-                                <span class="tag">Nice to have · Convenience boost</span>
-                                <span class="tag selected">Important need · Impacts daily life</span>
-                                <span class="tag">Major opportunity · Broad impact</span>
-                                <span class="tag">Critical gap · Blocking goals</span>
-                            </div>
-                        </label>
-
-                        <label>
-                            <span>4. Privacy settings</span>
-                            <div class="toggle">
-                                <div class="switch" data-switch></div>
-                                <span>Post anonymously</span>
-                            </div>
-                            <div class="toggle">
-                                <div class="switch active" data-switch></div>
-                                <span>Notify me when others engage</span>
-                            </div>
-                        </label>
-
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                            <button class="btn btn-primary">Submit Problem</button>
-                            <button class="btn">Save as Draft</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Opportunity Detail Page -->
-            <section class="section-panel" id="detail" role="tabpanel">
-                <div class="panel-card">
-                    <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 16px;">
-                        <div>
-                            <h2 style="margin-bottom: 8px;">Universal Healthcare Appointment Scheduling Platform</h2>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                <span class="chip">🏥 Health & Wellness</span>
-                                <span class="chip">💰 $2.3B Market</span>
-                                <span class="growth-badge up">↑ 18% growth</span>
-                            </div>
-                        </div>
-                        <button class="btn">⭐ Add to Watchlist</button>
-                    </div>
-                </div>
-
-                <div class="detail-layout">
-                    <div class="detail-main">
-                        <!-- Validation Growth Chart -->
-                        <div class="validation-chart">
-                            <div class="chart-header">
-                                <div>
-                                    <div class="chart-value">4,523</div>
-                                    <div class="subdued" style="font-size: 14px;">Total Validations</div>
-                                </div>
-                                <div class="chart-change">↑ 18% (3 months)</div>
-                            </div>
-                            <div class="chart-canvas">
-                                <svg class="chart-svg" viewBox="0 0 400 180" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:0.2" />
-                                            <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:0" />
-                                        </linearGradient>
-                                    </defs>
-                                    <!-- Grid lines -->
-                                    <line x1="0" y1="45" x2="400" y2="45" stroke="#E5E7EB" stroke-width="1"/>
-                                    <line x1="0" y1="90" x2="400" y2="90" stroke="#E5E7EB" stroke-width="1"/>
-                                    <line x1="0" y1="135" x2="400" y2="135" stroke="#E5E7EB" stroke-width="1"/>
-                                    <!-- Area fill -->
-                                    <path d="M0,160 L50,155 L100,145 L150,135 L200,115 L250,90 L300,65 L350,45 L400,30 L400,180 L0,180 Z" fill="url(#chartGradient)"/>
-                                    <!-- Line -->
-                                    <path d="M0,160 L50,155 L100,145 L150,135 L200,115 L250,90 L300,65 L350,45 L400,30" fill="none" stroke="#7C3AED" stroke-width="3"/>
-                                    <!-- Data points -->
-                                    <circle cx="0" cy="160" r="4" fill="#7C3AED"/>
-                                    <circle cx="100" cy="145" r="4" fill="#7C3AED"/>
-                                    <circle cx="200" cy="115" r="4" fill="#7C3AED"/>
-                                    <circle cx="300" cy="65" r="4" fill="#7C3AED"/>
-                                    <circle cx="400" cy="30" r="5" fill="#7C3AED" stroke="white" stroke-width="2"/>
-                                </svg>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
-                                <span>3 months ago</span>
-                                <span>2 months ago</span>
-                                <span>1 month ago</span>
-                                <span>Today</span>
-                            </div>
-                        </div>
-
-                        <!-- Key Metrics Panel -->
-                        <div class="panel-card">
-                            <h3 style="margin-bottom: 16px;">Key Metrics</h3>
-                            <div class="metrics-grid">
-                                <div class="metric-item">
-                                    <div class="metric-label">Validations</div>
-                                    <div class="metric-value">4,523</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-label">Growth Rate</div>
-                                    <div class="metric-value" style="color: #10B981;">+18%/wk</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-label">Market Size</div>
-                                    <div class="metric-value">$2.3B</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-label">Time to Market</div>
-                                    <div class="metric-value">12-18mo</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-label">Region</div>
-                                    <div class="metric-value" style="font-size: 16px;">🇺🇸 US</div>
-                                </div>
-                                <div class="metric-item">
-                                    <div class="metric-label">First Shared</div>
-                                    <div class="metric-value" style="font-size: 14px;">3mo ago</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- The Unmet Need -->
-                        <div class="panel-card">
-                            <h3 style="margin-bottom: 12px;">The Unmet Need</h3>
-                            <p style="line-height: 1.7; color: var(--text-secondary);">
-                                People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction.
-                                <br><br>
-                                <strong style="color: var(--text);">The Opportunity:</strong> A solution aggregating all healthcare appointments with unified reminders, real-time availability across providers, and intelligent scheduling suggestions.
-                            </p>
-                        </div>
-
-                        <!-- Solutions in Development -->
-                        <div class="panel-card">
-                            <h3 style="margin-bottom: 16px;">Solutions in Development</h3>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div class="signal-item">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-                                        <div>
-                                            <div style="font-weight: 600; margin-bottom: 4px;">HealthSync Technologies</div>
-                                            <div class="subdued" style="font-size: 14px;">Universal healthcare appointment aggregator · Pre-launch · Seed funded</div>
-                                        </div>
-                                        <button class="btn">Follow</button>
-                                    </div>
-                                </div>
-                                <div class="signal-item">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-                                        <div>
-                                            <div style="font-weight: 600; margin-bottom: 4px;">MediCal AI</div>
-                                            <div class="subdued" style="font-size: 14px;">AI-powered healthcare scheduling · Stealth mode · $2M raised</div>
-                                        </div>
-                                        <button class="btn">Get notified</button>
-                                    </div>
-                                </div>
-                                <div class="signal-item">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-                                        <div>
-                                            <div style="font-weight: 600; margin-bottom: 4px;">ApptSync</div>
-                                            <div class="subdued" style="font-size: 14px;">Calendar aggregation platform · Beta · 500+ users</div>
-                                        </div>
-                                        <button class="btn">Follow</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Discussion Thread -->
-                        <div class="panel-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                                <h3>Discussion (47 comments)</h3>
-                                <button class="btn btn-secondary">Add Comment</button>
-                            </div>
-                            <div class="comment-section">
-                                <div class="comment">
-                                    <div class="comment-header">
-                                        <div>
-                                            <span class="comment-author">Sarah M.</span>
-                                            <span class="comment-badge">🏆 Top Validator</span>
-                                        </div>
-                                        <span class="comment-time">2 days ago</span>
-                                    </div>
-                                    <p style="color: var(--text-secondary); line-height: 1.6;">
-                                        This is exactly my experience! I created a shared calendar for medical appointments because the situation was so chaotic. Need a universal scheduler.
-                                    </p>
-                                    <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 14px;">
-                                        <button class="agree-btn" data-agree>👍 24</button>
-                                        <button class="btn btn-secondary" style="padding: 4px 12px;">Reply</button>
-                                    </div>
-                                </div>
-
-                                <div class="comment">
-                                    <div class="comment-header">
-                                        <div>
-                                            <span class="comment-author">Anonymous</span>
-                                            <span class="comment-badge">💡 Solution Finder</span>
-                                        </div>
-                                        <span class="comment-time">1 day ago</span>
-                                    </div>
-                                    <p style="color: var(--text-secondary); line-height: 1.6;">
-                                        I work in healthcare IT and this is a known problem. Legacy systems lack modern APIs—adoption is slow but there's huge demand for integration.
-                                    </p>
-                                    <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 14px;">
-                                        <button class="agree-btn" data-agree>👍 18</button>
-                                        <button class="btn btn-secondary" style="padding: 4px 12px;">Reply</button>
-                                    </div>
-                                </div>
-
-                                <div class="comment">
-                                    <div class="comment-header">
-                                        <div>
-                                            <span class="comment-author">Michael R.</span>
-                                            <span class="comment-badge">🎯 Problem Solver</span>
-                                        </div>
-                                        <span class="comment-time">12 hours ago</span>
-                                    </div>
-                                    <p style="color: var(--text-secondary); line-height: 1.6;">
-                                        I'd easily pay $10-15/month for an app that syncs all appointments and reminders. This would save me hours every month!
-                                    </p>
-                                    <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 14px;">
-                                        <button class="agree-btn" data-agree>👍 32</button>
-                                        <button class="btn btn-secondary" style="padding: 4px 12px;">Reply</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sidebar: Related Opportunities -->
-                    <div class="detail-sidebar">
-                        <!-- I Need This Too Button -->
-                        <div class="panel-card">
-                            <button class="need-this-btn" id="need-this-btn">
-                                <span>✋</span>
-                                <span>I Need This Too</span>
-                            </button>
-                            <div style="text-align: center; margin-top: 12px;">
-                                <div style="font-size: 14px; color: var(--text-secondary);">
-                                    Join <strong style="color: var(--text);">4,523 people</strong> who validated this
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Share Options -->
-                        <div class="panel-card">
-                            <h4 style="margin-bottom: 12px;">Share</h4>
-                            <div style="display: grid; gap: 8px;">
-                                <button class="btn btn-secondary">📧 Email</button>
-                                <button class="btn btn-secondary">🔗 Copy Link</button>
-                                <button class="btn btn-secondary">📊 Export Data</button>
-                            </div>
-                        </div>
-
-                        <!-- Related Opportunities -->
-                        <div class="panel-card">
-                            <h4 style="margin-bottom: 12px;">Related Opportunities</h4>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <div class="related-item">
-                                    <div class="related-title">Prescription refill automation</div>
-                                    <div class="related-meta">2,891 validations · 🏥 Healthcare</div>
-                                </div>
-                                <div class="related-item">
-                                    <div class="related-title">Medical records portability</div>
-                                    <div class="related-meta">3,456 validations · 🏥 Healthcare</div>
-                                </div>
-                                <div class="related-item">
-                                    <div class="related-title">Insurance claim tracking</div>
-                                    <div class="related-meta">1,923 validations · 💰 Finance</div>
-                                </div>
-                                <div class="related-item">
-                                    <div class="related-title">Telehealth platform integration</div>
-                                    <div class="related-meta">2,234 validations · 🏥 Healthcare</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Stats -->
-                        <div class="panel-card">
-                            <h4 style="margin-bottom: 12px;">Quick Stats</h4>
-                            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span class="subdued">Viewed</span>
-                                    <strong>12,342 times</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span class="subdued">Shared</span>
-                                    <strong>892 times</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span class="subdued">Discussed</span>
-                                    <strong>47 comments</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span class="subdued">In Watchlists</span>
-                                    <strong>234 lists</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Research Dashboard -->
-            <section class="section-panel" id="dashboard" role="tabpanel">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Innovation Dashboard · Discover</h2>
-                        <div class="chip-row" style="margin: 0;">
-                            <span class="chip">Discover</span>
-                            <span class="chip">Collections</span>
-                            <span class="chip">Analytics</span>
-                            <span class="chip">API</span>
-                        </div>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <strong>82,394</strong>
-                            <span class="subdued">Total opportunities</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong>1,247</strong>
-                            <span class="subdued">New this week</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong>156</strong>
-                            <span class="subdued">High validation</span>
-                        </div>
-                        <div class="stat-card">
-                            <strong>23</strong>
-                            <span class="subdued">Watchlists</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Market Opportunity Highlights</h2>
-                    </div>
-                    <div class="grid-two">
-                        <div class="list-item">
-                            <small class="subdued">Estimated TAM</small>
-                            <strong>$2.3B</strong>
-                            <small>Healthcare scheduling</small>
-                        </div>
-                        <div class="list-item">
-                            <small class="subdued">Avg willingness to pay</small>
-                            <strong>$12-15</strong>
-                            <small>Per month per user</small>
-                        </div>
-                        <div class="list-item">
-                            <small class="subdued">Competitive threat</small>
-                            <strong>Medium</strong>
-                            <small>3 partial solutions</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Filters</h2>
-                        <button class="btn">Save search</button>
-                    </div>
-                    <div class="filter-grid">
-                        <select>
-                            <option>All industries</option>
-                            <option>Healthcare</option>
-                            <option>Finance</option>
-                            <option>Education</option>
-                            <option>Transportation</option>
-                        </select>
-                        <select>
-                            <option>All regions</option>
-                            <option>United States</option>
-                            <option>Europe</option>
-                            <option>Asia</option>
-                        </select>
-                        <select>
-                            <option>Last 30 days</option>
-                            <option>Last 7 days</option>
-                            <option>Last 90 days</option>
-                        </select>
-                        <select>
-                            <option>All validation levels</option>
-                            <option>500+ confirmations</option>
-                            <option>1,000+ confirmations</option>
-                        </select>
-                        <input type="text" placeholder="Keywords: healthcare, scheduling...">
-                        <select>
-                            <option>All severities</option>
-                            <option>Minor</option>
-                            <option>Moderate</option>
-                            <option>Major</option>
-                            <option>Critical</option>
-                        </select>
-                        <select>
-                            <option>All trends</option>
-                            <option>Rising fast</option>
-                            <option>Growing</option>
-                            <option>Stable</option>
-                            <option>Declining</option>
-                        </select>
-                        <button class="btn btn-primary">Apply filters</button>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Trending Opportunities (234)</h2>
-                        <div class="chip-row" style="margin: 0;">
-                            <span class="chip">⭐ Add to Watchlist</span>
-                            <span class="chip">💾 Save</span>
-                            <span class="chip">📊 Export</span>
-                        </div>
-                    </div>
-                    <div class="table-card">
-                        <div class="table-row">
-                            <strong>Universal healthcare appointment scheduling platform</strong>
-                            <small>🏥 Healthcare · United States · 4,523 confirmations · 📈 +12% this week</small>
-                        </div>
-                        <div class="table-row">
-                            <strong>Small business banking fees are opaque</strong>
-                            <small>💰 Finance · Global · 3,891 confirmations · 📈 +18% this week</small>
-                        </div>
-                        <div class="table-row">
-                            <strong>Finding reliable contractors for home repairs</strong>
-                            <small>🏠 Home & Living · United States · 6,234 confirmations · 📈 +8% this week</small>
-                        </div>
-                        <div class="table-row">
-                            <strong>EV charging infrastructure in apartments</strong>
-                            <small>🚗 Transportation · US & EU · 2,156 confirmations · 📈 +25% this week</small>
-                        </div>
-                        <div class="table-row">
-                            <strong>Managing multiple streaming subscriptions</strong>
-                            <small>💻 Technology · Global · 8,923 confirmations · 📉 -3% this week</small>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Deep Dive -->
-            <section class="section-panel" id="deepdive" role="tabpanel">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Opportunity Deep Dive · Market Analysis</h2>
-                        <span class="subdued">Universal healthcare appointment scheduling platform</span>
-                    </div>
-                    <p>In-depth analysis of market validation, demographics, revenue signals, and competition for the healthcare scheduling opportunity.</p>
-                </div>
-
-                <div class="grid-two">
-                    <div class="panel-card">
-                        <h3>Opportunity Summary</h3>
-                        <p>Users juggling multiple healthcare providers lack unified scheduling. Disconnected portals and legacy systems cause missed appointments. Solution: cross-provider aggregation, unified reminders, and API integrations.</p>
-                        <div class="grid-two" style="margin-top: 18px;">
-                            <div>
-                                <small class="subdued">First reported</small>
-                                <strong>3 months ago</strong>
-                            </div>
-                            <div>
-                                <small class="subdued">Growth rate</small>
-                                <strong style="color: #36f0b5;">+12% weekly</strong>
-                            </div>
-                            <div>
-                                <small class="subdued">Est. market size</small>
-                                <strong>~2.3M users</strong>
-                            </div>
-                            <div>
-                                <small class="subdued">Severity score</small>
-                                <strong style="color: var(--accent-hot);">8.2 / 10</strong>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="panel-card" style="text-align: center;">
-                        <small class="subdued">Validation Score</small>
-                        <div style="font-size: 64px; font-weight: 700;">94</div>
-                        <p class="subdued">Based on confirmations, engagement, growth, and clarity.</p>
-                        <div style="margin-top: 18px;">
-                            <small class="subdued">Solution feasibility</small>
-                            <div style="font-size: 32px;">7.8 / 10</div>
-                            <small>Medium technical complexity · 12-18 month timeline</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid-two">
-                    <div class="panel-card">
-                        <h3>Investment & Market Intelligence</h3>
-                        <div class="list-card">
-                            <div class="list-item">
-                                <small class="subdued">Investor interest</small>
-                                <strong>High</strong>
-                                <small>7 VCs monitoring</small>
-                            </div>
-                            <div class="list-item">
-                                <small class="subdued">Time to market</small>
-                                <strong>12-18 months</strong>
-                                <small>For MVP launch</small>
-                            </div>
-                            <div class="list-item">
-                                <small class="subdued">Revenue potential</small>
-                                <strong>$34M</strong>
-                                <small>Year 3 ARR estimate</small>
-                            </div>
-                            <div class="list-item">
-                                <small class="subdued">Competitive threat</small>
-                                <strong>Medium</strong>
-                                <small>3 partial solutions</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="panel-card">
-                        <h3>Willingness to Pay Signals</h3>
-                        <div class="list-card">
-                            <div class="list-item">
-                                <strong>"I'd easily pay $10-15/month for this solution"</strong>
-                                <small>Mentioned in 127 comments · High intent</small>
-                            </div>
-                            <div class="list-item">
-                                <strong>"Worth paying for if it saves time"</strong>
-                                <small>Mentioned in 89 comments · Medium intent</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card">
-                    <h3>Competitive Landscape</h3>
-                    <p><strong>Existing solutions mentioned:</strong></p>
-                    <ul style="margin: 12px 0 18px 20px;">
-                        <li>Google Calendar (manual entry) · 234 mentions</li>
-                        <li>Zocdoc (limited coverage) · 89 mentions</li>
-                        <li>Provider-specific apps · 156 mentions</li>
-                    </ul>
-                    <p><strong>Gap analysis:</strong> No tool aggregates appointments across disconnected healthcare systems. Existing solutions require manual entry or limited networks.</p>
-                </div>
-
-                <div class="panel-card" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
-                    <div>
-                        <strong>Export this analysis</strong>
-                        <p class="subdued">Share with your team or plug into research workflows.</p>
-                    </div>
-                    <div class="command-actions">
-                        <button class="btn">📄 PDF</button>
-                        <button class="btn">📊 CSV</button>
-                        <button class="btn">🔗 Share</button>
-                        <button class="btn btn-primary">Add to Collection</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Pricing -->
-            <section class="section-panel" id="pricing" role="tabpanel">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <h2>Pricing Tiers</h2>
-                        <span class="subdued">Access the world's largest opportunity graph</span>
-                    </div>
-                    <div class="pricing-grid">
-                        <div class="pricing-card">
-                            <strong>Free</strong>
-                            <div style="font-size: 36px;">$0</div>
-                            <small class="subdued">Forever free for sharing needs</small>
-                            <ul>
-                                <li>Share unlimited opportunities</li>
-                                <li>Browse all opportunities</li>
-                                <li>Basic search & comments</li>
-                                <li>Follow opportunities</li>
-                                <li>—</li>
-                            </ul>
-                            <button class="btn">Get started</button>
-                        </div>
-                        <div class="pricing-card highlight">
-                            <strong>Pro</strong>
-                            <div style="font-size: 36px;">$99</div>
-                            <small class="subdued">Per month · billed monthly</small>
-                            <div class="chip">Solo researchers find 3.2× more validated ideas</div>
-                            <ul>
-                                <li>Advanced search & filters</li>
-                                <li>3 watchlists with alerts</li>
-                                <li>Export 50 problems/month</li>
-                                <li>90-day history, validation scores</li>
-                                <li>Market size preview</li>
-                            </ul>
-                            <button class="btn btn-primary">Start free trial</button>
-                        </div>
-                        <div class="pricing-card">
-                            <strong>Business</strong>
-                            <div style="font-size: 36px;">$499</div>
-                            <small class="subdued">Teams · $99/seat</small>
-                            <div class="chip">Product teams cut research time by 60%</div>
-                            <ul>
-                                <li>Unlimited searches & exports</li>
-                                <li>Team collaboration (5 seats)</li>
-                                <li>API access (10k calls/month)</li>
-                                <li>1-year historical data</li>
-                                <li>Priority support & webhooks</li>
-                            </ul>
-                            <button class="btn">Start free trial</button>
-                        </div>
-                        <div class="pricing-card">
-                            <strong>Enterprise</strong>
-                            <div style="font-size: 36px;">Custom</div>
-                            <small class="subdued">Contact for pricing</small>
-                            <ul>
-                                <li>Unlimited seats & API calls</li>
-                                <li>Full historical archive</li>
-                                <li>White-label reports</li>
-                                <li>Custom ML models</li>
-                                <li>Dedicated success & SLA</li>
-                            </ul>
-                            <button class="btn">Contact sales</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel-card" style="text-align: center;">
-                    <h3>All plans include</h3>
-                    <div class="chip-row" style="justify-content: center;">
-                        <span class="chip">🔒 Enterprise-grade security</span>
-                        <span class="chip">📊 Real-time data</span>
-                        <span class="chip">🌍 Global coverage</span>
-                        <span class="chip">💬 Community access</span>
-                        <span class="chip">📱 Mobile app</span>
-                    </div>
-                </div>
-            </section>
-        </main>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <h1>Complete User Flow: Discovery → Deep Dive</h1>
+            <p>Understanding how users navigate from initial interest to actionable insights</p>
+        </div>
     </div>
 
-    <script>
-        // Tab navigation
-        const tabs = document.querySelectorAll('.tab-pill');
-        const sections = document.querySelectorAll('.section-panel');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                sections.forEach(section => section.classList.remove('active'));
-                document.getElementById(tab.dataset.target).classList.add('active');
-            });
-        });
+    <!-- Flow Tabs -->
+    <div class="flow-tabs">
+        <div class="flow-tabs-content">
+            <button class="flow-tab active" data-flow="browse">Browse Flow (Organic Discovery)</button>
+            <button class="flow-tab" data-flow="search">Search Flow (Intent-Driven)</button>
+            <button class="flow-tab" data-flow="submission">Submission Flow (Problem Submitter)</button>
+        </div>
+    </div>
 
-        // Toggle switches
-        document.querySelectorAll('[data-switch]').forEach(toggle => {
-            toggle.addEventListener('click', () => toggle.classList.toggle('active'));
-        });
-
-        // Hero search with AI-powered suggestions
-        const heroSearchInput = document.getElementById('hero-search-input');
-        const heroSuggestions = document.getElementById('hero-suggestions');
-
-        if (heroSearchInput && heroSuggestions) {
-            heroSearchInput.addEventListener('focus', () => {
-                heroSuggestions.classList.add('active');
-            });
-
-            heroSearchInput.addEventListener('input', (e) => {
-                if (e.target.value.length > 0) {
-                    heroSuggestions.classList.add('active');
-                } else {
-                    heroSuggestions.classList.remove('active');
-                }
-            });
-
-            // Close suggestions when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!heroSearchInput.contains(e.target) && !heroSuggestions.contains(e.target)) {
-                    heroSuggestions.classList.remove('active');
-                }
-            });
-
-            // Handle suggestion clicks
-            heroSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    heroSearchInput.value = item.querySelector('strong').textContent;
-                    heroSuggestions.classList.remove('active');
-                });
-            });
-        }
-
-        // Category filtering
-        const categoryCards = document.querySelectorAll('.category-card');
-        categoryCards.forEach(card => {
-            card.addEventListener('click', () => {
-                // Toggle active state
-                const isActive = card.classList.contains('active');
-
-                if (!isActive) {
-                    categoryCards.forEach(c => c.classList.remove('active'));
-                    card.classList.add('active');
-
-                    // Show visual feedback
-                    const category = card.dataset.category;
-                    console.log(`Filtering by category: ${category}`);
-
-                    // In a real implementation, this would filter the content
-                    // For now, just show visual feedback
-                } else {
-                    card.classList.remove('active');
-                    console.log('Filter cleared');
-                }
-            });
-        });
-
-        // Agree buttons in signals feed
-        const agreeButtons = document.querySelectorAll('[data-agree]');
-        agreeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent triggering parent click
-                btn.classList.toggle('agreed');
-
-                // Update count
-                const currentText = btn.textContent.trim();
-                const count = parseInt(currentText.match(/\d+/)[0]);
-
-                if (btn.classList.contains('agreed')) {
-                    btn.textContent = `👍 ${count + 1}`;
-                } else {
-                    btn.textContent = `👍 ${count - 1}`;
-                }
-            });
-        });
-
-        // Trending cards click to detail
-        const trendingCards = document.querySelectorAll('.trending-card');
-        trendingCards.forEach(card => {
-            card.addEventListener('click', () => {
-                // In a real implementation, navigate to detail page
-                console.log('Navigate to:', card.querySelector('strong').textContent);
-            });
-        });
-
-        // Signal items click to detail
-        const signalItems = document.querySelectorAll('.signal-item');
-        signalItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                // Don't trigger if clicking the agree button
-                if (!e.target.closest('[data-agree]')) {
-                    console.log('Navigate to signal:', item.querySelector('strong').textContent);
-                }
-            });
-        });
-
-        // "I Need This Too" button
-        const needThisBtn = document.getElementById('need-this-btn');
-        if (needThisBtn) {
-            needThisBtn.addEventListener('click', () => {
-                if (needThisBtn.classList.contains('validated')) {
-                    needThisBtn.classList.remove('validated');
-                    needThisBtn.innerHTML = '<span>✋</span><span>I Need This Too</span>';
-                } else {
-                    needThisBtn.classList.add('validated');
-                    needThisBtn.innerHTML = '<span>✅</span><span>Validated!</span>';
-                }
-            });
-        }
-
-        // Analytics Dashboard Integration
-        async function loadAnalyticsDashboard() {
-            try {
-                // Load analytics data in parallel
-                const [completionStats, topFeasible, geoDistribution] = await Promise.all([
-                    api.getCompletionStats(),
-                    api.getTopFeasible(50.0, 20),
-                    api.getGeographicDistribution()
-                ]);
-
-                // Update dashboard stats
-                updateDashboardStats(completionStats);
-
-                // Update opportunity highlights (using top feasible data)
-                updateOpportunityHighlights(topFeasible);
-
-                // Update trending opportunities list
-                updateTrendingOpportunitiesList(topFeasible);
-
-            } catch (error) {
-                console.error('Error loading analytics dashboard:', error);
-            }
-        }
-
-        // Update dashboard statistics
-        function updateDashboardStats(stats) {
-            const statCards = document.querySelectorAll('#dashboard .stats-grid .stat-card');
-            if (statCards.length >= 4 && stats) {
-                // Total opportunities
-                const totalOpps = (stats.open || 0) + (stats.in_progress || 0) + (stats.solved || 0) + (stats.abandoned || 0);
-                statCards[0].querySelector('strong').textContent = totalOpps.toLocaleString();
-
-                // New this week (use open opportunities as proxy)
-                statCards[1].querySelector('strong').textContent = (stats.open || 0).toLocaleString();
-
-                // High validation (use solved as high validation proxy)
-                statCards[2].querySelector('strong').textContent = (stats.solved || 0).toLocaleString();
-
-                // In progress
-                statCards[3].querySelector('strong').textContent = (stats.in_progress || 0).toLocaleString();
-                statCards[3].querySelector('.subdued').textContent = 'In progress';
-            }
-        }
-
-        // Update opportunity highlights
-        function updateOpportunityHighlights(opportunities) {
-            if (!opportunities || opportunities.length === 0) return;
-
-            const highlightsGrid = document.querySelector('#dashboard .panel-card:nth-of-type(2) .grid-two');
-            if (!highlightsGrid) return;
-
-            // Use the top opportunity for highlights
-            const topOpp = opportunities[0];
-
-            highlightsGrid.innerHTML = `
-                <div class="list-item">
-                    <small class="subdued">Top Opportunity</small>
-                    <strong>${topOpp.title}</strong>
-                    <small>${topOpp.category || 'Uncategorized'}</small>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Browse Flow -->
+        <div id="browse-flow" class="flow-content">
+            <!-- Stage 1: Entry Point -->
+            <div class="fade-in-up stagger-1">
+                <div style="text-align: center;">
+                    <span class="stage-badge violet">STAGE 1: ENTRY POINT</span>
                 </div>
-                <div class="list-item">
-                    <small class="subdued">Feasibility Score</small>
-                    <strong>${topOpp.feasibility_score ? Math.round(topOpp.feasibility_score) : 'N/A'}</strong>
-                    <small>Out of 100</small>
+                <div class="stage-card highlight">
+                    <div class="stage-header">
+                        <div class="stage-icon dark">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                <polyline points="17 6 23 6 23 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stage-body">
+                            <h2>Landing Page / Homepage</h2>
+                            <p>User discovers Friction through marketing, word-of-mouth, or organic search</p>
+                            <div class="info-grid">
+                                <div class="info-box">
+                                    <div class="info-box-label">Hero Section</div>
+                                    <p>"Transform Consumer Friction into Validated Business Opportunities"</p>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-box-label">Value Props</div>
+                                    <p>2,847+ validated ideas • Real consumer insights • Market-ready data</p>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-box-label">CTA</div>
+                                    <p class="bold">"Browse Trending Opportunities" →</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="list-item">
-                    <small class="subdued">Validation Count</small>
-                    <strong>${topOpp.validation_count || 0}</strong>
-                    <small>${topOpp.growth_rate ? `↑ ${Math.round(topOpp.growth_rate)}% growth` : 'Stable'}</small>
+            </div>
+
+            <!-- Arrow -->
+            <div class="arrow-connector">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animated-arrow">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </div>
+
+            <!-- Stage 2: Discovery -->
+            <div class="fade-in-up stagger-2">
+                <div style="text-align: center;">
+                    <span class="stage-badge blue">STAGE 2: DISCOVERY</span>
                 </div>
-                <div class="list-item">
-                    <small class="subdued">Geographic Scope</small>
-                    <strong>${formatGeographicScope(topOpp.geographic_scope)}</strong>
-                    <small>${topOpp.country || 'Global'}</small>
+                <div class="stage-card blue">
+                    <div class="stage-header">
+                        <div class="stage-icon blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                        </div>
+                        <div class="stage-body">
+                            <h2>Idea Discovery Feed</h2>
+                            <p>User browses curated opportunities sorted by trending, validation score, or category</p>
+                            
+                            <div class="example-card">
+                                <div class="example-card-label">EXAMPLE CARD VIEW:</div>
+                                <div class="opportunity-card">
+                                    <div class="opportunity-header">
+                                        <div>
+                                            <div class="opportunity-category">Home Services</div>
+                                            <div class="opportunity-title">On-Demand Home Maintenance Subscription</div>
+                                        </div>
+                                        <div class="validation-score">87/100</div>
+                                    </div>
+                                    <div class="opportunity-description">
+                                        Homeowners struggle with reactive, expensive emergency repairs...
+                                    </div>
+                                    <div class="opportunity-meta">
+                                        <span>📊 2,847 submissions</span>
+                                        <span>💰 $8.4B market</span>
+                                        <span>📈 +34% growth</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tier-boxes">
+                                <div class="tier-box amber">
+                                    <div class="tier-box-label">🔒 FREE TIER</div>
+                                    <p>Can see validation score, basic metrics, problem statement</p>
+                                </div>
+                                <div class="tier-box stone">
+                                    <div class="tier-box-label">USER ACTION</div>
+                                    <p class="bold">Click card → Problem Detail page</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            `;
-        }
+            </div>
 
-        // Update trending opportunities list in dashboard
-        function updateTrendingOpportunitiesList(opportunities) {
-            if (!opportunities || opportunities.length === 0) return;
+            <!-- Arrow -->
+            <div class="arrow-connector">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animated-arrow">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </div>
 
-            const trendingPanel = document.querySelector('#dashboard .panel-card:nth-of-type(3)');
-            if (!trendingPanel) return;
+            <!-- Stage 3: Problem Detail -->
+            <div class="fade-in-up stagger-3">
+                <div style="text-align: center;">
+                    <span class="stage-badge green">STAGE 3: TIER 1 - PROBLEM DETAIL (FREE)</span>
+                </div>
+                <div class="stage-card green">
+                    <div class="stage-header">
+                        <div class="stage-icon green">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </div>
+                        <div class="stage-body">
+                            <h2>Problem Detail Page</h2>
+                            <p>Quick validation view - helps user decide if this opportunity is worth deeper exploration</p>
+                            
+                            <div class="two-col-grid">
+                                <div class="info-box">
+                                    <div class="info-box-label">What They See</div>
+                                    <ul class="check-list">
+                                        <li>✓ Quick metrics (submissions, market size, urgency)</li>
+                                        <li>✓ Problem statement</li>
+                                        <li>✓ Top 3 consumer pain points</li>
+                                        <li>✓ Related opportunities</li>
+                                    </ul>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-box-label">What They Don't See</div>
+                                    <ul class="check-list">
+                                        <li>✗ Demographics breakdown</li>
+                                        <li>✗ Competitive landscape</li>
+                                        <li>✗ Financial modeling</li>
+                                        <li>✗ Execution playbook</li>
+                                    </ul>
+                                </div>
+                            </div>
 
-            // Find or create the table card
-            let tableCard = trendingPanel.querySelector('.table-card');
-            if (!tableCard) {
-                tableCard = document.createElement('div');
-                tableCard.className = 'table-card';
-                trendingPanel.appendChild(tableCard);
-            }
+                            <div class="cta-banner">
+                                <div>
+                                    <h3>Ready to go deeper?</h3>
+                                    <p>Unlock Research Dashboard with full market analysis</p>
+                                </div>
+                                <a href="#pricing" class="btn btn-white">Unlock Research → $29</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            // Clear existing content
-            tableCard.innerHTML = '';
+            <!-- Arrow -->
+            <div class="arrow-connector">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animated-arrow">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </div>
 
-            // Add top 5 opportunities
-            opportunities.slice(0, 5).forEach(opp => {
-                const row = document.createElement('div');
-                row.className = 'table-row';
-                row.style.cursor = 'pointer';
+            <!-- Stage 4: Research Dashboard -->
+            <div class="fade-in-up stagger-4">
+                <div style="text-align: center;">
+                    <span class="stage-badge" style="background: #fef3c7; color: #b45309;">STAGE 4: TIER 2 - RESEARCH DASHBOARD (PAID)</span>
+                </div>
+                <div class="stage-card" style="border-color: #f59e0b;">
+                    <div class="stage-header">
+                        <div class="stage-icon" style="background: #f59e0b;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                        </div>
+                        <div class="stage-body">
+                            <h2>Research Dashboard</h2>
+                            <p>Complete market analysis with demographics, competition, and financial projections</p>
+                            
+                            <div class="info-grid">
+                                <div class="info-box">
+                                    <div class="info-box-label">Market Analysis</div>
+                                    <p>TAM/SAM/SOM breakdown, growth trends, regional data</p>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-box-label">Demographics</div>
+                                    <p>Age, income, location, psychographics of target users</p>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-box-label">Competition</div>
+                                    <p>Competitor analysis, market gaps, differentiation opportunities</p>
+                                </div>
+                            </div>
 
-                const categoryIcon = getCategoryIcon(opp.category);
-                const growthIndicator = opp.growth_rate && opp.growth_rate > 0 ? '📈' : '📊';
-                const growthText = opp.growth_rate
-                    ? `${growthIndicator} ${opp.growth_rate > 0 ? '+' : ''}${Math.round(opp.growth_rate)}% growth`
-                    : '📊 Stable';
+                            <div class="cta-banner">
+                                <div>
+                                    <h3>Want AI-powered insights?</h3>
+                                    <p>Unlock Deep Dive with AI research assistant</p>
+                                </div>
+                                <a href="#pricing" class="btn btn-white">Unlock Deep Dive → $99</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                row.innerHTML = `
-                    <strong>${opp.title}</strong>
-                    <small>${categoryIcon} ${opp.category || 'Uncategorized'} · ${formatGeographicScope(opp.geographic_scope)} · ${opp.validation_count || 0} validations · ${growthText}</small>
-                `;
+        <!-- Search Flow (hidden by default) -->
+        <div id="search-flow" class="flow-content" style="display: none;">
+            <div class="stage-card highlight">
+                <div class="stage-header">
+                    <div class="stage-icon dark">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                    <div class="stage-body">
+                        <h2>Search Flow (Intent-Driven)</h2>
+                        <p>User arrives with a specific problem or industry in mind</p>
+                        
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <div class="info-box-label">Search Input</div>
+                                <p>Natural language query: "healthcare scheduling problems"</p>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-box-label">Filters</div>
+                                <p>Category, validation score, market size, recency</p>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-box-label">Results</div>
+                                <p>Ranked opportunities matching search intent</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                row.addEventListener('click', () => {
-                    console.log('Navigate to opportunity:', opp.id);
-                    // TODO: Navigate to opportunity detail
-                });
+        <!-- Submission Flow (hidden by default) -->
+        <div id="submission-flow" class="flow-content" style="display: none;">
+            <div class="stage-card highlight">
+                <div class="stage-header">
+                    <div class="stage-icon dark">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="stage-body">
+                        <h2>Submission Flow (Problem Submitter)</h2>
+                        <p>User wants to share a problem they've experienced</p>
+                        
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <div class="info-box-label">Step 1</div>
+                                <p>Describe the problem in your own words</p>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-box-label">Step 2</div>
+                                <p>Select category and add context</p>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-box-label">Step 3</div>
+                                <p>AI validates and matches to existing opportunities</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-                tableCard.appendChild(row);
-            });
-        }
+    <!-- Pricing Section -->
+    <section id="pricing" style="background: var(--white); border-top: 1px solid var(--stone-200); padding: 80px 32px;">
+        <div style="max-width: 1280px; margin: 0 auto; text-align: center;">
+            <h2 class="spektral" style="font-size: 36px; margin-bottom: 16px;">Choose Your Research Depth</h2>
+            <p style="color: var(--stone-600); margin-bottom: 48px;">Start free, upgrade when you find opportunities worth pursuing</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto;">
+                <div style="background: var(--stone-50); border: 2px solid var(--stone-200); border-radius: 16px; padding: 32px; text-align: left;">
+                    <div style="font-size: 14px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">FREE</div>
+                    <div style="font-size: 36px; font-weight: 700; margin-bottom: 8px;">$0</div>
+                    <div style="color: var(--stone-600); margin-bottom: 24px;">Problem Detail access</div>
+                    <ul style="list-style: none; margin-bottom: 24px;">
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Browse all opportunities</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Validation scores</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Basic problem statements</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Top pain points</li>
+                    </ul>
+                    <a href="signup.html" class="btn" style="width: 100%; justify-content: center;">Get Started Free</a>
+                </div>
+                
+                <div style="background: var(--white); border: 2px solid var(--stone-900); border-radius: 16px; padding: 32px; text-align: left; position: relative;">
+                    <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--stone-900); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">POPULAR</div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">RESEARCH</div>
+                    <div style="font-size: 36px; font-weight: 700; margin-bottom: 8px;">$29<span style="font-size: 16px; font-weight: 400;">/idea</span></div>
+                    <div style="color: var(--stone-600); margin-bottom: 24px;">Full market analysis</div>
+                    <ul style="list-style: none; margin-bottom: 24px;">
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Everything in Free</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Demographics breakdown</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Competitive landscape</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Market size analysis</li>
+                    </ul>
+                    <a href="signup.html" class="btn btn-primary" style="width: 100%; justify-content: center;">Unlock Research</a>
+                </div>
+                
+                <div style="background: var(--stone-50); border: 2px solid var(--stone-200); border-radius: 16px; padding: 32px; text-align: left;">
+                    <div style="font-size: 14px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">DEEP DIVE</div>
+                    <div style="font-size: 36px; font-weight: 700; margin-bottom: 8px;">$99<span style="font-size: 16px; font-weight: 400;">/idea</span></div>
+                    <div style="color: var(--stone-600); margin-bottom: 24px;">AI-powered insights</div>
+                    <ul style="list-style: none; margin-bottom: 24px;">
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Everything in Research</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ AI research assistant</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Financial projections</li>
+                        <li style="padding: 8px 0; font-size: 14px;">✓ Execution playbook</li>
+                    </ul>
+                    <a href="signup.html" class="btn" style="width: 100%; justify-content: center;">Unlock Deep Dive</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        // Format geographic scope
-        function formatGeographicScope(scope) {
-            if (!scope) return 'Global';
-            const formatted = {
-                'local': 'Local',
-                'regional': 'Regional',
-                'national': 'National',
-                'international': 'International',
-                'online': 'Online'
-            };
-            return formatted[scope] || scope;
-        }
+    <!-- Submit Section -->
+    <section id="submit" style="background: var(--stone-50); border-top: 1px solid var(--stone-200); padding: 80px 32px;">
+        <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+            <h2 class="spektral" style="font-size: 36px; margin-bottom: 16px;">Share a Problem</h2>
+            <p style="color: var(--stone-600); margin-bottom: 32px;">Help us discover opportunities by sharing friction you've experienced</p>
+            
+            <form style="background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 32px; text-align: left;">
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">What problem did you experience?</label>
+                    <textarea style="width: 100%; padding: 12px; border: 1px solid var(--stone-200); border-radius: 8px; font-size: 14px; min-height: 120px; resize: vertical;" placeholder="Describe the frustration or unmet need..."></textarea>
+                </div>
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Category</label>
+                    <select style="width: 100%; padding: 12px; border: 1px solid var(--stone-200); border-radius: 8px; font-size: 14px; background: white;">
+                        <option>Select a category...</option>
+                        <option>Healthcare</option>
+                        <option>Finance</option>
+                        <option>Home Services</option>
+                        <option>Technology</option>
+                        <option>Education</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Submit Problem</button>
+            </form>
+        </div>
+    </section>
 
-        // Get category icon
-        function getCategoryIcon(category) {
-            const icons = {
-                'Healthcare': '🏥',
-                'Finance': '💰',
-                'Transportation': '🚗',
-                'Technology': '💻',
-                'Education': '📚',
-                'Home': '🏠',
-                'Work': '💼'
-            };
-            return icons[category] || '📌';
-        }
-
-        // Load analytics when dashboard tab is clicked
-        tabs.forEach(tab => {
-            const originalClickHandler = tab.onclick;
-            tab.addEventListener('click', () => {
-                if (tab.dataset.target === 'dashboard') {
-                    loadAnalyticsDashboard();
-                }
-            });
-        });
-    </script>
-
-    <!-- API Integration -->
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
-    <script src="js/app.js"></script>
+    <script>
+        // Flow tab switching
+        document.querySelectorAll('.flow-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.flow-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const flow = tab.dataset.flow;
+                document.querySelectorAll('.flow-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(flow + '-flow').style.display = 'block';
+            });
+        });
+
+        // Auth-aware UI
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const user = await api.getCurrentUser();
+                    document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'flex');
+                    document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'none');
+                    
+                    const avatar = document.getElementById('user-avatar');
+                    if (avatar && user) {
+                        const initials = user.name 
+                            ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                            : user.email[0].toUpperCase();
+                        avatar.textContent = initials;
+                    }
+                } catch (error) {
+                    localStorage.removeItem('access_token');
+                }
+            }
+        });
+    </script>
 </body>
 </html>
