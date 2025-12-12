@@ -54,30 +54,14 @@ def _prepare_postgres_url(raw_url: str) -> str:
     return urlunparse(parsed._replace(query=new_query))
 
 def get_database_url():
-    """Get PostgreSQL connection URL dynamically at runtime
+    """Get PostgreSQL connection URL from PG* environment variables
     
-    Priority:
-    1. POSTGRES_URL secret (to bypass .replit override)
-    2. DATABASE_URL if it's a valid PostgreSQL URL
-    3. Construct from PG* environment variables (Replit native PostgreSQL)
+    For Replit: Uses PGHOST, PGDATABASE, PGUSER, PGPASSWORD from .replit file
+    These are set to: db:5432/replit with user 'replit'
     
-    Note: Reads environment variables at runtime, not import time
+    Note: Ignores DATABASE_URL and POSTGRES_URL to avoid conflicts with imported Secrets
     """
-    # First try POSTGRES_URL from Secrets (highest priority override)
-    postgres_url = os.getenv("POSTGRES_URL", "")
-    if postgres_url.startswith(("postgresql://", "postgres://")):
-        url = _prepare_postgres_url(postgres_url)
-        logger.info("Using POSTGRES_URL for PostgreSQL connection")
-        return url
-    
-    # Try DATABASE_URL (Replit's standard)
-    db_url = os.getenv("DATABASE_URL", "")
-    if db_url.startswith(("postgresql://", "postgres://")):
-        url = _prepare_postgres_url(db_url)
-        logger.info("Using DATABASE_URL for PostgreSQL connection")
-        return url
-    
-    # Try PG* variables (Replit native PostgreSQL)
+    # Use PG* variables (Replit native PostgreSQL)
     pg_host = os.getenv("PGHOST")
     pg_db = os.getenv("PGDATABASE")
     pg_user = os.getenv("PGUSER")
@@ -96,11 +80,12 @@ def get_database_url():
         logger.info(f"Using PG* variables for PostgreSQL connection ({pg_host}:{pg_port}/{pg_db})")
         return url
     
-    logger.error("No valid PostgreSQL URL found. Missing: PGHOST, PGDATABASE, or PGUSER")
-    logger.error("DATABASE_URL value: %s", db_url[:50] if db_url else "not set")
+    logger.error("No valid PostgreSQL configuration found")
+    logger.error("Missing required PG* variables: PGHOST, PGDATABASE, or PGUSER")
+    logger.error("Current values: PGHOST=%s, PGDATABASE=%s, PGUSER=%s", pg_host, pg_db, pg_user)
     raise ValueError(
-        "Database not configured. PostgreSQL module is in .replit but connection failed. "
-        "Check that PostgreSQL service is running. Try restarting your Repl."
+        "PostgreSQL not configured. Check .replit file has PGHOST=db, PGDATABASE=replit, PGUSER=replit. "
+        "Make sure 'postgresql-16' is in modules list and restart your Repl."
     )
 
 # Lazy initialization - don't create engine at import time

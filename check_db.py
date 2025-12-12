@@ -25,6 +25,23 @@ env_vars = {
     "PGPORT": os.getenv("PGPORT", "NOT SET"),
 }
 
+# Check for problematic values
+print("\n⚠️  CHECKING FOR CONFLICTS:")
+print("-" * 60)
+database_url = os.getenv("DATABASE_URL", "")
+postgres_url = os.getenv("POSTGRES_URL", "")
+replit_db = os.getenv("REPLIT_DB_URL", "")
+
+if database_url and not database_url.startswith(("postgresql://", "postgres://")):
+    print(f"✗ DATABASE_URL is set but NOT a PostgreSQL URL (it's: {database_url[:50]}...)")
+    print("  This might be from Replit Secrets pointing to KV store!")
+if postgres_url and "neon" in postgres_url:
+    print(f"✗ POSTGRES_URL points to old Neon database!")
+    print("  You need to delete POSTGRES_URL from Replit Secrets")
+if replit_db and database_url == replit_db:
+    print(f"✗ DATABASE_URL equals REPLIT_DB_URL (KV store, not PostgreSQL)")
+    print("  Delete DATABASE_URL from Replit Secrets to use .replit file values")
+
 for key, value in env_vars.items():
     status = "✓" if value != "NOT SET" else "✗"
     # Mask passwords in output
