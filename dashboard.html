@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard · Friction</title>
+    <link rel="stylesheet" href="css/features.css">
+    <style>
+        :root {
+            --bg: #F9FAFB;
+            --surface: #FFFFFF;
+            --panel-border: #E5E7EB;
+            --text: #111827;
+            --text-secondary: #6B7280;
+            --muted: #9CA3AF;
+            --accent: #D97757;
+            --accent-2: #C96646;
+            --accent-light: #FEF3E8;
+            --success: #10B981;
+            --success-bg: #D1FAE5;
+            --danger: #DC2626;
+            --danger-bg: #FEE2E2;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: #F3F4F6;
+            color: var(--text);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: #F3F4F6;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .user-menu:hover {
+            background: #E5E7EB;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid var(--panel-border);
+            cursor: pointer;
+            background: var(--surface);
+            color: var(--text);
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #F3F4F6;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-2);
+        }
+
+        .main-content {
+            padding: 32px 0;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .section-meta {
+            font-size: 13px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .realtime-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .trending-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .trending-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trending-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+        }
+
+        .trending-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .growth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .growth-badge.up {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .growth-badge.down {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .trending-card .validations {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .category-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-card:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .category-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .category-icon.work { background: #DBEAFE; }
+        .category-icon.finance { background: #FEF3C7; }
+        .category-icon.health { background: #FCE7F3; }
+        .category-icon.home { background: #D1FAE5; }
+        .category-icon.tech { background: #E0E7FF; }
+        .category-icon.transport { background: #FEE2E2; }
+        .category-icon.education { background: #F3E8FF; }
+        .category-icon.shopping { background: #CCFBF1; }
+
+        .category-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .category-info span {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .live-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .live-card {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .live-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+        }
+
+        .live-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+            gap: 8px;
+        }
+
+        .source-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .source-badge.api { background: #FEF3C7; color: #92400E; }
+        .source-badge.reddit { background: #DBEAFE; color: #1E40AF; }
+        .source-badge.hn { background: #E0E7FF; color: #3730A3; }
+
+        .impact-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .live-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .live-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .live-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .signals-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .signal-item {
+            background: var(--surface);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--border-radius);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .signal-item:hover {
+            border-color: var(--accent);
+        }
+
+        .signal-content h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .signal-content span {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .agree-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #F3F4F6;
+            border: 1px solid var(--panel-border);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .agree-btn:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .agree-btn.agreed {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .view-all-link {
+            font-size: 14px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .view-all-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1024px) {
+            .trending-grid,
+            .categories-grid,
+            .live-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .trending-grid,
+            .categories-grid,
+            .live-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <a href="dashboard.html" class="logo">
+                    <span>⚡</span>
+                    Friction
+                </a>
+                <nav class="header-nav">
+                    <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                    <a href="search.html" class="nav-link">Search</a>
+                    <a href="category.html" class="nav-link">Categories</a>
+                </nav>
+            </div>
+            <div class="header-actions">
+                <a href="#" class="btn" id="submit-btn">Submit Problem</a>
+                <div class="user-menu" id="user-menu">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <span id="user-name">User</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="layout main-content">
+        <section class="section">
+            <div class="section-header">
+                <h2>Trending Opportunities</h2>
+                <span class="section-meta">
+                    <span class="realtime-dot"></span>
+                    Updated in real-time
+                </span>
+            </div>
+            <div class="trending-grid" id="trending-container">
+                <div class="trending-card">
+                    <h3>Universal healthcare scheduling platform</h3>
+                    <span class="growth-badge up">↑ 18% this week</span>
+                    <div class="validations">4,523 validations</div>
+                </div>
+                <div class="trending-card">
+                    <h3>Transparent small business banking</h3>
+                    <span class="growth-badge up">↑ 12% this week</span>
+                    <div class="validations">3,891 validations</div>
+                </div>
+                <div class="trending-card">
+                    <h3>Finding reliable contractors for home repairs</h3>
+                    <span class="growth-badge up">↑ 8% this week</span>
+                    <div class="validations">6,234 validations</div>
+                </div>
+                <div class="trending-card">
+                    <h3>Managing multiple streaming subscriptions</h3>
+                    <span class="growth-badge down">↓ 3% this week</span>
+                    <div class="validations">8,923 validations</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Categories</h2>
+                <span class="section-meta">Explore 8 core domains - Click to filter</span>
+            </div>
+            <div class="categories-grid">
+                <div class="category-card" onclick="location.href='category.html?cat=work'">
+                    <div class="category-icon work">💼</div>
+                    <div class="category-info">
+                        <h3>Work & Productivity</h3>
+                        <span>12,483 problems</span>
+                    </div>
+                </div>
+                <div class="category-card" onclick="location.href='category.html?cat=finance'">
+                    <div class="category-icon finance">💰</div>
+                    <div class="category-info">
+                        <h3>Money & Finance</h3>
+                        <span>8,921 problems</span>
+                    </div>
+                </div>
+                <div class="category-card" onclick="location.href='category.html?cat=health'">
+                    <div class="category-icon health">🏥</div>
+                    <div class="category-info">
+                        <h3>Health & Wellness</h3>
+                        <span>15,672 problems</span>
+                    </div>
+                </div>
+                <div class="category-card" onclick="location.href='category.html?cat=home'">
+                    <div class="category-icon home">🏠</div>
+                    <div class="category-info">
+                        <h3>Home & Living</h3>
+                        <span>9,234 problems</span>
+                    </div>
+                </div>
+                <div class="category-card" onclick="location.href='category.html?cat=tech'">
+                    <div class="category-icon tech">💻</div>
+                    <div class="category-info">
+                        <h3>Technology</h3>
+                        <span>11,456 problems</span>
+                    </div>
+                </div>
+                <div class="category-card" onclick="location.href='category.html?cat=transport'">
+                    <div class="category-icon transport">🚗</div>
+                    <div class="category-info">
+                        <h3>Transportation</h3>
+                        <span>6,789 problems</span>
+                    </div>
+                </div>
+                <div class="category-card" onclick="location.href='category.html?cat=education'">
+                    <div class="category-icon education">📚</div>
+                    <div class="category-info">
+                        <h3>Education</h3>
+                        <span>7,345 problems</span>
+                    </div>
+                </div>
+                <div class="category-card" onclick="location.href='category.html?cat=shopping'">
+                    <div class="category-icon shopping">🛒</div>
+                    <div class="category-info">
+                        <h3>Shopping & Services</h3>
+                        <span>10,123 problems</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Live Opportunities from Databases</h2>
+                <span class="section-meta">Real-time data from external APIs - Click to explore</span>
+            </div>
+            <div class="live-grid" id="live-container">
+                <div class="live-card">
+                    <div class="live-card-header">
+                        <span class="source-badge api">API Source</span>
+                        <span class="impact-badge">High Impact</span>
+                    </div>
+                    <h3>Difficulty managing health insurance claims</h3>
+                    <p>Complex paperwork, unclear billing codes, and delayed reimbursements create friction for patients navigating the insurance landscape.</p>
+                    <div class="live-card-meta">
+                        <span>💰 Finance</span>
+                        <span>•</span>
+                        <span>1,247 confirmations</span>
+                        <span>•</span>
+                        <span>2 hrs ago</span>
+                    </div>
+                </div>
+                <div class="live-card">
+                    <div class="live-card-header">
+                        <span class="source-badge api">API Source</span>
+                        <span class="impact-badge">High Impact</span>
+                    </div>
+                    <h3>Finding trustworthy local service providers</h3>
+                    <p>Inconsistent reviews, hidden pricing, and unreliable scheduling make it challenging to find dependable contractors.</p>
+                    <div class="live-card-meta">
+                        <span>🏠 Home & Living</span>
+                        <span>•</span>
+                        <span>3,892 confirmations</span>
+                        <span>•</span>
+                        <span>5 hrs ago</span>
+                    </div>
+                </div>
+                <div class="live-card">
+                    <div class="live-card-header">
+                        <span class="source-badge reddit">Reddit</span>
+                        <span class="impact-badge">Trending</span>
+                    </div>
+                    <h3>EV charging infrastructure in apartment complexes</h3>
+                    <p>Limited charging stations, unfair cost allocation, and lack of landlord incentives prevent EV adoption.</p>
+                    <div class="live-card-meta">
+                        <span>🚗 Transportation</span>
+                        <span>•</span>
+                        <span>891 confirmations</span>
+                        <span>•</span>
+                        <span>1 day ago</span>
+                    </div>
+                </div>
+                <div class="live-card">
+                    <div class="live-card-header">
+                        <span class="source-badge hn">HN</span>
+                        <span class="impact-badge">High Impact</span>
+                    </div>
+                    <h3>SMB subscription management for SaaS</h3>
+                    <p>Small businesses struggle to track multiple software subscriptions, leading to duplicate tools and budget overruns.</p>
+                    <div class="live-card-meta">
+                        <span>💼 Work & Productivity</span>
+                        <span>•</span>
+                        <span>2,134 confirmations</span>
+                        <span>•</span>
+                        <span>6 hrs ago</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2>Recent Signals</h2>
+                <a href="#" class="view-all-link">View all signals</a>
+            </div>
+            <div class="signals-list" id="signals-container">
+                <div class="signal-item">
+                    <div class="signal-content">
+                        <h3>Better parking solutions near apartments</h3>
+                        <span>🚗 Transportation · 2 hours ago</span>
+                    </div>
+                    <button class="agree-btn">👍 234</button>
+                </div>
+                <div class="signal-item">
+                    <div class="signal-content">
+                        <h3>Unified healthcare portal across providers</h3>
+                        <span>🏥 Health & Wellness · 5 hours ago</span>
+                    </div>
+                    <button class="agree-btn">👍 1,432</button>
+                </div>
+                <div class="signal-item">
+                    <div class="signal-content">
+                        <h3>Affordable quality furniture marketplace</h3>
+                        <span>🏠 Home & Living · 1 day ago</span>
+                    </div>
+                    <button class="agree-btn">👍 647</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const user = await api.getCurrentUser();
+                
+                const userAvatar = document.getElementById('user-avatar');
+                const userName = document.getElementById('user-name');
+                
+                if (user) {
+                    const initials = user.name 
+                        ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                        : user.email[0].toUpperCase();
+                    
+                    userAvatar.textContent = initials;
+                    userName.textContent = user.name || user.email.split('@')[0];
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                localStorage.removeItem('access_token');
+                window.location.href = 'login.html';
+            }
+            
+            const userMenu = document.getElementById('user-menu');
+            userMenu.addEventListener('click', () => {
+                window.location.href = 'profile.html';
+            });
+            
+            setupAgreeButtons();
+        });
+        
+        function setupAgreeButtons() {
+            const agreeButtons = document.querySelectorAll('.agree-btn');
+            agreeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    btn.classList.toggle('agreed');
+                    
+                    const currentText = btn.textContent;
+                    const match = currentText.match(/(\d+[\d,]*)/);
+                    if (match) {
+                        let count = parseInt(match[1].replace(/,/g, ''));
+                        if (btn.classList.contains('agreed')) {
+                            count += 1;
+                        } else {
+                            count -= 1;
+                        }
+                        btn.textContent = `👍 ${count.toLocaleString()}`;
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

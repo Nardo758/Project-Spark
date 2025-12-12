@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (token) {
         try {
             currentUser = await api.getCurrentUser();
+            // Redirect logged-in users to dashboard
+            if (window.location.pathname === '/' || window.location.pathname.endsWith('index.html')) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
             updateUIForLoggedInUser();
         } catch (error) {
             // Token expired or invalid
