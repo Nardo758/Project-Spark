@@ -1,7 +1,11 @@
-# Friction - Problem Discovery Engine
+# Katalyst - Problem Discovery Engine
 
 ## Recent Changes (December 2024)
 
+- **Complete Frontend Redesign**: Rebranded from "Friction" to "Katalyst" with new design system
+- **New Pages Built**: discover.html, submit.html, pricing.html, signup.html, signin.html, account.html
+- **Design System**: Spectral/Inter fonts, stone color palette, violet/purple accents
+- **Consistent Navigation**: Home, Browse Ideas, Pricing, Sign In, Get Started across all pages
 - **Database Configuration Simplified**: Now uses PG* variables from .replit file (PGHOST=db, PGDATABASE=replit, PGUSER=replit)
 - **Resend Integration**: Email service configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables
 - **Stripe Integration**: Payment processing configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables  
