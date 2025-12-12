@@ -14,11 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (token) {
         try {
             currentUser = await api.getCurrentUser();
-            // Redirect logged-in users to dashboard
-            if (window.location.pathname === '/' || window.location.pathname.endsWith('index.html')) {
-                window.location.href = 'dashboard.html';
-                return;
-            }
             updateUIForLoggedInUser();
         } catch (error) {
             // Token expired or invalid
@@ -38,10 +33,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Update UI for logged in user
 function updateUIForLoggedInUser() {
     const authButtons = document.querySelectorAll('.auth-required');
-    authButtons.forEach(btn => btn.style.display = 'block');
+    authButtons.forEach(btn => btn.style.display = 'flex');
 
     const guestButtons = document.querySelectorAll('.guest-only');
     guestButtons.forEach(btn => btn.style.display = 'none');
+    
+    // Update user avatar
+    const avatar = document.getElementById('user-avatar');
+    if (avatar && currentUser) {
+        const initials = currentUser.name 
+            ? currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            : currentUser.email[0].toUpperCase();
+        avatar.textContent = initials;
+    }
 }
 
 // Load opportunities with filters

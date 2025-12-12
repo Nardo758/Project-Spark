@@ -1169,9 +1169,13 @@
                     <a href="#pricing" class="nav-link">Pricing</a>
                 </nav>
             </div>
-            <div class="header-actions">
-                <a href="login.html" class="btn btn-secondary">Sign In</a>
-                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            <div class="header-actions" id="header-actions">
+                <a href="login.html" class="btn btn-secondary guest-only">Sign In</a>
+                <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
+                <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
+                <div class="user-menu auth-required" style="display: none; cursor: pointer;" onclick="window.location.href='profile.html'">
+                    <span id="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
+                </div>
             </div>
         </header>
 

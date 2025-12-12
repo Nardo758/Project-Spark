@@ -339,9 +339,13 @@
                 </nav>
             </div>
 
-            <div class="header-actions">
-                <a href="login.html" class="btn">Sign In</a>
-                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            <div class="header-actions" id="header-actions">
+                <a href="login.html" class="btn guest-only">Sign In</a>
+                <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
+                <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
+                <div class="user-menu auth-required" style="display: none; cursor: pointer;" id="user-menu-btn">
+                    <span id="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
+                </div>
             </div>
         </div>
     </header>
@@ -484,13 +488,40 @@
         </div>
     </main>
 
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const user = await api.getCurrentUser();
+                    document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'flex');
+                    document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'none');
+                    
+                    const avatar = document.getElementById('user-avatar');
+                    if (avatar && user) {
+                        const initials = user.name 
+                            ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                            : user.email[0].toUpperCase();
+                        avatar.textContent = initials;
+                    }
+                    
+                    const userMenuBtn = document.getElementById('user-menu-btn');
+                    if (userMenuBtn) {
+                        userMenuBtn.addEventListener('click', () => window.location.href = 'profile.html');
+                    }
+                } catch (error) {
+                    localStorage.removeItem('access_token');
+                }
+            }
+        });
+
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                // In a real app, this would filter/sort the opportunities
             });
         });
 
@@ -504,7 +535,6 @@
         // Subcategory clicks
         document.querySelectorAll('.subcategory-card').forEach(card => {
             card.addEventListener('click', () => {
-                // In a real app, this would filter by subcategory
                 console.log('Filter by:', card.querySelector('strong').textContent);
             });
         });
