@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Your Problem · Katalyst</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-100: #d1fae5;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --violet-50: #f5f3ff;
+            --violet-100: #ede9fe;
+            --violet-400: #a78bfa;
+            --violet-600: #7c3aed;
+            --violet-700: #6d28d9;
+            --purple-50: #faf5ff;
+            --purple-600: #9333ea;
+            --blue-50: #eff6ff;
+            --blue-100: #dbeafe;
+            --blue-200: #bfdbfe;
+            --blue-600: #2563eb;
+            --blue-800: #1e40af;
+            --amber-50: #fffbeb;
+            --amber-100: #fef3c7;
+            --amber-200: #fde68a;
+            --amber-600: #d97706;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .spektral {
+            font-family: 'Spectral', serif;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes confetti {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+        .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+        .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+
+        /* Navigation */
+        nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+        }
+
+        .nav-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--stone-900);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+        }
+
+        .logo-text {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-link {
+            color: var(--stone-600);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--stone-900);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--stone-600);
+        }
+
+        .btn-ghost:hover {
+            color: var(--stone-900);
+        }
+
+        .btn-primary {
+            background: var(--stone-900);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--stone-800);
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--violet-50), var(--purple-50));
+            border-bottom: 1px solid var(--violet-100);
+            padding: 64px 0;
+            text-align: center;
+        }
+
+        .page-header-content {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .header-badge {
+            display: inline-block;
+            background: var(--violet-100);
+            color: var(--violet-700);
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-family: 'Spectral', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 16px;
+        }
+
+        .page-header p {
+            font-size: 20px;
+            color: var(--stone-600);
+        }
+
+        /* Value Props */
+        .value-props {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            padding: 32px 0;
+        }
+
+        .value-props-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 32px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            text-align: center;
+        }
+
+        .value-prop {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .value-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .value-icon.emerald {
+            background: var(--emerald-100);
+            color: var(--emerald-600);
+        }
+
+        .value-icon.violet {
+            background: var(--violet-100);
+            color: var(--violet-600);
+        }
+
+        .value-icon.blue {
+            background: var(--blue-100);
+            color: var(--blue-600);
+        }
+
+        .value-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .value-prop h3 {
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+        }
+
+        .value-prop p {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        /* Main Form */
+        .main-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 32px;
+        }
+
+        .form-card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 2px solid var(--stone-200);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .form-card h2 {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 8px;
+        }
+
+        .form-card > p {
+            font-size: 14px;
+            color: var(--stone-600);
+            margin-bottom: 16px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--stone-200);
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            min-height: 160px;
+            transition: all 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--violet-400);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+        }
+
+        textarea::placeholder {
+            color: var(--stone-400);
+        }
+
+        .tip-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--blue-50);
+            border: 1px solid var(--blue-200);
+            border-radius: 8px;
+        }
+
+        .tip-box svg {
+            width: 16px;
+            height: 16px;
+            color: var(--blue-600);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .tip-box p {
+            font-size: 13px;
+            color: var(--blue-800);
+        }
+
+        .tip-box strong {
+            font-weight: 600;
+        }
+
+        /* Category Grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .category-btn {
+            padding: 16px;
+            border: 2px solid var(--stone-200);
+            border-radius: 8px;
+            background: var(--white);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--stone-700);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .category-btn:hover {
+            border-color: var(--stone-300);
+            background: var(--stone-50);
+        }
+
+        .category-btn.selected {
+            border-color: var(--violet-600);
+            background: var(--violet-50);
+            color: var(--violet-700);
+        }
+
+        /* Similar Problems */
+        .similar-problems {
+            background: var(--amber-50);
+            border: 2px solid var(--amber-200);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .similar-problems.visible {
+            display: block;
+        }
+
+        .similar-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .similar-header svg {
+            width: 24px;
+            height: 24px;
+            color: var(--amber-600);
+            flex-shrink: 0;
+        }
+
+        .similar-header h3 {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+        }
+
+        .similar-header p {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .similar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .similar-item {
+            background: var(--white);
+            border: 1px solid var(--amber-200);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .similar-item-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .similar-item h4 {
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+        }
+
+        .similar-item .submissions {
+            font-size: 12px;
+            color: var(--stone-600);
+        }
+
+        .match-badge {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+
+        .match-badge strong {
+            font-family: 'Spectral', serif;
+            font-weight: 700;
+        }
+
+        .similar-link {
+            color: var(--violet-600);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .similar-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--violet-600), var(--purple-600));
+            color: var(--white);
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .submit-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Examples */
+        .examples-section {
+            margin-top: 64px;
+        }
+
+        .examples-section h3 {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .example-card {
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .example-card p {
+            font-size: 14px;
+            color: var(--stone-700);
+            font-style: italic;
+        }
+
+        /* Success State */
+        .success-state {
+            text-align: center;
+            padding: 80px 32px;
+            display: none;
+        }
+
+        .success-state.visible {
+            display: block;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--emerald-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--emerald-600);
+        }
+
+        .success-state h2 {
+            font-family: 'Spectral', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 16px;
+        }
+
+        .success-state > p {
+            font-size: 18px;
+            color: var(--stone-600);
+            max-width: 480px;
+            margin: 0 auto 32px;
+        }
+
+        .success-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .btn-outline {
+            background: var(--white);
+            border: 2px solid var(--stone-200);
+            color: var(--stone-700);
+            padding: 14px 24px;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--stone-900);
+            background: var(--stone-50);
+        }
+
+        .btn-violet {
+            background: var(--violet-600);
+            color: var(--white);
+            padding: 14px 24px;
+        }
+
+        .btn-violet:hover {
+            background: var(--violet-700);
+        }
+
+        @media (max-width: 768px) {
+            .value-props-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Katalyst</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="discover.html" class="nav-link">Browse Ideas</a>
+                <a href="pricing.html" class="nav-link">Pricing</a>
+            </div>
+            <div class="nav-actions">
+                <a href="signin.html" class="btn btn-ghost">Sign In</a>
+                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Form State -->
+    <div id="formState">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-content fade-in-up">
+                <div class="header-badge">Help Build the Future</div>
+                <h1 class="spektral">What's Frustrating You?</h1>
+                <p>Share your everyday problems and unmet needs. Your frustration could become the next validated business opportunity.</p>
+            </div>
+        </div>
+
+        <!-- Value Props -->
+        <div class="value-props">
+            <div class="value-props-content">
+                <div class="value-prop fade-in-up stagger-1">
+                    <div class="value-icon emerald">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                            <polyline points="16 7 22 7 22 13"/>
+                        </svg>
+                    </div>
+                    <h3>You're Not Alone</h3>
+                    <p>2,847 others have shared problems that became opportunities</p>
+                </div>
+                <div class="value-prop fade-in-up stagger-2">
+                    <div class="value-icon violet">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="8" r="6"/>
+                            <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+                        </svg>
+                    </div>
+                    <h3>Earn Recognition</h3>
+                    <p>Get notified when your problem becomes validated</p>
+                </div>
+                <div class="value-prop fade-in-up stagger-3">
+                    <div class="value-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </div>
+                    <h3>Shape Solutions</h3>
+                    <p>Help builders create what you actually need</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Form -->
+        <div class="main-content">
+            <form id="problemForm">
+                <!-- Problem Description -->
+                <div class="form-card fade-in-up">
+                    <h2>Describe Your Problem or Frustration</h2>
+                    <p>Be specific. What's the situation? What makes it frustrating? What have you tried?</p>
+                    <textarea 
+                        id="problemText"
+                        placeholder="Example: I never know when something in my home is about to break until it's too late and costs thousands to fix. I've tried preventive maintenance checklists but never follow through. Home warranties are a scam - they never cover what actually breaks."
+                        required
+                    ></textarea>
+                    <div class="tip-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                        </svg>
+                        <p><strong>Tip:</strong> The more detail you provide, the better we can understand and validate the opportunity. Include emotions, costs, time wasted, and what you wish existed.</p>
+                    </div>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="form-card fade-in-up stagger-1">
+                    <h2>What Category Does This Fall Under?</h2>
+                    <div class="category-grid" id="categoryGrid">
+                        <button type="button" class="category-btn" data-category="Home Services">Home Services</button>
+                        <button type="button" class="category-btn" data-category="Health & Wellness">Health & Wellness</button>
+                        <button type="button" class="category-btn" data-category="B2B SaaS">B2B SaaS</button>
+                        <button type="button" class="category-btn" data-category="Pet Tech">Pet Tech</button>
+                        <button type="button" class="category-btn" data-category="B2B Services">B2B Services</button>
+                        <button type="button" class="category-btn" data-category="Healthcare">Healthcare</button>
+                        <button type="button" class="category-btn" data-category="Finance">Finance</button>
+                        <button type="button" class="category-btn" data-category="Education">Education</button>
+                        <button type="button" class="category-btn" data-category="Food & Beverage">Food & Beverage</button>
+                        <button type="button" class="category-btn" data-category="Transportation">Transportation</button>
+                        <button type="button" class="category-btn" data-category="Entertainment">Entertainment</button>
+                        <button type="button" class="category-btn" data-category="Other">Other</button>
+                    </div>
+                </div>
+
+                <!-- Similar Problems (shown dynamically) -->
+                <div class="similar-problems" id="similarProblems">
+                    <div class="similar-header">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        <div>
+                            <h3>Good News! Others Feel This Too</h3>
+                            <p>We found similar problems already submitted. Your input will strengthen these opportunities.</p>
+                        </div>
+                    </div>
+                    <div class="similar-list">
+                        <div class="similar-item">
+                            <div class="similar-item-header">
+                                <div>
+                                    <h4>On-Demand Home Maintenance Subscription</h4>
+                                    <span class="submissions">2,847 submissions</span>
+                                </div>
+                                <span class="match-badge"><strong>94%</strong> match</span>
+                            </div>
+                            <a href="opportunity.html" class="similar-link">View opportunity →</a>
+                        </div>
+                        <div class="similar-item">
+                            <div class="similar-item-header">
+                                <div>
+                                    <h4>Vetted Contractor Marketplace</h4>
+                                    <span class="submissions">1,432 submissions</span>
+                                </div>
+                                <span class="match-badge"><strong>87%</strong> match</span>
+                            </div>
+                            <a href="opportunity.html" class="similar-link">View opportunity →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-btn fade-in-up stagger-2" id="submitBtn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    Submit My Problem
+                </button>
+            </form>
+
+            <!-- Examples -->
+            <div class="examples-section fade-in-up stagger-3">
+                <h3 class="spektral">Need Inspiration? Here's What Others Have Shared</h3>
+                <div class="examples-grid">
+                    <div class="example-card">
+                        <p>"I never know when my HVAC is about to fail until it's a $5K emergency"</p>
+                    </div>
+                    <div class="example-card">
+                        <p>"Finding trustworthy contractors is impossible - I've been burned 3 times"</p>
+                    </div>
+                    <div class="example-card">
+                        <p>"Managing multiple dietary restrictions for my family takes hours every week"</p>
+                    </div>
+                    <div class="example-card">
+                        <p>"Remote team bonding is impossible - we have no spontaneous interactions"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-state" id="successState">
+        <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+        </div>
+        <h2 class="spektral">Thank You for Sharing!</h2>
+        <p>Your problem has been submitted. We'll notify you when it's validated and becomes a business opportunity.</p>
+        <div class="success-actions">
+            <a href="discover.html" class="btn btn-outline">Browse Opportunities</a>
+            <button class="btn btn-violet" onclick="resetForm()">Submit Another Problem</button>
+        </div>
+    </div>
+
+    <script>
+        const problemText = document.getElementById('problemText');
+        const categoryGrid = document.getElementById('categoryGrid');
+        const similarProblems = document.getElementById('similarProblems');
+        const submitBtn = document.getElementById('submitBtn');
+        const problemForm = document.getElementById('problemForm');
+        const formState = document.getElementById('formState');
+        const successState = document.getElementById('successState');
+        
+        let selectedCategory = '';
+
+        // Category selection
+        categoryGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('category-btn')) {
+                document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('selected'));
+                e.target.classList.add('selected');
+                selectedCategory = e.target.dataset.category;
+                updateSubmitButton();
+            }
+        });
+
+        // Problem text input
+        problemText.addEventListener('input', () => {
+            // Show similar problems when text is long enough
+            if (problemText.value.length > 50) {
+                similarProblems.classList.add('visible');
+            } else {
+                similarProblems.classList.remove('visible');
+            }
+            updateSubmitButton();
+        });
+
+        // Update submit button state
+        function updateSubmitButton() {
+            submitBtn.disabled = !(problemText.value.trim() && selectedCategory);
+        }
+
+        // Form submission
+        problemForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            formState.style.display = 'none';
+            successState.classList.add('visible');
+            window.scrollTo(0, 0);
+        });
+
+        // Reset form
+        function resetForm() {
+            problemText.value = '';
+            selectedCategory = '';
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('selected'));
+            similarProblems.classList.remove('visible');
+            submitBtn.disabled = true;
+            successState.classList.remove('visible');
+            formState.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

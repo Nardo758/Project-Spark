@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover Validated Opportunities · Katalyst</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-100: #d1fae5;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --violet-100: #ede9fe;
+            --violet-600: #7c3aed;
+            --violet-700: #6d28d9;
+            --orange-100: #ffedd5;
+            --orange-700: #c2410c;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .spektral {
+            font-family: 'Spectral', serif;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .nav-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--stone-900);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+        }
+
+        .logo-text {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-link {
+            color: var(--stone-600);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--stone-900);
+        }
+
+        .nav-link.active {
+            color: var(--stone-900);
+            font-weight: 600;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--stone-600);
+        }
+
+        .btn-ghost:hover {
+            color: var(--stone-900);
+        }
+
+        .btn-primary {
+            background: var(--stone-900);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--stone-800);
+        }
+
+        /* Page Header */
+        .page-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            padding: 48px 0;
+        }
+
+        .page-header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .page-header h1 {
+            font-family: 'Spectral', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 16px;
+        }
+
+        .page-header p {
+            font-size: 20px;
+            color: var(--stone-600);
+            max-width: 720px;
+        }
+
+        /* Filters Bar */
+        .filters-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            position: sticky;
+            top: 65px;
+            z-index: 40;
+        }
+
+        .filters-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--stone-400);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 48px;
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--stone-400);
+            box-shadow: 0 0 0 3px rgba(168, 162, 158, 0.1);
+        }
+
+        .filter-select {
+            padding: 12px 40px 12px 16px;
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            background: var(--white);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2378716c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--stone-400);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 48px 32px;
+        }
+
+        .results-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .results-count {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .results-count strong {
+            color: var(--stone-900);
+        }
+
+        /* Opportunities Grid */
+        .opportunities-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .opportunity-card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 2px solid var(--stone-200);
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+            display: block;
+        }
+
+        .opportunity-card:hover {
+            border-color: var(--stone-900);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .category-tag {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--stone-500);
+        }
+
+        .trending-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--orange-100);
+            color: var(--orange-700);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .trending-badge svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .card-title {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+            transition: color 0.2s;
+        }
+
+        .opportunity-card:hover .card-title {
+            color: var(--violet-600);
+        }
+
+        .validation-score {
+            text-align: center;
+        }
+
+        .score-badge {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+            padding: 8px 12px;
+            border-radius: 16px;
+            margin-bottom: 4px;
+        }
+
+        .score-value {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .score-label {
+            font-size: 11px;
+            color: var(--stone-500);
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: var(--stone-700);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .metric-box {
+            background: var(--stone-50);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--stone-500);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .metric-label svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .metric-value {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .metric-value.growth {
+            color: var(--emerald-600);
+        }
+
+        /* Pain Points */
+        .pain-points {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .pain-point-tag {
+            background: var(--stone-100);
+            color: var(--stone-700);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+        }
+
+        .card-cta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--violet-600);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .card-cta svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .opportunity-card:hover .card-cta svg {
+            transform: translateX(4px);
+        }
+
+        /* Submit Button */
+        .submit-float {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: linear-gradient(135deg, var(--violet-600), #9333ea);
+            color: var(--white);
+            padding: 16px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .submit-float:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.5);
+        }
+
+        .submit-float svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Load More */
+        .load-more {
+            text-align: center;
+            margin-top: 48px;
+        }
+
+        .btn-load-more {
+            background: var(--white);
+            border: 2px solid var(--stone-200);
+            color: var(--stone-700);
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-load-more:hover {
+            border-color: var(--stone-900);
+            background: var(--stone-50);
+        }
+
+        @media (max-width: 1024px) {
+            .opportunities-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters-content {
+                flex-wrap: wrap;
+            }
+            
+            .search-box {
+                width: 100%;
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Katalyst</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="discover.html" class="nav-link active">Browse Ideas</a>
+                <a href="pricing.html" class="nav-link">Pricing</a>
+            </div>
+            <div class="nav-actions">
+                <a href="signin.html" class="btn btn-ghost">Sign In</a>
+                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <h1 class="spektral">Discover Validated Opportunities</h1>
+            <p>Browse 2,847+ market opportunities backed by real consumer insights. Each idea is validated, categorized, and ready to explore.</p>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="filters-bar">
+        <div class="filters-content">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input type="text" class="search-input" placeholder="Search opportunities..." id="searchInput">
+            </div>
+            <select class="filter-select" id="categoryFilter">
+                <option value="all">All Categories</option>
+                <option value="home-services">Home Services</option>
+                <option value="health-wellness">Health & Wellness</option>
+                <option value="b2b-saas">B2B SaaS</option>
+                <option value="pet-tech">Pet Tech</option>
+                <option value="b2b-services">B2B Services</option>
+                <option value="healthcare">Healthcare</option>
+            </select>
+            <select class="filter-select" id="regionFilter">
+                <option value="all">All Regions</option>
+                <option value="us-national">US National</option>
+                <option value="global">Global</option>
+                <option value="canada">Canada</option>
+                <option value="uk">UK</option>
+                <option value="australia">Australia</option>
+            </select>
+            <select class="filter-select" id="sortFilter">
+                <option value="trending">Trending</option>
+                <option value="validation">Validation Score</option>
+                <option value="market-size">Market Size</option>
+                <option value="growth">Growth Rate</option>
+                <option value="submissions">Submissions</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="results-info">
+            <span class="results-count">Showing <strong id="resultsCount">6</strong> opportunities</span>
+        </div>
+
+        <div class="opportunities-grid" id="opportunitiesGrid">
+            <!-- Card 1 -->
+            <a href="opportunity.html" class="opportunity-card fade-in" style="animation-delay: 0s">
+                <div class="card-header">
+                    <div>
+                        <div class="card-meta">
+                            <span class="category-tag">Home Services</span>
+                            <span class="trending-badge">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                                    <polyline points="16 7 22 7 22 13"/>
+                                </svg>
+                                Trending
+                            </span>
+                        </div>
+                        <h3 class="card-title">On-Demand Home Maintenance Subscription</h3>
+                    </div>
+                    <div class="validation-score">
+                        <div class="score-badge">
+                            <span class="score-value">87</span>
+                        </div>
+                        <div class="score-label">Score</div>
+                    </div>
+                </div>
+                <p class="card-description">Homeowners struggle with reactive, expensive emergency repairs and lack a reliable way to maintain their homes proactively.</p>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Submissions</div>
+                        <div class="metric-value">2,847</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Market</div>
+                        <div class="metric-value">$8.4B</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Growth</div>
+                        <div class="metric-value growth">+34%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            Region
+                        </div>
+                        <div class="metric-value">US</div>
+                    </div>
+                </div>
+                <div class="pain-points">
+                    <span class="pain-point-tag">Trust issues with contractors</span>
+                    <span class="pain-point-tag">Unpredictable costs</span>
+                </div>
+                <div class="card-cta">
+                    View full analysis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17 17 7"/>
+                        <path d="M7 7h10v10"/>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 2 -->
+            <a href="opportunity.html" class="opportunity-card fade-in" style="animation-delay: 0.1s">
+                <div class="card-header">
+                    <div>
+                        <div class="card-meta">
+                            <span class="category-tag">Health & Wellness</span>
+                            <span class="trending-badge">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                                    <polyline points="16 7 22 7 22 13"/>
+                                </svg>
+                                Trending
+                            </span>
+                        </div>
+                        <h3 class="card-title">AI-Powered Meal Planning for Dietary Restrictions</h3>
+                    </div>
+                    <div class="validation-score">
+                        <div class="score-badge">
+                            <span class="score-value">82</span>
+                        </div>
+                        <div class="score-label">Score</div>
+                    </div>
+                </div>
+                <p class="card-description">People with multiple dietary restrictions spend hours planning meals and still struggle to find variety and nutrition.</p>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Submissions</div>
+                        <div class="metric-value">1,876</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Market</div>
+                        <div class="metric-value">$3.2B</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Growth</div>
+                        <div class="metric-value growth">+41%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                <path d="M2 12h20"/>
+                            </svg>
+                            Region
+                        </div>
+                        <div class="metric-value">Global</div>
+                    </div>
+                </div>
+                <div class="pain-points">
+                    <span class="pain-point-tag">Limited recipe variety</span>
+                    <span class="pain-point-tag">Time-consuming planning</span>
+                </div>
+                <div class="card-cta">
+                    View full analysis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17 17 7"/>
+                        <path d="M7 7h10v10"/>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 3 -->
+            <a href="opportunity.html" class="opportunity-card fade-in" style="animation-delay: 0.2s">
+                <div class="card-header">
+                    <div>
+                        <div class="card-meta">
+                            <span class="category-tag">B2B SaaS</span>
+                        </div>
+                        <h3 class="card-title">Remote Team Culture & Engagement Platform</h3>
+                    </div>
+                    <div class="validation-score">
+                        <div class="score-badge">
+                            <span class="score-value">79</span>
+                        </div>
+                        <div class="score-label">Score</div>
+                    </div>
+                </div>
+                <p class="card-description">Remote teams lack informal connection opportunities and culture-building moments that happen naturally in offices.</p>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Submissions</div>
+                        <div class="metric-value">1,542</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Market</div>
+                        <div class="metric-value">$12.7B</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Growth</div>
+                        <div class="metric-value growth">+28%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                <path d="M2 12h20"/>
+                            </svg>
+                            Region
+                        </div>
+                        <div class="metric-value">Global</div>
+                    </div>
+                </div>
+                <div class="pain-points">
+                    <span class="pain-point-tag">No spontaneous interactions</span>
+                    <span class="pain-point-tag">Weak team bonds</span>
+                </div>
+                <div class="card-cta">
+                    View full analysis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17 17 7"/>
+                        <path d="M7 7h10v10"/>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 4 -->
+            <a href="opportunity.html" class="opportunity-card fade-in" style="animation-delay: 0.3s">
+                <div class="card-header">
+                    <div>
+                        <div class="card-meta">
+                            <span class="category-tag">Pet Tech</span>
+                            <span class="trending-badge">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                                    <polyline points="16 7 22 7 22 13"/>
+                                </svg>
+                                Trending
+                            </span>
+                        </div>
+                        <h3 class="card-title">Pet Health Monitoring & Preventive Care</h3>
+                    </div>
+                    <div class="validation-score">
+                        <div class="score-badge">
+                            <span class="score-value">76</span>
+                        </div>
+                        <div class="score-label">Score</div>
+                    </div>
+                </div>
+                <p class="card-description">Pet owners struggle to track health metrics and often miss early warning signs of serious conditions.</p>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Submissions</div>
+                        <div class="metric-value">1,389</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Market</div>
+                        <div class="metric-value">$4.8B</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Growth</div>
+                        <div class="metric-value growth">+52%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            Region
+                        </div>
+                        <div class="metric-value">US</div>
+                    </div>
+                </div>
+                <div class="pain-points">
+                    <span class="pain-point-tag">Expensive vet visits</span>
+                    <span class="pain-point-tag">Missing warning signs</span>
+                </div>
+                <div class="card-cta">
+                    View full analysis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17 17 7"/>
+                        <path d="M7 7h10v10"/>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 5 -->
+            <a href="opportunity.html" class="opportunity-card fade-in" style="animation-delay: 0.4s">
+                <div class="card-header">
+                    <div>
+                        <div class="card-meta">
+                            <span class="category-tag">B2B Services</span>
+                        </div>
+                        <h3 class="card-title">Fractional CFO Marketplace for Startups</h3>
+                    </div>
+                    <div class="validation-score">
+                        <div class="score-badge">
+                            <span class="score-value">84</span>
+                        </div>
+                        <div class="score-label">Score</div>
+                    </div>
+                </div>
+                <p class="card-description">Early-stage startups need financial expertise but can't afford or justify a full-time CFO.</p>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Submissions</div>
+                        <div class="metric-value">1,247</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Market</div>
+                        <div class="metric-value">$2.1B</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Growth</div>
+                        <div class="metric-value growth">+38%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            Region
+                        </div>
+                        <div class="metric-value">US</div>
+                    </div>
+                </div>
+                <div class="pain-points">
+                    <span class="pain-point-tag">Can't afford full-time CFO</span>
+                    <span class="pain-point-tag">Poor financial planning</span>
+                </div>
+                <div class="card-cta">
+                    View full analysis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17 17 7"/>
+                        <path d="M7 7h10v10"/>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 6 -->
+            <a href="opportunity.html" class="opportunity-card fade-in" style="animation-delay: 0.5s">
+                <div class="card-header">
+                    <div>
+                        <div class="card-meta">
+                            <span class="category-tag">Healthcare</span>
+                        </div>
+                        <h3 class="card-title">Smart Medication Adherence System</h3>
+                    </div>
+                    <div class="validation-score">
+                        <div class="score-badge">
+                            <span class="score-value">81</span>
+                        </div>
+                        <div class="score-label">Score</div>
+                    </div>
+                </div>
+                <p class="card-description">Patients with complex medication schedules struggle to take the right pills at the right time, leading to health complications.</p>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Submissions</div>
+                        <div class="metric-value">1,098</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Market</div>
+                        <div class="metric-value">$6.3B</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Growth</div>
+                        <div class="metric-value growth">+31%</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                <path d="M2 12h20"/>
+                            </svg>
+                            Region
+                        </div>
+                        <div class="metric-value">Global</div>
+                    </div>
+                </div>
+                <div class="pain-points">
+                    <span class="pain-point-tag">Missing doses</span>
+                    <span class="pain-point-tag">Multiple medications</span>
+                </div>
+                <div class="card-cta">
+                    View full analysis
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 17 17 7"/>
+                        <path d="M7 7h10v10"/>
+                    </svg>
+                </div>
+            </a>
+        </div>
+
+        <div class="load-more">
+            <button class="btn-load-more">Load More Opportunities</button>
+        </div>
+    </div>
+
+    <!-- Floating Submit Button -->
+    <a href="submit.html" class="submit-float">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14"/>
+            <path d="M5 12h14"/>
+        </svg>
+        Submit Your Problem
+    </a>
+</body>
+</html>
