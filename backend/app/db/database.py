@@ -54,24 +54,29 @@ def _prepare_postgres_url(raw_url: str) -> str:
     return urlunparse(parsed._replace(query=new_query))
 
 def get_database_url():
-    """Get PostgreSQL connection URL from PG* environment variables
+    """Get PostgreSQL connection URL from environment variables.
     
-    For Replit: Uses PGHOST, PGDATABASE, PGUSER, PGPASSWORD from .replit file
-    These are set to: db:5432/replit with user 'replit'
-    
-    Note: Ignores DATABASE_URL and POSTGRES_URL to avoid conflicts with imported Secrets
+    Priority order:
+    1. DATABASE_URL (set by Replit's database provisioning)
+    2. PG* variables (PGHOST, PGDATABASE, PGUSER, PGPASSWORD)
     """
-    # Use PG* variables (Replit native PostgreSQL)
+    # First check DATABASE_URL (set by Replit database provisioning)
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        url = _prepare_postgres_url(database_url)
+        logger.info("Using DATABASE_URL for PostgreSQL connection")
+        return url
+    
+    # Fallback to PG* variables
     pg_host = os.getenv("PGHOST")
     pg_db = os.getenv("PGDATABASE")
     pg_user = os.getenv("PGUSER")
-    pg_password = os.getenv("PGPASSWORD", "")  # May be empty for local Replit PostgreSQL
+    pg_password = os.getenv("PGPASSWORD", "")
     pg_port = os.getenv("PGPORT", "5432")
     
     logger.info(f"PG* variables: PGHOST={pg_host}, PGDATABASE={pg_db}, PGUSER={pg_user}, PGPORT={pg_port}")
     
     if pg_host and pg_db and pg_user:
-        # Build URL with or without password
         if pg_password:
             raw_url = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
         else:
@@ -81,11 +86,9 @@ def get_database_url():
         return url
     
     logger.error("No valid PostgreSQL configuration found")
-    logger.error("Missing required PG* variables: PGHOST, PGDATABASE, or PGUSER")
-    logger.error("Current values: PGHOST=%s, PGDATABASE=%s, PGUSER=%s", pg_host, pg_db, pg_user)
+    logger.error("Set DATABASE_URL or PG* variables (PGHOST, PGDATABASE, PGUSER)")
     raise ValueError(
-        "PostgreSQL not configured. Check .replit file has PGHOST=db, PGDATABASE=replit, PGUSER=replit. "
-        "Make sure 'postgresql-16' is in modules list and restart your Repl."
+        "PostgreSQL not configured. Set DATABASE_URL environment variable or configure PG* variables."
     )
 
 # Lazy initialization - don't create engine at import time
