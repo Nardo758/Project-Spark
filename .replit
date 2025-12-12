@@ -1,4 +1,4 @@
-modules = ["python-3.11", "web", "nodejs-20", "postgresql-16"]
+modules = ["python-3.11", "web", "nodejs-20"]
 run = "python server.py"
 hidden = [".pythonlibs", "venv", ".cache", "**/__pycache__", "**/.pytest_cache", ".replit"]
 entrypoint = "server.py"
@@ -9,7 +9,7 @@ integrations = ["python_database:1.0.0", "resend:1.0.0", "stripe:2.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "freetype", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "rustc", "tcl", "tk", "zlib"]
+packages = ["cargo", "freetype", "lcms2", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "openssl", "pkg-config", "rustc", "tcl", "tk", "zlib"]
 
 [env]
 PYTHON_LD_LIBRARY_PATH = "/nix/store/*-python3-*/lib"
