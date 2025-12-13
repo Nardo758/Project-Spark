@@ -1,0 +1,91 @@
+🎯 Interactive Flow Demo Features:
+Top Navigation Bar 
+Shows your current location with clickable breadcrumbs:
+[Landing] → [Discovery] → [Opportunity Detail]
+You can click any breadcrumb to jump to that page instantly.
+
+Page 1: Landing Page
+What you see:
+
+Hero section with value proposition
+"2,847+ Validated Opportunities" badge
+Main headline and description
+Two CTA buttons:
+
+"Browse Opportunities" (primary) ← This is the one we're testing
+"Watch Demo" (secondary)
+
+
+
+What happens when you click "Browse Opportunities":
+→ Takes you to Discovery Feed page
+Green helper box shows: "Click 'Browse Opportunities' above to see Discovery Feed"
+
+Page 2: Discovery Feed (/discover)
+What you see:
+
+Header: "Discover Validated Opportunities"
+Grid of opportunity cards (2 columns)
+First card is fully interactive:
+
+Title: "On-Demand Home Maintenance Subscription"
+Validation score: 87/100
+Metrics: Submissions, Market Size, Growth, Region
+Hover effect: Border changes to black, shadow appears
+
+
+
+What happens when you click a card:
+→ Takes you to Opportunity Detail page
+Green helper box shows: "Click the 'On-Demand Home Maintenance' card to see Opportunity Detail"
+
+Page 3: Opportunity Detail (/opportunity/2847)
+What you see:
+
+Breadcrumb: Discovery / On-Demand Home Maintenance (can click back)
+Page title and validation score
+Tier navigation tabs (showing Tier 1 is active)
+Three quick metrics cards:
+
+Submissions: 2,847 (↑ 34%/mo)
+Market Size: $8.4B
+Urgency: High
+
+
+Paywall CTA: "Unlock Full Research Dashboard"
+
+Blue info box explains: "You're viewing Tier 1 (FREE)"
+
+The Complete User Journey:
+1. User lands on homepage
+   "Hmm, what opportunities are available?"
+   
+2. Clicks "Browse Opportunities"
+   → Sees 2,847+ opportunities in grid
+   
+3. Scrolls through cards, sees metrics
+   "87 validation score, $8.4B market... interesting!"
+   
+4. Clicks card to learn more
+   → Sees detailed problem description
+   → Sees validation metrics
+   → Sees upgrade options
+   
+5. Decision point:
+   ├─ Free tier: Get basic validation
+   ├─ Pro ($99): Get full research
+   └─ Business ($499): Get execution + AI
+
+Key UX Observations:
+✅ Clear progression: Each page has obvious next step
+✅ Breadcrumbs: Easy to go back
+✅ Value escalation: Each page reveals more depth
+✅ CTAs are prominent: "Browse" → "View Full" → "Unlock"
+✅ Helper text: Green boxes guide the user
+
+Try It Out:
+
+Start at Landing Page - notice the hero section
+Click "Browse Opportunities" - see the transition to Discovery
+Click the opportunity card - see how detail page loads
+Click breadcrumbs - navigate back through the flow
