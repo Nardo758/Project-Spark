@@ -587,8 +587,9 @@
                 <a href="pricing.html" class="nav-link active">Pricing</a>
             </div>
             <div class="nav-actions">
-                <a href="signin.html" class="btn btn-ghost">Sign In</a>
-                <a href="signup.html" class="btn btn-primary">Get Started</a>
+                <a href="signin.html" class="btn btn-ghost guest-only" style="display: inline-flex;">Sign In</a>
+                <a href="signup.html" class="btn btn-primary guest-only" style="display: inline-flex;">Get Started</a>
+                <a href="account.html" class="btn btn-primary auth-required" style="display: none;">Account</a>
             </div>
         </div>
     </nav>
@@ -918,6 +919,43 @@
                 const item = button.parentElement;
                 item.classList.toggle('open');
             });
+        });
+    </script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        function showLoggedInUI() {
+            document.querySelectorAll('.auth-required').forEach(el => {
+                if (el.tagName === 'A' || el.classList.contains('btn')) {
+                    el.style.display = 'inline-flex';
+                } else {
+                    el.style.display = 'flex';
+                }
+            });
+            document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'none');
+        }
+        
+        function showLoggedOutUI() {
+            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'inline-flex');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            if (token) {
+                api.token = token;
+                try {
+                    await api.getCurrentUser();
+                    showLoggedInUI();
+                } catch (error) {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('token');
+                    api.token = null;
+                    showLoggedOutUI();
+                }
+            } else {
+                showLoggedOutUI();
+            }
         });
     </script>
 </body>
