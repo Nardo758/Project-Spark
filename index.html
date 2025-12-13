@@ -1733,16 +1733,28 @@
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        function showLoggedInUI() {
+            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'flex');
+            document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'none');
+        }
+        
+        function showLoggedOutUI() {
+            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'inline-flex');
+        }
+        
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('access_token');
             if (token) {
                 try {
                     const user = await api.getCurrentUser();
-                    document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'flex');
-                    document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'none');
+                    showLoggedInUI();
                 } catch (error) {
                     localStorage.removeItem('access_token');
+                    showLoggedOutUI();
                 }
+            } else {
+                showLoggedOutUI();
             }
         });
     </script>
