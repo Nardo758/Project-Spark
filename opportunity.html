@@ -1439,6 +1439,667 @@
                 left: 24px;
             }
         }
+
+        /* Deep Dive Hybrid Console Styles */
+        .deep-dive-console {
+            display: flex;
+            height: calc(100vh - 200px);
+            min-height: 600px;
+            background: var(--stone-50);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--stone-200);
+        }
+
+        .deep-dive-sidebar {
+            width: 320px;
+            background: var(--white);
+            border-right: 1px solid var(--stone-200);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .deep-dive-sidebar.collapsed {
+            display: none;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--stone-200);
+        }
+
+        .sidebar-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-title {
+            font-family: 'Spectral', serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .sidebar-toggle {
+            padding: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            color: var(--stone-600);
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--stone-100);
+        }
+
+        .progress-section {
+            margin-bottom: 12px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--stone-600);
+        }
+
+        .progress-percent {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8b5cf6;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--stone-100);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b5cf6, #a855f7);
+            transition: width 0.5s ease;
+        }
+
+        .progress-count {
+            font-size: 11px;
+            color: var(--stone-500);
+            margin-top: 4px;
+        }
+
+        .autosave-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--emerald-100);
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            font-size: 11px;
+            color: var(--emerald-700);
+        }
+
+        .autosave-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--emerald-600);
+            border-radius: 50%;
+        }
+
+        .categories-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .categories-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .categories-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .categories-list::-webkit-scrollbar-thumb {
+            background: var(--stone-300);
+            border-radius: 3px;
+        }
+
+        .category-card {
+            position: relative;
+            padding: 12px;
+            background: var(--white);
+            border: 2px solid var(--stone-200);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-card:hover {
+            border-color: var(--stone-300);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .category-card.active {
+            border-color: #c4b5fd;
+            background: #f5f3ff;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .category-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .category-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: var(--stone-100);
+            color: var(--stone-600);
+        }
+
+        .category-card.active .category-icon {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .category-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .category-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 2px;
+        }
+
+        .category-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .category-badge {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .category-badge.research {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .category-badge.deep-dive {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .category-interactions {
+            font-size: 9px;
+            color: var(--stone-500);
+        }
+
+        .category-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .category-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--stone-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-check.completed {
+            background: var(--emerald-600);
+            border-color: var(--emerald-600);
+            color: white;
+        }
+
+        .category-preview {
+            font-size: 10px;
+            color: var(--stone-600);
+            line-height: 1.4;
+        }
+
+        .category-preview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .preview-stat {
+            background: var(--stone-50);
+            padding: 6px 8px;
+            border-radius: 6px;
+        }
+
+        .preview-stat-label {
+            font-size: 9px;
+            color: var(--stone-500);
+        }
+
+        .preview-stat-value {
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Spectral', serif;
+            color: var(--stone-900);
+        }
+
+        .preview-stat-value.success {
+            color: var(--emerald-600);
+        }
+
+        .sidebar-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--stone-200);
+            background: var(--stone-50);
+        }
+
+        .sidebar-footer-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--stone-600);
+        }
+
+        .sidebar-footer-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--emerald-500);
+            border-radius: 50%;
+        }
+
+        .sidebar-expand-btn {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 8px;
+            cursor: pointer;
+            z-index: 100;
+            display: none;
+        }
+
+        .deep-dive-sidebar.collapsed + .deep-dive-main .sidebar-expand-btn {
+            display: block;
+        }
+
+        .deep-dive-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+            min-width: 0;
+        }
+
+        .console-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--stone-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .console-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .console-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .console-title {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .console-subtitle {
+            font-size: 13px;
+            color: var(--stone-500);
+        }
+
+        .console-new-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--stone-100);
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--stone-700);
+            cursor: pointer;
+            margin-left: 16px;
+        }
+
+        .console-new-btn:hover {
+            background: var(--stone-200);
+        }
+
+        .console-header-right {
+            display: flex;
+            gap: 8px;
+        }
+
+        .save-export-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #8b5cf6;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+        }
+
+        .save-export-btn:hover {
+            background: #7c3aed;
+        }
+
+        .save-export-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .save-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            width: 320px;
+            background: var(--white);
+            border: 2px solid var(--stone-200);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: none;
+        }
+
+        .save-menu.open {
+            display: block;
+        }
+
+        .save-menu-section {
+            padding: 16px;
+            border-bottom: 1px solid var(--stone-200);
+        }
+
+        .save-menu-section:last-child {
+            border-bottom: none;
+        }
+
+        .save-menu-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 12px;
+        }
+
+        .save-name-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--stone-200);
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .save-name-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .save-confirm-btn {
+            width: 100%;
+            padding: 10px;
+            background: #8b5cf6;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+        }
+
+        .save-confirm-btn:hover {
+            background: #7c3aed;
+        }
+
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .export-option:hover {
+            background: var(--stone-50);
+        }
+
+        .export-option-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--stone-100);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--stone-600);
+        }
+
+        .export-option-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--stone-900);
+        }
+
+        .export-option-desc {
+            font-size: 11px;
+            color: var(--stone-500);
+        }
+
+        .console-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .console-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .console-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .console-messages::-webkit-scrollbar-thumb {
+            background: var(--stone-300);
+            border-radius: 3px;
+        }
+
+        .console-message {
+            margin-bottom: 16px;
+            max-width: 85%;
+        }
+
+        .console-message.user {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .console-message-content {
+            display: inline-block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .console-message.user .console-message-content {
+            background: var(--stone-900);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .console-message.ai .console-message-content {
+            background: var(--stone-100);
+            color: var(--stone-900);
+            border-bottom-left-radius: 4px;
+        }
+
+        .console-thinking {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--stone-100);
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--stone-600);
+            max-width: 200px;
+        }
+
+        .console-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .console-suggestion {
+            padding: 8px 14px;
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--stone-700);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .console-suggestion:hover {
+            background: var(--stone-50);
+            border-color: var(--stone-300);
+        }
+
+        .console-input-area {
+            padding: 16px 24px;
+            border-top: 1px solid var(--stone-200);
+            display: flex;
+            gap: 12px;
+        }
+
+        .console-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--stone-200);
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .console-input:focus {
+            border-color: #8b5cf6;
+        }
+
+        .console-send-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--stone-900);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .console-send-btn:hover {
+            background: var(--stone-800);
+        }
+
+        @media (max-width: 1024px) {
+            .deep-dive-sidebar {
+                width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .deep-dive-console {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .deep-dive-sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+
+            .deep-dive-main {
+                min-height: 500px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2155,52 +2816,432 @@
 
         <!-- TIER 3: Deep Dive -->
         <div id="tier-deep" class="tier-content" style="display: none;">
-            <div>
-                <div>
-                    <!-- Geographic Market Intelligence Preview -->
-                    <div class="content-card" style="margin-bottom: 24px;">
-                        <h2>Geographic Market Intelligence</h2>
-                        <div class="metrics-grid" style="margin-bottom: 24px;">
-                            <div class="metric-card">
-                                <div class="metric-label">Priority Markets</div>
-                                <div class="metric-value">6 Ranked</div>
+            <div class="deep-dive-console">
+                <!-- Left Sidebar - Analysis Categories -->
+                <div class="deep-dive-sidebar" id="deep-dive-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-header-top">
+                            <h2 class="sidebar-title">Analysis Sections</h2>
+                            <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse sidebar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-section">
+                            <div class="progress-header">
+                                <span class="progress-label">Progress</span>
+                                <span class="progress-percent" id="progress-percent">22%</span>
                             </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Launch Playbooks</div>
-                                <div class="metric-value">3 Phases</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill" style="width: 22%;"></div>
                             </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Regulatory Guides</div>
-                                <div class="metric-value">By Region</div>
+                            <div class="progress-count" id="progress-count">2 of 9 sections completed</div>
+                        </div>
+
+                        <div class="autosave-indicator" id="autosave-indicator" style="display: none;">
+                            <span class="autosave-dot"></span>
+                            <span id="autosave-text">Auto-saved 0 messages</span>
+                        </div>
+                    </div>
+
+                    <div class="categories-list" id="categories-list">
+                        <!-- Market Validation -->
+                        <div class="category-card" data-category="market-validation">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                            <polyline points="17 6 23 6 23 12"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Market Validation</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge research">Research</span>
+                                            <span class="category-interactions" data-interactions="0"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check" data-category="market-validation"></div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="category-preview">Search volume: 127K/mo • +43% growth</div>
+                        </div>
+
+                        <!-- Geographic Distribution -->
+                        <div class="category-card" data-category="geographic">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Geographic Distribution</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge research">Research</span>
+                                            <span class="category-interactions" data-interactions="5">5 interactions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check completed" data-category="geographic">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 10px; height: 10px;">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="category-preview">Priority: Southwest US ($1.2B, +52%)</div>
+                        </div>
+
+                        <!-- Problem Analysis -->
+                        <div class="category-card" data-category="problem-analysis">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Problem Analysis</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge research">Research</span>
+                                            <span class="category-interactions" data-interactions="0"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check" data-category="problem-analysis"></div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="category-preview">Trust issues: 847 mentions (9.2/10)</div>
+                        </div>
+
+                        <!-- Opportunity Sizing -->
+                        <div class="category-card" data-category="opportunity-sizing">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Opportunity Sizing</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge research">Research</span>
+                                            <span class="category-interactions" data-interactions="2">2 interactions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check" data-category="opportunity-sizing"></div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="category-preview">TAM: $8.4B • SAM: $2.1B • SOM: $187M</div>
+                        </div>
+
+                        <!-- Solution Pathways -->
+                        <div class="category-card" data-category="solution-pathways">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <circle cx="12" cy="12" r="6"></circle>
+                                            <circle cx="12" cy="12" r="2"></circle>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Solution Pathways</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge research">Research</span>
+                                            <span class="category-interactions" data-interactions="0"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check" data-category="solution-pathways"></div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="category-preview">Top: Vetted contractors (1,247 mentions)</div>
+                        </div>
+
+                        <!-- Executive Summary (Deep Dive) -->
+                        <div class="category-card active" data-category="executive">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10 9 9 9 8 9"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Executive Summary</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge deep-dive">Deep Dive</span>
+                                            <span class="category-interactions" data-interactions="3">3 interactions</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check completed" data-category="executive">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 10px; height: 10px;">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: #8b5cf6;">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="category-preview">$8.4B market • 18.4x LTV:CAC</div>
+                        </div>
+
+                        <!-- Financial Modeling (Deep Dive) -->
+                        <div class="category-card" data-category="financial">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Financial Modeling</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge deep-dive">Deep Dive</span>
+                                            <span class="category-interactions" data-interactions="1">1 interaction</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check" data-category="financial"></div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="category-preview-grid">
+                                <div class="preview-stat">
+                                    <div class="preview-stat-label">Year 1</div>
+                                    <div class="preview-stat-value">$4.6M</div>
+                                </div>
+                                <div class="preview-stat">
+                                    <div class="preview-stat-label">Year 5</div>
+                                    <div class="preview-stat-value success">$312M</div>
+                                </div>
                             </div>
                         </div>
-                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Market Entry Priority Sequence</h3>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--emerald-100); border-radius: 8px;">
-                                <span style="font-weight: 600; color: var(--emerald-700);">#1</span>
-                                <span style="font-weight: 500;">Southwest US</span>
-                                <span style="font-size: 12px; color: var(--stone-500); margin-left: auto;">Best ROI, lowest barrier</span>
+
+                        <!-- Execution Playbook (Deep Dive) -->
+                        <div class="category-card" data-category="execution">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Execution Playbook</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge deep-dive">Deep Dive</span>
+                                            <span class="category-interactions" data-interactions="0"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check" data-category="execution"></div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--stone-100); border-radius: 8px;">
-                                <span style="font-weight: 600; color: var(--stone-600);">#2</span>
-                                <span style="font-weight: 500;">US National</span>
-                                <span style="font-size: 12px; color: var(--stone-500); margin-left: auto;">Scale with proven model</span>
+                            <div class="category-preview">90-day plan • 3 phases</div>
+                        </div>
+
+                        <!-- Raw Data & Exports (Deep Dive) -->
+                        <div class="category-card" data-category="data">
+                            <div class="category-header">
+                                <div class="category-left">
+                                    <div class="category-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                                        </svg>
+                                    </div>
+                                    <div class="category-info">
+                                        <div class="category-name">Raw Data & Exports</div>
+                                        <div class="category-meta">
+                                            <span class="category-badge deep-dive">Deep Dive</span>
+                                            <span class="category-interactions" data-interactions="0"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-right">
+                                    <div class="category-check" data-category="data"></div>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; color: var(--stone-400);">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </div>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--stone-100); border-radius: 8px;">
-                                <span style="font-weight: 600; color: var(--stone-600);">#3</span>
-                                <span style="font-weight: 500;">Canada & Australia</span>
-                                <span style="font-size: 12px; color: var(--stone-500); margin-left: auto;">Similar demographics, low competition</span>
+                            <div class="category-preview" style="display: flex; gap: 4px;">
+                                <span style="flex: 1; background: var(--stone-100); padding: 4px 8px; border-radius: 4px; text-align: center; font-size: 9px; font-weight: 500;">PDF</span>
+                                <span style="flex: 1; background: var(--stone-100); padding: 4px 8px; border-radius: 4px; text-align: center; font-size: 9px; font-weight: 500;">CSV</span>
+                                <span style="flex: 1; background: var(--stone-100); padding: 4px 8px; border-radius: 4px; text-align: center; font-size: 9px; font-weight: 500;">API</span>
                             </div>
                         </div>
-                        <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">AI Research Assistant</h3>
-                        <div style="padding: 16px; background: linear-gradient(135deg, #8b5cf6, #6366f1); border-radius: 8px; color: white;">
-                            <p style="font-size: 14px; margin-bottom: 8px;">Ask questions like:</p>
-                            <ul style="font-size: 13px; opacity: 0.9; margin-left: 16px;">
-                                <li>"Where should I launch this geographically?"</li>
-                                <li>"What are the regulatory requirements in Texas?"</li>
-                                <li>"How should I price for the Canadian market?"</li>
-                            </ul>
+                    </div>
+
+                    <div class="sidebar-footer">
+                        <div class="sidebar-footer-text">
+                            <span class="sidebar-footer-dot"></span>
+                            <span>All data current as of Dec 2024</span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Main Console Area -->
+                <div class="deep-dive-main">
+                    <button class="sidebar-expand-btn" id="sidebar-expand-btn" title="Expand sidebar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+
+                    <div class="console-header">
+                        <div class="console-header-left">
+                            <div class="console-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="console-title">AI Research Console</div>
+                                <div class="console-subtitle" id="console-subtitle">Executive Summary</div>
+                            </div>
+                            <button class="console-new-btn" id="console-new-btn" style="display: none;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                New
+                            </button>
+                        </div>
+                        <div class="console-header-right" style="position: relative;">
+                            <button class="save-export-btn" id="save-export-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Save & Export
+                            </button>
+                            <div class="save-menu" id="save-menu">
+                                <div class="save-menu-section">
+                                    <div class="save-menu-title">Save This Conversation</div>
+                                    <input type="text" class="save-name-input" id="save-name-input" placeholder="Name this analysis...">
+                                    <button class="save-confirm-btn" id="save-confirm-btn">Save Conversation</button>
+                                </div>
+                                <div class="save-menu-section">
+                                    <div class="save-menu-title">Export As</div>
+                                    <div class="export-option" data-format="pdf">
+                                        <div class="export-option-icon">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="export-option-name">PDF Report</div>
+                                            <div class="export-option-desc">Formatted document</div>
+                                        </div>
+                                    </div>
+                                    <div class="export-option" data-format="json">
+                                        <div class="export-option-icon">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="7 10 12 15 17 10"></polyline>
+                                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="export-option-name">JSON Data</div>
+                                            <div class="export-option-desc">Raw structured data</div>
+                                        </div>
+                                    </div>
+                                    <div class="export-option" data-format="notion">
+                                        <div class="export-option-icon">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                                                <polyline points="16 6 12 2 8 6"></polyline>
+                                                <line x1="12" y1="2" x2="12" y2="15"></line>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div class="export-option-name">Notion</div>
+                                            <div class="export-option-desc">Add to workspace</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="console-messages" id="console-messages">
+                        <div class="console-message ai">
+                            <div class="console-message-content">
+                                Welcome to the Deep Dive AI Research Console! I have access to comprehensive analysis across 2,847 validated data points. Select a category from the sidebar or ask me anything about this opportunity.
+                                <div class="console-suggestions">
+                                    <button class="console-suggestion" data-question="Give me an executive summary of this opportunity">Executive summary</button>
+                                    <button class="console-suggestion" data-question="Build a detailed financial model with projections">Financial projections</button>
+                                    <button class="console-suggestion" data-question="Create a 90-day execution playbook">Execution playbook</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="console-input-area">
+                        <input type="text" class="console-input" id="console-input" placeholder="Ask about this opportunity...">
+                        <button class="console-send-btn" id="console-send-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2532,9 +3573,381 @@
             }
         }
 
+        // Deep Dive Console Functionality
+        const deepDiveState = {
+            activeCategory: 'executive',
+            sidebarOpen: true,
+            messages: [],
+            categoryCompletion: {
+                'market-validation': { completed: false, interactions: 0 },
+                'geographic': { completed: true, interactions: 5 },
+                'problem-analysis': { completed: false, interactions: 0 },
+                'opportunity-sizing': { completed: false, interactions: 2 },
+                'solution-pathways': { completed: false, interactions: 0 },
+                'executive': { completed: true, interactions: 3 },
+                'financial': { completed: false, interactions: 1 },
+                'execution': { completed: false, interactions: 0 },
+                'data': { completed: false, interactions: 0 }
+            },
+            savedThreads: []
+        };
+
+        const categoryNames = {
+            'market-validation': 'Market Validation',
+            'geographic': 'Geographic Distribution',
+            'problem-analysis': 'Problem Analysis',
+            'opportunity-sizing': 'Opportunity Sizing',
+            'solution-pathways': 'Solution Pathways',
+            'executive': 'Executive Summary',
+            'financial': 'Financial Modeling',
+            'execution': 'Execution Playbook',
+            'data': 'Raw Data & Exports'
+        };
+
+        const categoryQuestions = {
+            'market-validation': 'Analyze market validation signals and demand trends',
+            'geographic': 'Where should I launch this business geographically?',
+            'problem-analysis': 'Break down the problem categories and pain point severity',
+            'opportunity-sizing': 'Calculate TAM, SAM, and SOM for this opportunity',
+            'solution-pathways': 'What features should the solution prioritize?',
+            'executive': 'Give me an executive summary of this opportunity',
+            'financial': 'Build a detailed financial model with projections',
+            'execution': 'Create a 90-day execution playbook',
+            'data': 'What raw data and exports are available?'
+        };
+
+        function initDeepDiveConsole() {
+            const sidebar = document.getElementById('deep-dive-sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebarExpandBtn = document.getElementById('sidebar-expand-btn');
+            const consoleInput = document.getElementById('console-input');
+            const consoleSendBtn = document.getElementById('console-send-btn');
+            const saveExportBtn = document.getElementById('save-export-btn');
+            const saveMenu = document.getElementById('save-menu');
+            const consoleNewBtn = document.getElementById('console-new-btn');
+
+            if (!sidebar) return;
+
+            // Sidebar toggle
+            sidebarToggle?.addEventListener('click', () => {
+                sidebar.classList.add('collapsed');
+                sidebarExpandBtn.style.display = 'block';
+                deepDiveState.sidebarOpen = false;
+            });
+
+            sidebarExpandBtn?.addEventListener('click', () => {
+                sidebar.classList.remove('collapsed');
+                sidebarExpandBtn.style.display = 'none';
+                deepDiveState.sidebarOpen = true;
+            });
+
+            // Category card clicks
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.category-check')) return;
+                    const category = card.dataset.category;
+                    setActiveCategory(category);
+                });
+            });
+
+            // Category completion toggles
+            document.querySelectorAll('.category-check').forEach(check => {
+                check.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const category = check.dataset.category;
+                    toggleCompletion(category);
+                });
+            });
+
+            // Console input
+            consoleInput?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendConsoleMessage();
+            });
+
+            consoleSendBtn?.addEventListener('click', sendConsoleMessage);
+
+            // Console suggestions
+            document.querySelectorAll('.console-suggestion').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const question = btn.dataset.question;
+                    document.getElementById('console-input').value = question;
+                    sendConsoleMessage();
+                });
+            });
+
+            // Save & Export menu
+            saveExportBtn?.addEventListener('click', () => {
+                saveMenu.classList.toggle('open');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.console-header-right')) {
+                    saveMenu?.classList.remove('open');
+                }
+            });
+
+            document.getElementById('save-confirm-btn')?.addEventListener('click', saveConversation);
+
+            document.querySelectorAll('.export-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    exportConversation(opt.dataset.format);
+                });
+            });
+
+            // New conversation button
+            consoleNewBtn?.addEventListener('click', () => {
+                if (deepDiveState.messages.length > 0) {
+                    if (confirm('Start a new conversation? Current conversation will be saved.')) {
+                        saveConversation();
+                        deepDiveState.messages = [];
+                        renderConsoleMessages();
+                        consoleNewBtn.style.display = 'none';
+                    }
+                }
+            });
+
+            updateProgress();
+            loadSavedThreads();
+        }
+
+        function setActiveCategory(category) {
+            deepDiveState.activeCategory = category;
+            
+            // Update UI
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.category === category);
+            });
+
+            document.getElementById('console-subtitle').textContent = categoryNames[category];
+
+            // Track interaction
+            deepDiveState.categoryCompletion[category].interactions++;
+            updateCategoryInteractions(category);
+
+            // Set suggested question
+            document.getElementById('console-input').value = categoryQuestions[category];
+        }
+
+        function toggleCompletion(category) {
+            const completion = deepDiveState.categoryCompletion[category];
+            completion.completed = !completion.completed;
+
+            const check = document.querySelector(`.category-check[data-category="${category}"]`);
+            if (completion.completed) {
+                check.classList.add('completed');
+                check.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 10px; height: 10px;"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            } else {
+                check.classList.remove('completed');
+                check.innerHTML = '';
+            }
+
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const completed = Object.values(deepDiveState.categoryCompletion).filter(c => c.completed).length;
+            const total = 9;
+            const percent = Math.round((completed / total) * 100);
+
+            document.getElementById('progress-percent').textContent = `${percent}%`;
+            document.getElementById('progress-fill').style.width = `${percent}%`;
+            document.getElementById('progress-count').textContent = `${completed} of ${total} sections completed`;
+        }
+
+        function updateCategoryInteractions(category) {
+            const count = deepDiveState.categoryCompletion[category].interactions;
+            const el = document.querySelector(`.category-card[data-category="${category}"] .category-interactions`);
+            if (el) {
+                el.textContent = count > 0 ? `${count} interactions` : '';
+            }
+        }
+
+        function updateAutosave() {
+            const indicator = document.getElementById('autosave-indicator');
+            const text = document.getElementById('autosave-text');
+            if (deepDiveState.messages.length > 0) {
+                indicator.style.display = 'flex';
+                text.textContent = `Auto-saved ${deepDiveState.messages.length} messages`;
+                document.getElementById('console-new-btn').style.display = 'flex';
+            } else {
+                indicator.style.display = 'none';
+                document.getElementById('console-new-btn').style.display = 'none';
+            }
+        }
+
+        async function sendConsoleMessage() {
+            const input = document.getElementById('console-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+
+            // Add user message
+            deepDiveState.messages.push({ type: 'user', content: text, timestamp: new Date() });
+            renderConsoleMessages();
+
+            // Track interaction
+            if (deepDiveState.activeCategory) {
+                deepDiveState.categoryCompletion[deepDiveState.activeCategory].interactions++;
+                updateCategoryInteractions(deepDiveState.activeCategory);
+            }
+
+            // Show thinking indicator
+            showThinking();
+
+            try {
+                if (currentOpportunityId) {
+                    const response = await api.sendAIMessage(text, currentOpportunityId, deepDiveState.messages.map(m => ({
+                        role: m.type === 'user' ? 'user' : 'assistant',
+                        content: m.content
+                    })));
+                    
+                    hideThinking();
+                    deepDiveState.messages.push({ 
+                        type: 'ai', 
+                        content: response.response, 
+                        suggestions: response.suggestions,
+                        timestamp: new Date() 
+                    });
+                } else {
+                    // Fallback response if no opportunity loaded
+                    hideThinking();
+                    deepDiveState.messages.push({ 
+                        type: 'ai', 
+                        content: `Based on the Deep Dive analysis for "${text}", the platform has analyzed 2,847 consumer submissions to validate this opportunity. This analysis provides comprehensive insights across market validation, geographic distribution, problem analysis, opportunity sizing, and solution pathways.`,
+                        timestamp: new Date() 
+                    });
+                }
+            } catch (error) {
+                console.error('Console AI error:', error);
+                hideThinking();
+                deepDiveState.messages.push({ 
+                    type: 'ai', 
+                    content: 'Sorry, I encountered an error processing your request. Please try again.',
+                    timestamp: new Date() 
+                });
+            }
+
+            renderConsoleMessages();
+            updateAutosave();
+        }
+
+        function showThinking() {
+            const messagesEl = document.getElementById('console-messages');
+            const thinking = document.createElement('div');
+            thinking.id = 'console-thinking';
+            thinking.className = 'console-thinking';
+            thinking.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-dasharray="30" stroke-dashoffset="10"></circle></svg> Thinking...';
+            messagesEl.appendChild(thinking);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function hideThinking() {
+            document.getElementById('console-thinking')?.remove();
+        }
+
+        function renderConsoleMessages() {
+            const messagesEl = document.getElementById('console-messages');
+            
+            let html = '<div class="console-message ai"><div class="console-message-content">Welcome to the Deep Dive AI Research Console! I have access to comprehensive analysis across 2,847 validated data points. Select a category from the sidebar or ask me anything about this opportunity.</div></div>';
+            
+            deepDiveState.messages.forEach(msg => {
+                html += `<div class="console-message ${msg.type}"><div class="console-message-content">${formatAIResponse(msg.content)}`;
+                if (msg.suggestions && msg.suggestions.length > 0) {
+                    html += '<div class="console-suggestions">';
+                    msg.suggestions.forEach(s => {
+                        html += `<button class="console-suggestion" data-question="${s}">${s}</button>`;
+                    });
+                    html += '</div>';
+                }
+                html += '</div></div>';
+            });
+
+            messagesEl.innerHTML = html;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            // Re-attach suggestion listeners
+            messagesEl.querySelectorAll('.console-suggestion').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('console-input').value = btn.dataset.question;
+                    sendConsoleMessage();
+                });
+            });
+        }
+
+        function saveConversation() {
+            if (deepDiveState.messages.length === 0) return;
+            
+            const nameInput = document.getElementById('save-name-input');
+            const name = nameInput.value.trim() || `Analysis ${new Date().toLocaleDateString()}`;
+            
+            const thread = {
+                id: Date.now(),
+                name: name,
+                date: new Date().toISOString().split('T')[0],
+                messages: [...deepDiveState.messages],
+                category: deepDiveState.activeCategory
+            };
+            
+            deepDiveState.savedThreads.push(thread);
+            
+            // Persist to localStorage
+            try {
+                const saved = JSON.parse(localStorage.getItem('katalyst_saved_threads') || '[]');
+                saved.push(thread);
+                localStorage.setItem('katalyst_saved_threads', JSON.stringify(saved));
+            } catch (e) {
+                console.log('Could not save to localStorage:', e);
+            }
+
+            nameInput.value = '';
+            document.getElementById('save-menu').classList.remove('open');
+            alert(`Saved as "${name}"`);
+        }
+        
+        function loadSavedThreads() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('katalyst_saved_threads') || '[]');
+                deepDiveState.savedThreads = saved;
+            } catch (e) {
+                console.log('Could not load saved threads:', e);
+            }
+        }
+
+        function exportConversation(format) {
+            if (deepDiveState.messages.length === 0) {
+                alert('No conversation to export');
+                return;
+            }
+
+            const exportData = {
+                opportunity: document.getElementById('opportunity-title')?.textContent || 'Opportunity Analysis',
+                date: new Date().toISOString(),
+                category: deepDiveState.activeCategory,
+                messages: deepDiveState.messages
+            };
+
+            if (format === 'json') {
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `katalyst-analysis-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'pdf') {
+                alert('PDF export coming soon');
+            } else if (format === 'notion') {
+                alert('Notion integration coming soon');
+            }
+
+            document.getElementById('save-menu').classList.remove('open');
+        }
+
         // Auth-aware UI
         document.addEventListener('DOMContentLoaded', async () => {
             loadOpportunityData();
+            initDeepDiveConsole();
             
             const token = localStorage.getItem('access_token');
             if (token) {
