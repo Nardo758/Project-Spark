@@ -2,6 +2,15 @@
 
 ## Recent Changes (December 2024)
 
+- **Deep Dive Console Improvements** (December 13, 2024):
+  - Dark Mode toggle with CSS custom properties and localStorage persistence
+  - Keyboard Shortcuts: Cmd+Enter to send, Cmd+S to save, arrow keys for navigation, Escape to close panels
+  - Message Actions: Copy, bookmark (with persistence), expand/collapse for long messages
+  - Saved Threads Panel: Slide-out drawer to view, load, and delete saved conversations
+  - Animated Celebration: Overlay animation when all 9 analysis sections completed
+  - Export Templates: Markdown, JSON, and Plain Text exports for conversations
+  - Share Analysis: Modal with shareable link generation and copy functionality
+  - Save to Project: Panel for managing projects and saving opportunities to them
 - **Complete Frontend Redesign**: Rebranded from "Friction" to "Katalyst" with new design system
 - **New Pages Built**: discover.html, submit.html, pricing.html, signup.html, signin.html, account.html
 - **Design System**: Spectral/Inter fonts, stone color palette, violet/purple accents
