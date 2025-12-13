@@ -1,0 +1,51 @@
+I re-checked the repo and the root cause looks like a mix of two issues that can make the sign-in button/avatar flip on and off:
+
+inconsistent localStorage keys for the token across pages (some pages set "token", the API client and most pages read "access_token"), and
+the header UI toggle code assumes a single key and a single display type, so a mismatch or a failed token check can hide the auth UI unexpectedly.
+Below are small, targeted changes you can apply to make the header behavior reliable. Apply all three (they’re safe and complementary).
+
+Make the login write the canonical key
+In signin.html (the version that currently does localStorage.setItem('token', ...)) replace the localStorage write so it stores the canonical key used everywhere: access_token.
+Replace: localStorage.setItem('token', response.access_token); localStorage.setItem('user', JSON.stringify(response.user)); window.location.href = 'discover.html';
+
+With: localStorage.setItem('access_token', response.access_token); localStorage.setItem('user', JSON.stringify(response.user)); api.token = response.access_token; // keep in-memory client in sync window.location.href = 'discover.html';
+
+Why: this ensures every page that checks access_token will find it after login.
+
+Make the app initialization accept either key (backwards-compatible)
+Edit js/app.js DOMContentLoaded token check to accept either key, and set the api client token so subsequent calls work:
+Replace the top of DOMContentLoaded token logic:
+
+const token = localStorage.getItem('access_token'); if (token) { try { currentUser = await api.getCurrentUser(); updateUIForLoggedInUser(); } catch (error) { // Token expired or invalid localStorage.removeItem('access_token'); } }
+
+With this (exact code):
+
+const token = localStorage.getItem('access_token') || localStorage.getItem('token'); if (token) { api.token = token; // ensure api client uses the token try { currentUser = await api.getCurrentUser(); updateUIForLoggedInUser(); } catch (error) { // Token expired or invalid — remove both keys localStorage.removeItem('access_token'); localStorage.removeItem('token'); api.token = null; } }
+
+Why: accepts older pages that still write 'token', and keeps the in-memory api client token in sync.
+
+Make updateUIForLoggedInUser more robust across tag types
+Some header items are anchors (<a>), some are divs — forcing display='flex' can produce inconsistent layout. Update updateUIForLoggedInUser to restore an appropriate display for anchors vs container elements:
+Replace:
+
+const authButtons = document.querySelectorAll('.auth-required'); authButtons.forEach(btn => btn.style.display = 'flex');
+
+const guestButtons = document.querySelectorAll('.guest-only'); guestButtons.forEach(btn => btn.style.display = 'none');
+
+With:
+
+const authButtons = document.querySelectorAll('.auth-required'); authButtons.forEach(btn => { // use inline-flex for anchors and flex for other containers if (btn.tagName === 'A' || btn.classList.contains('btn')) { btn.style.display = 'inline-flex'; btn.style.alignItems = 'center'; } else { btn.style.display = 'flex'; } });
+
+const guestButtons = document.querySelectorAll('.guest-only'); guestButtons.forEach(btn => btn.style.display = 'none');
+
+Why: restores display in a way that matches anchors and buttons so they remain visible and aligned.
+
+Extra checks to run if you still see flakiness
+
+Ensure index.html (the landing page) actually includes js/app.js (and js/api.js) before </body>. If the landing page doesn't load js/app.js, the header will never toggle. Add:
+<script src="js/config.js"></script> <script src="js/api.js"></script> <script src="js/app.js"></script>
+just before </body>.
+
+If you have multiple signin/login page variants, update them all to set localStorage.setItem('access_token', ...) (or keep the acceptance code from step 2).
+
+After login, avoid redirecting before the token is stored/in-memory client updated. The snippets above set api.token before redirect.

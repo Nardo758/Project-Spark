@@ -691,8 +691,9 @@
                 console.log('Login successful!', response);
                 
                 // Store token and redirect
-                localStorage.setItem('token', response.access_token);
+                localStorage.setItem('access_token', response.access_token);
                 localStorage.setItem('user', JSON.stringify(response.user));
+                api.token = response.access_token;
                 
                 window.location.href = 'discover.html';
 

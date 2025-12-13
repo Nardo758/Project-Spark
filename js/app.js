@@ -9,15 +9,18 @@ let currentUser = null;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if user is logged in
-    const token = localStorage.getItem('access_token');
+    // Check if user is logged in (accept either key for backwards compatibility)
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
     if (token) {
+        api.token = token;
         try {
             currentUser = await api.getCurrentUser();
             updateUIForLoggedInUser();
         } catch (error) {
-            // Token expired or invalid
+            // Token expired or invalid - remove both keys
             localStorage.removeItem('access_token');
+            localStorage.removeItem('token');
+            api.token = null;
         }
     }
 
@@ -33,7 +36,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Update UI for logged in user
 function updateUIForLoggedInUser() {
     const authButtons = document.querySelectorAll('.auth-required');
-    authButtons.forEach(btn => btn.style.display = 'flex');
+    authButtons.forEach(btn => {
+        if (btn.tagName === 'A' || btn.classList.contains('btn')) {
+            btn.style.display = 'inline-flex';
+            btn.style.alignItems = 'center';
+        } else {
+            btn.style.display = 'flex';
+        }
+    });
 
     const guestButtons = document.querySelectorAll('.guest-only');
     guestButtons.forEach(btn => btn.style.display = 'none');
