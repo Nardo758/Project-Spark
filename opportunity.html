@@ -780,6 +780,461 @@
             color: var(--stone-600);
         }
 
+        /* Research Dashboard Tabs */
+        .research-tabs-container {
+            background: var(--white);
+            border-radius: 12px;
+            border: 1px solid var(--stone-200);
+            overflow: hidden;
+        }
+
+        .research-tabs-nav {
+            display: flex;
+            border-bottom: 1px solid var(--stone-200);
+        }
+
+        .research-tab {
+            flex: 1;
+            padding: 16px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--stone-500);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .research-tab:hover {
+            color: var(--stone-700);
+            background: var(--stone-50);
+        }
+
+        .research-tab.active {
+            color: var(--stone-900);
+            border-bottom-color: var(--stone-900);
+        }
+
+        .research-tab svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .research-tab-content {
+            padding: 32px;
+        }
+
+        .research-panel {
+            display: none;
+        }
+
+        .research-panel.active {
+            display: block;
+        }
+
+        /* Research Dashboard Content Styles */
+        .research-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--stone-500);
+            margin-bottom: 16px;
+        }
+
+        .research-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .research-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .research-stat-label {
+            color: var(--stone-700);
+            font-size: 14px;
+        }
+
+        .research-stat-value {
+            font-family: 'Spectral', serif;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .research-stat-value.growth {
+            color: var(--emerald-600);
+        }
+
+        .competitor-card {
+            padding: 16px;
+            background: var(--stone-50);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .competitor-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .competitor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .competitor-name {
+            font-weight: 500;
+            color: var(--stone-900);
+        }
+
+        .competitor-share {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--stone-500);
+        }
+
+        .competitor-weakness {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        /* Geographic Region Card */
+        .region-card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--stone-200);
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .region-card:hover {
+            border-color: var(--stone-300);
+        }
+
+        .region-card.selected {
+            border-color: var(--stone-900);
+            background: var(--stone-50);
+        }
+
+        .region-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .region-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .region-title {
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+        }
+
+        .region-market-size {
+            text-align: right;
+        }
+
+        .region-market-label {
+            font-size: 11px;
+            color: var(--stone-500);
+        }
+
+        .region-market-value {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .region-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .region-stat-label {
+            font-size: 11px;
+            color: var(--stone-500);
+        }
+
+        .region-stat-value {
+            font-family: 'Spectral', serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .region-cities {
+            padding-top: 12px;
+            border-top: 1px solid var(--stone-200);
+        }
+
+        .region-cities-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--stone-500);
+            margin-bottom: 8px;
+        }
+
+        .region-cities-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .region-city-tag {
+            padding: 4px 8px;
+            background: var(--stone-100);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--stone-700);
+        }
+
+        /* Launch Strategy Box */
+        .launch-strategy-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .launch-strategy-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .launch-phase-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .launch-phase-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .launch-phase-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .launch-phase-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .launch-phase-number.phase-1 { background: var(--emerald-600); }
+        .launch-phase-number.phase-2 { background: #3b82f6; }
+        .launch-phase-number.phase-3 { background: #8b5cf6; }
+
+        .launch-phase-name {
+            font-weight: 600;
+            color: var(--stone-900);
+        }
+
+        .launch-phase-desc {
+            font-size: 14px;
+            color: var(--stone-700);
+            padding-left: 32px;
+        }
+
+        /* Pain Point Card */
+        .pain-card {
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .pain-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .pain-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .pain-category {
+            font-weight: 500;
+            color: var(--stone-900);
+        }
+
+        .pain-severity {
+            text-align: right;
+        }
+
+        .pain-severity-label {
+            font-size: 11px;
+            color: var(--stone-500);
+        }
+
+        .pain-severity-value {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .pain-quote {
+            font-size: 14px;
+            color: var(--stone-600);
+            margin-bottom: 4px;
+        }
+
+        .pain-mentions {
+            font-size: 12px;
+            color: var(--stone-500);
+        }
+
+        /* Opportunity Sizing */
+        .tam-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .tam-card {
+            background: var(--stone-50);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .tam-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--stone-500);
+            margin-bottom: 8px;
+        }
+
+        .tam-value {
+            font-family: 'Spectral', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .tam-desc {
+            font-size: 13px;
+            color: var(--stone-600);
+            margin-top: 4px;
+        }
+
+        /* Pricing Tier */
+        .pricing-tier {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .pricing-tier:last-child {
+            margin-bottom: 0;
+        }
+
+        .pricing-tier-name {
+            font-weight: 500;
+            color: var(--stone-900);
+        }
+
+        .pricing-tier-adoption {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .pricing-tier-price {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        /* Feature Priority */
+        .feature-priority {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--stone-50);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .feature-priority:last-child {
+            margin-bottom: 0;
+        }
+
+        .feature-priority-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--stone-900);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Spectral', serif;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .feature-priority-content {
+            flex: 1;
+        }
+
+        .feature-priority-name {
+            font-weight: 500;
+            color: var(--stone-900);
+        }
+
+        .feature-priority-mentions {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
         /* AI Chat */
         .ai-chat-toggle {
             position: fixed;
@@ -829,18 +1284,21 @@
         }
 
         .ai-chat-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--stone-200);
+            padding: 24px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            border-radius: 16px 16px 0 0;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
         .ai-chat-header-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -848,8 +1306,15 @@
         }
 
         .ai-chat-header-title {
-            font-weight: 600;
-            font-size: 14px;
+            font-family: 'Spectral', serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: white;
+        }
+
+        .ai-chat-header-subtitle {
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
         }
 
         .ai-chat-messages {
@@ -1173,89 +1638,518 @@
 
         <!-- TIER 2: Research Dashboard -->
         <div id="tier-research" class="tier-content" style="display: none;">
-            <div>
-                <div>
-                    <!-- Geographic Distribution Preview -->
-                    <div class="content-card" style="margin-bottom: 24px;">
-                        <h2>Geographic Distribution</h2>
-                        <div class="geo-grid">
-                            <div class="geo-card">
-                                <div class="geo-card-header">
-                                    <span class="geo-card-title">Southwest US</span>
-                                    <span class="applicability-badge very-high">Best</span>
+            <div class="research-tabs-container fade-in-up">
+                <!-- Tab Navigation -->
+                <div class="research-tabs-nav">
+                    <button class="research-tab active" data-tab="market">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                        Market Validation
+                    </button>
+                    <button class="research-tab" data-tab="geography">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        Geographic Distribution
+                    </button>
+                    <button class="research-tab" data-tab="problem">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        Problem Analysis
+                    </button>
+                    <button class="research-tab" data-tab="opportunity">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        Opportunity Sizing
+                    </button>
+                    <button class="research-tab" data-tab="solution">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6"></circle>
+                            <circle cx="12" cy="12" r="2"></circle>
+                        </svg>
+                        Solution Pathways
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="research-tab-content">
+                    <!-- Market Validation Panel -->
+                    <div class="research-panel active" id="panel-market">
+                        <div class="research-grid-2">
+                            <div>
+                                <h3 class="research-section-title">Demand Signals</h3>
+                                <div class="research-stat-row">
+                                    <span class="research-stat-label">Search Volume (monthly)</span>
+                                    <span class="research-stat-value">127K</span>
                                 </div>
-                                <div class="geo-card-stats">
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Market Size</span><span class="geo-card-stat-value">$1.2B</span></div>
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Growth</span><span class="geo-card-stat-value" style="color: var(--emerald-600);">+52%</span></div>
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Competition</span><span class="geo-card-stat-value">Medium</span></div>
+                                <div class="research-stat-row">
+                                    <span class="research-stat-label">YoY Growth</span>
+                                    <span class="research-stat-value growth">+43%</span>
+                                </div>
+                                <div class="research-stat-row">
+                                    <span class="research-stat-label">Social Mentions</span>
+                                    <span class="research-stat-value">89K/mo</span>
                                 </div>
                             </div>
-                            <div class="geo-card">
-                                <div class="geo-card-header">
-                                    <span class="geo-card-title">US National</span>
-                                    <span class="applicability-badge high">High</span>
+                            <div>
+                                <h3 class="research-section-title">Demographics</h3>
+                                <div class="research-stat-row">
+                                    <span class="research-stat-label">Primary Age Range</span>
+                                    <span class="research-stat-value">35-54</span>
                                 </div>
-                                <div class="geo-card-stats">
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Market Size</span><span class="geo-card-stat-value">$8.4B</span></div>
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Growth</span><span class="geo-card-stat-value" style="color: var(--emerald-600);">+34%</span></div>
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Competition</span><span class="geo-card-stat-value">High</span></div>
+                                <div class="research-stat-row">
+                                    <span class="research-stat-label">Income Level</span>
+                                    <span class="research-stat-value">$75K-150K</span>
                                 </div>
-                            </div>
-                            <div class="geo-card">
-                                <div class="geo-card-header">
-                                    <span class="geo-card-title">Canada</span>
-                                    <span class="applicability-badge high">High</span>
-                                </div>
-                                <div class="geo-card-stats">
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Market Size</span><span class="geo-card-stat-value">$2.1B CAD</span></div>
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Growth</span><span class="geo-card-stat-value" style="color: var(--emerald-600);">+28%</span></div>
-                                    <div class="geo-card-stat"><span class="geo-card-stat-label">Competition</span><span class="geo-card-stat-value">Low</span></div>
+                                <div class="research-stat-row">
+                                    <span class="research-stat-label">Home Ownership</span>
+                                    <span class="research-stat-value">87%</span>
                                 </div>
                             </div>
                         </div>
+                        <div style="border-top: 1px solid var(--stone-200); margin-top: 24px; padding-top: 24px;">
+                            <h3 class="research-section-title">Competitive Landscape</h3>
+                            <div class="competitor-card">
+                                <div class="competitor-header">
+                                    <span class="competitor-name">American Home Shield</span>
+                                    <span class="competitor-share">23% market share</span>
+                                </div>
+                                <p class="competitor-weakness">Key weakness: Poor service quality</p>
+                            </div>
+                            <div class="competitor-card">
+                                <div class="competitor-header">
+                                    <span class="competitor-name">HomeAdvisor</span>
+                                    <span class="competitor-share">18% market share</span>
+                                </div>
+                                <p class="competitor-weakness">Key weakness: Lead generation only</p>
+                            </div>
+                            <div class="competitor-card">
+                                <div class="competitor-header">
+                                    <span class="competitor-name">Thumbtack</span>
+                                    <span class="competitor-share">12% market share</span>
+                                </div>
+                                <p class="competitor-weakness">Key weakness: No ongoing relationship</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Geographic Distribution Panel -->
+                    <div class="research-panel" id="panel-geography">
+                        <h3 class="research-section-title">Market Applicability by Region</h3>
+                        
+                        <div class="region-card selected" data-region="us-southwest">
+                            <div class="region-header">
+                                <div>
+                                    <div class="region-title">Southwest Region</div>
+                                    <span class="applicability-badge very-high">Very High</span>
+                                </div>
+                                <div class="region-market-size">
+                                    <div class="region-market-label">Market Size</div>
+                                    <div class="region-market-value">$1.2B</div>
+                                </div>
+                            </div>
+                            <div class="region-stats">
+                                <div>
+                                    <div class="region-stat-label">Submissions</div>
+                                    <div class="region-stat-value">847</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Growth Rate</div>
+                                    <div class="region-stat-value" style="color: var(--emerald-600);">+52%</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Competition</div>
+                                    <div class="region-stat-value">Medium</div>
+                                </div>
+                            </div>
+                            <div class="region-cities">
+                                <div class="region-cities-label">Top Markets</div>
+                                <div class="region-cities-list">
+                                    <span class="region-city-tag">Austin, TX</span>
+                                    <span class="region-city-tag">Phoenix, AZ</span>
+                                    <span class="region-city-tag">Las Vegas, NV</span>
+                                    <span class="region-city-tag">Albuquerque, NM</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="region-card" data-region="us-national">
+                            <div class="region-header">
+                                <div>
+                                    <div class="region-title">United States (National)</div>
+                                    <span class="applicability-badge high">High</span>
+                                </div>
+                                <div class="region-market-size">
+                                    <div class="region-market-label">Market Size</div>
+                                    <div class="region-market-value">$8.4B</div>
+                                </div>
+                            </div>
+                            <div class="region-stats">
+                                <div>
+                                    <div class="region-stat-label">Submissions</div>
+                                    <div class="region-stat-value">2,847</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Growth Rate</div>
+                                    <div class="region-stat-value" style="color: var(--emerald-600);">+34%</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Competition</div>
+                                    <div class="region-stat-value">High</div>
+                                </div>
+                            </div>
+                            <div class="region-cities">
+                                <div class="region-cities-label">Top Markets</div>
+                                <div class="region-cities-list">
+                                    <span class="region-city-tag">Austin, TX</span>
+                                    <span class="region-city-tag">Denver, CO</span>
+                                    <span class="region-city-tag">Portland, OR</span>
+                                    <span class="region-city-tag">Nashville, TN</span>
+                                    <span class="region-city-tag">Charlotte, NC</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="region-card" data-region="canada">
+                            <div class="region-header">
+                                <div>
+                                    <div class="region-title">Canada</div>
+                                    <span class="applicability-badge high">High</span>
+                                </div>
+                                <div class="region-market-size">
+                                    <div class="region-market-label">Market Size</div>
+                                    <div class="region-market-value">$2.1B CAD</div>
+                                </div>
+                            </div>
+                            <div class="region-stats">
+                                <div>
+                                    <div class="region-stat-label">Submissions</div>
+                                    <div class="region-stat-value">412</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Growth Rate</div>
+                                    <div class="region-stat-value" style="color: var(--emerald-600);">+28%</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Competition</div>
+                                    <div class="region-stat-value">Low</div>
+                                </div>
+                            </div>
+                            <div class="region-cities">
+                                <div class="region-cities-label">Top Markets</div>
+                                <div class="region-cities-list">
+                                    <span class="region-city-tag">Toronto, ON</span>
+                                    <span class="region-city-tag">Vancouver, BC</span>
+                                    <span class="region-city-tag">Calgary, AB</span>
+                                    <span class="region-city-tag">Montreal, QC</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="region-card" data-region="uk">
+                            <div class="region-header">
+                                <div>
+                                    <div class="region-title">United Kingdom</div>
+                                    <span class="applicability-badge medium">Medium</span>
+                                </div>
+                                <div class="region-market-size">
+                                    <div class="region-market-label">Market Size</div>
+                                    <div class="region-market-value">£1.8B</div>
+                                </div>
+                            </div>
+                            <div class="region-stats">
+                                <div>
+                                    <div class="region-stat-label">Submissions</div>
+                                    <div class="region-stat-value">234</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Growth Rate</div>
+                                    <div class="region-stat-value" style="color: var(--emerald-600);">+19%</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Competition</div>
+                                    <div class="region-stat-value">High</div>
+                                </div>
+                            </div>
+                            <div class="region-cities">
+                                <div class="region-cities-label">Top Markets</div>
+                                <div class="region-cities-list">
+                                    <span class="region-city-tag">London</span>
+                                    <span class="region-city-tag">Manchester</span>
+                                    <span class="region-city-tag">Birmingham</span>
+                                    <span class="region-city-tag">Edinburgh</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="region-card" data-region="australia">
+                            <div class="region-header">
+                                <div>
+                                    <div class="region-title">Australia</div>
+                                    <span class="applicability-badge medium">Medium</span>
+                                </div>
+                                <div class="region-market-size">
+                                    <div class="region-market-label">Market Size</div>
+                                    <div class="region-market-value">$1.4B AUD</div>
+                                </div>
+                            </div>
+                            <div class="region-stats">
+                                <div>
+                                    <div class="region-stat-label">Submissions</div>
+                                    <div class="region-stat-value">189</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Growth Rate</div>
+                                    <div class="region-stat-value" style="color: var(--emerald-600);">+31%</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Competition</div>
+                                    <div class="region-stat-value">Low</div>
+                                </div>
+                            </div>
+                            <div class="region-cities">
+                                <div class="region-cities-label">Top Markets</div>
+                                <div class="region-cities-list">
+                                    <span class="region-city-tag">Sydney</span>
+                                    <span class="region-city-tag">Melbourne</span>
+                                    <span class="region-city-tag">Brisbane</span>
+                                    <span class="region-city-tag">Perth</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="region-card" data-region="global">
+                            <div class="region-header">
+                                <div>
+                                    <div class="region-title">Global Market</div>
+                                    <span class="applicability-badge medium">Varies</span>
+                                </div>
+                                <div class="region-market-size">
+                                    <div class="region-market-label">Market Size</div>
+                                    <div class="region-market-value">$47B+</div>
+                                </div>
+                            </div>
+                            <div class="region-stats">
+                                <div>
+                                    <div class="region-stat-label">Submissions</div>
+                                    <div class="region-stat-value">4,821</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Growth Rate</div>
+                                    <div class="region-stat-value" style="color: var(--emerald-600);">+29%</div>
+                                </div>
+                                <div>
+                                    <div class="region-stat-label">Competition</div>
+                                    <div class="region-stat-value">Highly variable</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Launch Strategy -->
-                        <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">Recommended 3-Phase Launch Strategy</h3>
-                        <div class="launch-phases">
-                            <div class="launch-phase">
-                                <div class="phase-number">1</div>
-                                <div class="phase-content">
-                                    <div class="phase-title">Southwest US Launch</div>
-                                    <div class="phase-description">Start in high-growth, business-friendly markets with lower competition</div>
-                                    <div class="phase-cities">
-                                        <span class="phase-city">Austin, TX</span>
-                                        <span class="phase-city">Phoenix, AZ</span>
-                                        <span class="phase-city">Las Vegas, NV</span>
-                                    </div>
+                        <div class="launch-strategy-box">
+                            <div class="launch-strategy-title">
+                                <span>🎯</span> Recommended Launch Strategy
+                            </div>
+                            <div class="launch-phase-card">
+                                <div class="launch-phase-header">
+                                    <div class="launch-phase-number phase-1">1</div>
+                                    <span class="launch-phase-name">Phase 1: Southwest US Launch</span>
+                                </div>
+                                <p class="launch-phase-desc">Highest growth (+52%), favorable regulations, medium competition. Start Austin → Phoenix.</p>
+                            </div>
+                            <div class="launch-phase-card">
+                                <div class="launch-phase-header">
+                                    <div class="launch-phase-number phase-2">2</div>
+                                    <span class="launch-phase-name">Phase 2: National Expansion</span>
+                                </div>
+                                <p class="launch-phase-desc">Expand to top 20 metro areas. Address state licensing complexity.</p>
+                            </div>
+                            <div class="launch-phase-card">
+                                <div class="launch-phase-header">
+                                    <div class="launch-phase-number phase-3">3</div>
+                                    <span class="launch-phase-name">Phase 3: International (Canada/Australia)</span>
+                                </div>
+                                <p class="launch-phase-desc">After US market leadership established. Similar demographics, lower competition.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Problem Analysis Panel -->
+                    <div class="research-panel" id="panel-problem">
+                        <h3 class="research-section-title">Pain Point Categorization</h3>
+                        
+                        <div class="pain-card">
+                            <div class="pain-card-header">
+                                <div>
+                                    <div class="pain-category">Trust & Reliability</div>
+                                    <p class="pain-quote">Can't find trustworthy contractors</p>
+                                </div>
+                                <div class="pain-severity">
+                                    <div class="pain-severity-label">Severity</div>
+                                    <div class="pain-severity-value">9.2/10</div>
                                 </div>
                             </div>
-                            <div class="launch-phase">
-                                <div class="phase-number">2</div>
-                                <div class="phase-content">
-                                    <div class="phase-title">National Expansion</div>
-                                    <div class="phase-description">Expand to top 20 metros with proven playbook</div>
-                                    <div class="phase-cities">
-                                        <span class="phase-city">Denver, CO</span>
-                                        <span class="phase-city">Portland, OR</span>
-                                        <span class="phase-city">Nashville, TN</span>
-                                        <span class="phase-city">Charlotte, NC</span>
-                                    </div>
+                            <div class="pain-mentions">847 mentions</div>
+                        </div>
+
+                        <div class="pain-card">
+                            <div class="pain-card-header">
+                                <div>
+                                    <div class="pain-category">Cost Predictability</div>
+                                    <p class="pain-quote">Emergency repairs are financially devastating</p>
+                                </div>
+                                <div class="pain-severity">
+                                    <div class="pain-severity-label">Severity</div>
+                                    <div class="pain-severity-value">8.8/10</div>
                                 </div>
                             </div>
-                            <div class="launch-phase">
-                                <div class="phase-number">3</div>
-                                <div class="phase-content">
-                                    <div class="phase-title">International</div>
-                                    <div class="phase-description">Enter English-speaking markets with similar demographics</div>
-                                    <div class="phase-cities">
-                                        <span class="phase-city">Toronto, ON</span>
-                                        <span class="phase-city">Vancouver, BC</span>
-                                        <span class="phase-city">Sydney, AU</span>
-                                    </div>
+                            <div class="pain-mentions">623 mentions</div>
+                        </div>
+
+                        <div class="pain-card">
+                            <div class="pain-card-header">
+                                <div>
+                                    <div class="pain-category">Knowledge Gap</div>
+                                    <p class="pain-quote">Don't know what maintenance is needed</p>
                                 </div>
+                                <div class="pain-severity">
+                                    <div class="pain-severity-label">Severity</div>
+                                    <div class="pain-severity-value">7.9/10</div>
+                                </div>
+                            </div>
+                            <div class="pain-mentions">512 mentions</div>
+                        </div>
+
+                        <div class="pain-card">
+                            <div class="pain-card-header">
+                                <div>
+                                    <div class="pain-category">Time & Convenience</div>
+                                    <p class="pain-quote">Coordinating multiple services is exhausting</p>
+                                </div>
+                                <div class="pain-severity">
+                                    <div class="pain-severity-label">Severity</div>
+                                    <div class="pain-severity-value">7.4/10</div>
+                                </div>
+                            </div>
+                            <div class="pain-mentions">421 mentions</div>
+                        </div>
+                    </div>
+
+                    <!-- Opportunity Sizing Panel -->
+                    <div class="research-panel" id="panel-opportunity">
+                        <div class="tam-grid">
+                            <div class="tam-card">
+                                <div class="tam-label">TAM</div>
+                                <div class="tam-value">$8.4B</div>
+                                <div class="tam-desc">Total addressable</div>
+                            </div>
+                            <div class="tam-card">
+                                <div class="tam-label">SAM</div>
+                                <div class="tam-value">$2.1B</div>
+                                <div class="tam-desc">Serviceable available</div>
+                            </div>
+                            <div class="tam-card">
+                                <div class="tam-label">SOM</div>
+                                <div class="tam-value">$187M</div>
+                                <div class="tam-desc">5-year target</div>
+                            </div>
+                        </div>
+
+                        <h3 class="research-section-title">Willingness to Pay</h3>
+                        
+                        <div class="pricing-tier">
+                            <div>
+                                <div class="pricing-tier-name">Basic Plan</div>
+                                <div class="pricing-tier-adoption">67% would subscribe</div>
+                            </div>
+                            <div class="pricing-tier-price">$49/mo</div>
+                        </div>
+
+                        <div class="pricing-tier">
+                            <div>
+                                <div class="pricing-tier-name">Premium Plan</div>
+                                <div class="pricing-tier-adoption">34% would subscribe</div>
+                            </div>
+                            <div class="pricing-tier-price">$99/mo</div>
+                        </div>
+
+                        <div class="pricing-tier">
+                            <div>
+                                <div class="pricing-tier-name">Comprehensive</div>
+                                <div class="pricing-tier-adoption">18% would subscribe</div>
+                            </div>
+                            <div class="pricing-tier-price">$149/mo</div>
+                        </div>
+                    </div>
+
+                    <!-- Solution Pathways Panel -->
+                    <div class="research-panel" id="panel-solution">
+                        <h3 class="research-section-title">Desired Solution Features</h3>
+                        
+                        <div class="feature-priority">
+                            <div class="feature-priority-number">1</div>
+                            <div class="feature-priority-content">
+                                <div class="feature-priority-name">Vetted contractor network</div>
+                                <div class="feature-priority-mentions">1,247 user mentions</div>
+                            </div>
+                        </div>
+
+                        <div class="feature-priority">
+                            <div class="feature-priority-number">2</div>
+                            <div class="feature-priority-content">
+                                <div class="feature-priority-name">Preventive maintenance scheduling</div>
+                                <div class="feature-priority-mentions">1,089 user mentions</div>
+                            </div>
+                        </div>
+
+                        <div class="feature-priority">
+                            <div class="feature-priority-number">3</div>
+                            <div class="feature-priority-content">
+                                <div class="feature-priority-name">Fixed pricing guarantee</div>
+                                <div class="feature-priority-mentions">923 user mentions</div>
+                            </div>
+                        </div>
+
+                        <div class="feature-priority">
+                            <div class="feature-priority-number">4</div>
+                            <div class="feature-priority-content">
+                                <div class="feature-priority-name">24/7 emergency support</div>
+                                <div class="feature-priority-mentions">876 user mentions</div>
+                            </div>
+                        </div>
+
+                        <div class="feature-priority">
+                            <div class="feature-priority-number">5</div>
+                            <div class="feature-priority-content">
+                                <div class="feature-priority-name">Home systems monitoring</div>
+                                <div class="feature-priority-mentions">734 user mentions</div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Upgrade to Deep Dive CTA -->
+            <div class="cta-banner" style="margin-top: 32px;">
+                <div>
+                    <h3>Unlock Deep Dive Analysis</h3>
+                    <p>Get actionable execution playbook, financial models, full competitive intelligence, and product roadmap</p>
+                </div>
+                <button class="btn btn-white" onclick="document.querySelector('[data-tier=deep]').click()">
+                    Deep Dive
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -1324,11 +2218,14 @@
     <div class="ai-chat-panel" id="ai-chat-panel">
         <div class="ai-chat-header">
             <div class="ai-chat-header-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: white;">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
             </div>
-            <span class="ai-chat-header-title">AI Research Assistant</span>
+            <div>
+                <div class="ai-chat-header-title">AI Research Assistant</div>
+                <div class="ai-chat-header-subtitle">Powered by deep analysis of 2,847 data points</div>
+            </div>
         </div>
         <div class="ai-chat-messages" id="ai-chat-messages">
             <div class="ai-message ai">
@@ -1446,6 +2343,29 @@
                     content.style.display = 'none';
                 });
                 document.getElementById('tier-' + tier).style.display = 'block';
+            });
+        });
+
+        // Research Dashboard tab switching
+        document.querySelectorAll('.research-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.dataset.tab;
+                
+                document.querySelectorAll('.research-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('.research-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.getElementById('panel-' + tabId).classList.add('active');
+            });
+        });
+
+        // Region card selection in Research Dashboard
+        document.querySelectorAll('.region-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.region-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
             });
         });
 
