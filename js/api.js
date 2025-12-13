@@ -324,14 +324,16 @@ class FrictionAPI {
     }
 
     // AI Chat
-    async sendAIMessage(message, opportunityId, conversationHistory = []) {
+    async sendAIMessage(message, opportunityId, conversationHistory = [], category = null, bookmarkedInsights = []) {
         const response = await fetch(`${this.baseURL}/ai/chat`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({
                 message,
                 opportunity_id: opportunityId,
-                conversation_history: conversationHistory
+                conversation_history: conversationHistory,
+                category: category,
+                bookmarked_insights: bookmarkedInsights
             })
         });
         return this.handleResponse(response);

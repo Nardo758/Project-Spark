@@ -4528,10 +4528,22 @@
 
             try {
                 if (currentOpportunityId) {
-                    const response = await api.sendAIMessage(text, currentOpportunityId, deepDiveState.messages.map(m => ({
-                        role: m.type === 'user' ? 'user' : 'assistant',
-                        content: m.content
-                    })));
+                    // Get bookmarked message contents for AI context
+                    const bookmarkedContents = bookmarkedMessages
+                        .filter(idx => deepDiveState.messages[idx])
+                        .map(idx => deepDiveState.messages[idx].content)
+                        .slice(0, 5);
+                    
+                    const response = await api.sendAIMessage(
+                        text, 
+                        currentOpportunityId, 
+                        deepDiveState.messages.map(m => ({
+                            role: m.type === 'user' ? 'user' : 'assistant',
+                            content: m.content
+                        })),
+                        deepDiveState.activeCategory,
+                        bookmarkedContents
+                    );
                     
                     hideThinking();
                     deepDiveState.messages.push({ 
