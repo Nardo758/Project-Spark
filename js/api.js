@@ -323,6 +323,27 @@ class FrictionAPI {
         return this.handleResponse(response);
     }
 
+    // AI Chat
+    async sendAIMessage(message, opportunityId, conversationHistory = []) {
+        const response = await fetch(`${this.baseURL}/ai/chat`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                message,
+                opportunity_id: opportunityId,
+                conversation_history: conversationHistory
+            })
+        });
+        return this.handleResponse(response);
+    }
+
+    async getAISuggestions(opportunityId) {
+        const response = await fetch(`${this.baseURL}/ai/suggestions/${opportunityId}`, {
+            headers: this.getHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
     // Helper: Check if user is authenticated
     isAuthenticated() {
         return !!this.token;
