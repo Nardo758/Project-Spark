@@ -1007,12 +1007,12 @@
     <div class="page-header">
         <div class="page-header-content">
             <div class="page-header-left">
-                <div class="page-header-meta">IDEA #2847</div>
-                <h1>On-Demand Home Maintenance Subscription</h1>
+                <div class="page-header-meta" id="opportunity-id">IDEA #...</div>
+                <h1 id="opportunity-title">Loading...</h1>
             </div>
             <div class="validation-score">
                 <div class="validation-score-label">Validation Score</div>
-                <div class="validation-score-value">87/100</div>
+                <div class="validation-score-value" id="validation-score">--/100</div>
             </div>
         </div>
     </div>
@@ -1086,7 +1086,7 @@
             <!-- Problem Statement -->
             <div class="content-card fade-in-up stagger-2">
                 <h2>Problem Statement</h2>
-                <p>Homeowners struggle with reactive, expensive emergency repairs and lack a reliable way to maintain their homes proactively. Finding trustworthy contractors, scheduling multiple services, and managing home maintenance creates significant friction and anxiety.</p>
+                <p id="opportunity-description">Homeowners struggle with reactive, expensive emergency repairs and lack a reliable way to maintain their homes proactively. Finding trustworthy contractors, scheduling multiple services, and managing home maintenance creates significant friction and anxiety.</p>
             </div>
 
             <!-- Pain Points -->
@@ -1569,8 +1569,37 @@
             });
         });
 
+        // Load opportunity data from API
+        async function loadOpportunityData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const opportunityId = urlParams.get('id');
+            
+            if (!opportunityId) {
+                console.log('No opportunity ID provided');
+                return;
+            }
+            
+            try {
+                const opp = await api.getOpportunity(opportunityId);
+                
+                document.getElementById('opportunity-id').textContent = `IDEA #${opp.id}`;
+                document.getElementById('opportunity-title').textContent = opp.title;
+                document.title = `${opp.title} · Katalyst`;
+                
+                const score = Math.min(100, Math.round(50 + (opp.validation_count / 10) + (opp.growth_rate || 0)));
+                document.getElementById('validation-score').textContent = `${score}/100`;
+                
+                document.getElementById('opportunity-description').textContent = opp.description;
+                
+            } catch (error) {
+                console.error('Failed to load opportunity:', error);
+            }
+        }
+
         // Auth-aware UI
         document.addEventListener('DOMContentLoaded', async () => {
+            loadOpportunityData();
+            
             const token = localStorage.getItem('access_token');
             if (token) {
                 try {
