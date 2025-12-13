@@ -25,6 +25,25 @@
             --amber-200: #fde68a;
             --amber-700: #b45309;
             --white: #ffffff;
+            --violet-500: #8b5cf6;
+            --violet-600: #7c3aed;
+            --violet-100: #ede9fe;
+        }
+
+        [data-theme="dark"] {
+            --stone-50: #1c1917;
+            --stone-100: #292524;
+            --stone-200: #44403c;
+            --stone-300: #57534e;
+            --stone-400: #78716c;
+            --stone-500: #a8a29e;
+            --stone-600: #d6d3d1;
+            --stone-700: #e7e5e4;
+            --stone-800: #f5f5f4;
+            --stone-900: #fafaf9;
+            --white: #1c1917;
+            --emerald-100: #064e3b;
+            --violet-100: #2e1065;
         }
 
         * {
@@ -2100,6 +2119,600 @@
                 min-height: 500px;
             }
         }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--stone-100);
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--stone-700);
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--stone-200);
+        }
+
+        .theme-toggle svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Keyboard Shortcut Hints */
+        .shortcut-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: var(--stone-400);
+            margin-left: 8px;
+        }
+
+        .shortcut-key {
+            padding: 2px 6px;
+            background: var(--stone-100);
+            border: 1px solid var(--stone-200);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        /* Message Actions */
+        .message-actions {
+            display: none;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .console-message:hover .message-actions {
+            display: flex;
+        }
+
+        .message-action-btn {
+            padding: 4px 8px;
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--stone-600);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+
+        .message-action-btn:hover {
+            background: var(--stone-100);
+            color: var(--stone-900);
+        }
+
+        .message-action-btn.bookmarked {
+            background: var(--amber-100);
+            border-color: var(--amber-200);
+            color: var(--amber-700);
+        }
+
+        .message-action-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Collapsible Messages */
+        .console-message-content.collapsed {
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .console-message-content.collapsed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, var(--stone-100));
+        }
+
+        .expand-message-btn {
+            display: block;
+            width: 100%;
+            padding: 6px;
+            background: var(--stone-50);
+            border: 1px solid var(--stone-200);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--stone-600);
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .expand-message-btn:hover {
+            background: var(--stone-100);
+        }
+
+        /* Saved Threads Panel */
+        .saved-threads-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--white);
+            border-left: 1px solid var(--stone-200);
+            box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .saved-threads-panel.open {
+            right: 0;
+        }
+
+        .saved-threads-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--stone-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .saved-threads-title {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .close-panel-btn {
+            padding: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--stone-500);
+            border-radius: 6px;
+        }
+
+        .close-panel-btn:hover {
+            background: var(--stone-100);
+        }
+
+        .saved-threads-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .saved-thread-item {
+            padding: 16px;
+            background: var(--stone-50);
+            border: 1px solid var(--stone-200);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .saved-thread-item:hover {
+            border-color: var(--violet-500);
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+        }
+
+        .saved-thread-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .saved-thread-meta {
+            font-size: 12px;
+            color: var(--stone-500);
+            display: flex;
+            gap: 12px;
+        }
+
+        .saved-thread-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        /* Category Quick Actions */
+        .category-quick-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .quick-action-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: var(--stone-50);
+            border: 1px solid var(--stone-200);
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--stone-700);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--violet-100);
+            border-color: var(--violet-500);
+            color: var(--violet-600);
+        }
+
+        .quick-action-btn svg {
+            width: 10px;
+            height: 10px;
+        }
+
+        /* Celebration Animation */
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes celebrate-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .celebration-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .celebration-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .celebration-card {
+            background: var(--white);
+            padding: 48px;
+            border-radius: 20px;
+            text-align: center;
+            animation: celebrate-pulse 0.5s ease;
+        }
+
+        .celebration-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .celebration-title {
+            font-family: 'Spectral', serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--violet-500), var(--emerald-600));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .celebration-subtitle {
+            color: var(--stone-600);
+            margin-bottom: 24px;
+        }
+
+        /* Export Templates */
+        .export-templates-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .export-template-card {
+            padding: 16px;
+            background: var(--stone-50);
+            border: 1px solid var(--stone-200);
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .export-template-card:hover {
+            border-color: var(--violet-500);
+            background: var(--violet-100);
+        }
+
+        .export-template-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .export-template-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .export-template-desc {
+            font-size: 10px;
+            color: var(--stone-500);
+        }
+
+        /* Share Analysis Modal */
+        .share-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .share-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .share-modal-content {
+            background: var(--white);
+            padding: 32px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .share-modal-title {
+            font-family: 'Spectral', serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .share-link-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .share-link-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .share-options {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .share-option-btn {
+            padding: 12px 24px;
+            background: var(--stone-100);
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .share-option-btn:hover {
+            background: var(--stone-200);
+        }
+
+        /* Save to Project Feature */
+        .project-panel {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 450px;
+            height: 100vh;
+            background: var(--white);
+            border-left: 1px solid var(--stone-200);
+            box-shadow: -10px 0 40px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-panel.open {
+            right: 0;
+        }
+
+        .project-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--stone-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .project-panel-title {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .project-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--stone-200);
+        }
+
+        .project-tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--stone-500);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .project-tab.active {
+            color: var(--violet-600);
+            border-bottom-color: var(--violet-600);
+        }
+
+        .project-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .project-list {
+            margin-bottom: 20px;
+        }
+
+        .project-item {
+            padding: 16px;
+            background: var(--stone-50);
+            border: 2px solid var(--stone-200);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .project-item:hover {
+            border-color: var(--violet-500);
+        }
+
+        .project-item.selected {
+            border-color: var(--violet-500);
+            background: var(--violet-100);
+        }
+
+        .project-item-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .project-item-meta {
+            font-size: 12px;
+            color: var(--stone-500);
+        }
+
+        .project-item-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: var(--stone-200);
+            border-radius: 12px;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .new-project-form {
+            padding: 16px;
+            background: var(--stone-50);
+            border: 2px dashed var(--stone-300);
+            border-radius: 10px;
+        }
+
+        .new-project-form input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--stone-200);
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .new-project-form textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--stone-200);
+            border-radius: 6px;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 12px;
+        }
+
+        .add-idea-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--stone-200);
+        }
+
+        .add-idea-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .idea-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--stone-200);
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .idea-input:focus {
+            outline: none;
+            border-color: var(--violet-500);
+        }
+
+        .project-panel-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--stone-200);
+            display: flex;
+            gap: 12px;
+        }
+
+        .project-panel-footer button {
+            flex: 1;
+        }
+
+        /* Panel Overlay */
+        .panel-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .panel-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 <body>
@@ -3162,6 +3775,21 @@
                             </button>
                         </div>
                         <div class="console-header-right" style="position: relative;">
+                            <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
+                                <svg id="theme-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                <svg id="theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                            </button>
+                            <button class="theme-toggle" id="saved-threads-btn" title="Saved threads">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                                Saved
+                            </button>
+                            <button class="theme-toggle" id="project-btn" title="Save to project">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+                                Projects
+                            </button>
+                            <button class="theme-toggle" id="share-btn" title="Share analysis">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            </button>
                             <button class="save-export-btn" id="save-export-btn">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -3178,7 +3806,7 @@
                                 </div>
                                 <div class="save-menu-section">
                                     <div class="save-menu-title">Export As</div>
-                                    <div class="export-option" data-format="pdf">
+                                    <div class="export-option" data-format="markdown">
                                         <div class="export-option-icon">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
                                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -3186,16 +3814,15 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <div class="export-option-name">PDF Report</div>
+                                            <div class="export-option-name">Markdown</div>
                                             <div class="export-option-desc">Formatted document</div>
                                         </div>
                                     </div>
                                     <div class="export-option" data-format="json">
                                         <div class="export-option-icon">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                                <polyline points="7 10 12 15 17 10"></polyline>
-                                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                                                <polyline points="16 18 22 12 16 6"></polyline>
+                                                <polyline points="8 6 2 12 8 18"></polyline>
                                             </svg>
                                         </div>
                                         <div>
@@ -3203,17 +3830,18 @@
                                             <div class="export-option-desc">Raw structured data</div>
                                         </div>
                                     </div>
-                                    <div class="export-option" data-format="notion">
+                                    <div class="export-option" data-format="text">
                                         <div class="export-option-icon">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                                                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                                                <polyline points="16 6 12 2 8 6"></polyline>
-                                                <line x1="12" y1="2" x2="12" y2="15"></line>
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
                                             </svg>
                                         </div>
                                         <div>
-                                            <div class="export-option-name">Notion</div>
-                                            <div class="export-option-desc">Add to workspace</div>
+                                            <div class="export-option-name">Plain Text</div>
+                                            <div class="export-option-desc">Simple text file</div>
                                         </div>
                                     </div>
                                 </div>
@@ -3247,6 +3875,109 @@
             </div>
         </div>
     </main>
+
+    <!-- Panel Overlay -->
+    <div class="panel-overlay" id="panel-overlay"></div>
+
+    <!-- Saved Threads Panel -->
+    <div class="saved-threads-panel" id="saved-threads-panel">
+        <div class="saved-threads-header">
+            <h2 class="saved-threads-title">Saved Threads</h2>
+            <button class="close-panel-btn" id="close-threads-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="saved-threads-list" id="saved-threads-list">
+            <p style="text-align: center; color: var(--stone-500); padding: 40px 20px;">No saved threads yet. Save a conversation to see it here.</p>
+        </div>
+    </div>
+
+    <!-- Project Panel -->
+    <div class="project-panel" id="project-panel">
+        <div class="project-panel-header">
+            <h2 class="project-panel-title">My Projects</h2>
+            <button class="close-panel-btn" id="close-project-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="project-tabs">
+            <button class="project-tab active" data-tab="existing">Existing Projects</button>
+            <button class="project-tab" data-tab="new">Create New</button>
+        </div>
+        <div class="project-content" id="project-content">
+            <div id="existing-projects-tab">
+                <div class="project-list" id="project-list">
+                    <div class="project-item" data-project-id="1">
+                        <div class="project-item-name">Home Services Venture</div>
+                        <div class="project-item-meta">Created Dec 10, 2024</div>
+                        <span class="project-item-count">3 ideas saved</span>
+                    </div>
+                    <div class="project-item" data-project-id="2">
+                        <div class="project-item-name">SaaS Ideas Q1 2025</div>
+                        <div class="project-item-meta">Created Dec 8, 2024</div>
+                        <span class="project-item-count">7 ideas saved</span>
+                    </div>
+                </div>
+                <div class="add-idea-section">
+                    <div class="add-idea-title">Add New Idea to Selected Project</div>
+                    <input type="text" class="idea-input" id="new-idea-title" placeholder="Idea title...">
+                    <textarea class="idea-input" id="new-idea-description" placeholder="Describe your idea..." style="min-height: 80px;"></textarea>
+                </div>
+            </div>
+            <div id="new-project-tab" style="display: none;">
+                <div class="new-project-form">
+                    <input type="text" id="new-project-name" placeholder="Project name...">
+                    <textarea id="new-project-description" placeholder="Describe what this project is about..."></textarea>
+                    <button class="btn btn-primary" id="create-project-btn" style="width: 100%;">Create Project</button>
+                </div>
+            </div>
+        </div>
+        <div class="project-panel-footer">
+            <button class="btn" id="cancel-project-btn">Cancel</button>
+            <button class="btn btn-primary" id="save-to-project-btn">Save to Project</button>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="share-modal" id="share-modal">
+        <div class="share-modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 class="share-modal-title" style="margin: 0;">Share Analysis</h2>
+                <button class="close-panel-btn" id="close-share-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <p style="color: var(--stone-600); margin-bottom: 16px;">Anyone with this link can view this analysis.</p>
+            <div class="share-link-input">
+                <input type="text" id="share-link" readonly value="https://katalyst.app/share/abc123xyz">
+                <button class="btn btn-primary" id="copy-share-link">Copy</button>
+            </div>
+            <div class="share-options">
+                <button class="share-option-btn" data-share="email">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    Email
+                </button>
+                <button class="share-option-btn" data-share="twitter">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                    Twitter
+                </button>
+                <button class="share-option-btn" data-share="linkedin">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                    LinkedIn
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Celebration Overlay -->
+    <div class="celebration-overlay" id="celebration-overlay">
+        <div class="celebration-card">
+            <div class="celebration-icon">🎉</div>
+            <h2 class="celebration-title">Deep Dive Complete!</h2>
+            <p class="celebration-subtitle">You've explored all 9 analysis sections. Great work!</p>
+            <button class="btn btn-primary" id="close-celebration" style="padding: 12px 32px;">Continue Exploring</button>
+        </div>
+    </div>
 
     <!-- AI Chat Toggle Button -->
     <button class="ai-chat-toggle" id="ai-chat-toggle" title="AI Research Assistant">
@@ -3846,13 +4577,20 @@
             document.getElementById('console-thinking')?.remove();
         }
 
+        let bookmarkedMessages = JSON.parse(localStorage.getItem('katalyst_bookmarks') || '[]');
+
         function renderConsoleMessages() {
             const messagesEl = document.getElementById('console-messages');
             
             let html = '<div class="console-message ai"><div class="console-message-content">Welcome to the Deep Dive AI Research Console! I have access to comprehensive analysis across 2,847 validated data points. Select a category from the sidebar or ask me anything about this opportunity.</div></div>';
             
-            deepDiveState.messages.forEach(msg => {
-                html += `<div class="console-message ${msg.type}"><div class="console-message-content">${formatAIResponse(msg.content)}`;
+            deepDiveState.messages.forEach((msg, idx) => {
+                const isBookmarked = bookmarkedMessages.includes(idx);
+                const isLong = msg.content && msg.content.length > 500;
+                
+                html += `<div class="console-message ${msg.type}" data-msg-idx="${idx}">`;
+                html += `<div class="console-message-content${isLong ? ' collapsed' : ''}" data-msg-idx="${idx}">${formatAIResponse(msg.content)}`;
+                
                 if (msg.suggestions && msg.suggestions.length > 0) {
                     html += '<div class="console-suggestions">';
                     msg.suggestions.forEach(s => {
@@ -3860,7 +4598,17 @@
                     });
                     html += '</div>';
                 }
-                html += '</div></div>';
+                html += '</div>';
+                
+                if (isLong) {
+                    html += `<button class="expand-message-btn" data-msg-idx="${idx}">Show more</button>`;
+                }
+                
+                html += `<div class="message-actions">`;
+                html += `<button class="message-action-btn copy-btn" data-msg-idx="${idx}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy</button>`;
+                html += `<button class="message-action-btn bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" data-msg-idx="${idx}"><svg viewBox="0 0 24 24" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg> ${isBookmarked ? 'Bookmarked' : 'Bookmark'}</button>`;
+                html += `</div>`;
+                html += '</div>';
             });
 
             messagesEl.innerHTML = html;
@@ -3871,6 +4619,50 @@
                 btn.addEventListener('click', () => {
                     document.getElementById('console-input').value = btn.dataset.question;
                     sendConsoleMessage();
+                });
+            });
+            
+            // Attach message action listeners
+            messagesEl.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.dataset.msgIdx);
+                    const msg = deepDiveState.messages[idx];
+                    if (msg) {
+                        navigator.clipboard.writeText(msg.content).then(() => {
+                            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                            setTimeout(() => {
+                                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+                            }, 1500);
+                        });
+                    }
+                });
+            });
+            
+            messagesEl.querySelectorAll('.bookmark-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.dataset.msgIdx);
+                    if (bookmarkedMessages.includes(idx)) {
+                        bookmarkedMessages = bookmarkedMessages.filter(i => i !== idx);
+                    } else {
+                        bookmarkedMessages.push(idx);
+                    }
+                    localStorage.setItem('katalyst_bookmarks', JSON.stringify(bookmarkedMessages));
+                    renderConsoleMessages();
+                });
+            });
+            
+            messagesEl.querySelectorAll('.expand-message-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = btn.dataset.msgIdx;
+                    const content = messagesEl.querySelector(`.console-message-content[data-msg-idx="${idx}"]`);
+                    if (content) {
+                        const isCollapsed = content.classList.contains('collapsed');
+                        content.classList.toggle('collapsed');
+                        btn.textContent = isCollapsed ? 'Show less' : 'Show more';
+                    }
                 });
             });
         }
@@ -3920,9 +4712,12 @@
                 return;
             }
 
+            const opportunityTitle = document.getElementById('opportunity-title')?.textContent || 'Opportunity Analysis';
+            const exportDate = new Date().toISOString();
+
             const exportData = {
-                opportunity: document.getElementById('opportunity-title')?.textContent || 'Opportunity Analysis',
-                date: new Date().toISOString(),
+                opportunity: opportunityTitle,
+                date: exportDate,
                 category: deepDiveState.activeCategory,
                 messages: deepDiveState.messages
             };
@@ -3935,19 +4730,342 @@
                 a.download = `katalyst-analysis-${Date.now()}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
-            } else if (format === 'pdf') {
-                alert('PDF export coming soon');
-            } else if (format === 'notion') {
-                alert('Notion integration coming soon');
+            } else if (format === 'markdown') {
+                let md = `# ${opportunityTitle}\n\n`;
+                md += `**Date:** ${new Date(exportDate).toLocaleDateString()}\n`;
+                md += `**Category:** ${deepDiveState.activeCategory || 'General'}\n\n`;
+                md += `---\n\n## Conversation\n\n`;
+                
+                deepDiveState.messages.forEach((msg, idx) => {
+                    const speaker = msg.type === 'user' ? '**You:**' : '**AI:**';
+                    md += `${speaker}\n\n${msg.content}\n\n`;
+                    if (idx < deepDiveState.messages.length - 1) md += '---\n\n';
+                });
+                
+                const blob = new Blob([md], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `katalyst-analysis-${Date.now()}.md`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else if (format === 'text') {
+                let txt = `${opportunityTitle}\n${'='.repeat(opportunityTitle.length)}\n\n`;
+                txt += `Date: ${new Date(exportDate).toLocaleDateString()}\n`;
+                txt += `Category: ${deepDiveState.activeCategory || 'General'}\n\n`;
+                txt += `-`.repeat(50) + `\n\n`;
+                
+                deepDiveState.messages.forEach((msg) => {
+                    const speaker = msg.type === 'user' ? 'You:' : 'AI:';
+                    txt += `${speaker}\n${msg.content}\n\n`;
+                });
+                
+                const blob = new Blob([txt], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `katalyst-analysis-${Date.now()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
             }
 
             document.getElementById('save-menu').classList.remove('open');
         }
 
+        // ============ NEW FEATURES ============
+
+        // Dark Mode Toggle
+        function initThemeToggle() {
+            const toggle = document.getElementById('theme-toggle');
+            const lightIcon = document.getElementById('theme-icon-light');
+            const darkIcon = document.getElementById('theme-icon-dark');
+            
+            const savedTheme = localStorage.getItem('katalyst_theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                lightIcon.style.display = 'none';
+                darkIcon.style.display = 'block';
+            }
+            
+            toggle?.addEventListener('click', () => {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    lightIcon.style.display = 'block';
+                    darkIcon.style.display = 'none';
+                    localStorage.setItem('katalyst_theme', 'light');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    lightIcon.style.display = 'none';
+                    darkIcon.style.display = 'block';
+                    localStorage.setItem('katalyst_theme', 'dark');
+                }
+            });
+        }
+
+        // Keyboard Shortcuts
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                const cmdKey = isMac ? e.metaKey : e.ctrlKey;
+                
+                // Cmd+Enter to send message
+                if (cmdKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    const consoleInput = document.getElementById('console-input');
+                    if (document.activeElement === consoleInput || consoleInput.value.trim()) {
+                        sendConsoleMessage();
+                    }
+                }
+                
+                // Cmd+S to save conversation
+                if (cmdKey && e.key === 's') {
+                    e.preventDefault();
+                    if (deepDiveState.messages.length > 0) {
+                        saveConversation();
+                    }
+                }
+                
+                // Arrow keys for category navigation
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    const categories = ['market-validation', 'geographic', 'problem-analysis', 'opportunity-sizing', 'solution-pathways', 'executive', 'financial', 'execution', 'data'];
+                    const currentIndex = categories.indexOf(deepDiveState.activeCategory);
+                    
+                    if (e.key === 'ArrowUp' && currentIndex > 0) {
+                        setActiveCategory(categories[currentIndex - 1]);
+                    } else if (e.key === 'ArrowDown' && currentIndex < categories.length - 1) {
+                        setActiveCategory(categories[currentIndex + 1]);
+                    }
+                }
+
+                // Escape to close panels
+                if (e.key === 'Escape') {
+                    closePanels();
+                }
+            });
+        }
+
+        // Saved Threads Panel
+        function initSavedThreadsPanel() {
+            const btn = document.getElementById('saved-threads-btn');
+            const panel = document.getElementById('saved-threads-panel');
+            const closeBtn = document.getElementById('close-threads-btn');
+            const overlay = document.getElementById('panel-overlay');
+            
+            btn?.addEventListener('click', () => {
+                panel.classList.add('open');
+                overlay.classList.add('active');
+                renderSavedThreadsList();
+            });
+            
+            closeBtn?.addEventListener('click', closePanels);
+            overlay?.addEventListener('click', closePanels);
+        }
+        
+        function renderSavedThreadsList() {
+            const list = document.getElementById('saved-threads-list');
+            const threads = deepDiveState.savedThreads;
+            
+            if (threads.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--stone-500); padding: 40px 20px;">No saved threads yet. Save a conversation to see it here.</p>';
+                return;
+            }
+            
+            list.innerHTML = threads.map(thread => `
+                <div class="saved-thread-item" data-thread-id="${thread.id}">
+                    <div class="saved-thread-name">${thread.name}</div>
+                    <div class="saved-thread-meta">
+                        <span>${thread.date}</span>
+                        <span>${thread.messages?.length || 0} messages</span>
+                    </div>
+                    <div class="saved-thread-actions">
+                        <button class="btn" onclick="loadThread(${thread.id})" style="padding: 6px 12px; font-size: 11px;">Load</button>
+                        <button class="btn" onclick="deleteThread(${thread.id})" style="padding: 6px 12px; font-size: 11px; color: #dc2626;">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function loadThread(threadId) {
+            const thread = deepDiveState.savedThreads.find(t => t.id === threadId);
+            if (thread) {
+                deepDiveState.messages = [...thread.messages];
+                deepDiveState.activeCategory = thread.category;
+                setActiveCategory(thread.category);
+                renderConsoleMessages();
+                closePanels();
+            }
+        }
+        
+        function deleteThread(threadId) {
+            if (!confirm('Delete this saved thread?')) return;
+            deepDiveState.savedThreads = deepDiveState.savedThreads.filter(t => t.id !== threadId);
+            localStorage.setItem('katalyst_saved_threads', JSON.stringify(deepDiveState.savedThreads));
+            renderSavedThreadsList();
+        }
+
+        // Project Panel
+        let selectedProjectId = null;
+        let userProjects = JSON.parse(localStorage.getItem('katalyst_projects') || '[]');
+        
+        function initProjectPanel() {
+            const btn = document.getElementById('project-btn');
+            const panel = document.getElementById('project-panel');
+            const closeBtn = document.getElementById('close-project-btn');
+            const cancelBtn = document.getElementById('cancel-project-btn');
+            const saveBtn = document.getElementById('save-to-project-btn');
+            const createBtn = document.getElementById('create-project-btn');
+            const overlay = document.getElementById('panel-overlay');
+            
+            btn?.addEventListener('click', () => {
+                panel.classList.add('open');
+                overlay.classList.add('active');
+                renderProjectList();
+            });
+            
+            closeBtn?.addEventListener('click', closePanels);
+            cancelBtn?.addEventListener('click', closePanels);
+            
+            // Project tabs
+            document.querySelectorAll('.project-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabName = tab.dataset.tab;
+                    document.getElementById('existing-projects-tab').style.display = tabName === 'existing' ? 'block' : 'none';
+                    document.getElementById('new-project-tab').style.display = tabName === 'new' ? 'block' : 'none';
+                });
+            });
+            
+            createBtn?.addEventListener('click', () => {
+                const name = document.getElementById('new-project-name').value.trim();
+                const desc = document.getElementById('new-project-description').value.trim();
+                if (!name) { alert('Please enter a project name'); return; }
+                
+                const project = {
+                    id: Date.now(),
+                    name: name,
+                    description: desc,
+                    createdAt: new Date().toISOString(),
+                    ideas: []
+                };
+                userProjects.push(project);
+                localStorage.setItem('katalyst_projects', JSON.stringify(userProjects));
+                document.getElementById('new-project-name').value = '';
+                document.getElementById('new-project-description').value = '';
+                document.querySelector('[data-tab="existing"]').click();
+                renderProjectList();
+            });
+            
+            saveBtn?.addEventListener('click', () => {
+                if (!selectedProjectId) { alert('Please select a project first'); return; }
+                const title = document.getElementById('new-idea-title').value.trim();
+                const desc = document.getElementById('new-idea-description').value.trim();
+                const opportunityTitle = document.getElementById('opportunity-title')?.textContent || 'Untitled';
+                
+                const project = userProjects.find(p => p.id === selectedProjectId);
+                if (project) {
+                    project.ideas.push({
+                        id: Date.now(),
+                        title: title || opportunityTitle,
+                        description: desc || `Saved from analysis: ${opportunityTitle}`,
+                        savedAt: new Date().toISOString(),
+                        opportunityId: currentOpportunityId
+                    });
+                    localStorage.setItem('katalyst_projects', JSON.stringify(userProjects));
+                    alert(`Saved to "${project.name}"!`);
+                    closePanels();
+                }
+            });
+        }
+        
+        function renderProjectList() {
+            const list = document.getElementById('project-list');
+            if (userProjects.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--stone-500); padding: 20px;">No projects yet. Create one to get started.</p>';
+                return;
+            }
+            
+            list.innerHTML = userProjects.map(p => `
+                <div class="project-item ${selectedProjectId === p.id ? 'selected' : ''}" data-project-id="${p.id}" onclick="selectProject(${p.id})">
+                    <div class="project-item-name">${p.name}</div>
+                    <div class="project-item-meta">Created ${new Date(p.createdAt).toLocaleDateString()}</div>
+                    <span class="project-item-count">${p.ideas?.length || 0} ideas saved</span>
+                </div>
+            `).join('');
+        }
+        
+        function selectProject(projectId) {
+            selectedProjectId = projectId;
+            renderProjectList();
+        }
+
+        // Share Modal
+        function initShareModal() {
+            const btn = document.getElementById('share-btn');
+            const modal = document.getElementById('share-modal');
+            const closeBtn = document.getElementById('close-share-modal');
+            const copyBtn = document.getElementById('copy-share-link');
+            
+            btn?.addEventListener('click', () => {
+                const shareId = Math.random().toString(36).substring(2, 15);
+                document.getElementById('share-link').value = `https://katalyst.app/share/${shareId}`;
+                modal.classList.add('active');
+            });
+            
+            closeBtn?.addEventListener('click', () => modal.classList.remove('active'));
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+            
+            copyBtn?.addEventListener('click', () => {
+                const link = document.getElementById('share-link');
+                link.select();
+                document.execCommand('copy');
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+            });
+        }
+
+        // Celebration Animation
+        function checkCelebration() {
+            const completed = Object.values(deepDiveState.categoryCompletion).filter(c => c.completed).length;
+            if (completed === 9 && !localStorage.getItem('katalyst_celebrated')) {
+                document.getElementById('celebration-overlay').classList.add('active');
+                localStorage.setItem('katalyst_celebrated', 'true');
+            }
+        }
+        
+        function initCelebration() {
+            document.getElementById('close-celebration')?.addEventListener('click', () => {
+                document.getElementById('celebration-overlay').classList.remove('active');
+            });
+        }
+
+        // Close all panels
+        function closePanels() {
+            document.getElementById('saved-threads-panel')?.classList.remove('open');
+            document.getElementById('project-panel')?.classList.remove('open');
+            document.getElementById('panel-overlay')?.classList.remove('active');
+        }
+
+        // Override updateProgress to check for celebration
+        const originalUpdateProgress = updateProgress;
+        updateProgress = function() {
+            originalUpdateProgress();
+            checkCelebration();
+        };
+
         // Auth-aware UI
         document.addEventListener('DOMContentLoaded', async () => {
             loadOpportunityData();
             initDeepDiveConsole();
+            initThemeToggle();
+            initKeyboardShortcuts();
+            initSavedThreadsPanel();
+            initProjectPanel();
+            initShareModal();
+            initCelebration();
             
             const token = localStorage.getItem('access_token');
             if (token) {
