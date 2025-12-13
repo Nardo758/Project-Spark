@@ -6,6 +6,7 @@ import time
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
+from urllib.parse import urlparse, unquote
 import threading
 import json
 
@@ -34,6 +35,8 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         if self.path.startswith('/api/') or self.path == '/docs' or self.path == '/openapi.json' or self.path == '/redoc' or self.path == '/health':
             self.proxy_request('GET')
         else:
+            parsed = urlparse(self.path)
+            self.path = unquote(parsed.path)
             super().do_GET()
     
     def do_POST(self):

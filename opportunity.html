@@ -1455,78 +1455,98 @@
         const aiChatInput = document.getElementById('ai-chat-input');
         const aiSendBtn = document.getElementById('ai-send-btn');
         const aiMessages = document.getElementById('ai-chat-messages');
+        let conversationHistory = [];
+        let currentOpportunityId = null;
 
         aiChatToggle.addEventListener('click', () => {
             aiChatPanel.classList.toggle('open');
         });
 
-        const aiResponses = {
-            'geographic': `Based on geographic analysis across 6 markets:
+        function formatAIResponse(text) {
+            return text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^- /gm, '• ')
+                .replace(/^(\d+)\. /gm, '<strong>$1.</strong> ');
+        }
 
-**Recommended Launch Sequence:**
+        function addTypingIndicator() {
+            const typing = document.createElement('div');
+            typing.className = 'ai-message ai';
+            typing.id = 'typing-indicator';
+            typing.innerHTML = '<span style="opacity: 0.6;">Thinking...</span>';
+            aiMessages.appendChild(typing);
+            aiMessages.scrollTop = aiMessages.scrollHeight;
+            return typing;
+        }
 
-**Phase 1 (Months 0-12): Southwest US**
-• Start: Austin, TX → Phoenix, AZ
-• Why: Highest growth (+52%), $1.2B market, business-friendly regulations
-• Market size: 847 validated submissions
-• Competition: Medium (easier entry)
+        function removeTypingIndicator() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
 
-**Phase 2 (Months 13-24): National Expansion**
-• Add: Denver, Portland, Nashville, Charlotte
-• Why: Strong demand signals, expanding from proven playbook
+        function renderSuggestions(suggestions) {
+            if (!suggestions || suggestions.length === 0) return '';
+            return `<div class="ai-suggestions">${suggestions.map(s => 
+                `<button class="ai-suggestion" data-question="${s}">${s}</button>`
+            ).join('')}</div>`;
+        }
 
-**Phase 3 (Months 25+): International**
-• Markets: Canada & Australia
-• Why: Similar demographics, lower competition`,
-            'risk': `Based on the data, the three biggest risks are:
-
-1. **Contractor Quality Control** - With 847 mentions of trust issues, maintaining service quality at scale is critical.
-
-2. **Unit Economics** - You'll need to hit 500+ customers per metro to achieve profitable density.
-
-3. **Customer Acquisition Cost** - CAC of $127 is solid, but requires careful channel optimization.`,
-            'pricing': `The data reveals clear pricing tiers:
-
-**Recommended Strategy:**
-• **Starter ($49/mo)** - Annual inspection + 2 preventive visits + 10% discount on repairs
-• **Premium ($99/mo)** - Everything in Starter + priority scheduling + $500 emergency coverage
-• **Comprehensive ($149/mo)** - Everything in Premium + unlimited visits + full parts coverage
-
-67% of respondents would pay $49/mo, creating a strong funnel.`
-        };
-
-        function sendMessage(text) {
+        async function sendMessage(text) {
             if (!text.trim()) return;
             
-            // Add user message
+            if (!currentOpportunityId) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'ai-message ai';
+                errorMsg.innerHTML = '<span style="color: #b91c1c;">Please wait for the opportunity to load before asking questions.</span>';
+                aiMessages.appendChild(errorMsg);
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+                return;
+            }
+            
             const userMsg = document.createElement('div');
             userMsg.className = 'ai-message user';
             userMsg.textContent = text;
             aiMessages.appendChild(userMsg);
-            
-            // Simulate AI response
-            setTimeout(() => {
-                const aiMsg = document.createElement('div');
-                aiMsg.className = 'ai-message ai';
-                
-                let response = 'I can analyze that for you. Could you be more specific about what aspect you\'d like me to explore?';
-                const lowerText = text.toLowerCase();
-                
-                if (lowerText.includes('geograph') || lowerText.includes('where') || lowerText.includes('launch') || lowerText.includes('region') || lowerText.includes('market')) {
-                    response = aiResponses.geographic;
-                } else if (lowerText.includes('risk')) {
-                    response = aiResponses.risk;
-                } else if (lowerText.includes('pric')) {
-                    response = aiResponses.pricing;
-                }
-                
-                aiMsg.innerHTML = response.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                aiMessages.appendChild(aiMsg);
-                aiMessages.scrollTop = aiMessages.scrollHeight;
-            }, 800);
-            
             aiChatInput.value = '';
             aiMessages.scrollTop = aiMessages.scrollHeight;
+            
+            conversationHistory.push({ role: 'user', content: text });
+            addTypingIndicator();
+            
+            try {
+                const response = await api.sendAIMessage(text, currentOpportunityId, conversationHistory);
+                
+                conversationHistory.push({ role: 'assistant', content: response.response });
+                
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'ai-message ai';
+                aiMsg.innerHTML = formatAIResponse(response.response);
+                
+                if (response.suggestions && response.suggestions.length > 0) {
+                    aiMsg.innerHTML += renderSuggestions(response.suggestions);
+                }
+                
+                aiMessages.appendChild(aiMsg);
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+                
+                aiMsg.querySelectorAll('.ai-suggestion').forEach(btn => {
+                    btn.addEventListener('click', () => sendMessage(btn.dataset.question));
+                });
+                
+            } catch (error) {
+                conversationHistory.pop();
+                console.error('AI chat error:', error);
+                
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'ai-message ai';
+                errorMsg.innerHTML = '<span style="color: #b91c1c;">Sorry, I encountered an error. Please try again.</span>';
+                aiMessages.appendChild(errorMsg);
+                aiMessages.scrollTop = aiMessages.scrollHeight;
+            } finally {
+                removeTypingIndicator();
+            }
         }
 
         aiSendBtn.addEventListener('click', () => sendMessage(aiChatInput.value));
@@ -1534,7 +1554,6 @@
             if (e.key === 'Enter') sendMessage(aiChatInput.value);
         });
 
-        // Suggestion buttons
         document.querySelectorAll('.ai-suggestion').forEach(btn => {
             btn.addEventListener('click', () => {
                 sendMessage(btn.dataset.question);
@@ -1551,6 +1570,8 @@
                 return;
             }
             
+            currentOpportunityId = parseInt(opportunityId, 10);
+            
             try {
                 const opp = await api.getOpportunity(opportunityId);
                 
@@ -1563,8 +1584,31 @@
                 
                 document.getElementById('opportunity-description').textContent = opp.description;
                 
+                loadAISuggestions(opp);
+                
             } catch (error) {
                 console.error('Failed to load opportunity:', error);
+            }
+        }
+        
+        async function loadAISuggestions(opportunity) {
+            try {
+                const data = await api.getAISuggestions(opportunity.id);
+                
+                const greetingHtml = `
+                    <div class="ai-message ai">
+                        ${data.greeting}
+                        ${renderSuggestions(data.suggestions)}
+                    </div>
+                `;
+                aiMessages.innerHTML = greetingHtml;
+                
+                aiMessages.querySelectorAll('.ai-suggestion').forEach(btn => {
+                    btn.addEventListener('click', () => sendMessage(btn.dataset.question));
+                });
+                
+            } catch (error) {
+                console.log('Could not load AI suggestions:', error);
             }
         }
 
