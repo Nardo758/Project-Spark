@@ -1,0 +1,773 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Sparkles, Send, ChevronLeft, ChevronRight, FileText, MapPin, TrendingUp, Target, DollarSign, Zap, Download, Share2, Loader, X, Users, BarChart3, Calendar, AlertCircle, CheckCircle, Plus } from 'lucide-react';
+
+export default function HybridDeepDiveConsole() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('executive');
+  const [query, setQuery] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [isThinking, setIsThinking] = useState(false);
+  const [showSaveMenu, setShowSaveMenu] = useState(false);
+  const [savedThreads, setSavedThreads] = useState([
+    { id: 1, name: 'Business Plan Analysis', date: '2024-12-13', messages: 12 },
+    { id: 2, name: 'Geographic Strategy', date: '2024-12-12', messages: 8 }
+  ]);
+  const [currentThreadName, setCurrentThreadName] = useState('');
+  const [categoryCompletion, setCategoryCompletion] = useState({
+    'market-validation': { completed: false, interactions: 0 },
+    'geographic': { completed: true, interactions: 5 },
+    'problem-analysis': { completed: false, interactions: 0 },
+    'opportunity-sizing': { completed: false, interactions: 2 },
+    'solution-pathways': { completed: false, interactions: 0 },
+    'executive': { completed: true, interactions: 3 },
+    'financial': { completed: false, interactions: 1 },
+    'execution': { completed: false, interactions: 0 },
+    'data': { completed: false, interactions: 0 }
+  });
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Categories - All 9 (5 from Research Dashboard + 4 Deep Dive exclusive)
+  const categories = [
+    // FROM RESEARCH DASHBOARD (Tier 2)
+    {
+      id: 'market-validation',
+      name: 'Market Validation',
+      icon: TrendingUp,
+      badge: 'Research',
+      tier: 'research'
+    },
+    {
+      id: 'geographic',
+      name: 'Geographic Distribution',
+      icon: MapPin,
+      badge: 'Research',
+      tier: 'research'
+    },
+    {
+      id: 'problem-analysis',
+      name: 'Problem Analysis',
+      icon: AlertCircle,
+      badge: 'Research',
+      tier: 'research'
+    },
+    {
+      id: 'opportunity-sizing',
+      name: 'Opportunity Sizing',
+      icon: DollarSign,
+      badge: 'Research',
+      tier: 'research'
+    },
+    {
+      id: 'solution-pathways',
+      name: 'Solution Pathways',
+      icon: Target,
+      badge: 'Research',
+      tier: 'research'
+    },
+    // DEEP DIVE EXCLUSIVE (Tier 3)
+    {
+      id: 'executive',
+      name: 'Executive Summary',
+      icon: FileText,
+      badge: 'Deep Dive',
+      tier: 'deep-dive'
+    },
+    {
+      id: 'financial',
+      name: 'Financial Modeling',
+      icon: DollarSign,
+      badge: 'Deep Dive',
+      tier: 'deep-dive'
+    },
+    {
+      id: 'execution',
+      name: 'Execution Playbook',
+      icon: Zap,
+      badge: 'Deep Dive',
+      tier: 'deep-dive'
+    },
+    {
+      id: 'data',
+      name: 'Raw Data & Exports',
+      icon: BarChart3,
+      badge: 'Deep Dive',
+      tier: 'deep-dive'
+    }
+  ];
+
+  const handleCategoryClick = (categoryId) => {
+    setActiveCategory(categoryId);
+    
+    // Track interaction
+    setCategoryCompletion(prev => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        interactions: (prev[categoryId]?.interactions || 0) + 1
+      }
+    }));
+    
+    // Auto-generate AI question based on category
+    const categoryQuestions = {
+      'market-validation': 'Analyze market validation signals and demand trends',
+      'geographic': 'Where should I launch this business geographically?',
+      'problem-analysis': 'Break down the problem categories and pain point severity',
+      'opportunity-sizing': 'Calculate TAM, SAM, and SOM for this opportunity',
+      'solution-pathways': 'What features should the solution prioritize?',
+      'executive': 'Give me an executive summary of this opportunity',
+      'financial': 'Build a detailed financial model with projections',
+      'execution': 'Create a 90-day execution playbook',
+      'data': 'What raw data and exports are available?'
+    };
+    
+    const question = categoryQuestions[categoryId];
+    if (question) {
+      setQuery(question);
+    }
+  };
+
+  const handleSend = (customQuery = null) => {
+    const queryText = customQuery || query;
+    if (!queryText.trim()) return;
+
+    const userMessage = {
+      type: 'user',
+      content: queryText,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setQuery('');
+    setIsThinking(true);
+
+    // Track interaction for active category
+    if (activeCategory) {
+      setCategoryCompletion(prev => ({
+        ...prev,
+        [activeCategory]: {
+          ...prev[activeCategory],
+          interactions: (prev[activeCategory]?.interactions || 0) + 1
+        }
+      }));
+    }
+
+    setTimeout(() => {
+      const aiMessage = {
+        type: 'ai',
+        content: generateResponse(queryText),
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsThinking(false);
+    }, 2000);
+  };
+
+  const generateResponse = (query) => {
+    return `Based on the Deep Dive analysis, I can provide detailed insights about "${query}". The platform has analyzed 2,847 consumer submissions to validate this opportunity.`;
+  };
+
+  const handleSaveConversation = () => {
+    if (messages.length === 0) return;
+    
+    const name = currentThreadName || `Analysis ${new Date().toLocaleDateString()}`;
+    const newThread = {
+      id: Date.now(),
+      name: name,
+      date: new Date().toISOString().split('T')[0],
+      messages: messages.length,
+      content: messages
+    };
+    
+    setSavedThreads(prev => [newThread, ...prev]);
+    setCurrentThreadName('');
+    setShowSaveMenu(false);
+    
+    alert(`Saved as "${name}"`);
+  };
+
+  const handleExportConversation = (format) => {
+    if (messages.length === 0) return;
+    
+    const exportData = {
+      opportunity: "On-Demand Home Maintenance Subscription",
+      date: new Date().toISOString(),
+      messages: messages,
+      category: activeCategory
+    };
+    
+    if (format === 'json') {
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `katalyst-analysis-${Date.now()}.json`;
+      a.click();
+    } else if (format === 'pdf') {
+      alert('PDF export would generate here - integrate with PDF library');
+    } else if (format === 'notion') {
+      alert('Notion export would integrate with Notion API here');
+    }
+  };
+
+  const handleLoadThread = (thread) => {
+    setMessages(thread.content || []);
+    setCurrentThreadName(thread.name);
+  };
+
+  const toggleCompletion = (categoryId) => {
+    setCategoryCompletion(prev => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        completed: !prev[categoryId]?.completed
+      }
+    }));
+  };
+
+  // Calculate overall progress
+  const completedCount = Object.values(categoryCompletion).filter(c => c.completed).length;
+  const totalCategories = categories.length;
+  const progressPercentage = Math.round((completedCount / totalCategories) * 100);
+
+  return (
+    <div className="h-screen flex bg-stone-50">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+        
+        .spektral { font-family: 'Spectral', serif; }
+        .inter { font-family: 'Inter', sans-serif; }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+        
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        .slide-in {
+          animation: slideIn 0.2s ease-out;
+        }
+      `}</style>
+
+      {/* LEFT SIDEBAR - Deep Dive Categories */}
+      {sidebarOpen && (
+        <div className="w-[300px] bg-white border-r border-stone-200 flex flex-col slide-in">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-stone-200">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm spektral font-bold text-stone-900">Analysis Sections</h2>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-1 hover:bg-stone-100 rounded transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-stone-600" />
+              </button>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs inter text-stone-600">Progress</span>
+                <span className="text-xs inter font-bold text-violet-600">{progressPercentage}%</span>
+              </div>
+              <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-violet-600 to-purple-600 transition-all duration-500"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+              <div className="text-xs inter text-stone-500 mt-1">
+                {completedCount} of {totalCategories} sections completed
+              </div>
+            </div>
+
+            {/* Auto-save indicator */}
+            {messages.length > 0 && (
+              <div className="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <CheckCircle className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+                <span className="text-xs inter text-emerald-700">Auto-saved {messages.length} messages</span>
+              </div>
+            )}
+          </div>
+
+          {/* Categories List */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+            {categories.map((category) => {
+              const Icon = category.icon;
+              const isActive = activeCategory === category.id;
+              const completion = categoryCompletion[category.id] || { completed: false, interactions: 0 };
+              
+              return (
+                <div key={category.id} className="relative">
+                  <button
+                    onClick={() => handleCategoryClick(category.id)}
+                    className={`w-full text-left rounded-lg border-2 transition-all ${
+                      isActive
+                        ? 'border-violet-300 bg-violet-50 shadow-sm'
+                        : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            isActive ? 'bg-violet-600' : 'bg-stone-100'
+                          }`}>
+                            <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-stone-600'}`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs inter font-semibold text-stone-900 truncate">{category.name}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[9px] inter font-medium px-1.5 py-0.5 rounded ${
+                                category.tier === 'research' 
+                                  ? 'bg-blue-100 text-blue-700' 
+                                  : 'bg-purple-100 text-purple-700'
+                              }`}>
+                                {category.badge}
+                              </span>
+                              {completion.interactions > 0 && (
+                                <span className="text-[9px] inter text-stone-500">
+                                  {completion.interactions} interactions
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {completion.completed && (
+                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          )}
+                          <ChevronRight className={`w-3.5 h-3.5 ${isActive ? 'text-violet-600' : 'text-stone-400'}`} />
+                        </div>
+                      </div>
+
+                      {/* Preview based on category - Shortened for compactness */}
+                      <div className="space-y-1">
+                        {category.id === 'market-validation' && (
+                          <div className="text-[10px] inter text-stone-700">
+                            Search volume: 127K/mo • +43% growth
+                          </div>
+                        )}
+                        {category.id === 'geographic' && (
+                          <div className="text-[10px] inter text-stone-700">
+                            Priority: Southwest US ($1.2B, +52%)
+                          </div>
+                        )}
+                        {category.id === 'problem-analysis' && (
+                          <div className="text-[10px] inter text-stone-700">
+                            Trust issues: 847 mentions (9.2/10)
+                          </div>
+                        )}
+                        {category.id === 'opportunity-sizing' && (
+                          <div className="text-[10px] inter text-stone-700">
+                            TAM: $8.4B • SAM: $2.1B • SOM: $187M
+                          </div>
+                        )}
+                        {category.id === 'solution-pathways' && (
+                          <div className="text-[10px] inter text-stone-700">
+                            Top: Vetted contractors (1,247 mentions)
+                          </div>
+                        )}
+                        {category.id === 'executive' && (
+                          <div className="text-[10px] inter text-stone-700">
+                            $8.4B market • 18.4x LTV:CAC
+                          </div>
+                        )}
+                        {category.id === 'financial' && (
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <div className="bg-stone-50 rounded px-1.5 py-1">
+                              <div className="text-[9px] inter text-stone-500">Y1</div>
+                              <div className="text-xs spektral font-bold text-stone-900">$4.6M</div>
+                            </div>
+                            <div className="bg-stone-50 rounded px-1.5 py-1">
+                              <div className="text-[9px] inter text-stone-500">Y5</div>
+                              <div className="text-xs spektral font-bold text-emerald-600">$312M</div>
+                            </div>
+                          </div>
+                        )}
+                        {category.id === 'execution' && (
+                          <div className="text-[10px] inter text-stone-700">
+                            90-day plan • 3 phases
+                          </div>
+                        )}
+                        {category.id === 'data' && (
+                          <div className="flex gap-1">
+                            <span className="flex-1 bg-stone-100 rounded px-1 py-0.5 text-center text-[9px] inter font-medium text-stone-700">PDF</span>
+                            <span className="flex-1 bg-stone-100 rounded px-1 py-0.5 text-center text-[9px] inter font-medium text-stone-700">CSV</span>
+                            <span className="flex-1 bg-stone-100 rounded px-1 py-0.5 text-center text-[9px] inter font-medium text-stone-700">API</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {/* Completion toggle */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCompletion(category.id);
+                    }}
+                    className="absolute top-2 right-2 p-1 hover:bg-white rounded transition-colors"
+                    title={completion.completed ? "Mark as incomplete" : "Mark as complete"}
+                  >
+                    {completion.completed ? (
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    ) : (
+                      <div className="w-4 h-4 border-2 border-stone-300 rounded-full"></div>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Sidebar Footer */}
+          <div className="p-4 border-t border-stone-200 bg-stone-50">
+            <div className="flex items-center gap-2 text-xs inter text-stone-600">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+              <span>All data current as of Dec 2024</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collapsed Sidebar Toggle */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="fixed left-0 top-1/2 -translate-y-1/2 bg-white border border-stone-200 border-l-0 rounded-r-lg p-3 hover:bg-stone-50 transition-colors shadow-lg z-50"
+        >
+          <ChevronRight className="w-5 h-5 text-stone-600" />
+        </button>
+      )}
+
+      {/* RIGHT SIDE - AI Console (rest remains the same but I'll add the save button updates) */}
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Console Header - Updated with New Conversation button */}
+        <div className="border-b border-stone-200 px-8 py-6 bg-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-700 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl spektral font-bold text-stone-900">AI Research Console</h1>
+                <p className="text-sm inter text-stone-500">
+                  {currentThreadName || (activeCategory && categories.find(c => c.id === activeCategory)?.name)}
+                </p>
+              </div>
+              {messages.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (confirm('Start a new conversation? Current conversation will be auto-saved.')) {
+                      if (messages.length > 0) {
+                        handleSaveConversation();
+                      }
+                      setMessages([]);
+                      setCurrentThreadName('');
+                    }
+                  }}
+                  className="ml-4 flex items-center gap-2 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors inter text-xs font-medium text-stone-700"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  New
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Save & Export Menu - (keeping existing implementation) */}
+              <div className="relative">
+                <button 
+                  onClick={() => setShowSaveMenu(!showSaveMenu)}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors inter text-sm font-medium"
+                  disabled={messages.length === 0}
+                >
+                  <Download className="w-4 h-4" />
+                  Save & Export
+                </button>
+                
+                {showSaveMenu && (
+                  <div className="absolute right-0 top-12 w-80 bg-white border-2 border-stone-200 rounded-xl shadow-2xl z-50 slide-in">
+                    <div className="p-4 border-b border-stone-200">
+                      <div className="text-sm inter font-semibold text-stone-900 mb-3">Save This Conversation</div>
+                      <input
+                        type="text"
+                        value={currentThreadName}
+                        onChange={(e) => setCurrentThreadName(e.target.value)}
+                        placeholder="Name this analysis..."
+                        className="w-full px-3 py-2 border border-stone-200 rounded-lg inter text-sm focus:outline-none focus:border-violet-400 mb-2"
+                      />
+                      <button
+                        onClick={handleSaveConversation}
+                        className="w-full bg-violet-600 hover:bg-violet-700 text-white py-2 rounded-lg inter text-sm font-medium transition-colors"
+                      >
+                        Save Conversation
+                      </button>
+                    </div>
+                    
+                    <div className="p-4 border-b border-stone-200">
+                      <div className="text-sm inter font-semibold text-stone-900 mb-3">Export As</div>
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => handleExportConversation('pdf')}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-stone-50 rounded-lg transition-colors text-left"
+                        >
+                          <FileText className="w-4 h-4 text-stone-600" />
+                          <div>
+                            <div className="text-sm inter font-medium text-stone-900">PDF Report</div>
+                            <div className="text-xs inter text-stone-500">Formatted document</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleExportConversation('json')}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-stone-50 rounded-lg transition-colors text-left"
+                        >
+                          <Download className="w-4 h-4 text-stone-600" />
+                          <div>
+                            <div className="text-sm inter font-medium text-stone-900">JSON Data</div>
+                            <div className="text-xs inter text-stone-500">Raw conversation</div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => handleExportConversation('notion')}
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-stone-50 rounded-lg transition-colors text-left"
+                        >
+                          <Share2 className="w-4 h-4 text-stone-600" />
+                          <div>
+                            <div className="text-sm inter font-medium text-stone-900">Export to Notion</div>
+                            <div className="text-xs inter text-stone-500">Sync to workspace</div>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 max-h-64 overflow-y-auto custom-scrollbar">
+                      <div className="text-sm inter font-semibold text-stone-900 mb-3">Recent Conversations</div>
+                      {savedThreads.length > 0 ? (
+                        <div className="space-y-2">
+                          {savedThreads.map((thread) => (
+                            <button
+                              key={thread.id}
+                              onClick={() => {
+                                handleLoadThread(thread);
+                                setShowSaveMenu(false);
+                              }}
+                              className="w-full flex items-start justify-between p-3 hover:bg-stone-50 rounded-lg transition-colors text-left group"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm inter font-medium text-stone-900 truncate">{thread.name}</div>
+                                <div className="text-xs inter text-stone-500">{thread.date} • {thread.messages} messages</div>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-600 flex-shrink-0 mt-0.5" />
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm inter text-stone-500">No saved conversations yet</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button className="flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200 rounded-lg transition-colors inter text-sm font-medium text-stone-700">
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Messages Area - Same as before */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-8 py-8 bg-stone-50">
+          {messages.length === 0 && (
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-12">
+                <div className="w-16 h-16 bg-gradient-to-br from-violet-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-violet-600" />
+                </div>
+                <h2 className="text-2xl spektral font-bold text-stone-900 mb-2">
+                  How can I help you analyze this opportunity?
+                </h2>
+                <p className="text-lg inter text-stone-600">
+                  Click a section on the left or ask me anything about this $8.4B market opportunity
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { icon: FileText, text: "Generate complete business plan", color: "violet" },
+                  { icon: Calendar, text: "Create 12-month roadmap", color: "blue" },
+                  { icon: DollarSign, text: "Build financial model", color: "emerald" },
+                  { icon: Target, text: "Define MVP features", color: "amber" }
+                ].map((action, idx) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleSend(action.text)}
+                      className="p-6 bg-white hover:bg-stone-50 border-2 border-stone-200 hover:border-violet-300 rounded-xl transition-all text-left group"
+                    >
+                      <div className={`w-10 h-10 bg-${action.color}-100 group-hover:bg-${action.color}-200 rounded-lg flex items-center justify-center mb-3 transition-colors`}>
+                        <Icon className={`w-5 h-5 text-${action.color}-600`} />
+                      </div>
+                      <div className="inter font-medium text-stone-900">{action.text}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {activeCategory && (
+                <div className="mt-12 p-6 bg-gradient-to-br from-violet-50 to-purple-50 border-2 border-violet-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-violet-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="inter font-semibold text-violet-900 mb-1">
+                        Exploring: {categories.find(c => c.id === activeCategory)?.name}
+                      </h3>
+                      <p className="text-sm inter text-violet-700 mb-3">
+                        I can help you analyze this section in depth, generate deliverables, or answer specific questions.
+                      </p>
+                      <button
+                        onClick={() => handleSend(`Tell me more about ${categories.find(c => c.id === activeCategory)?.name.toLowerCase()}`)}
+                        className="text-sm inter font-medium text-violet-600 hover:text-violet-700"
+                      >
+                        Ask AI about this section →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="max-w-3xl mx-auto space-y-6">
+            {messages.map((message, idx) => (
+              <div key={idx} className="slide-in">
+                {message.type === 'user' ? (
+                  <div className="flex justify-end">
+                    <div className="bg-violet-600 text-white rounded-2xl rounded-tr-sm px-6 py-4 max-w-[80%]">
+                      <p className="inter">{message.content}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-white rounded-2xl border border-stone-200 p-6">
+                        <p className="inter text-stone-800 leading-relaxed">
+                          {message.content}
+                        </p>
+                        <div className="flex gap-2 mt-4 pt-4 border-t border-stone-200">
+                          <button className="flex items-center gap-2 px-3 py-2 bg-stone-50 hover:bg-stone-100 rounded-lg text-sm inter font-medium text-stone-700 transition-colors">
+                            <Download className="w-4 h-4" />
+                            Export
+                          </button>
+                          <button className="flex items-center gap-2 px-3 py-2 bg-stone-50 hover:bg-stone-100 rounded-lg text-sm inter font-medium text-stone-700 transition-colors">
+                            <Share2 className="w-4 h-4" />
+                            Share
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {isThinking && (
+              <div className="flex gap-4 slide-in">
+                <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Loader className="w-4 h-4 text-white animate-spin" />
+                </div>
+                <div className="inter text-stone-600">
+                  Analyzing data and generating response...
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="border-t border-stone-200 bg-white px-8 py-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative">
+              <textarea
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Ask anything about this opportunity... (Press Enter to send)"
+                rows={1}
+                className="w-full px-6 py-4 pr-16 border-2 border-stone-200 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 rounded-xl inter text-stone-900 resize-none focus:outline-none"
+                style={{ minHeight: '56px', maxHeight: '200px' }}
+              />
+              
+              <button
+                onClick={() => handleSend()}
+                disabled={!query.trim()}
+                className="absolute right-2 top-2 bg-gradient-to-r from-violet-600 to-purple-700 disabled:from-stone-300 disabled:to-stone-300 text-white p-3 rounded-lg hover:shadow-lg transition-all disabled:cursor-not-allowed"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+
+            {activeCategory && (
+              <div className="flex items-center gap-2 mt-3">
+                <span className="text-xs inter text-stone-500">Try asking:</span>
+                <button
+                  onClick={() => setQuery(`Analyze ${categories.find(c => c.id === activeCategory)?.name.toLowerCase()} in detail`)}
+                  className="px-3 py-1 bg-stone-100 hover:bg-violet-100 text-stone-700 hover:text-violet-700 rounded-full text-xs inter font-medium transition-colors"
+                >
+                  Analyze this section
+                </button>
+                <button
+                  onClick={() => setQuery(`Generate report for ${categories.find(c => c.id === activeCategory)?.name.toLowerCase()}`)}
+                  className="px-3 py-1 bg-stone-100 hover:bg-violet-100 text-stone-700 hover:text-violet-700 rounded-full text-xs inter font-medium transition-colors"
+                >
+                  Generate report
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
