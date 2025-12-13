@@ -8,7 +8,7 @@ class FrictionAPI {
         this.baseURL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) 
             ? CONFIG.API_BASE_URL 
             : '/api/v1';
-        this.token = localStorage.getItem('access_token');
+        this.token = localStorage.getItem('access_token') || localStorage.getItem('token');
     }
 
     // Helper method to get headers
