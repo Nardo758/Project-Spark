@@ -2,6 +2,10 @@
 
 ## Recent Changes (December 2024)
 
+- **Browse Opportunities Flow Fix** (December 14, 2024):
+  - Fixed "Browse Opportunities" hero button to link to discover.html instead of opportunity.html
+  - Complete user flow now works: Landing → Discovery Feed → Opportunity Detail
+
 - **Deep Dive Console Improvements** (December 13, 2024):
   - Dark Mode toggle with CSS custom properties and localStorage persistence
   - Keyboard Shortcuts: Cmd+Enter to send, Cmd+S to save, arrow keys for navigation, Escape to close panels
