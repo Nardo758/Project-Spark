@@ -77,7 +77,7 @@ exposeLocalhost = true
 
 [deployment]
 run = ["python", "server.py"]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 ignorePorts = false
 
 [workflows]
