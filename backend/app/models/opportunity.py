@@ -44,6 +44,11 @@ class Opportunity(Base):
     # Status
     status = Column(String(50), default="active")  # active, resolved, archived
 
+    # Source Tracking (for scraped data)
+    source_id = Column(String(255), nullable=True, unique=True, index=True)  # External ID from source
+    source_url = Column(String(1000), nullable=True)  # Original URL
+    source_platform = Column(String(50), nullable=True)  # reddit, twitter, etc.
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -2,6 +2,12 @@
 
 ## Recent Changes (December 2024)
 
+- **Apify Webhook Integration** (December 14, 2024):
+  - Created `/api/v1/webhook/apify` endpoint to receive scraped Reddit data
+  - Auto-categorizes posts into opportunity categories
+  - Calculates severity based on upvotes/comments/frustration keywords
+  - Added source tracking columns (source_id, source_url, source_platform) to opportunities
+
 - **Browse Opportunities Flow Fix** (December 14, 2024):
   - Fixed "Browse Opportunities" hero button to link to discover.html instead of opportunity.html
   - Complete user flow now works: Landing → Discovery Feed → Opportunity Detail
