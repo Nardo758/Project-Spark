@@ -4252,6 +4252,13 @@
             });
         });
 
+        // User subscription state
+        let userSubscription = {
+            tier: 'free',
+            isUnlocked: false,
+            viewsRemaining: 0
+        };
+
         // Load opportunity data from API
         async function loadOpportunityData() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -4264,6 +4271,9 @@
             
             currentOpportunityId = parseInt(opportunityId, 10);
             
+            // Check user subscription status
+            await checkUserSubscription();
+            
             try {
                 const opp = await api.getOpportunity(opportunityId);
                 
@@ -4271,15 +4281,194 @@
                 document.getElementById('opportunity-title').textContent = opp.title;
                 document.title = `${opp.title} · Katalyst`;
                 
-                const score = Math.min(100, Math.round(50 + (opp.validation_count / 10) + (opp.growth_rate || 0)));
+                // Use AI score if available, otherwise calculate
+                const score = opp.ai_opportunity_score || Math.min(100, Math.round(50 + (opp.validation_count / 10) + (opp.growth_rate || 0)));
                 document.getElementById('validation-score').textContent = `${score}/100`;
                 
                 document.getElementById('opportunity-description').textContent = opp.description;
+                
+                // Update page with AI insights if available
+                updatePageWithAIInsights(opp);
+                
+                // Apply subscription-based gating
+                applySubscriptionGating();
                 
                 loadAISuggestions(opp);
                 
             } catch (error) {
                 console.error('Failed to load opportunity:', error);
+            }
+        }
+
+        async function checkUserSubscription() {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            if (!token) {
+                userSubscription = { tier: 'free', isUnlocked: false, viewsRemaining: 0 };
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/v1/subscriptions/my-subscription', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    userSubscription.tier = data.tier || 'free';
+                    userSubscription.viewsRemaining = data.views_remaining || 0;
+                }
+                
+                // Check if this specific opportunity is unlocked
+                const unlockResponse = await fetch(`/api/v1/subscriptions/unlocked/${currentOpportunityId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (unlockResponse.ok) {
+                    const unlockData = await unlockResponse.json();
+                    userSubscription.isUnlocked = unlockData.unlocked;
+                    userSubscription.viewsRemaining = unlockData.remaining_unlocks;
+                }
+            } catch (error) {
+                console.log('Could not check subscription status');
+            }
+        }
+
+        function updatePageWithAIInsights(opp) {
+            // If AI-analyzed, show AI insights in the header
+            if (opp.ai_analyzed && opp.ai_summary) {
+                const headerContent = document.querySelector('.page-header-content');
+                if (headerContent) {
+                    const aiInsightDiv = document.createElement('div');
+                    aiInsightDiv.className = 'ai-insight-banner';
+                    aiInsightDiv.innerHTML = `
+                        <div style="background: linear-gradient(135deg, #ede9fe, #f3e8ff); border-radius: 12px; padding: 16px; margin-top: 16px; border: 1px solid #c4b5fd;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+                                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21"/>
+                                </svg>
+                                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #7c3aed;">AI Analysis</span>
+                            </div>
+                            <p style="color: #44403c; font-size: 14px; line-height: 1.5;">${opp.ai_summary}</p>
+                            <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 12px;">
+                                <span style="color: #059669; font-weight: 600;">Market: ${opp.ai_market_size_estimate || 'TBD'}</span>
+                                <span style="color: #78716c;">Competition: ${(opp.ai_competition_level || 'Medium').charAt(0).toUpperCase() + (opp.ai_competition_level || 'medium').slice(1)}</span>
+                                <span style="color: #78716c;">Urgency: ${(opp.ai_urgency_level || 'Medium').charAt(0).toUpperCase() + (opp.ai_urgency_level || 'medium').slice(1)}</span>
+                            </div>
+                        </div>
+                    `;
+                    headerContent.appendChild(aiInsightDiv);
+                }
+            }
+        }
+
+        function applySubscriptionGating() {
+            const isFullAccess = userSubscription.tier !== 'free' || userSubscription.isUnlocked;
+            
+            // Research tier - requires Pro or higher
+            const researchTab = document.querySelector('.tier-tab[data-tier="research"]');
+            const deepTab = document.querySelector('.tier-tab[data-tier="deep"]');
+            
+            if (userSubscription.tier === 'free' && !userSubscription.isUnlocked) {
+                // Add lock icons and disable premium tabs for free users
+                if (researchTab) {
+                    researchTab.classList.add('locked');
+                    if (!researchTab.querySelector('.lock-icon')) {
+                        researchTab.innerHTML += ` <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>`;
+                    }
+                }
+                if (deepTab) {
+                    deepTab.classList.add('locked');
+                    if (!deepTab.querySelector('.lock-icon')) {
+                        deepTab.innerHTML += ` <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>`;
+                    }
+                }
+                
+                // Add paywall overlays to locked tiers
+                addPaywallOverlay('tier-research', 'Pro');
+                addPaywallOverlay('tier-deep', 'Business');
+            }
+        }
+
+        function addPaywallOverlay(sectionId, requiredTier) {
+            const section = document.getElementById(sectionId);
+            if (!section || section.querySelector('.paywall-overlay')) return;
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'paywall-overlay';
+            overlay.innerHTML = `
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.98) 100%); z-index: 10; display: flex; align-items: center; justify-content: center; pointer-events: all;">
+                    <div style="text-align: center; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 400px;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" style="margin-bottom: 16px;">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <h3 style="font-family: 'Spectral', serif; font-size: 24px; color: #1c1917; margin-bottom: 8px;">Unlock Full Analysis</h3>
+                        <p style="color: #78716c; font-size: 14px; margin-bottom: 24px; line-height: 1.6;">
+                            Get access to detailed market research, competitive analysis, and AI-powered business recommendations.
+                        </p>
+                        ${userSubscription.viewsRemaining > 0 ? `
+                            <button onclick="unlockOpportunity()" class="btn btn-primary" style="width: 100%; margin-bottom: 12px; justify-content: center;">
+                                Unlock This Opportunity (${userSubscription.viewsRemaining} views left)
+                            </button>
+                            <p style="font-size: 12px; color: #a8a29e;">or</p>
+                        ` : ''}
+                        <a href="pricing.html" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #7c3aed, #9333ea); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 8px;">
+                            Upgrade to ${requiredTier}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14"/>
+                                <path d="m12 5 7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            `;
+            section.style.position = 'relative';
+            section.appendChild(overlay);
+        }
+
+        async function unlockOpportunity() {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'signin.html';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/v1/subscriptions/unlock', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ opportunity_id: currentOpportunityId })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    userSubscription.isUnlocked = true;
+                    userSubscription.viewsRemaining = data.remaining_unlocks;
+                    
+                    // Remove paywall overlays
+                    document.querySelectorAll('.paywall-overlay').forEach(el => el.remove());
+                    document.querySelectorAll('.tier-tab.locked').forEach(tab => {
+                        tab.classList.remove('locked');
+                        const lockIcon = tab.querySelector('.lock-icon');
+                        if (lockIcon) lockIcon.remove();
+                    });
+                    
+                    // Reload to show full content
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Unable to unlock. Please try again.');
+                }
+            } catch (error) {
+                console.error('Unlock error:', error);
+                alert('Unable to unlock. Please try again.');
             }
         }
         

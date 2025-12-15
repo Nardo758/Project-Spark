@@ -1,0 +1,129 @@
+This is a classic tension in B2B data platforms. Let me break down a multi-layered strategy that balances discovery, value delivery, and data protection:
+Core Strategy: Progressive Value Disclosure
+Tier 1: Free Discovery (Hook)
+
+Show opportunity title + high-level category
+Display engagement metrics (Reddit upvotes, comment count)
+Show geographic tags and trend indicator
+Basic one-sentence description
+"Unlock full analysis" CTA
+
+Tier 2: Pro Research ($99/month)
+
+Full problem description with quotes
+Basic validation signals (source links, comment sentiment)
+Consumer pain point analysis
+Market size indicators
+Geographic applicability breakdown
+Critical limit: 50 detailed views/month (prevents bulk extraction)
+
+Tier 3: Business Deep Dive ($499/month)
+
+Everything in Pro, plus:
+Competitive landscape analysis
+AI-generated business model suggestions
+Related opportunity clusters
+Historical trend data
+Limit: 200 detailed views/month
+Export to PDF (watermarked with user email + timestamp)
+
+Tier 4: Enterprise (Custom)
+
+API access with rate limiting
+Bulk data access (filtered by category/geography)
+Custom alerts and monitoring
+Dedicated support
+
+Technical Protection Mechanisms
+Rate Limiting by Action Type
+Free users:
+- 10 opportunity previews/day
+- 0 full views
+
+Pro users:
+- Unlimited previews
+- 50 full detailed views/month
+- 5 AI report generations/month
+
+Business users:
+- Unlimited previews
+- 200 full views/month
+- 25 AI reports/month
+View Tracking Architecture
+
+Track every "full view" action per user
+Reset monthly counters on billing cycle
+Show remaining quota in UI prominently
+Soft paywall: "You've used 45/50 views this month"
+
+Anti-Scraping Measures
+
+Session-based tokens - Each full view requires a unique token that expires
+Mouse movement detection - Flag accounts with robotic behavior
+Time-on-page thresholds - Viewing 50 opportunities in 10 minutes triggers review
+IP + device fingerprinting - Detect account sharing/abuse
+Watermarking - Embed user ID invisibly in displayed content
+Rate limit escalation - Slow down requests after threshold
+
+Data Obfuscation for Free/Preview
+
+Show fragments: "Consumers report difficulty with [REDACTED] when trying to..."
+Display aggregated insights without raw data
+Use summary statistics instead of individual examples
+
+The "Netflix Model" Approach
+Show enough to create FOMO, not enough to satisfy:
+Preview Layer (Always Visible)
+
+Problem headline: "Pet owners struggle with inconsistent medication schedules"
+Tags: Healthcare, Pet Care, Consumer Apps
+Validation score: 87/100
+Geographic fit: Strong in US, UK, AU
+Comment count: 234 discussions
+Trend: ↗ +23% growth last 30 days
+
+Behind Paywall
+
+Actual consumer quotes
+Source URLs and discussions
+Detailed validation methodology
+Market size estimates
+Competitive analysis
+Business model suggestions
+AI-generated deliverables
+
+Psychological Positioning
+Frame scarcity as value protection:
+"We limit views per month to ensure our opportunities remain high-value and non-saturated. Unlike generic idea lists, Katalyst opportunities are actively curated and not widely disseminated."
+Create urgency:
+
+"47 people viewed this opportunity this week"
+"Trending in your target market"
+"New opportunities added daily - don't miss out"
+
+Bundle complementary value:
+
+Pro tier includes market monitoring alerts
+Business tier includes competitive tracking
+Enterprise gets custom research requests
+
+Monetization Multipliers
+Microtransactions for power users:
+
+Buy 10 additional views for $29
+Unlock specific high-demand categories (à la carte)
+Purchase individual AI reports ($49 each)
+
+Consultation upsells:
+
+"Need help validating this opportunity? Book a strategy session ($299)"
+"Want us to conduct deeper research on this market? Custom project quote"
+
+The Critical Balance
+Your quota system should feel generous enough to be useful but scarce enough to prevent extraction:
+
+50 views/month (Pro) = ~1-2 serious evaluations per day
+200 views/month (Business) = Multiple team members exploring actively
+This prevents someone from systematically downloading your entire database while still allowing legitimate business research
+
+The key insight: You're not selling opportunities, you're selling validated market intelligence. The raw data is less valuable than your curation, validation, and packaging. Even if someone extracts 200 opportunities, they're still getting your analysis framework and quality filtering - which is the real moat.

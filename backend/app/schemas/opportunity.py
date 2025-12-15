@@ -60,6 +60,21 @@ class Opportunity(OpportunityBase):
     feasibility_score: Optional[float] = None
     duplicate_of: Optional[int] = None
 
+    # AI Analysis Fields
+    ai_analyzed: bool = False
+    ai_analyzed_at: Optional[datetime] = None
+    ai_opportunity_score: Optional[int] = None
+    ai_summary: Optional[str] = None
+    ai_market_size_estimate: Optional[str] = None
+    ai_competition_level: Optional[str] = None
+    ai_urgency_level: Optional[str] = None
+    ai_target_audience: Optional[str] = None
+    ai_pain_intensity: Optional[int] = None
+
+    # Source tracking
+    source_platform: Optional[str] = None
+    source_url: Optional[str] = None
+
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -72,3 +87,15 @@ class OpportunityList(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class OpportunityGatedResponse(Opportunity):
+    """Response with gated AI fields based on subscription"""
+    is_unlocked: bool = False
+    is_authenticated: bool = False
+    
+    # Gated AI fields - hidden unless unlocked
+    ai_business_model_suggestions: Optional[list] = None
+    ai_competitive_advantages: Optional[list] = None
+    ai_key_risks: Optional[list] = None
+    ai_next_steps: Optional[list] = None

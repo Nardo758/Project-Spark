@@ -56,6 +56,27 @@ def get_billing_info(
     }
 
 
+@router.get("/my-subscription")
+def get_my_subscription(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get simplified subscription status for frontend"""
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    usage = usage_service.get_current_usage(current_user, db)
+    limits = stripe_service.get_tier_limits(subscription.tier)
+    remaining_unlocks = usage_service.get_remaining_unlocks(current_user, db)
+
+    return {
+        "tier": subscription.tier.value if hasattr(subscription.tier, 'value') else subscription.tier,
+        "status": subscription.status.value if hasattr(subscription.status, 'value') else subscription.status,
+        "views_remaining": remaining_unlocks,
+        "views_limit": limits.unlocked_opportunities_limit,
+        "period_end": subscription.current_period_end.isoformat() if subscription.current_period_end else None,
+        "is_active": subscription.status == SubscriptionStatus.ACTIVE
+    }
+
+
 @router.get("/limits", response_model=SubscriptionLimits)
 def get_subscription_limits(
     current_user: User = Depends(get_current_active_user),

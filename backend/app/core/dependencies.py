@@ -55,3 +55,26 @@ async def get_current_admin_user(
             detail="Admin access required"
         )
     return current_user
+
+
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login", auto_error=False)
+
+
+async def get_current_user_optional(
+    token: str = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
+) -> User | None:
+    """Get the current user if authenticated, otherwise return None"""
+    if not token:
+        return None
+    
+    payload = decode_access_token(token)
+    if payload is None:
+        return None
+    
+    email: str = payload.get("sub")
+    if email is None:
+        return None
+    
+    user = db.query(User).filter(User.email == email).first()
+    return user

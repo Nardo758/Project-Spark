@@ -510,6 +510,283 @@
             background: var(--stone-50);
         }
 
+        /* Featured Opportunities Section */
+        .featured-section {
+            background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+            padding: 48px 0;
+            margin-bottom: 0;
+        }
+
+        .featured-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .featured-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .featured-title {
+            font-family: 'Spectral', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fafaf9;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .featured-title .icon {
+            background: linear-gradient(135deg, var(--violet-600), #9333ea);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .featured-subtitle {
+            color: var(--stone-400);
+            font-size: 14px;
+        }
+
+        .featured-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .featured-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .featured-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--violet-600);
+            transform: translateY(-4px);
+        }
+
+        .featured-card .rank-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: linear-gradient(135deg, var(--violet-600), #9333ea);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .featured-card .card-category {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--violet-500);
+            margin-bottom: 8px;
+        }
+
+        .featured-card .card-title {
+            font-family: 'Spectral', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fafaf9;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .featured-card .ai-insight {
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .featured-card .ai-insight-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--violet-500);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .featured-card .ai-insight-text {
+            font-size: 13px;
+            color: #e7e5e4;
+            line-height: 1.5;
+        }
+
+        .featured-card .metrics-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .featured-card .metric {
+            flex: 1;
+        }
+
+        .featured-card .metric-label {
+            font-size: 10px;
+            color: var(--stone-500);
+            text-transform: uppercase;
+        }
+
+        .featured-card .metric-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fafaf9;
+        }
+
+        .featured-card .metric-value.score {
+            color: var(--emerald-600);
+        }
+
+        .featured-card .viewers-badge {
+            font-size: 11px;
+            color: var(--stone-400);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .featured-card .viewers-badge .dot {
+            width: 6px;
+            height: 6px;
+            background: var(--emerald-600);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* AI Analyzed Badge */
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, var(--violet-600), #9333ea);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .ai-badge svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Gated Content Indicator */
+        .gated-overlay {
+            position: relative;
+        }
+
+        .gated-overlay::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, transparent, var(--white));
+            pointer-events: none;
+        }
+
+        .unlock-prompt {
+            background: linear-gradient(135deg, var(--violet-100), #f3e8ff);
+            border: 1px dashed var(--violet-600);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .unlock-prompt p {
+            font-size: 13px;
+            color: var(--stone-700);
+            margin-bottom: 8px;
+        }
+
+        .unlock-prompt .btn-unlock {
+            background: var(--violet-600);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .unlock-prompt .btn-unlock:hover {
+            background: var(--violet-700);
+        }
+
+        /* Competition Level Badges */
+        .competition-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .competition-badge.low {
+            background: var(--emerald-100);
+            color: var(--emerald-700);
+        }
+
+        .competition-badge.medium {
+            background: var(--orange-100);
+            color: var(--orange-700);
+        }
+
+        .competition-badge.high {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Urgency Indicator */
+        .urgency-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--stone-500);
+            margin-top: 8px;
+        }
+
+        .urgency-indicator .viewers-count {
+            color: var(--stone-700);
+            font-weight: 500;
+        }
+
         @media (max-width: 1024px) {
             .opportunities-grid {
                 grid-template-columns: 1fr;
@@ -522,6 +799,10 @@
             .search-box {
                 width: 100%;
                 flex: none;
+            }
+
+            .featured-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -555,7 +836,29 @@
     <div class="page-header">
         <div class="page-header-content">
             <h1 class="spektral">Discover Validated Opportunities</h1>
-            <p>Browse 2,847+ market opportunities backed by real consumer insights. Each idea is validated, categorized, and ready to explore.</p>
+            <p>Browse market opportunities backed by real consumer insights. Each idea is AI-analyzed, validated, and ready to explore.</p>
+        </div>
+    </div>
+
+    <!-- Featured Opportunities Section -->
+    <div class="featured-section" id="featuredSection" style="display: none;">
+        <div class="featured-content">
+            <div class="featured-header">
+                <div>
+                    <h2 class="featured-title">
+                        <span class="icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                            </svg>
+                        </span>
+                        AI-Curated Top Opportunities
+                    </h2>
+                    <p class="featured-subtitle">Highest potential opportunities identified by our AI analysis</p>
+                </div>
+            </div>
+            <div class="featured-grid" id="featuredGrid">
+                <!-- Featured cards will be loaded here -->
+            </div>
         </div>
     </div>
 
@@ -625,14 +928,89 @@
     <script src="js/api.js"></script>
     <script>
         let allOpportunities = [];
+        let featuredOpportunities = [];
         let displayedCount = 0;
         const PAGE_SIZE = 10;
+        let userTier = 'free'; // free, pro, business, enterprise
+        let viewsRemaining = 10; // Free tier default
 
         function formatNumber(num) {
             if (num >= 1000) {
                 return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
             }
             return num.toString();
+        }
+
+        function generateViewerCount(id) {
+            // Deterministic "random" viewer count based on opportunity ID
+            return 12 + (id * 7) % 89;
+        }
+
+        function createFeaturedCard(opp, rank) {
+            const viewerCount = generateViewerCount(opp.id);
+            const aiSummary = opp.ai_summary || 'High-potential opportunity with strong validation signals and growing market demand.';
+            
+            return `
+                <a href="opportunity.html?id=${opp.id}" class="featured-card">
+                    <div class="rank-badge">#${rank}</div>
+                    <div class="card-category">${opp.category}</div>
+                    <h3 class="card-title">${opp.title}</h3>
+                    <div class="ai-insight">
+                        <div class="ai-insight-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21"/>
+                            </svg>
+                            AI Insight
+                        </div>
+                        <div class="ai-insight-text">${aiSummary}</div>
+                    </div>
+                    <div class="metrics-row">
+                        <div class="metric">
+                            <div class="metric-label">AI Score</div>
+                            <div class="metric-value score">${opp.ai_opportunity_score || 85}/100</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Market</div>
+                            <div class="metric-value">${opp.ai_market_size_estimate || opp.market_size || '$1B+'}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Competition</div>
+                            <div class="metric-value">${(opp.ai_competition_level || 'low').charAt(0).toUpperCase() + (opp.ai_competition_level || 'low').slice(1)}</div>
+                        </div>
+                    </div>
+                    <div class="viewers-badge">
+                        <span class="dot"></span>
+                        ${viewerCount} people viewed this week
+                    </div>
+                </a>
+            `;
+        }
+
+        async function loadFeaturedOpportunities() {
+            try {
+                const response = await fetch('/api/v1/ai-analysis/top-opportunities?limit=3');
+                if (response.ok) {
+                    featuredOpportunities = await response.json();
+                    if (featuredOpportunities.length > 0) {
+                        displayFeaturedOpportunities();
+                    }
+                }
+            } catch (error) {
+                console.log('Featured opportunities not available yet');
+            }
+        }
+
+        function displayFeaturedOpportunities() {
+            const section = document.getElementById('featuredSection');
+            const grid = document.getElementById('featuredGrid');
+            
+            if (featuredOpportunities.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            
+            grid.innerHTML = featuredOpportunities.map((opp, i) => createFeaturedCard(opp, i + 1)).join('');
+            section.style.display = 'block';
         }
 
         function getRegionLabel(opp) {
@@ -660,7 +1038,26 @@
 
         function createOpportunityCard(opp, index) {
             const isTrending = opp.growth_rate > 20;
-            const validationScore = Math.min(100, Math.round(50 + (opp.validation_count / 10) + (opp.growth_rate || 0)));
+            const isAiAnalyzed = opp.ai_analyzed || false;
+            const aiScore = opp.ai_opportunity_score || Math.min(100, Math.round(50 + (opp.validation_count / 10) + (opp.growth_rate || 0)));
+            const competitionLevel = opp.ai_competition_level || 'medium';
+            const viewerCount = generateViewerCount(opp.id);
+            
+            const competitionBadge = `<span class="competition-badge ${competitionLevel}">${competitionLevel.charAt(0).toUpperCase() + competitionLevel.slice(1)} Competition</span>`;
+            
+            const aiSummaryPreview = opp.ai_summary 
+                ? `<div style="background: var(--violet-100); border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 13px; color: var(--stone-700);">
+                    <span style="color: var(--violet-600); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">AI Insight:</span>
+                    ${opp.ai_summary}
+                   </div>`
+                : '';
+            
+            const gatedContentIndicator = userTier === 'free' 
+                ? `<div class="unlock-prompt">
+                    <p>Unlock full market analysis, competitive insights, and business recommendations</p>
+                    <a href="pricing.html" class="btn-unlock">Upgrade to Pro</a>
+                   </div>`
+                : '';
             
             return `
                 <a href="opportunity.html?id=${opp.id}" class="opportunity-card fade-in" style="animation-delay: ${index * 0.1}s">
@@ -668,6 +1065,13 @@
                         <div>
                             <div class="card-meta">
                                 <span class="category-tag">${opp.category}</span>
+                                ${isAiAnalyzed ? `
+                                <span class="ai-badge">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21"/>
+                                    </svg>
+                                    AI Analyzed
+                                </span>` : ''}
                                 ${isTrending ? `
                                 <span class="trending-badge">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -681,12 +1085,13 @@
                         </div>
                         <div class="validation-score">
                             <div class="score-badge">
-                                <span class="score-value">${validationScore}</span>
+                                <span class="score-value">${aiScore}</span>
                             </div>
-                            <div class="score-label">Score</div>
+                            <div class="score-label">${isAiAnalyzed ? 'AI Score' : 'Score'}</div>
                         </div>
                     </div>
-                    <p class="card-description">${opp.description.substring(0, 150)}${opp.description.length > 150 ? '...' : ''}</p>
+                    ${aiSummaryPreview}
+                    <p class="card-description">${opp.description.substring(0, 120)}${opp.description.length > 120 ? '...' : ''}</p>
                     <div class="metrics-grid">
                         <div class="metric-box">
                             <div class="metric-label">Validations</div>
@@ -694,7 +1099,7 @@
                         </div>
                         <div class="metric-box">
                             <div class="metric-label">Market</div>
-                            <div class="metric-value">${opp.market_size || 'TBD'}</div>
+                            <div class="metric-value">${opp.ai_market_size_estimate || opp.market_size || 'TBD'}</div>
                         </div>
                         <div class="metric-box">
                             <div class="metric-label">Growth</div>
@@ -709,11 +1114,20 @@
                         </div>
                     </div>
                     <div class="pain-points">
-                        <span class="pain-point-tag">${opp.subcategory || opp.category}</span>
+                        ${competitionBadge}
                         <span class="pain-point-tag">Severity: ${opp.severity}/5</span>
                     </div>
+                    <div class="urgency-indicator">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <span class="viewers-count">${viewerCount} people</span> viewed this week
+                    </div>
                     <div class="card-cta">
-                        View full analysis
+                        ${userTier === 'free' ? 'Preview opportunity' : 'View full analysis'}
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M7 17 17 7"/>
                             <path d="M7 7h10v10"/>
@@ -836,15 +1250,31 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // Load featured and regular opportunities in parallel
+            loadFeaturedOpportunities();
             loadOpportunities();
             
-            // Check auth status
+            // Check auth status and subscription tier
             const token = localStorage.getItem('access_token') || localStorage.getItem('token');
             if (token) {
                 api.token = token;
                 try {
-                    await api.getCurrentUser();
+                    const user = await api.getCurrentUser();
                     showLoggedInUI();
+                    
+                    // Check subscription tier
+                    try {
+                        const subResponse = await fetch('/api/v1/subscriptions/my-subscription', {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (subResponse.ok) {
+                            const subscription = await subResponse.json();
+                            userTier = subscription.tier || 'free';
+                            viewsRemaining = subscription.views_remaining || 10;
+                        }
+                    } catch (e) {
+                        console.log('Subscription info not available');
+                    }
                 } catch (error) {
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('token');

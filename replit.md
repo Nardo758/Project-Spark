@@ -2,6 +2,22 @@
 
 ## Recent Changes (December 2024)
 
+- **AI-Powered Opportunity Analysis & Tiered Monetization** (December 15, 2024):
+  - Created `/api/v1/ai-analysis/` endpoints for AI-powered opportunity analysis
+  - AI generates: opportunity scores (0-100), market size estimates, competition levels, business model suggestions
+  - Updated Opportunity model with AI analysis fields (ai_analyzed, ai_opportunity_score, ai_summary, etc.)
+  - Added "Top Curated Opportunities" featured section on discover page
+  - AI badges and insights displayed on opportunity cards
+  - Competition level badges (low/medium/high) and viewer count urgency indicators
+  - Subscription-based content gating on opportunity detail page
+  - Paywall overlays for Research and Deep Dive sections for free users
+  - Unlock functionality for individual opportunities with view quota tracking
+  - Added `/api/v1/subscriptions/my-subscription` endpoint for frontend subscription status
+  - **Server-side gating enforced**: Opportunity detail endpoint now returns gated content based on unlock status
+  - Premium AI fields (business_model_suggestions, competitive_advantages, key_risks, next_steps) hidden from non-unlocked users
+  - Added `OpportunityGatedResponse` schema with is_unlocked and is_authenticated flags
+  - Optional authentication dependency (`get_current_user_optional`) for public access with personalized gating
+
 - **Apify Webhook Integration** (December 14, 2024):
   - Created `/api/v1/webhook/apify` endpoint to receive scraped Reddit data
   - Auto-categorizes posts into opportunity categories
