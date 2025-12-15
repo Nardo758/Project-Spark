@@ -76,8 +76,8 @@ externalPort = 8000
 exposeLocalhost = true
 
 [deployment]
-run = ["python", "backend/scheduler.py", "--quick", "--batch-size", "20"]
-deploymentTarget = "scheduled"
+run = ["python", "server.py"]
+deploymentTarget = "autoscale"
 ignorePorts = false
 
 [workflows]
