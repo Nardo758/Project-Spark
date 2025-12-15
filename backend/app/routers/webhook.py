@@ -293,3 +293,62 @@ async def import_apify_data(
         "skipped": skipped_count,
         "total_items": len(data)
     }
+
+
+@router.post("/apify/trigger-scrape")
+async def trigger_apify_scrape(
+    x_apify_webhook_secret: Optional[str] = Header(None, alias="X-Apify-Webhook-Secret")
+):
+    """Trigger the Apify Reddit scraper to run a new scrape"""
+    if APIFY_WEBHOOK_SECRET and x_apify_webhook_secret != APIFY_WEBHOOK_SECRET:
+        raise HTTPException(status_code=401, detail="Invalid webhook secret")
+    
+    apify_token = os.getenv("APIFY_API_TOKEN", "")
+    if not apify_token:
+        raise HTTPException(status_code=500, detail="APIFY_API_TOKEN not configured")
+    
+    actor_id = "trudax/reddit-scraper-lite"
+    run_url = f"https://api.apify.com/v2/acts/{actor_id}/runs?token={apify_token}"
+    
+    run_input = {
+        "debugMode": False,
+        "maxItems": 200,
+        "maxPostCount": 200,
+        "maxComments": 0,
+        "proxy": {"useApifyProxy": True},
+        "scrollTimeout": 40,
+        "searchComments": False,
+        "searchCommunities": False,
+        "searchPosts": True,
+        "searchUsers": False,
+        "searches": [
+            "frustrated with",
+            "wish there was",
+            "why is it so hard to",
+            "anyone else annoyed by",
+            "there should be an app for",
+            "I hate how",
+            "biggest pain point",
+            "looking for solution to"
+        ],
+        "skipComments": True,
+        "sort": "relevance",
+        "time": "week"
+    }
+    
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        response = await client.post(run_url, json=run_input)
+        
+        if response.status_code != 201:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to trigger scraper: {response.status_code} - {response.text}"
+            )
+        
+        run_data = response.json().get("data", {})
+        return {
+            "status": "started",
+            "run_id": run_data.get("id"),
+            "started_at": datetime.now().isoformat(),
+            "message": "Scraper started. Use /apify/fetch-latest to import results after completion."
+        }

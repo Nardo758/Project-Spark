@@ -18,8 +18,16 @@
   - Added `OpportunityGatedResponse` schema with is_unlocked and is_authenticated flags
   - Optional authentication dependency (`get_current_user_optional`) for public access with personalized gating
 
+- **Daily Automated Data Pipeline** (December 15, 2024):
+  - Created `backend/scheduler.py` for automated daily syncs
+  - Scheduler can trigger Apify scraper, wait for completion, import data, and run AI analysis
+  - Added `/api/v1/webhook/apify/trigger-scrape` endpoint to manually trigger scraper
+  - Configured scheduled deployment for daily execution
+  - Searches for pain points: "frustrated with", "wish there was", "why is it so hard to", etc.
+
 - **Apify Webhook Integration** (December 14, 2024):
   - Created `/api/v1/webhook/apify` endpoint to receive scraped Reddit data
+  - `/api/v1/webhook/apify/fetch-latest` - Pull latest data from Apify without webhook
   - Auto-categorizes posts into opportunity categories
   - Calculates severity based on upvotes/comments/frustration keywords
   - Added source tracking columns (source_id, source_url, source_platform) to opportunities
