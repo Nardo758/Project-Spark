@@ -397,7 +397,7 @@
     <div class="search-header">
         <div class="search-header-content">
             <div class="search-input-wrapper">
-                <input type="text" class="search-input" placeholder="Search for opportunities..." id="search-input" value="healthcare scheduling">
+                <input type="text" class="search-input" placeholder="Search for opportunities..." id="search-input">
                 <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -419,78 +419,12 @@
         <div class="results-section">
             <div class="results-header">
                 <h2 class="spektral">Search Results</h2>
-                <span class="results-count">234 opportunities found</span>
+                <span class="results-count" id="results-count">Loading...</span>
             </div>
 
-            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
-                <div class="opportunity-header">
-                    <div>
-                        <div class="opportunity-category">Healthcare</div>
-                        <div class="opportunity-title">Universal Healthcare Appointment Scheduling Platform</div>
-                    </div>
-                    <div class="validation-score">92/100</div>
-                </div>
-                <div class="opportunity-description">
-                    People managing healthcare appointments across multiple providers need a unified scheduling platform. Different portals, limited online booking, and lack of cross-provider visibility create missed appointments and administrative friction.
-                </div>
-                <div class="opportunity-meta">
-                    <span>📊 4,523 submissions</span>
-                    <span class="growth-badge">↑ 18% this week</span>
-                    <span>💰 $2.3B market</span>
-                </div>
-            </div>
-
-            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
-                <div class="opportunity-header">
-                    <div>
-                        <div class="opportunity-category">Healthcare</div>
-                        <div class="opportunity-title">Prescription Refill Automation Platform</div>
-                    </div>
-                    <div class="validation-score">87/100</div>
-                </div>
-                <div class="opportunity-description">
-                    Managing prescription refills across multiple pharmacies and providers is time-consuming. Patients need reminders, easy refill requests, and cross-pharmacy price comparison in one place.
-                </div>
-                <div class="opportunity-meta">
-                    <span>📊 2,891 submissions</span>
-                    <span class="growth-badge">↑ 12% this week</span>
-                    <span>💰 $890M market</span>
-                </div>
-            </div>
-
-            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
-                <div class="opportunity-header">
-                    <div>
-                        <div class="opportunity-category">Healthcare</div>
-                        <div class="opportunity-title">Medical Records Portability Solution</div>
-                    </div>
-                    <div class="validation-score">84/100</div>
-                </div>
-                <div class="opportunity-description">
-                    Patients struggle to access and share their complete medical history across providers. Fragmented records lead to repeated tests, medication errors, and gaps in care coordination.
-                </div>
-                <div class="opportunity-meta">
-                    <span>📊 3,456 submissions</span>
-                    <span class="growth-badge">↑ 24% this week</span>
-                    <span>💰 $1.8B market</span>
-                </div>
-            </div>
-
-            <div class="opportunity-card" onclick="window.location.href='opportunity.html'">
-                <div class="opportunity-header">
-                    <div>
-                        <div class="opportunity-category">Healthcare</div>
-                        <div class="opportunity-title">Mental Health Support Accessibility</div>
-                    </div>
-                    <div class="validation-score">89/100</div>
-                </div>
-                <div class="opportunity-description">
-                    Finding affordable, quality mental health support is difficult. Long wait times, high costs, and limited insurance coverage create barriers. A platform connecting patients with verified, affordable therapists would help.
-                </div>
-                <div class="opportunity-meta">
-                    <span>📊 6,123 submissions</span>
-                    <span class="growth-badge">↑ 28% this week</span>
-                    <span>💰 $3.1B market</span>
+            <div id="search-results">
+                <div style="text-align: center; padding: 40px; color: var(--stone-500);">
+                    Loading opportunities...
                 </div>
             </div>
         </div>
@@ -534,15 +468,141 @@
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        let allOpportunities = [];
+        let filteredOpportunities = [];
+        let activeCategory = 'all';
+
+        // Render opportunities
+        function renderOpportunities(opportunities) {
+            const container = document.getElementById('search-results');
+            const countEl = document.getElementById('results-count');
+            
+            countEl.textContent = `${opportunities.length} opportunities found`;
+            
+            if (opportunities.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--stone-500);">
+                        No opportunities found matching your search.
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = opportunities.map(opp => `
+                <div class="opportunity-card" onclick="window.location.href='opportunity.html?id=${opp.id}'">
+                    <div class="opportunity-header">
+                        <div>
+                            <div class="opportunity-category">${opp.category || 'General'}</div>
+                            <div class="opportunity-title">${opp.title}</div>
+                        </div>
+                        <div class="validation-score">${opp.ai_opportunity_score || opp.validation_count || '--'}/100</div>
+                    </div>
+                    <div class="opportunity-description">
+                        ${opp.description ? opp.description.substring(0, 200) + (opp.description.length > 200 ? '...' : '') : 'No description available'}
+                    </div>
+                    <div class="opportunity-meta">
+                        <span>📊 ${opp.validation_count || 0} validations</span>
+                        ${opp.growth_rate > 0 ? `<span class="growth-badge">↑ ${Math.round(opp.growth_rate)}% this week</span>` : ''}
+                        ${opp.ai_market_size_estimate ? `<span>💰 ${opp.ai_market_size_estimate}</span>` : (opp.market_size ? `<span>💰 ${opp.market_size}</span>` : '')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter by category
+        function filterByCategory(category) {
+            activeCategory = category.toLowerCase();
+            
+            if (activeCategory === 'all') {
+                filteredOpportunities = [...allOpportunities];
+            } else if (activeCategory === 'trending ↑') {
+                filteredOpportunities = [...allOpportunities].sort((a, b) => (b.growth_rate || 0) - (a.growth_rate || 0));
+            } else {
+                const categoryMap = {
+                    '🏥 healthcare': 'healthcare',
+                    '💰 finance': 'finance',
+                    '💻 technology': 'technology',
+                    '🏠 home & living': 'home & living'
+                };
+                const mappedCategory = categoryMap[activeCategory] || activeCategory;
+                filteredOpportunities = allOpportunities.filter(opp => 
+                    opp.category && opp.category.toLowerCase().includes(mappedCategory)
+                );
+            }
+            
+            renderOpportunities(filteredOpportunities);
+        }
+
+        // Search filter
+        function filterBySearch(query) {
+            if (!query.trim()) {
+                filteredOpportunities = [...allOpportunities];
+            } else {
+                const q = query.toLowerCase();
+                filteredOpportunities = allOpportunities.filter(opp => 
+                    (opp.title && opp.title.toLowerCase().includes(q)) ||
+                    (opp.description && opp.description.toLowerCase().includes(q)) ||
+                    (opp.category && opp.category.toLowerCase().includes(q))
+                );
+            }
+            renderOpportunities(filteredOpportunities);
+        }
+
+        // Load opportunities from API
+        async function loadOpportunities() {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/opportunities/?limit=100`);
+                const data = await response.json();
+                allOpportunities = data.opportunities || [];
+                filteredOpportunities = [...allOpportunities];
+                
+                // Check for search query in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchQuery = urlParams.get('q');
+                if (searchQuery) {
+                    document.getElementById('search-input').value = searchQuery;
+                    filterBySearch(searchQuery);
+                } else {
+                    renderOpportunities(filteredOpportunities);
+                }
+            } catch (error) {
+                console.error('Failed to load opportunities:', error);
+                document.getElementById('search-results').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--stone-500);">
+                        Failed to load opportunities. Please try again.
+                    </div>
+                `;
+            }
+        }
+
         // Filter chip toggle
         document.querySelectorAll('.filter-chip').forEach(chip => {
             chip.addEventListener('click', () => {
-                chip.classList.toggle('active');
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                filterByCategory(chip.textContent.trim());
             });
+        });
+
+        // Search input
+        const searchInput = document.getElementById('search-input');
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => filterBySearch(e.target.value), 300);
+        });
+        
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                filterBySearch(e.target.value);
+            }
         });
 
         // Auth-aware UI
         document.addEventListener('DOMContentLoaded', async () => {
+            // Load opportunities
+            await loadOpportunities();
+            
             const token = localStorage.getItem('access_token');
             if (token) {
                 try {
