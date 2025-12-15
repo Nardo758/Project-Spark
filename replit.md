@@ -1,6 +1,12 @@
-# Katalyst - Problem Discovery Engine
+# OppGrid - Problem Discovery Engine
 
 ## Recent Changes (December 2024)
+
+- **Rebranding to OppGrid** (December 15, 2024):
+  - Updated logo across all pages with new grid-based animated design
+  - Cyan (#00D9FF) active cells with hover animation
+  - Roboto Mono font for brand text
+  - Updated all page titles from "Katalyst" to "OppGrid"
 
 - **AI-Powered Opportunity Analysis & Tiered Monetization** (December 15, 2024):
   - Created `/api/v1/ai-analysis/` endpoints for AI-powered opportunity analysis

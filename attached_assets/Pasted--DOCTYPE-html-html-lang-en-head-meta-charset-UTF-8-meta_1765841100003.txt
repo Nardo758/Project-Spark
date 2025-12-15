@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OppGrid Logo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #0a0a0a;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            position: relative;
+        }
+
+        .logo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-cell {
+            background: #2a2a2a;
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .logo-cell.active {
+            background: #00D9FF;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
+        }
+
+        .logo:hover .logo-cell {
+            animation: gridPulse 2s infinite;
+        }
+
+        .logo:hover .logo-cell:nth-child(1) { animation-delay: 0s; }
+        .logo:hover .logo-cell:nth-child(2) { animation-delay: 0.1s; }
+        .logo:hover .logo-cell:nth-child(3) { animation-delay: 0.2s; }
+        .logo:hover .logo-cell:nth-child(4) { animation-delay: 0.3s; }
+        .logo:hover .logo-cell:nth-child(5) { animation-delay: 0.4s; }
+        .logo:hover .logo-cell:nth-child(6) { animation-delay: 0.5s; }
+        .logo:hover .logo-cell:nth-child(7) { animation-delay: 0.6s; }
+        .logo:hover .logo-cell:nth-child(8) { animation-delay: 0.7s; }
+        .logo:hover .logo-cell:nth-child(9) { animation-delay: 0.8s; }
+
+        @keyframes gridPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.85); opacity: 0.6; }
+        }
+
+        .logo-text {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <div class="logo-icon">
+            <div class="logo-grid">
+                <div class="logo-cell active"></div>
+                <div class="logo-cell"></div>
+                <div class="logo-cell active"></div>
+                <div class="logo-cell"></div>
+                <div class="logo-cell active"></div>
+                <div class="logo-cell"></div>
+                <div class="logo-cell active"></div>
+                <div class="logo-cell active"></div>
+                <div class="logo-cell active"></div>
+            </div>
+        </div>
+        <div class="logo-text">OppGrid</div>
+    </div>
+</body>
+</html>
