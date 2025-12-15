@@ -4,7 +4,7 @@
 
 - **Rebranding to OppGrid** (December 15, 2024):
   - Updated logo across all pages with new grid-based animated design
-  - Cyan (#00D9FF) active cells with hover animation
+  - Violet (#7c3aed) active cells with hover animation (matches site accent color)
   - Roboto Mono font for brand text
   - Updated all page titles from "Katalyst" to "OppGrid"
 
