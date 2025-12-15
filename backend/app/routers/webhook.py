@@ -164,6 +164,89 @@ async def receive_apify_webhook(
         "total_items": len(items)
     }
 
+@router.post("/apify/fetch-latest")
+async def fetch_latest_apify_data(
+    db: Session = Depends(get_db),
+    actor_id: str = "trudax/reddit-scraper-lite"
+):
+    """Fetch latest data from an Apify actor's default dataset"""
+    apify_token = os.getenv("APIFY_API_TOKEN", "")
+    if not apify_token:
+        raise HTTPException(status_code=500, detail="APIFY_API_TOKEN not configured")
+    
+    # Get the latest successful run for this actor
+    runs_url = f"https://api.apify.com/v2/acts/{actor_id}/runs?token={apify_token}&status=SUCCEEDED&desc=true&limit=1"
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        # Get latest run
+        runs_response = await client.get(runs_url)
+        if runs_response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Failed to fetch runs: {runs_response.text}")
+        
+        runs_data = runs_response.json()
+        if not runs_data.get("data", {}).get("items"):
+            raise HTTPException(status_code=404, detail="No successful runs found for this actor")
+        
+        latest_run = runs_data["data"]["items"][0]
+        dataset_id = latest_run.get("defaultDatasetId")
+        run_id = latest_run.get("id")
+        
+        if not dataset_id:
+            raise HTTPException(status_code=500, detail="No dataset found for this run")
+        
+        # Fetch the dataset items
+        dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?token={apify_token}&limit=500"
+        dataset_response = await client.get(dataset_url)
+        
+        if dataset_response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Failed to fetch dataset: {dataset_response.text}")
+        
+        items = dataset_response.json()
+    
+    created_count = 0
+    skipped_count = 0
+    
+    for item in items:
+        if item.get("dataType") != "post":
+            continue
+        
+        source_id = item.get("id")
+        existing = db.query(Opportunity).filter(Opportunity.source_id == source_id).first()
+        if existing:
+            skipped_count += 1
+            continue
+        
+        opp_data = extract_opportunity_from_post(item)
+        
+        opportunity = Opportunity(
+            title=opp_data["title"],
+            description=opp_data["description"],
+            category=opp_data["category"],
+            subcategory=opp_data["subcategory"],
+            severity=opp_data["severity"],
+            validation_count=opp_data["validation_count"],
+            growth_rate=opp_data["growth_rate"],
+            geographic_scope=opp_data["geographic_scope"],
+            source_url=opp_data["source_url"],
+            source_platform=opp_data["source_platform"],
+            source_id=opp_data["source_id"],
+        )
+        
+        db.add(opportunity)
+        created_count += 1
+    
+    db.commit()
+    
+    return {
+        "status": "success",
+        "run_id": run_id,
+        "dataset_id": dataset_id,
+        "created": created_count,
+        "skipped": skipped_count,
+        "total_items": len(items)
+    }
+
+
 @router.post("/apify/import")
 async def import_apify_data(
     data: List[dict],
