@@ -216,6 +216,73 @@
             font-size: 16px;
         }
 
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--stone-900);
+            color: var(--stone-900);
+        }
+
+        .btn-outline:hover {
+            background: var(--stone-900);
+            color: var(--white);
+        }
+
+        /* Demo Modal */
+        .demo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .demo-modal.show {
+            display: flex;
+        }
+
+        .demo-modal-content {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 800px;
+            width: 90%;
+            position: relative;
+        }
+
+        .demo-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--stone-600);
+            font-size: 24px;
+        }
+
+        .demo-placeholder {
+            aspect-ratio: 16/9;
+            background: var(--stone-100);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            color: var(--stone-500);
+        }
+
+        .demo-placeholder svg {
+            width: 64px;
+            height: 64px;
+            color: var(--violet-600);
+        }
+
         /* Hero Section */
         .hero {
             position: relative;
@@ -1289,7 +1356,12 @@
                             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                         </svg>
                     </a>
-                    <a href="discover.html" class="btn btn-large">Browse Ideas</a>
+                    <button class="btn btn-large btn-outline" onclick="openDemoModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Watch Demo
+                    </button>
                 </div>
                 <div class="hero-stats fade-in-up stagger-4">
                     <div class="hero-stat">
@@ -1794,6 +1866,31 @@
                 showLoggedOutUI();
             }
         });
+
+        function openDemoModal() {
+            document.getElementById('demo-modal').classList.add('show');
+        }
+
+        function closeDemoModal() {
+            document.getElementById('demo-modal').classList.remove('show');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDemoModal();
+        });
     </script>
+
+    <!-- Demo Modal -->
+    <div id="demo-modal" class="demo-modal" onclick="if(event.target === this) closeDemoModal()">
+        <div class="demo-modal-content">
+            <button class="demo-modal-close" onclick="closeDemoModal()">&times;</button>
+            <div class="demo-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <p>Demo video coming soon</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
