@@ -4419,31 +4419,7 @@
         }
 
         function updatePageWithAIInsights(opp) {
-            // If AI-analyzed, show AI insights in the header
-            if (opp.ai_analyzed && opp.ai_summary) {
-                const headerContent = document.querySelector('.page-header-content');
-                if (headerContent) {
-                    const aiInsightDiv = document.createElement('div');
-                    aiInsightDiv.className = 'ai-insight-banner';
-                    aiInsightDiv.innerHTML = `
-                        <div style="background: linear-gradient(135deg, #ede9fe, #f3e8ff); border-radius: 12px; padding: 16px; margin-top: 16px; border: 1px solid #c4b5fd;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
-                                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21"/>
-                                </svg>
-                                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #7c3aed;">AI Analysis</span>
-                            </div>
-                            <p style="color: #44403c; font-size: 14px; line-height: 1.5;">${opp.ai_summary}</p>
-                            <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 12px;">
-                                <span style="color: #059669; font-weight: 600;">Market: ${opp.ai_market_size_estimate || 'TBD'}</span>
-                                <span style="color: #78716c;">Competition: ${(opp.ai_competition_level || 'Medium').charAt(0).toUpperCase() + (opp.ai_competition_level || 'medium').slice(1)}</span>
-                                <span style="color: #78716c;">Urgency: ${(opp.ai_urgency_level || 'Medium').charAt(0).toUpperCase() + (opp.ai_urgency_level || 'medium').slice(1)}</span>
-                            </div>
-                        </div>
-                    `;
-                    headerContent.appendChild(aiInsightDiv);
-                }
-            }
+            // AI insights now displayed in the metrics cards, no separate banner needed
         }
 
         function populatePainPoints(opp) {
