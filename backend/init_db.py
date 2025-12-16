@@ -35,6 +35,27 @@ def wait_for_db(max_retries=5, delay=2):
                 return False
     return False
 
+def ensure_admin_users(db):
+    """Ensure admin users have proper settings"""
+    admin_emails = ['m.dixon5030@gmail.com']
+    
+    for email in admin_emails:
+        user = db.query(User).filter(User.email == email).first()
+        if user:
+            updated = False
+            if not user.is_admin:
+                user.is_admin = True
+                updated = True
+            if not user.is_active:
+                user.is_active = True
+                updated = True
+            if updated:
+                db.commit()
+                logger.info(f"Updated admin privileges for {email}")
+        else:
+            logger.info(f"Admin user {email} not found in database")
+
+
 def init_db():
     """Initialize database with sample data"""
 
@@ -57,6 +78,9 @@ def init_db():
     db = SessionLocal()
 
     try:
+        # Always ensure admin users have proper settings
+        ensure_admin_users(db)
+        
         # Check if we already have data
         existing_users = db.query(User).count()
         if existing_users > 0:
