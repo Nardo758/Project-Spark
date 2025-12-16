@@ -1,6 +1,17 @@
-# OppGrid - Problem Discovery Engine
+# OppGrid - Opportunity Intelligence Platform
 
 ## Recent Changes (December 2024)
+
+- **Idea Engine - AI-Powered Idea Generation & Validation** (December 16, 2024):
+  - NEW: `/api/v1/idea-engine/generate` - Free AI idea generation and refinement
+  - NEW: `/api/v1/idea-engine/validate` - Paid comprehensive idea validation ($9.99)
+  - NEW: `/api/v1/idea-engine/create-payment-intent` - Stripe payment intent creation
+  - NEW: `/api/v1/idea-engine/stripe-key` - Stripe publishable key endpoint
+  - NEW: `idea-engine.html` - 3-step wizard UI (input → generation → validation)
+  - Business model pivot: Free idea generation, paid validation service
+  - Updated navigation across all pages to include "Idea Engine" link
+  - Updated hero CTA to "Validate Your Idea" pointing to Idea Engine
+  - Uses claude-haiku-4-5 for fast free generation, claude-sonnet-4-5 for deep validation
 
 - **Rebranding to OppGrid** (December 15, 2024):
   - Updated logo across all pages with new grid-based animated design

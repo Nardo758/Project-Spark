@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idea Engine · OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap&family=Roboto+Mono:wght@700" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-50: #ecfdf5;
+            --emerald-100: #d1fae5;
+            --emerald-500: #10b981;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --violet-50: #f5f3ff;
+            --violet-100: #ede9fe;
+            --violet-400: #a78bfa;
+            --violet-500: #8b5cf6;
+            --violet-600: #7c3aed;
+            --violet-700: #6d28d9;
+            --purple-50: #faf5ff;
+            --purple-600: #9333ea;
+            --blue-50: #eff6ff;
+            --blue-100: #dbeafe;
+            --blue-600: #2563eb;
+            --amber-50: #fffbeb;
+            --amber-100: #fef3c7;
+            --amber-500: #f59e0b;
+            --amber-600: #d97706;
+            --red-50: #fef2f2;
+            --red-500: #ef4444;
+            --red-600: #dc2626;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .spektral { font-family: 'Spectral', serif; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+        .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+        .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+
+        nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+        }
+
+        .nav-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--stone-900);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+        }
+
+        .logo-text-group {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .logo-text {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .logo-tagline {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--stone-500);
+            letter-spacing: 0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-link {
+            color: var(--stone-600);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover { color: var(--stone-900); }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--stone-600);
+        }
+
+        .btn-ghost:hover { color: var(--stone-900); }
+
+        .btn-primary {
+            background: var(--violet-600);
+            color: var(--white);
+        }
+
+        .btn-primary:hover { background: var(--stone-800); }
+
+        .btn-secondary {
+            background: var(--stone-100);
+            color: var(--stone-700);
+            border: 1px solid var(--stone-200);
+        }
+
+        .btn-secondary:hover { background: var(--stone-200); }
+
+        .btn-success {
+            background: var(--emerald-600);
+            color: var(--white);
+        }
+
+        .btn-success:hover { background: var(--emerald-700); }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--violet-50), var(--purple-50));
+            border-bottom: 1px solid var(--violet-100);
+            padding: 64px 0;
+            text-align: center;
+        }
+
+        .page-header-content {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--violet-100);
+            color: var(--violet-700);
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-family: 'Spectral', serif;
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .page-header p {
+            font-size: 18px;
+            color: var(--stone-600);
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 32px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 48px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            background: var(--stone-200);
+            color: var(--stone-500);
+        }
+
+        .step.active .step-number {
+            background: var(--violet-600);
+            color: var(--white);
+        }
+
+        .step.completed .step-number {
+            background: var(--emerald-500);
+            color: var(--white);
+        }
+
+        .step-label {
+            font-size: 14px;
+            color: var(--stone-500);
+        }
+
+        .step.active .step-label { color: var(--stone-900); font-weight: 500; }
+        .step.completed .step-label { color: var(--emerald-600); }
+
+        .step-connector {
+            width: 60px;
+            height: 2px;
+            background: var(--stone-200);
+            margin: 0 8px;
+        }
+
+        .step-connector.completed { background: var(--emerald-500); }
+
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 2px solid var(--stone-200);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-icon.violet { background: var(--violet-100); color: var(--violet-600); }
+        .card-icon.emerald { background: var(--emerald-100); color: var(--emerald-600); }
+        .card-icon.amber { background: var(--amber-100); color: var(--amber-600); }
+
+        .card-title {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: var(--stone-500);
+        }
+
+        .idea-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--stone-200);
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 150px;
+            transition: border-color 0.2s;
+        }
+
+        .idea-input:focus {
+            outline: none;
+            border-color: var(--violet-400);
+        }
+
+        .idea-input::placeholder { color: var(--stone-400); }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: var(--stone-400);
+            margin-top: 8px;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            margin-top: 16px;
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--white);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .generated-idea {
+            display: none;
+        }
+
+        .generated-idea.show { display: block; }
+
+        .idea-title {
+            font-family: 'Spectral', serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .idea-category {
+            display: inline-block;
+            background: var(--violet-100);
+            color: var(--violet-700);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .idea-description {
+            font-size: 16px;
+            color: var(--stone-700);
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .idea-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .detail-item {
+            background: var(--stone-50);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: var(--stone-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--stone-900);
+            font-weight: 500;
+        }
+
+        .preview-score {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--violet-50), var(--purple-50));
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .score-value {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--violet-600);
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .preview-insights {
+            background: var(--amber-50);
+            border: 1px solid var(--amber-100);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .insights-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--amber-600);
+            margin-bottom: 12px;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--stone-700);
+            margin-bottom: 8px;
+        }
+
+        .insight-item:last-child { margin-bottom: 0; }
+
+        .insight-bullet {
+            color: var(--amber-500);
+            font-weight: bold;
+        }
+
+        .validation-cta {
+            background: linear-gradient(135deg, var(--stone-900), var(--stone-800));
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            color: var(--white);
+        }
+
+        .validation-cta h3 {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .validation-cta p {
+            color: var(--stone-400);
+            margin-bottom: 24px;
+        }
+
+        .price-tag {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+
+        .price-currency {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .price-amount {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .price-period {
+            font-size: 16px;
+            color: var(--stone-400);
+        }
+
+        .validate-btn {
+            background: var(--emerald-500);
+            color: var(--white);
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .validate-btn:hover { background: var(--emerald-600); }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 24px;
+            text-align: left;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--stone-300);
+        }
+
+        .feature-check { color: var(--emerald-500); }
+
+        .validation-result {
+            display: none;
+        }
+
+        .validation-result.show { display: block; }
+
+        .result-header {
+            text-align: center;
+            padding: 32px;
+            background: linear-gradient(135deg, var(--emerald-50), var(--blue-50));
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .result-score {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 80px;
+            font-weight: 700;
+            color: var(--emerald-600);
+        }
+
+        .result-confidence {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .result-summary {
+            font-size: 18px;
+            color: var(--stone-700);
+            margin-top: 16px;
+        }
+
+        .result-section {
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .result-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--stone-900);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .result-stat {
+            text-align: center;
+            padding: 16px;
+            background: var(--stone-50);
+            border-radius: 8px;
+        }
+
+        .result-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .result-stat-label {
+            font-size: 12px;
+            color: var(--stone-500);
+        }
+
+        .result-list {
+            list-style: none;
+        }
+
+        .result-list li {
+            padding: 12px;
+            background: var(--stone-50);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .result-list li:last-child { margin-bottom: 0; }
+
+        .payment-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .payment-modal.show { display: flex; }
+
+        .payment-modal-content {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 480px;
+            width: 90%;
+        }
+
+        .payment-modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .payment-modal-title {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .payment-modal-price {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--violet-600);
+        }
+
+        #card-element {
+            padding: 16px;
+            border: 2px solid var(--stone-200);
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        #card-errors {
+            color: var(--red-500);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .pay-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+        }
+
+        .pay-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--stone-400);
+        }
+
+        .new-idea-btn {
+            width: 100%;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .page-header h1 { font-size: 32px; }
+            .idea-details { grid-template-columns: 1fr; }
+            .result-grid { grid-template-columns: 1fr; }
+            .features-list { grid-template-columns: 1fr; }
+            .step-label { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                    </svg>
+                </div>
+                <div class="logo-text-group">
+                    <span class="logo-text">OppGrid</span>
+                    <span class="logo-tagline">The Opportunity Intelligence Platform</span>
+                </div>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="idea-engine.html" class="nav-link active">Idea Engine</a>
+                <a href="discover.html" class="nav-link">Browse Ideas</a>
+                <a href="pricing.html" class="nav-link">Pricing</a>
+            </div>
+            <div class="nav-actions">
+                <a href="signin.html" class="btn btn-ghost">Sign In</a>
+                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <div class="page-header-content fade-in-up">
+            <div class="header-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                AI-Powered
+            </div>
+            <h1 class="spektral">Idea Engine</h1>
+            <p>Transform your business ideas into validated opportunities. Generate ideas for free, unlock deep validation for a one-time fee.</p>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="step-indicator fade-in-up stagger-1">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <span class="step-label">Share Your Idea</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <span class="step-label">AI Generation</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <span class="step-label">Full Validation</span>
+            </div>
+        </div>
+
+        <div id="inputSection" class="card fade-in-up stagger-2">
+            <div class="card-header">
+                <div class="card-icon violet">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="card-title">What's Your Business Idea?</h2>
+                    <p class="card-subtitle">Describe your idea, problem you're solving, or opportunity you've spotted</p>
+                </div>
+            </div>
+            <textarea id="ideaInput" class="idea-input" placeholder="Example: I want to create an app that helps busy professionals meal prep for the week in under 30 minutes. Many people waste money on takeout because they don't have time to plan meals, and existing apps are too complicated..."></textarea>
+            <div class="char-count"><span id="charCount">0</span>/2000 characters</div>
+            <button id="generateBtn" class="btn btn-primary generate-btn" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                Generate Opportunity — Free
+            </button>
+        </div>
+
+        <div id="generatedSection" class="generated-idea">
+            <div class="card fade-in-up">
+                <div class="card-header">
+                    <div class="card-icon emerald">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="card-title">Your Refined Opportunity</h2>
+                        <p class="card-subtitle">AI-enhanced business concept ready for validation</p>
+                    </div>
+                </div>
+
+                <h3 id="generatedTitle" class="idea-title"></h3>
+                <span id="generatedCategory" class="idea-category"></span>
+                <p id="generatedDescription" class="idea-description"></p>
+
+                <div class="idea-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Problem Statement</div>
+                        <div id="problemStatement" class="detail-value"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Target Audience</div>
+                        <div id="targetAudience" class="detail-value"></div>
+                    </div>
+                    <div class="detail-item" style="grid-column: span 2;">
+                        <div class="detail-label">Unique Value Proposition</div>
+                        <div id="uniqueValue" class="detail-value"></div>
+                    </div>
+                </div>
+
+                <div class="preview-score">
+                    <div class="score-value"><span id="previewScore">0</span><span style="font-size: 24px;">/100</span></div>
+                    <div class="score-label">Preliminary Opportunity Score</div>
+                </div>
+
+                <div class="preview-insights">
+                    <div class="insights-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                        </svg>
+                        Preview Insights (Unlock Full Analysis Below)
+                    </div>
+                    <div id="insightsList"></div>
+                </div>
+
+                <div class="validation-cta">
+                    <h3 class="spektral">Unlock Full Validation Report</h3>
+                    <p>Get detailed market analysis, competition insights, business models, risks, and actionable next steps.</p>
+                    <div class="price-tag">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">9.99</span>
+                        <span class="price-period">one-time</span>
+                    </div>
+                    <button id="validateBtn" class="validate-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 8px;">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                            <line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                        Get Full Validation
+                    </button>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg class="feature-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Market Size Estimate
+                        </div>
+                        <div class="feature-item">
+                            <svg class="feature-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Competition Analysis
+                        </div>
+                        <div class="feature-item">
+                            <svg class="feature-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Business Model Ideas
+                        </div>
+                        <div class="feature-item">
+                            <svg class="feature-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Risk Assessment
+                        </div>
+                        <div class="feature-item">
+                            <svg class="feature-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Revenue Potential
+                        </div>
+                        <div class="feature-item">
+                            <svg class="feature-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Actionable Next Steps
+                        </div>
+                    </div>
+                </div>
+
+                <button id="startOverBtn" class="btn btn-secondary new-idea-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16"/>
+                        <path d="M8 16H3v5"/>
+                    </svg>
+                    Start Over with New Idea
+                </button>
+            </div>
+        </div>
+
+        <div id="validationSection" class="validation-result">
+            <div class="result-header fade-in-up">
+                <div class="result-score"><span id="finalScore">0</span></div>
+                <div class="result-confidence">Validation Confidence: <span id="confidence">0</span>%</div>
+                <p id="resultSummary" class="result-summary"></p>
+            </div>
+
+            <div class="result-section fade-in-up stagger-1">
+                <div class="result-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+                    </svg>
+                    Market Overview
+                </div>
+                <div class="result-grid">
+                    <div class="result-stat">
+                        <div id="marketSize" class="result-stat-value">-</div>
+                        <div class="result-stat-label">Market Size</div>
+                    </div>
+                    <div class="result-stat">
+                        <div id="competition" class="result-stat-value">-</div>
+                        <div class="result-stat-label">Competition</div>
+                    </div>
+                    <div class="result-stat">
+                        <div id="urgency" class="result-stat-value">-</div>
+                        <div class="result-stat-label">Urgency</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-section fade-in-up stagger-2">
+                <div class="result-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M16 12l-4-4-4 4M12 16V8"/>
+                    </svg>
+                    Revenue & Timeline
+                </div>
+                <div class="result-grid">
+                    <div class="result-stat">
+                        <div id="revenuePotential" class="result-stat-value">-</div>
+                        <div class="result-stat-label">Revenue Potential</div>
+                    </div>
+                    <div class="result-stat">
+                        <div id="timeToMarket" class="result-stat-value">-</div>
+                        <div class="result-stat-label">Time to Market</div>
+                    </div>
+                    <div class="result-stat">
+                        <div id="painIntensity" class="result-stat-value">-</div>
+                        <div class="result-stat-label">Pain Intensity</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-section fade-in-up stagger-3">
+                <div class="result-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    Business Model Suggestions
+                </div>
+                <ul id="businessModels" class="result-list"></ul>
+            </div>
+
+            <div class="result-section fade-in-up">
+                <div class="result-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Competitive Advantages
+                </div>
+                <ul id="advantages" class="result-list"></ul>
+            </div>
+
+            <div class="result-section fade-in-up">
+                <div class="result-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Key Risks & Mitigations
+                </div>
+                <ul id="risks" class="result-list"></ul>
+            </div>
+
+            <div class="result-section fade-in-up">
+                <div class="result-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                    Actionable Next Steps
+                </div>
+                <ul id="nextSteps" class="result-list"></ul>
+            </div>
+
+            <div class="result-section fade-in-up">
+                <div class="result-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                        <polyline points="17 6 23 6 23 12"/>
+                    </svg>
+                    Market Trends
+                </div>
+                <ul id="trends" class="result-list"></ul>
+            </div>
+
+            <button id="newIdeaBtn" class="btn btn-primary new-idea-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Validate Another Idea
+            </button>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="payment-modal">
+        <div class="payment-modal-content" style="position: relative;">
+            <button id="closeModal" class="close-modal">&times;</button>
+            <div class="payment-modal-header">
+                <h3 class="payment-modal-title spektral">Complete Your Purchase</h3>
+                <div class="payment-modal-price">$9.99</div>
+                <p style="color: var(--stone-500); font-size: 14px;">One-time validation report</p>
+            </div>
+            <div id="card-element"></div>
+            <div id="card-errors" role="alert"></div>
+            <button id="payBtn" class="btn btn-success pay-btn">
+                Pay $9.99
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1/idea-engine';
+        let stripe = null;
+        let elements = null;
+        let cardElement = null;
+        let generatedData = null;
+
+        const ideaInput = document.getElementById('ideaInput');
+        const charCount = document.getElementById('charCount');
+        const generateBtn = document.getElementById('generateBtn');
+        const inputSection = document.getElementById('inputSection');
+        const generatedSection = document.getElementById('generatedSection');
+        const validationSection = document.getElementById('validationSection');
+        const validateBtn = document.getElementById('validateBtn');
+        const paymentModal = document.getElementById('paymentModal');
+        const closeModal = document.getElementById('closeModal');
+        const payBtn = document.getElementById('payBtn');
+        const startOverBtn = document.getElementById('startOverBtn');
+        const newIdeaBtn = document.getElementById('newIdeaBtn');
+
+        ideaInput.addEventListener('input', () => {
+            const len = ideaInput.value.length;
+            charCount.textContent = len;
+            generateBtn.disabled = len < 20;
+        });
+
+        generateBtn.addEventListener('click', async () => {
+            const idea = ideaInput.value.trim();
+            if (!idea) return;
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<div class="spinner"></div> Generating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idea })
+                });
+
+                if (!response.ok) throw new Error('Generation failed');
+
+                generatedData = await response.json();
+                displayGeneratedIdea(generatedData);
+                updateSteps(2);
+            } catch (error) {
+                alert('Failed to generate idea. Please try again.');
+                console.error(error);
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                    </svg>
+                    Generate Opportunity — Free
+                `;
+            }
+        });
+
+        function displayGeneratedIdea(data) {
+            document.getElementById('generatedTitle').textContent = data.title;
+            document.getElementById('generatedCategory').textContent = data.category;
+            document.getElementById('generatedDescription').textContent = data.refined_idea;
+            document.getElementById('problemStatement').textContent = data.problem_statement;
+            document.getElementById('targetAudience').textContent = data.target_audience;
+            document.getElementById('uniqueValue').textContent = data.unique_value_proposition;
+            document.getElementById('previewScore').textContent = data.preview_score;
+
+            const insightsList = document.getElementById('insightsList');
+            insightsList.innerHTML = data.preview_insights.map(insight => `
+                <div class="insight-item">
+                    <span class="insight-bullet">*</span>
+                    <span>${insight}</span>
+                </div>
+            `).join('');
+
+            inputSection.style.display = 'none';
+            generatedSection.classList.add('show');
+        }
+
+        async function initStripe() {
+            try {
+                const response = await fetch(`${API_BASE}/stripe-key`);
+                if (!response.ok) return;
+                
+                const { publishable_key } = await response.json();
+                stripe = Stripe(publishable_key);
+                elements = stripe.elements();
+                cardElement = elements.create('card');
+                cardElement.mount('#card-element');
+
+                cardElement.on('change', (event) => {
+                    const displayError = document.getElementById('card-errors');
+                    displayError.textContent = event.error ? event.error.message : '';
+                });
+            } catch (error) {
+                console.error('Failed to init Stripe:', error);
+            }
+        }
+
+        validateBtn.addEventListener('click', async () => {
+            if (!stripe) {
+                await initStripe();
+            }
+            paymentModal.classList.add('show');
+        });
+
+        closeModal.addEventListener('click', () => {
+            paymentModal.classList.remove('show');
+        });
+
+        payBtn.addEventListener('click', async () => {
+            if (!stripe || !cardElement) {
+                alert('Payment system not available. Please try again.');
+                return;
+            }
+
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<div class="spinner"></div> Processing...';
+
+            try {
+                const intentResponse = await fetch(`${API_BASE}/create-payment-intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: 999 })
+                });
+
+                if (!intentResponse.ok) throw new Error('Failed to create payment');
+
+                const { client_secret, payment_intent_id } = await intentResponse.json();
+
+                const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
+                    payment_method: { card: cardElement }
+                });
+
+                if (error) {
+                    document.getElementById('card-errors').textContent = error.message;
+                    throw error;
+                }
+
+                if (paymentIntent.status === 'succeeded') {
+                    paymentModal.classList.remove('show');
+                    await runValidation(paymentIntent.id);
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+            } finally {
+                payBtn.disabled = false;
+                payBtn.innerHTML = 'Pay $9.99';
+            }
+        });
+
+        async function runValidation(paymentIntentId) {
+            validateBtn.disabled = true;
+            validateBtn.innerHTML = '<div class="spinner" style="border-color: var(--emerald-600); border-top-color: transparent;"></div> Validating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        idea: generatedData.refined_idea,
+                        title: generatedData.title,
+                        category: generatedData.category,
+                        payment_intent_id: paymentIntentId
+                    })
+                });
+
+                if (!response.ok) throw new Error('Validation failed');
+
+                const result = await response.json();
+                displayValidationResult(result);
+                updateSteps(3);
+            } catch (error) {
+                alert('Validation failed. Please try again.');
+                console.error(error);
+            } finally {
+                validateBtn.disabled = false;
+                validateBtn.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 8px;">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                        <line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                    Get Full Validation
+                `;
+            }
+        }
+
+        function displayValidationResult(data) {
+            document.getElementById('finalScore').textContent = data.opportunity_score;
+            document.getElementById('confidence').textContent = data.validation_confidence;
+            document.getElementById('resultSummary').textContent = data.summary;
+            document.getElementById('marketSize').textContent = data.market_size_estimate;
+            document.getElementById('competition').textContent = data.competition_level;
+            document.getElementById('urgency').textContent = data.urgency_level;
+            document.getElementById('revenuePotential').textContent = data.revenue_potential;
+            document.getElementById('timeToMarket').textContent = data.time_to_market;
+            document.getElementById('painIntensity').textContent = `${data.pain_intensity}/10`;
+
+            const renderList = (id, items) => {
+                document.getElementById(id).innerHTML = items.map(item => `<li>${item}</li>`).join('');
+            };
+
+            renderList('businessModels', data.business_model_suggestions);
+            renderList('advantages', data.competitive_advantages);
+            renderList('risks', data.key_risks);
+            renderList('nextSteps', data.next_steps);
+            renderList('trends', data.market_trends);
+
+            generatedSection.classList.remove('show');
+            validationSection.classList.add('show');
+        }
+
+        function updateSteps(current) {
+            for (let i = 1; i <= 3; i++) {
+                const step = document.getElementById(`step${i}`);
+                const connector = step.nextElementSibling;
+                
+                step.classList.remove('active', 'completed');
+                if (i < current) {
+                    step.classList.add('completed');
+                    if (connector && connector.classList.contains('step-connector')) {
+                        connector.classList.add('completed');
+                    }
+                } else if (i === current) {
+                    step.classList.add('active');
+                }
+            }
+        }
+
+        function resetToStart() {
+            ideaInput.value = '';
+            charCount.textContent = '0';
+            generateBtn.disabled = true;
+            generatedData = null;
+            
+            inputSection.style.display = 'block';
+            generatedSection.classList.remove('show');
+            validationSection.classList.remove('show');
+            updateSteps(1);
+        }
+
+        startOverBtn.addEventListener('click', resetToStart);
+        newIdeaBtn.addEventListener('click', resetToStart);
+
+        initStripe();
+    </script>
+</body>
+</html>
