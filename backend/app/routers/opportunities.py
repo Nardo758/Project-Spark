@@ -157,6 +157,11 @@ async def get_opportunity(
         "ai_urgency_level": opportunity.ai_urgency_level,
         "ai_target_audience": opportunity.ai_target_audience,
         "ai_pain_intensity": opportunity.ai_pain_intensity,
+        # AI-generated content fields
+        "ai_generated_title": opportunity.ai_generated_title,
+        "ai_problem_statement": opportunity.ai_problem_statement,
+        # Raw source data
+        "raw_source_data": opportunity.raw_source_data,
     }
     
     # Gate premium AI fields based on unlock status
