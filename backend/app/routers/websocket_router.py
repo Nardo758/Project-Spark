@@ -60,7 +60,7 @@ async def websocket_endpoint(
         # Send connection confirmation
         await websocket.send_json({
             "type": "connection",
-            "message": "Connected to Friction WebSocket",
+            "message": "Connected to OppGrid WebSocket",
             "user_id": user.id
         })
 

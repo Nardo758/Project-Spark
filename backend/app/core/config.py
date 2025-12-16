@@ -5,7 +5,7 @@ import os
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Friction API"
+    PROJECT_NAME: str = "OppGrid API"
     API_V1_PREFIX: str = "/api/v1"
 
     # Database - Support both DATABASE_URL and REPLIT_DB_URL
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
                 # Fallback for local development
                 self.DATABASE_URL = os.getenv(
                     "DATABASE_URL",
-                    "postgresql://user:password@localhost:5432/friction_db"
+                    "postgresql://user:password@localhost:5432/oppgrid_db"
                 )
 
         # Set frontend and backend URLs for Replit environment

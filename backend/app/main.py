@@ -48,7 +48,7 @@ app.include_router(webhook.router, prefix=f"{settings.API_V1_PREFIX}", tags=["We
 def root():
     """Root endpoint"""
     return {
-        "message": "Welcome to Friction API",
+        "message": "Welcome to OppGrid API",
         "docs": "/docs",
         "version": "1.0.0"
     }

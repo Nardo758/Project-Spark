@@ -195,11 +195,11 @@ class EmailService:
         </head>
         <body>
             <div class="header">
-                <h1>⚡ Friction</h1>
+                <h1>⚡ OppGrid</h1>
             </div>
             <div class="content">
                 <h2>Welcome, {user_name}!</h2>
-                <p>Thanks for signing up for Friction. We're excited to have you on board!</p>
+                <p>Thanks for signing up for OppGrid. We're excited to have you on board!</p>
                 <p>To complete your registration and start discovering opportunities, please verify your email address by clicking the button below:</p>
 
                 <div style="text-align: center;">
@@ -211,10 +211,10 @@ class EmailService:
 
                 <p>This verification link will expire in 24 hours.</p>
 
-                <p>If you didn't create an account with Friction, you can safely ignore this email.</p>
+                <p>If you didn't create an account with OppGrid, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-                <p>© 2024 Friction. All rights reserved.</p>
+                <p>© 2024 OppGrid. All rights reserved.</p>
                 <p>This is an automated message, please do not reply.</p>
             </div>
         </body>
@@ -222,7 +222,7 @@ class EmailService:
         """
 
         text_content = f"""
-        Welcome to Friction, {user_name}!
+        Welcome to OppGrid, {user_name}!
 
         Thanks for signing up. To complete your registration, please verify your email address by visiting:
 
@@ -230,14 +230,14 @@ class EmailService:
 
         This verification link will expire in 24 hours.
 
-        If you didn't create an account with Friction, you can safely ignore this email.
+        If you didn't create an account with OppGrid, you can safely ignore this email.
 
-        © 2024 Friction
+        © 2024 OppGrid
         """
 
         return self.send_email(
             to_email=to_email,
-            subject="Verify your email address - Friction",
+            subject="Verify your email address - OppGrid",
             html_content=html_content,
             text_content=text_content
         )
@@ -324,7 +324,7 @@ class EmailService:
         </head>
         <body>
             <div class="header">
-                <h1>⚡ Friction</h1>
+                <h1>⚡ OppGrid</h1>
             </div>
             <div class="content">
                 <h2>Password Reset Request</h2>
@@ -345,7 +345,7 @@ class EmailService:
                 </div>
             </div>
             <div class="footer">
-                <p>© 2024 Friction. All rights reserved.</p>
+                <p>© 2024 OppGrid. All rights reserved.</p>
                 <p>This is an automated message, please do not reply.</p>
             </div>
         </body>
@@ -353,7 +353,7 @@ class EmailService:
         """
 
         text_content = f"""
-        Password Reset Request - Friction
+        Password Reset Request - OppGrid
 
         Hi {user_name},
 
@@ -365,12 +365,12 @@ class EmailService:
 
         If you didn't request a password reset, please ignore this email or contact support if you have concerns about your account security.
 
-        © 2024 Friction
+        © 2024 OppGrid
         """
 
         return self.send_email(
             to_email=to_email,
-            subject="Reset your password - Friction",
+            subject="Reset your password - OppGrid",
             html_content=html_content,
             text_content=text_content
         )
@@ -462,7 +462,7 @@ class EmailService:
         </head>
         <body>
             <div class="header">
-                <h1>⚡ Friction</h1>
+                <h1>⚡ OppGrid</h1>
             </div>
             <div class="content">
                 <h2>Hi {user_name}!</h2>
@@ -482,7 +482,7 @@ class EmailService:
                 </p>
             </div>
             <div class="footer">
-                <p>© 2024 Friction. All rights reserved.</p>
+                <p>© 2024 OppGrid. All rights reserved.</p>
                 <p>This is an automated message, please do not reply.</p>
             </div>
         </body>
@@ -501,12 +501,12 @@ class EmailService:
 
         You can manage your notification preferences in your account settings.
 
-        © 2024 Friction
+        © 2024 OppGrid
         """
 
         return self.send_email(
             to_email=to_email,
-            subject=f"Friction: {notification_title}",
+            subject=f"OppGrid: {notification_title}",
             html_content=html_content,
             text_content=text_content
         )

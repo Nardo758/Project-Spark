@@ -41,7 +41,7 @@ class SocialSharingService:
         description = opportunity.description[:200] if opportunity.description else ""
 
         if platform == "twitter":
-            text = f"{title}\n\n{description}\n\nShared via Friction"
+            text = f"{title}\n\n{description}\n\nShared via OppGrid"
             return f"https://twitter.com/intent/tweet?text={quote(text)}&url={quote(opportunity_url)}"
 
         elif platform == "linkedin":
@@ -52,7 +52,7 @@ class SocialSharingService:
 
         elif platform == "email":
             subject = f"Check out this opportunity: {title}"
-            body = f"{title}\n\n{description}\n\n{opportunity_url}\n\nShared via Friction"
+            body = f"{title}\n\n{description}\n\n{opportunity_url}\n\nShared via OppGrid"
             return f"mailto:?subject={quote(subject)}&body={quote(body)}"
 
         elif platform == "copy_link":
@@ -149,7 +149,7 @@ class SocialSharingService:
             "og:description": description,
             "og:url": opportunity_url,
             "og:type": "article",
-            "og:site_name": "Friction",
+            "og:site_name": "OppGrid",
 
             # Twitter Card
             "twitter:card": "summary_large_image",

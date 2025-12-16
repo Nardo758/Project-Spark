@@ -29,7 +29,7 @@ class TwoFactorService:
         return pyotp.random_base32()
 
     @staticmethod
-    def generate_qr_code(email: str, secret: str, issuer: str = "Friction") -> str:
+    def generate_qr_code(email: str, secret: str, issuer: str = "OppGrid") -> str:
         """
         Generate QR code for authenticator app setup
 
