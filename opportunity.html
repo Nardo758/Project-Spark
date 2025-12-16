@@ -4301,6 +4301,9 @@
                 
                 document.getElementById('opportunity-description').textContent = opp.description;
                 
+                // Populate metrics cards from API data
+                populateMetrics(opp);
+                
                 // Update page with AI insights if available
                 updatePageWithAIInsights(opp);
                 
@@ -4348,6 +4351,70 @@
                 }
             } catch (error) {
                 console.log('Could not check subscription status');
+            }
+        }
+
+        function populateMetrics(opp) {
+            // Submissions = validation_count
+            const submissionsValue = opp.validation_count || 0;
+            const submissionsFormatted = submissionsValue >= 1000 
+                ? (submissionsValue / 1000).toFixed(submissionsValue >= 10000 ? 1 : 0) + 'K'
+                : submissionsValue.toLocaleString();
+            
+            // Market Size from AI analysis
+            const marketSize = opp.ai_market_size_estimate || opp.market_size || '$10M-$50M';
+            
+            // Urgency from AI analysis
+            const urgency = opp.ai_urgency_level 
+                ? opp.ai_urgency_level.charAt(0).toUpperCase() + opp.ai_urgency_level.slice(1) 
+                : 'Medium';
+            
+            // Growth rate for submissions change
+            const growthRate = opp.growth_rate || 0;
+            const growthText = growthRate > 0 ? `↑ ${growthRate}% this month` : 'Trending';
+            
+            // Update the metrics grid HTML
+            const metricsGrid = document.querySelector('.metrics-grid');
+            if (metricsGrid) {
+                metricsGrid.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <div class="metric-label">Submissions</div>
+                        </div>
+                        <div class="metric-value">${submissionsFormatted}</div>
+                        <div class="metric-change">${growthText}</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                <polyline points="17 6 23 6 23 12"></polyline>
+                            </svg>
+                            <div class="metric-label">Market Size</div>
+                        </div>
+                        <div class="metric-value">${marketSize}</div>
+                        <div class="metric-change neutral">TAM estimate</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <div class="metric-label">Urgency</div>
+                        </div>
+                        <div class="metric-value">${urgency}</div>
+                        <div class="metric-change neutral">${urgency === 'Critical' || urgency === 'High' ? 'Immediate need' : 'Growing demand'}</div>
+                    </div>
+                `;
             }
         }
 
