@@ -71,7 +71,7 @@ def get_my_subscription(
         "tier": subscription.tier.value if hasattr(subscription.tier, 'value') else subscription.tier,
         "status": subscription.status.value if hasattr(subscription.status, 'value') else subscription.status,
         "views_remaining": remaining_unlocks,
-        "views_limit": limits.unlocked_opportunities_limit,
+        "views_limit": limits.get("monthly_unlocks", 10),
         "period_end": subscription.current_period_end.isoformat() if subscription.current_period_end else None,
         "is_active": subscription.status == SubscriptionStatus.ACTIVE
     }
