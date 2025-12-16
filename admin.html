@@ -846,43 +846,33 @@
         let currentUser = null;
 
         async function init() {
-            console.log('[Admin] Initializing admin panel...');
             const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-            console.log('[Admin] Token found:', !!token);
-            
             if (!token) {
-                console.log('[Admin] No token, redirecting to signin');
                 window.location.href = 'signin.html?redirect=admin.html';
                 return;
             }
 
             try {
-                console.log('[Admin] Fetching user info...');
                 const response = await fetch(`${API_BASE_URL}/users/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                console.log('[Admin] Response status:', response.status);
                 if (!response.ok) throw new Error('Not authenticated');
 
                 currentUser = await response.json();
-                console.log('[Admin] User data:', JSON.stringify(currentUser));
-                console.log('[Admin] is_admin value:', currentUser.is_admin, 'type:', typeof currentUser.is_admin);
 
                 if (!currentUser.is_admin) {
-                    console.log('[Admin] User is not admin, redirecting...');
                     showToast('Access denied: Admin privileges required', 'error');
                     setTimeout(() => window.location.href = 'index.html', 2000);
                     return;
                 }
 
-                console.log('[Admin] Admin access granted!');
                 document.getElementById('admin-name').textContent = currentUser.name;
 
                 setupNavigation();
                 loadDashboard();
             } catch (error) {
-                console.error('[Admin] Auth error:', error);
+                console.error('Auth error:', error);
                 window.location.href = 'signin.html';
             }
         }
