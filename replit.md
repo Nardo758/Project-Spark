@@ -2,6 +2,24 @@
 
 ## Recent Changes (December 2024)
 
+- **Access Control & Admin Panel** (December 16, 2024):
+  - NEW: `admin.html` - Full admin panel with dashboard, user management, opportunity moderation, and subscription controls
+  - NEW: Subscription tier access control dependencies (`require_pro`, `require_business`, `require_enterprise`)
+  - NEW: `/api/v1/admin/subscriptions` - List and filter all subscriptions
+  - NEW: `/api/v1/admin/subscriptions/{id}/tier` - Manually update subscription tier
+  - NEW: `/api/v1/admin/users/{id}/grant-subscription` - Grant subscription to user
+  - NEW: `/api/v1/admin/users/{id}/demote` - Remove admin privileges
+  - Admin panel features: Platform stats, user search/filter, ban/unban users, promote/demote admins
+  - Opportunity management: View, search, and delete opportunities
+  - Subscription management: View all subscriptions, change tiers, grant access
+  - Report moderation: View pending reports, resolve or dismiss
+  - Frontend access control: Admin-only page with token verification and redirect
+
+- **Stripe & Resend Integration** (December 16, 2024):
+  - Connected Stripe sandbox via Replit connector for payment processing
+  - Connected Resend via Replit connector for transactional emails
+  - Both services use Replit connector API for secure key management
+
 - **Idea Engine - AI-Powered Idea Generation & Validation** (December 16, 2024):
   - NEW: `/api/v1/idea-engine/generate` - Free AI idea generation and refinement
   - NEW: `/api/v1/idea-engine/validate` - Paid comprehensive idea validation ($9.99)
