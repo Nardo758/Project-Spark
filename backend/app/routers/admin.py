@@ -380,3 +380,161 @@ def promote_to_admin(
     db.commit()
 
     return {"message": f"User {user.name} promoted to admin"}
+
+
+@router.post("/users/{user_id}/demote")
+def demote_from_admin(
+    user_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Remove admin status from a user"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    if user_id == admin_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot demote yourself"
+        )
+
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not an admin"
+        )
+
+    user.is_admin = False
+    db.commit()
+
+    return {"message": f"User {user.name} demoted from admin"}
+
+
+from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus
+
+
+@router.get("/subscriptions")
+def list_subscriptions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    tier_filter: Optional[str] = Query(None),
+    status_filter: Optional[str] = Query(None),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """List all subscriptions"""
+    query = db.query(
+        Subscription,
+        User.email,
+        User.name
+    ).join(User, Subscription.user_id == User.id)
+
+    if tier_filter:
+        try:
+            tier = SubscriptionTier(tier_filter)
+            query = query.filter(Subscription.tier == tier)
+        except ValueError:
+            pass
+
+    if status_filter:
+        try:
+            status_enum = SubscriptionStatus(status_filter)
+            query = query.filter(Subscription.status == status_enum)
+        except ValueError:
+            pass
+
+    results = query.order_by(desc(Subscription.created_at)).offset(skip).limit(limit).all()
+
+    return [
+        {
+            "id": sub.id,
+            "user_id": sub.user_id,
+            "user_email": email,
+            "user_name": name,
+            "tier": sub.tier.value,
+            "status": sub.status.value,
+            "stripe_customer_id": sub.stripe_customer_id,
+            "stripe_subscription_id": sub.stripe_subscription_id,
+            "current_period_end": sub.current_period_end,
+            "cancel_at_period_end": sub.cancel_at_period_end,
+            "created_at": sub.created_at
+        }
+        for sub, email, name in results
+    ]
+
+
+@router.patch("/subscriptions/{subscription_id}/tier")
+def update_subscription_tier(
+    subscription_id: int,
+    tier: str,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Manually update a user's subscription tier (admin override)"""
+    subscription = db.query(Subscription).filter(Subscription.id == subscription_id).first()
+
+    if not subscription:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Subscription not found"
+        )
+
+    try:
+        new_tier = SubscriptionTier(tier)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tier: {tier}. Valid options: free, pro, business, enterprise"
+        )
+
+    subscription.tier = new_tier
+    db.commit()
+
+    return {"message": f"Subscription updated to {tier}"}
+
+
+@router.post("/users/{user_id}/grant-subscription")
+def grant_subscription(
+    user_id: int,
+    tier: str = Query(...),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Grant or create a subscription for a user"""
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    try:
+        new_tier = SubscriptionTier(tier)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tier: {tier}. Valid options: free, pro, business, enterprise"
+        )
+
+    subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+
+    if subscription:
+        subscription.tier = new_tier
+        subscription.status = SubscriptionStatus.ACTIVE
+    else:
+        subscription = Subscription(
+            user_id=user_id,
+            tier=new_tier,
+            status=SubscriptionStatus.ACTIVE
+        )
+        db.add(subscription)
+
+    db.commit()
+
+    return {"message": f"Granted {tier} subscription to user {user.name}"}

@@ -78,3 +78,54 @@ async def get_current_user_optional(
     
     user = db.query(User).filter(User.email == email).first()
     return user
+
+
+from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus
+from typing import List, Callable
+from functools import wraps
+
+
+def get_user_subscription_tier(user: User, db: Session) -> SubscriptionTier:
+    """Get user's current subscription tier"""
+    subscription = db.query(Subscription).filter(
+        Subscription.user_id == user.id,
+        Subscription.status == SubscriptionStatus.ACTIVE
+    ).first()
+    
+    if subscription:
+        return subscription.tier
+    return SubscriptionTier.FREE
+
+
+class RequireSubscription:
+    """Dependency that requires a minimum subscription tier"""
+    
+    def __init__(self, min_tier: SubscriptionTier):
+        self.min_tier = min_tier
+        self.tier_hierarchy = {
+            SubscriptionTier.FREE: 0,
+            SubscriptionTier.PRO: 1,
+            SubscriptionTier.BUSINESS: 2,
+            SubscriptionTier.ENTERPRISE: 3
+        }
+    
+    async def __call__(
+        self,
+        current_user: User = Depends(get_current_active_user),
+        db: Session = Depends(get_db)
+    ) -> User:
+        user_tier = get_user_subscription_tier(current_user, db)
+        user_level = self.tier_hierarchy.get(user_tier, 0)
+        required_level = self.tier_hierarchy.get(self.min_tier, 0)
+        
+        if user_level < required_level:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"This feature requires a {self.min_tier.value} subscription or higher"
+            )
+        return current_user
+
+
+require_pro = RequireSubscription(SubscriptionTier.PRO)
+require_business = RequireSubscription(SubscriptionTier.BUSINESS)
+require_enterprise = RequireSubscription(SubscriptionTier.ENTERPRISE)
