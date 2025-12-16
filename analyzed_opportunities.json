@@ -1,0 +1,158 @@
+[
+  {
+    "title": "A tool that analyzes Reddit to find 'SomebodyMakeThis' opportunities automatically",
+    "description": "You know how this subreddit is full of people saying 'someone should build X'? What if there was a tool that automatically found these opportunities across Reddit?\n\n**The idea**: Scan subreddits for patterns like:\n\n* \"I wish there was an app that...\"\n* \"Why doesn't anyone make...\"\n* \"This should exist but doesn't...\"\n* Common complaints that hint at business opportunities\n\nBasically, it would surface the problems people are asking to be solved, similar to what gets posted here but from all of...",
+    "category": "Technology",
+    "source_url": "https://www.reddit.com/r/SomebodyMakeThis/comments/1lvuqmn/a_tool_that_analyzes_reddit_to_find/",
+    "source_subreddit": "SomebodyMakeThis",
+    "confidence_score": 1.0,
+    "matched_phrases": [
+      "I wish there was",
+      "Why doesn't anyone make"
+    ],
+    "upvotes": 6,
+    "comments": 8,
+    "scraped_at": "2025-12-14T15:45:28.333Z"
+  },
+  {
+    "title": "My first experience as a hiring manager opened my eyes to a lot... The bar is much lower than I could have ever imagined.",
+    "description": "In my last few jobs, I became responsible for screening applicants for the first time. And honestly, from what I've seen, I'm no longer surprised why so many people struggle just to get an interview. Sometimes it's just a difficult numbers game; some jobs get over a thousand applications even after we filter out the completely irrelevant ones.\n\nWe've all seen the complaint posts from job seekers, and I myself was in their shoes one day. But let me give you a small glimpse from the other side....",
+    "category": "Technology",
+    "source_url": "https://www.reddit.com/r/InterviewsHell/comments/1ojxzoy/my_first_experience_as_a_hiring_manager_opened_my/",
+    "source_subreddit": "InterviewsHell",
+    "confidence_score": 1.0,
+    "matched_phrases": [
+      "I can't believe we still"
+    ],
+    "upvotes": 452,
+    "comments": 96,
+    "scraped_at": "2025-12-14T15:47:54.439Z"
+  },
+  {
+    "title": "Staffing process an absolute nightmare - how do other places to do? Any tips or tricks we can learn from? (Big 4)",
+    "description": "Im a Manager at a Big 4, and the staffing process is honestly such a pain in the ass at my firm. We have a Resource Maanger who manages a huge excel file with all our names and availabilities. Then senior staff (Managers and above) will meet weekly to discuss resourcing for upcoming projects and availability of  the team in general. \n\nAnd then trying to find someone who is actually available and has the right skills for my projects - absolute nightmare - i need to email 10 different people to...",
+    "category": "Work & Productivity",
+    "source_url": "https://www.reddit.com/r/consulting/comments/1izs2d5/staffing_process_an_absolute_nightmare_how_do/",
+    "source_subreddit": "consulting",
+    "confidence_score": 1.0,
+    "matched_phrases": [
+      "I can't believe we still"
+    ],
+    "upvotes": 8,
+    "comments": 18,
+    "scraped_at": "2025-12-14T15:48:01.667Z"
+  },
+  {
+    "title": "Untitled Opportunity",
+    "description": ".public\\_ip is not a problem. The EIP properties related to association are (what you describe in second part). I absolutely understand why it happens (however I would expect provider to take care of it), my question is rather how you deal with it.\n\nHaving inaccurate data in the state means re-runs of the code detects changes while there were none (from terraform methodology point of view you should be able to apply every minute and if there are no changes to code and no changes to the infra ...",
+    "category": "Technology",
+    "source_url": "",
+    "source_subreddit": "",
+    "confidence_score": 0.94,
+    "matched_phrases": [
+      "there should be"
+    ],
+    "upvotes": 0,
+    "comments": 0,
+    "scraped_at": "2025-12-14T15:47:36.732Z"
+  },
+  {
+    "title": "What Would You Do?",
+    "description": "I'm sure everyone has had a similar situation like this: Where there is a child in the class that acts either naughty or not the norm and the local teacher dismisses them as special and either does nothing, or keeps them away and doesn't allow them to participate in class.\n\nSo here is my current situation.  I probably have 2 kids in one class where the teachers have dismissed them as special. One can't sit still in his character, randomly talks/yells in his first language and occasionally yel...",
+    "category": "Technology",
+    "source_url": "https://www.reddit.com/r/TEFL/comments/1jwokqm/what_would_you_do/",
+    "source_subreddit": "TEFL",
+    "confidence_score": 0.82,
+    "matched_phrases": [
+      "How do you deal with"
+    ],
+    "upvotes": 14,
+    "comments": 3,
+    "scraped_at": "2025-12-14T15:47:34.630Z"
+  },
+  {
+    "title": "In-laws and other people in general, - how do you deal with problem of resemblance?",
+    "description": "As you can see by my other post I have gone NC with, what probably were Nparents. Had social anxiety before probably related. However I am much better now, even though I'll never be a social butterfly. \n\nHowever I've noticed that when seeing my in-laws I get very quiet and insecure at times. I get most nervous around meals which is where there some of the most intense conflicts were with nparents. In-laws are normal and loving people so there is no logical reason for this really. As far as I ...",
+    "category": "Technology",
+    "source_url": "https://www.reddit.com/r/raisedbynarcissists/comments/21wx5w/inlaws_and_other_people_in_general_how_do_you/",
+    "source_subreddit": "raisedbynarcissists",
+    "confidence_score": 0.82,
+    "matched_phrases": [
+      "How do you deal with",
+      "anyone else"
+    ],
+    "upvotes": 11,
+    "comments": 8,
+    "scraped_at": "2025-12-14T15:47:37.242Z"
+  },
+  {
+    "title": "How do you deal with problems that are outside of your control?",
+    "description": "Straight to the point, I (18) am very short (5'6), autistic, and incredibly ugly. These 3 things have resulted in complete loneliness and isolation my entire life, depression, and constant bullying.\n\nHow can you be happy knowing that these factors cannot be changed?\n\n\n...\n\n...\n\n...\n\n*If you are here just to answer my question and not argue ignore everything below...*\n\n\nI know for a fact that most of the replies are going to be \"actually I know this short guy...\" or something saying these 3 fa...",
+    "category": "Entertainment & Social",
+    "source_url": "https://www.reddit.com/r/Healthygamergg/comments/14doxod/how_do_you_deal_with_problems_that_are_outside_of/",
+    "source_subreddit": "Healthygamergg",
+    "confidence_score": 0.8,
+    "matched_phrases": [
+      "How do you deal with"
+    ],
+    "upvotes": 4,
+    "comments": 4,
+    "scraped_at": "2025-12-14T15:47:36.835Z"
+  },
+  {
+    "title": "How do you deal with problems finance in a relationship?",
+    "description": "I\u2019ve (32F) been in a relationship with my boyfriend (31M) for about a year, although I\u2019ve known him my whole life. Before we started dating, in his previous relationship, he was very motivated and hard worker. Had his own place, great career. After that relationship ended, he gave up everything and became homeless (lived with his aunt, now lives with a friend in a spare room). He had a full time job that doesn\u2019t pay well and he\u2019s well aware of that but still chooses to stay. I\u2019m not working a...",
+    "category": "Money & Finance",
+    "source_url": "https://www.reddit.com/r/relationships/comments/q1mlej/how_do_you_deal_with_problems_finance_in_a/",
+    "source_subreddit": "relationships",
+    "confidence_score": 0.77,
+    "matched_phrases": [
+      "How do you deal with"
+    ],
+    "upvotes": 1,
+    "comments": 4,
+    "scraped_at": "2025-12-14T15:47:34.852Z"
+  },
+  {
+    "title": "am I stupid or it's AWS?",
+    "description": "hi fellow terraformers,\n\nso, I haven't played with AWS for a while and now I have a small project which involves it. So I started playing around (using terraform, obviously) and I found an interesting thing. My setup is super simple: one VM with EIP in a custom VPC/subnet. As I didn't find any better way to do it (is there?), I'm attaching EIP to VM using aws\\_eip\\_association. I'm lazy, so I send the whole EIP to output. While detaching and re-attaching EIP I noticed that the provider does n...",
+    "category": "Work & Productivity",
+    "source_url": "https://www.reddit.com/r/Terraform/comments/1dl2len/am_i_stupid_or_its_aws/",
+    "source_subreddit": "Terraform",
+    "confidence_score": 0.73,
+    "matched_phrases": [
+      "How do you deal with"
+    ],
+    "upvotes": 3,
+    "comments": 24,
+    "scraped_at": "2025-12-14T15:47:36.731Z"
+  },
+  {
+    "title": "Give me some advice on work ethics",
+    "description": "I'll be honest, I'm a bad worker. I have a lazy attitude that I'm trying to kick away and a tendency to avoid receiving more work. I just wanna complete my work swiftly so that I can enjoy the night without worries. \n\n- What attitudes do you adopt? \n\n- What do you expect from yourself at work? \n\n- How do you handle the relationships with you co-workers, subordinates and bosses? \n\n- How do you deal with problems that have no obvious solution to? \n\n- How do you improve at work? \n\nThe list goes ...",
+    "category": "Work & Productivity",
+    "source_url": "https://www.reddit.com/r/entj/comments/bmxd45/give_me_some_advice_on_work_ethics/",
+    "source_subreddit": "entj",
+    "confidence_score": 0.7,
+    "matched_phrases": [
+      "How do you deal with"
+    ],
+    "upvotes": 4,
+    "comments": 10,
+    "scraped_at": "2025-12-14T15:47:34.730Z"
+  },
+  {
+    "title": "Untitled Opportunity",
+    "description": "> What attitudes do you adopt?\n\n\"I'm not here to fuck around.\"\n\n> What do you expect from yourself at work?\n\nTo do things the best way possible.\n\n> How do you handle the relationships with you co-workers, subordinates and bosses?\n\nBy using lots of Fe + my humor to have a good laugh.\n\n> How do you deal with problems that have no obvious solution to?\n\nBy not giving up on finding one.\n\n> How do you improve at work?\n\nBy making mistakes or choosing subpar solutions and then learning from it (by re...",
+    "category": "Work & Productivity",
+    "source_url": "",
+    "source_subreddit": "",
+    "confidence_score": 0.7,
+    "matched_phrases": [
+      "How do you deal with"
+    ],
+    "upvotes": 0,
+    "comments": 0,
+    "scraped_at": "2025-12-14T15:47:34.730Z"
+  }
+]
