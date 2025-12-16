@@ -70,10 +70,15 @@ class Opportunity(OpportunityBase):
     ai_urgency_level: Optional[str] = None
     ai_target_audience: Optional[str] = None
     ai_pain_intensity: Optional[int] = None
+    
+    # AI-generated content
+    ai_generated_title: Optional[str] = None
+    ai_problem_statement: Optional[str] = None
 
     # Source tracking
     source_platform: Optional[str] = None
     source_url: Optional[str] = None
+    raw_source_data: Optional[str] = None
 
     created_at: datetime
     updated_at: Optional[datetime] = None

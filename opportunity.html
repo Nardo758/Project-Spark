@@ -4337,20 +4337,22 @@
                 const opp = await api.getOpportunity(opportunityId);
                 
                 document.getElementById('opportunity-id').textContent = `IDEA #${opp.id}`;
-                document.getElementById('opportunity-title').textContent = opp.title;
+                document.getElementById('opportunity-title').textContent = opp.ai_generated_title || opp.title;
                 document.title = `${opp.title} · OppGrid`;
                 
                 // Use AI score if available, otherwise calculate
                 const score = opp.ai_opportunity_score || Math.min(100, Math.round(50 + (opp.validation_count / 10) + (opp.growth_rate || 0)));
                 document.getElementById('validation-score').textContent = `${score}/100`;
                 
-                document.getElementById('opportunity-description').textContent = opp.description;
+                document.getElementById('opportunity-description').textContent = opp.ai_problem_statement || opp.description;
                 
                 // Populate metrics cards from API data
                 populateMetrics(opp);
                 
-                // Load source data if available
-                loadSourceData(opp.id);
+                // Load source data if available (only if raw_source_data exists)
+                if (opp.raw_source_data) {
+                    loadSourceData(opp.id);
+                }
                 
                 // Update page with AI insights if available
                 updatePageWithAIInsights(opp);
