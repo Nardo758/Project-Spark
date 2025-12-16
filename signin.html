@@ -713,7 +713,9 @@
                 localStorage.setItem('user', JSON.stringify(response.user));
                 api.token = response.access_token;
                 
-                window.location.href = 'discover.html';
+                // Check for redirect parameter
+                const redirectUrl = urlParams.get('redirect') || 'discover.html';
+                window.location.href = redirectUrl;
 
             } catch (error) {
                 console.error('Login error:', error);
