@@ -8,7 +8,7 @@ const CONFIG = {
     API_BASE_URL: '/api/v1',
     
     // Application Settings
-    APP_NAME: 'Friction',
+    APP_NAME: 'OppGrid',
     VERSION: '1.0.0',
     
     // Token storage key

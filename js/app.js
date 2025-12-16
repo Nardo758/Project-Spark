@@ -1,5 +1,5 @@
 /**
- * Friction Frontend - Main Application Logic
+ * OppGrid Frontend - Main Application Logic
  * Connects UI to backend API with all features
  */
 
@@ -530,7 +530,7 @@ function showLoginPrompt() {
 }
 
 // Export for global use
-window.FrictionApp = {
+window.OppGridApp = {
     loadOpportunities,
     submitOpportunity,
     validateExisting,

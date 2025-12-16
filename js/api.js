@@ -1,9 +1,9 @@
 /**
- * Friction API Client
+ * OppGrid API Client
  * Connects the frontend to the backend API
  */
 
-class FrictionAPI {
+class OppGridAPI {
     constructor() {
         this.baseURL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) 
             ? CONFIG.API_BASE_URL 
@@ -353,4 +353,4 @@ class FrictionAPI {
 }
 
 // Create a global instance
-const api = new FrictionAPI();
+const api = new OppGridAPI();
