@@ -40,6 +40,7 @@ class User(UserBase):
     validation_count: int = 0
     is_active: bool = True
     is_verified: bool = False
+    is_admin: bool = False
     created_at: datetime
 
     class Config:
