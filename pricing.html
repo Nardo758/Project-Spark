@@ -103,11 +103,25 @@
             font-size: 18px;
         }
 
+        .logo-text-group {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
         .logo-text {
             font-family: 'Spectral', serif;
             font-size: 24px;
             font-weight: 700;
             color: var(--stone-900);
+        }
+
+        .logo-tagline {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--stone-500);
+            letter-spacing: 0.02em;
         }
 
         .nav-links {
@@ -580,7 +594,10 @@
                         <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                     </svg>
                 </div>
-                <span class="logo-text">OppGrid</span>
+                <div class="logo-text-group">
+                    <span class="logo-text">OppGrid</span>
+                    <span class="logo-tagline">The Opportunity Intelligence Platform</span>
+                </div>
             </a>
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
