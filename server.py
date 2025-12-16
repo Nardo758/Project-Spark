@@ -24,6 +24,30 @@ def get_frontend_port(default_port: int = 5000) -> int:
 BACKEND_PORT = int(os.getenv("BACKEND_PORT", "8000"))
 FRONTEND_PORT = get_frontend_port()
 
+# Global flag to track backend readiness
+backend_ready = False
+
+def wait_for_backend(timeout=60):
+    """Wait for backend to be ready by checking health endpoint"""
+    global backend_ready
+    start_time = time.time()
+    
+    while time.time() - start_time < timeout:
+        try:
+            req = Request(f'http://localhost:{BACKEND_PORT}/health', method='GET')
+            with urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    backend_ready = True
+                    print(f"[Server] Backend is ready after {time.time() - start_time:.1f}s")
+                    return True
+        except Exception:
+            pass
+        time.sleep(0.5)
+    
+    print(f"[Server] Warning: Backend not responding after {timeout}s, continuing anyway...")
+    backend_ready = True  # Allow requests to proceed, they'll get proper errors
+    return False
+
 class ProxyHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -74,7 +98,16 @@ class ProxyHandler(SimpleHTTPRequestHandler):
             self.send_error(405)
     
     def proxy_request(self, method):
+        global backend_ready
         backend_url = f'http://localhost:{BACKEND_PORT}{self.path}'
+        
+        # If backend not ready yet, wait a bit
+        if not backend_ready:
+            retries = 10
+            while not backend_ready and retries > 0:
+                time.sleep(0.5)
+                retries -= 1
+        
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(content_length) if content_length > 0 else None
@@ -106,11 +139,13 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         except URLError as e:
             self.send_response(503)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(json.dumps({'detail': 'Backend unavailable'}).encode())
+            self.wfile.write(json.dumps({'detail': 'Backend unavailable. Please try again in a moment.'}).encode())
         except Exception as e:
             self.send_response(500)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             self.wfile.write(json.dumps({'detail': str(e)}).encode())
     
@@ -165,10 +200,20 @@ def init_database():
 if __name__ == '__main__':
     init_database()
     
+    # Start backend in a thread
     backend_thread = threading.Thread(target=run_backend, daemon=True)
     backend_thread.start()
     
     print("Waiting for backend to start...")
-    time.sleep(3)
+    
+    # Wait for backend to be ready in a separate thread so frontend can start
+    def wait_and_mark_ready():
+        wait_for_backend(timeout=30)
+    
+    wait_thread = threading.Thread(target=wait_and_mark_ready, daemon=True)
+    wait_thread.start()
+    
+    # Give backend a few seconds head start
+    time.sleep(5)
     
     run_frontend()
