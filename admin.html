@@ -665,6 +665,12 @@
                         Reports
                     </a>
                 </li>
+                <li>
+                    <a href="#scraper" data-section="scraper">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                        Scraper Data
+                    </a>
+                </li>
             </ul>
         </aside>
 
@@ -833,6 +839,69 @@
                     </table>
                 </div>
             </section>
+
+            <section id="section-scraper" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Scraper Data Import</h1>
+                    <p>Upload and analyze Reddit scraper data to discover business opportunities</p>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Upload Scraper Data</h2>
+                    </div>
+                    <div style="padding: 20px; background: #1a1a2e; border-radius: 12px; margin-bottom: 20px;">
+                        <p style="margin-bottom: 15px; color: #a0a0a0;">Upload a JSON file from Reddit scraper (e.g., Apify Reddit Scraper Pro)</p>
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <input type="file" id="scraper-file" accept=".json" style="color: #fff;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #fff;">
+                                <input type="checkbox" id="auto-import-checkbox">
+                                Auto-import valid opportunities
+                            </label>
+                            <button class="btn btn-primary" onclick="analyzeScraperData()">Analyze Data</button>
+                        </div>
+                    </div>
+
+                    <div id="scraper-stats" style="display: none; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 15px;">Analysis Results</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Total Posts</div>
+                                <div class="stat-value" id="scraper-total">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Valid Opportunities</div>
+                                <div class="stat-value" id="scraper-valid">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Imported</div>
+                                <div class="stat-value" id="scraper-imported">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Skipped</div>
+                                <div class="stat-value" id="scraper-skipped">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="scraper-results" style="display: none;">
+                        <h3 style="margin-bottom: 15px;">Discovered Opportunities</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Score</th>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Subreddit</th>
+                                    <th>Upvotes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scraper-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -909,6 +978,7 @@
                 case 'opportunities': loadOpportunities(); break;
                 case 'subscriptions': loadSubscriptions(); break;
                 case 'reports': loadReports(); break;
+                case 'scraper': break;
             }
         }
 
@@ -1320,6 +1390,70 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
+        }
+
+        async function analyzeScraperData() {
+            const fileInput = document.getElementById('scraper-file');
+            const autoImport = document.getElementById('auto-import-checkbox').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showToast('Please select a JSON file', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                showToast('Analyzing scraper data...', 'info');
+                
+                const url = `/api/v1/scraper/analyze?auto_import=${autoImport}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Analysis failed');
+                }
+                
+                const result = await response.json();
+                
+                document.getElementById('scraper-stats').style.display = 'block';
+                document.getElementById('scraper-total').textContent = result.total_posts;
+                document.getElementById('scraper-valid').textContent = result.valid_opportunities;
+                document.getElementById('scraper-imported').textContent = result.imported;
+                document.getElementById('scraper-skipped').textContent = result.skipped;
+                
+                if (result.opportunities && result.opportunities.length > 0) {
+                    document.getElementById('scraper-results').style.display = 'block';
+                    const tbody = document.getElementById('scraper-table-body');
+                    tbody.innerHTML = result.opportunities.map(opp => `
+                        <tr>
+                            <td><span class="badge ${opp.confidence_score >= 0.9 ? 'badge-pro' : opp.confidence_score >= 0.8 ? 'badge-plus' : 'badge-free'}">${opp.confidence_score.toFixed(2)}</span></td>
+                            <td>${escapeHtml(opp.title.substring(0, 80))}${opp.title.length > 80 ? '...' : ''}</td>
+                            <td>${escapeHtml(opp.category)}</td>
+                            <td>r/${escapeHtml(opp.subreddit || 'unknown')}</td>
+                            <td>${opp.upvotes}</td>
+                        </tr>
+                    `).join('');
+                }
+                
+                if (autoImport && result.imported > 0) {
+                    showToast(`Imported ${result.imported} opportunities!`, 'success');
+                } else {
+                    showToast(`Found ${result.valid_opportunities} valid opportunities`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('Scraper analysis error:', error);
+                showToast(error.message || 'Failed to analyze data', 'error');
+            }
         }
 
         function logout() {
