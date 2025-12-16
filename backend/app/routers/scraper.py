@@ -3,17 +3,18 @@ Scraper Data Processing API
 Upload and analyze Reddit scraper data to extract business opportunities
 """
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 import json
 import os
 
-from app.db.database import get_db
+from app.db.database import get_db, SessionLocal
 from app.models.opportunity import Opportunity
 from app.models.user import User
 from app.core.dependencies import get_current_admin_user
+from app.routers.ai_analysis import analyze_single_opportunity, update_opportunity_with_analysis
 
 router = APIRouter()
 
@@ -74,6 +75,24 @@ class AnalysisResult(BaseModel):
     imported: int
     skipped: int
     opportunities: List[dict]
+    ai_analysis_queued: int = 0
+
+
+def run_ai_analysis_on_opportunities(opportunity_ids: List[int]):
+    """Background task to run AI analysis on imported opportunities"""
+    db = SessionLocal()
+    try:
+        for opp_id in opportunity_ids:
+            opp = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+            if opp and not opp.ai_analyzed:
+                analysis = analyze_single_opportunity(opp)
+                if analysis:
+                    update_opportunity_with_analysis(db, opp, analysis)
+                    print(f"AI analyzed opportunity {opp_id}: score={opp.ai_opportunity_score}")
+    except Exception as e:
+        print(f"AI analysis background error: {e}")
+    finally:
+        db.close()
 
 
 class OpportunityPreview(BaseModel):
@@ -165,6 +184,7 @@ def analyze_post(post: dict) -> Optional[dict]:
 
 @router.post("/analyze", response_model=AnalysisResult)
 async def analyze_scraper_data(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     auto_import: bool = False,
     db: Session = Depends(get_db),
@@ -196,6 +216,7 @@ async def analyze_scraper_data(
     
     imported = 0
     skipped = 0
+    imported_ids = []
     
     if auto_import:
         demo_user = db.query(User).filter(User.email == "demo@example.com").first()
@@ -229,16 +250,22 @@ async def analyze_scraper_data(
                 source_url=opp.get("source_url", ""),
             )
             db.add(new_opp)
+            db.flush()
+            imported_ids.append(new_opp.id)
             imported += 1
         
         db.commit()
+        
+        if imported_ids:
+            background_tasks.add_task(run_ai_analysis_on_opportunities, imported_ids)
     
     return AnalysisResult(
         total_posts=len(data),
         valid_opportunities=len(opportunities),
         imported=imported,
         skipped=skipped,
-        opportunities=opportunities[:50]
+        opportunities=opportunities[:50],
+        ai_analysis_queued=len(imported_ids)
     )
 
 
