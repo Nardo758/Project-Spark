@@ -214,7 +214,7 @@ class EmailService:
                 <p>If you didn't create an account with OppGrid, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-                <p>© 2024 OppGrid. All rights reserved.</p>
+                <p>© 2025 OppGrid. All rights reserved.</p>
                 <p>This is an automated message, please do not reply.</p>
             </div>
         </body>
@@ -232,7 +232,7 @@ class EmailService:
 
         If you didn't create an account with OppGrid, you can safely ignore this email.
 
-        © 2024 OppGrid
+        © 2025 OppGrid
         """
 
         return self.send_email(
@@ -345,7 +345,7 @@ class EmailService:
                 </div>
             </div>
             <div class="footer">
-                <p>© 2024 OppGrid. All rights reserved.</p>
+                <p>© 2025 OppGrid. All rights reserved.</p>
                 <p>This is an automated message, please do not reply.</p>
             </div>
         </body>
@@ -365,7 +365,7 @@ class EmailService:
 
         If you didn't request a password reset, please ignore this email or contact support if you have concerns about your account security.
 
-        © 2024 OppGrid
+        © 2025 OppGrid
         """
 
         return self.send_email(
@@ -482,7 +482,7 @@ class EmailService:
                 </p>
             </div>
             <div class="footer">
-                <p>© 2024 OppGrid. All rights reserved.</p>
+                <p>© 2025 OppGrid. All rights reserved.</p>
                 <p>This is an automated message, please do not reply.</p>
             </div>
         </body>
@@ -501,7 +501,7 @@ class EmailService:
 
         You can manage your notification preferences in your account settings.
 
-        © 2024 OppGrid
+        © 2025 OppGrid
         """
 
         return self.send_email(
