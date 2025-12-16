@@ -63,6 +63,11 @@ class Opportunity(Base):
     ai_competitive_advantages = Column(Text, nullable=True)  # JSON array of advantages
     ai_key_risks = Column(Text, nullable=True)  # JSON array of risks
     ai_next_steps = Column(Text, nullable=True)  # JSON array of recommended actions
+    ai_generated_title = Column(String(500), nullable=True)  # AI-refined idea title
+    ai_problem_statement = Column(Text, nullable=True)  # AI-generated problem statement
+    
+    # Raw source data (for user verification)
+    raw_source_data = Column(Text, nullable=True)  # JSON of original scraped content
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

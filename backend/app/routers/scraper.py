@@ -9,6 +9,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 import json
 import os
+from datetime import datetime
 
 from app.db.database import get_db, SessionLocal
 from app.models.opportunity import Opportunity
@@ -248,6 +249,17 @@ async def analyze_scraper_data(
                 completion_status="open",
                 status="active",
                 source_url=opp.get("source_url", ""),
+                source_platform="reddit",
+                raw_source_data=json.dumps({
+                    "original_title": opp.get("title", ""),
+                    "original_body": opp.get("description", ""),
+                    "subreddit": opp.get("subreddit", ""),
+                    "upvotes": opp.get("upvotes", 0),
+                    "comments": opp.get("comments", 0),
+                    "source_url": opp.get("source_url", ""),
+                    "confidence_score": opp.get("confidence_score", 0),
+                    "import_date": datetime.utcnow().isoformat()
+                }),
             )
             db.add(new_opp)
             db.flush()
@@ -285,4 +297,34 @@ async def get_scraper_stats(
         "reddit_imported": reddit_opps,
         "total_opportunities": total_opps,
         "reddit_percentage": round(reddit_opps / total_opps * 100, 1) if total_opps > 0 else 0
+    }
+
+
+@router.get("/source-data/{opportunity_id}")
+async def get_source_data(
+    opportunity_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get the raw source data for an opportunity (for user verification)"""
+    opp = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    if not opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    raw_data = None
+    if opp.raw_source_data:
+        try:
+            raw_data = json.loads(opp.raw_source_data)
+        except:
+            raw_data = {"raw": opp.raw_source_data}
+    
+    return {
+        "opportunity_id": opp.id,
+        "has_source_data": opp.raw_source_data is not None,
+        "source_platform": opp.source_platform,
+        "source_url": opp.source_url,
+        "raw_data": raw_data,
+        "ai_generated_title": opp.ai_generated_title,
+        "ai_problem_statement": opp.ai_problem_statement,
+        "original_title": opp.title,
+        "original_description": opp.description[:500] if opp.description else None
     }

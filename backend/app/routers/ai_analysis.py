@@ -42,12 +42,17 @@ class BatchAnalysisResponse(BaseModel):
     failed: int
     results: List[AnalysisResult]
 
-ANALYSIS_SYSTEM_PROMPT = """You are a market research analyst for Katalyst, a platform that identifies business opportunities from real consumer pain points.
+ANALYSIS_SYSTEM_PROMPT = """You are a market research analyst for OppGrid, a platform that identifies business opportunities from real consumer pain points.
 
-Analyze the given problem/opportunity and provide a structured assessment. Be specific and data-driven in your estimates.
+Analyze the given raw data and provide a structured assessment. Your job is to:
+1. Define a clear, compelling IDEA title (what solution could address this pain)
+2. Write a professional PROBLEM STATEMENT describing the core issue
+3. Provide market analysis and scoring
 
 Respond in valid JSON format only with the following structure:
 {
+    "idea_title": "<clear, compelling idea name, max 80 chars - describe the solution concept>",
+    "problem_statement": "<2-3 sentence professional problem statement explaining the pain point and why it matters>",
     "opportunity_score": <int 0-100, higher = better opportunity>,
     "summary": "<one line, max 100 chars, compelling insight for the opportunity>",
     "market_size_estimate": "<range like $50M-$200M, $1B-$5B based on the problem scope>",
@@ -123,6 +128,19 @@ def update_opportunity_with_analysis(db: Session, opp: Opportunity, analysis: di
     opp.ai_competitive_advantages = json.dumps(analysis.get("competitive_advantages", []))
     opp.ai_key_risks = json.dumps(analysis.get("key_risks", []))
     opp.ai_next_steps = json.dumps(analysis.get("next_steps", []))
+    
+    # AI-generated idea title and problem statement
+    if analysis.get("idea_title"):
+        opp.ai_generated_title = analysis.get("idea_title", "")[:500]
+        # Update main title if it looks like raw scraper data
+        if opp.title and len(opp.title) > 100:
+            opp.title = opp.ai_generated_title
+    
+    if analysis.get("problem_statement"):
+        opp.ai_problem_statement = analysis.get("problem_statement", "")
+        # Update description with the refined problem statement
+        if opp.description:
+            opp.description = opp.ai_problem_statement
     
     if opp.ai_opportunity_score and not opp.market_size:
         opp.market_size = analysis.get("market_size_estimate", "")

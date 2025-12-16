@@ -2862,6 +2862,51 @@
                 </div>
             </div>
 
+            <!-- Source Data Section -->
+            <div class="content-card fade-in-up" id="source-data-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h2 style="margin-bottom: 0;">Supporting Data</h2>
+                    <button class="btn" onclick="toggleSourceData()" id="toggle-source-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View Raw Data
+                    </button>
+                </div>
+                <p style="color: var(--stone-500); font-size: 14px; margin-bottom: 16px;">
+                    View the original source data used to generate this opportunity analysis.
+                </p>
+                <div id="source-data-content" style="display: none;">
+                    <div style="background: var(--stone-100); border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">SOURCE PLATFORM</div>
+                        <div id="source-platform-display" style="font-weight: 500;">--</div>
+                    </div>
+                    <div style="background: var(--stone-100); border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--stone-500); margin-bottom: 8px;">ORIGINAL POST</div>
+                        <div id="source-original-title" style="font-weight: 500; margin-bottom: 8px;">--</div>
+                        <div id="source-original-body" style="color: var(--stone-600); font-size: 14px; line-height: 1.6;">--</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                        <div style="background: var(--stone-100); border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--stone-500);">UPVOTES</div>
+                            <div id="source-upvotes" style="font-size: 18px; font-weight: 600;">--</div>
+                        </div>
+                        <div style="background: var(--stone-100); border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--stone-500);">COMMENTS</div>
+                            <div id="source-comments" style="font-size: 18px; font-weight: 600;">--</div>
+                        </div>
+                        <div style="background: var(--stone-100); border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--stone-500);">CONFIDENCE</div>
+                            <div id="source-confidence" style="font-size: 18px; font-weight: 600;">--</div>
+                        </div>
+                    </div>
+                    <a id="source-url-link" href="#" target="_blank" style="display: inline-block; margin-top: 16px; color: var(--violet-600); font-size: 14px; text-decoration: none;">
+                        View Original Post →
+                    </a>
+                </div>
+            </div>
+
             <!-- Geographic Market Selector (Tier 1 Feature) -->
             <div class="geo-section fade-in-up stagger-4" id="geo-selector">
                 <h2>
@@ -4304,6 +4349,9 @@
                 // Populate metrics cards from API data
                 populateMetrics(opp);
                 
+                // Load source data if available
+                loadSourceData(opp.id);
+                
                 // Update page with AI insights if available
                 updatePageWithAIInsights(opp);
                 
@@ -4420,6 +4468,76 @@
 
         function updatePageWithAIInsights(opp) {
             // AI insights now displayed in the metrics cards, no separate banner needed
+        }
+
+        let sourceDataLoaded = false;
+        let sourceDataVisible = false;
+
+        async function loadSourceData(opportunityId) {
+            try {
+                const response = await fetch(`/api/v1/scraper/source-data/${opportunityId}`);
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                
+                if (data.has_source_data && data.raw_data) {
+                    document.getElementById('source-data-section').style.display = 'block';
+                    
+                    document.getElementById('source-platform-display').textContent = 
+                        (data.source_platform || 'Unknown').charAt(0).toUpperCase() + 
+                        (data.source_platform || 'unknown').slice(1);
+                    
+                    document.getElementById('source-original-title').textContent = 
+                        data.raw_data.original_title || 'No title';
+                    document.getElementById('source-original-body').textContent = 
+                        data.raw_data.original_body || 'No content';
+                    
+                    document.getElementById('source-upvotes').textContent = 
+                        data.raw_data.upvotes || 0;
+                    document.getElementById('source-comments').textContent = 
+                        data.raw_data.comments || 0;
+                    document.getElementById('source-confidence').textContent = 
+                        ((data.raw_data.confidence_score || 0) * 100).toFixed(0) + '%';
+                    
+                    const urlLink = document.getElementById('source-url-link');
+                    if (data.source_url) {
+                        urlLink.href = data.source_url;
+                        urlLink.style.display = 'inline-block';
+                    } else {
+                        urlLink.style.display = 'none';
+                    }
+                    
+                    sourceDataLoaded = true;
+                }
+            } catch (error) {
+                console.log('Could not load source data');
+            }
+        }
+
+        function toggleSourceData() {
+            const content = document.getElementById('source-data-content');
+            const btn = document.getElementById('toggle-source-btn');
+            sourceDataVisible = !sourceDataVisible;
+            
+            if (sourceDataVisible) {
+                content.style.display = 'block';
+                btn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                    Hide Raw Data
+                `;
+            } else {
+                content.style.display = 'none';
+                btn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    View Raw Data
+                `;
+            }
         }
 
         function populatePainPoints(opp) {
