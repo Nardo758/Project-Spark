@@ -1865,7 +1865,66 @@
             } else {
                 showLoggedOutUI();
             }
+            
+            loadDynamicContent();
         });
+
+        async function loadDynamicContent() {
+            try {
+                const [topOppsResponse, statsResponse] = await Promise.all([
+                    fetch('/api/v1/ai-analysis/top-opportunities?limit=1'),
+                    fetch('/api/v1/ai-analysis/stats')
+                ]);
+
+                if (topOppsResponse.ok) {
+                    const topOpps = await topOppsResponse.json();
+                    if (topOpps.length > 0) {
+                        updateHeroCard(topOpps[0]);
+                    }
+                }
+
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    updateStats(stats);
+                }
+            } catch (error) {
+                console.log('Using fallback static content');
+            }
+        }
+
+        function updateHeroCard(opp) {
+            const titleEl = document.querySelector('.hero-card-title');
+            const subtitleEl = document.querySelector('.hero-card-subtitle');
+            const scoreEl = document.querySelector('.hero-card-score-value');
+            const marketSizeEl = document.querySelector('.hero-card-metric:nth-child(1) .hero-card-metric-value');
+            const submissionsEl = document.querySelector('.hero-card-metric:nth-child(2) .hero-card-metric-value');
+            const btnEl = document.querySelector('.hero-card-btn');
+            const floatSpan = document.querySelector('.hero-float-top span');
+            const clusterTitle = document.querySelector('.value-card-footer span:last-child');
+            const geoExample = document.querySelector('.geo-example h4');
+
+            if (titleEl) titleEl.textContent = opp.title || 'Trending Opportunity';
+            if (subtitleEl) subtitleEl.textContent = opp.ai_summary || opp.category || '';
+            if (scoreEl) scoreEl.textContent = opp.ai_opportunity_score || '--';
+            if (marketSizeEl) marketSizeEl.textContent = opp.ai_market_size_estimate || '--';
+            if (submissionsEl) submissionsEl.textContent = (opp.validation_count || 0).toLocaleString();
+            if (btnEl) btnEl.href = `opportunity.html?id=${opp.id}`;
+            if (floatSpan) floatSpan.textContent = `${(opp.validation_count || 0).toLocaleString()} users want this`;
+            if (clusterTitle) clusterTitle.textContent = opp.title || 'Top Opportunity';
+            if (geoExample) geoExample.textContent = `Example: ${opp.title || 'Market Opportunity'}`;
+        }
+
+        function updateStats(stats) {
+            const validatedEl = document.querySelector('.hero-stat:nth-child(1) .hero-stat-value');
+            const badgeEl = document.querySelector('.hero-badge');
+
+            if (validatedEl && stats.analyzed_opportunities) {
+                validatedEl.textContent = stats.analyzed_opportunities.toLocaleString();
+            }
+            if (badgeEl && stats.analyzed_opportunities) {
+                badgeEl.textContent = `${stats.analyzed_opportunities.toLocaleString()}+ Validated Opportunities`;
+            }
+        }
 
         function openDemoModal() {
             document.getElementById('demo-modal').classList.add('show');
