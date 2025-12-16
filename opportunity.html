@@ -2854,17 +2854,11 @@
             <!-- Pain Points -->
             <div class="content-card fade-in-up stagger-3">
                 <h2>Top Consumer Pain Points</h2>
-                <div class="pain-point slide-in" style="animation-delay: 0.4s; opacity: 0;">
-                    <div class="pain-point-quote">"I never know when something's about to break until it's too late and costs thousands"</div>
-                    <div class="pain-point-severity">Severity: Critical</div>
-                </div>
-                <div class="pain-point slide-in" style="animation-delay: 0.5s; opacity: 0;">
-                    <div class="pain-point-quote">"Finding reliable contractors is a nightmare - I've been burned too many times"</div>
-                    <div class="pain-point-severity">Severity: High</div>
-                </div>
-                <div class="pain-point slide-in" style="animation-delay: 0.6s; opacity: 0;">
-                    <div class="pain-point-quote">"I have no idea what maintenance my home actually needs or when"</div>
-                    <div class="pain-point-severity">Severity: High</div>
+                <div id="pain-points-container">
+                    <div class="pain-point slide-in" style="animation-delay: 0.4s;">
+                        <div class="pain-point-quote">Loading pain points...</div>
+                        <div class="pain-point-severity">Severity: --</div>
+                    </div>
                 </div>
             </div>
 
@@ -2911,26 +2905,11 @@
             </div>
 
             <!-- Related Opportunities -->
-            <div class="content-card fade-in-up" style="animation-delay: 0.5s; opacity: 0;">
+            <div class="content-card fade-in-up" style="animation-delay: 0.5s;">
                 <h2>Related Opportunities</h2>
-                <ul class="related-list">
+                <ul class="related-list" id="related-opportunities-list">
                     <li class="related-item">
-                        <span>Home Warranty Alternatives</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </li>
-                    <li class="related-item">
-                        <span>Preventive HVAC Monitoring</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </li>
-                    <li class="related-item">
-                        <span>Property Management for Owners</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
+                        <span>Loading related opportunities...</span>
                     </li>
                 </ul>
             </div>
@@ -4325,6 +4304,12 @@
                 // Update page with AI insights if available
                 updatePageWithAIInsights(opp);
                 
+                // Populate pain points from description
+                populatePainPoints(opp);
+                
+                // Load related opportunities
+                loadRelatedOpportunities(opp.category, opp.id);
+                
                 // Apply subscription-based gating
                 applySubscriptionGating();
                 
@@ -4391,6 +4376,68 @@
                     `;
                     headerContent.appendChild(aiInsightDiv);
                 }
+            }
+        }
+
+        function populatePainPoints(opp) {
+            const container = document.getElementById('pain-points-container');
+            if (!container) return;
+            
+            const painPoints = extractPainPoints(opp.description);
+            const severities = ['Critical', 'High', 'High', 'Medium'];
+            
+            container.innerHTML = painPoints.map((point, index) => `
+                <div class="pain-point slide-in" style="animation-delay: ${0.4 + index * 0.1}s;">
+                    <div class="pain-point-quote">"${point}"</div>
+                    <div class="pain-point-severity">Severity: ${severities[index] || 'Medium'}</div>
+                </div>
+            `).join('');
+        }
+
+        function extractPainPoints(description) {
+            if (!description) return ['No pain points available'];
+            
+            const sentences = description.split(/[.!?]+/).filter(s => s.trim().length > 10);
+            const painPhrases = sentences.filter(s => 
+                /struggle|difficult|hard|frustrat|problem|issue|pain|lack|unable|can't|cannot|wish|need|want/i.test(s)
+            );
+            
+            if (painPhrases.length >= 2) {
+                return painPhrases.slice(0, 4).map(s => s.trim());
+            }
+            
+            return sentences.slice(0, 3).map(s => s.trim());
+        }
+
+        async function loadRelatedOpportunities(category, currentId) {
+            const container = document.getElementById('related-opportunities-list');
+            if (!container) return;
+            
+            try {
+                const response = await fetch(`/api/v1/opportunities?category=${encodeURIComponent(category)}&limit=5`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                const related = (data.opportunities || data).filter(o => o.id !== currentId).slice(0, 3);
+                
+                if (related.length === 0) {
+                    container.innerHTML = '<li class="related-item"><span>No related opportunities found</span></li>';
+                    return;
+                }
+                
+                container.innerHTML = related.map(opp => `
+                    <li class="related-item">
+                        <a href="opportunity.html?id=${opp.id}" style="display: flex; justify-content: space-between; align-items: center; width: 100%; text-decoration: none; color: inherit;">
+                            <span>${opp.title}</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </a>
+                    </li>
+                `).join('');
+            } catch (error) {
+                console.log('Could not load related opportunities');
+                container.innerHTML = '<li class="related-item"><span>Related opportunities unavailable</span></li>';
             }
         }
 
