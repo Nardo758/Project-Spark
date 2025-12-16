@@ -3961,7 +3961,7 @@
             </div>
             <p style="color: var(--stone-600); margin-bottom: 16px;">Anyone with this link can view this analysis.</p>
             <div class="share-link-input">
-                <input type="text" id="share-link" readonly value="https://katalyst.app/share/abc123xyz">
+                <input type="text" id="share-link" readonly value="https://oppgrid.com/share/abc123xyz">
                 <button class="btn btn-primary" id="copy-share-link">Copy</button>
             </div>
             <div class="share-options">
@@ -4291,7 +4291,7 @@
                 
                 document.getElementById('opportunity-id').textContent = `IDEA #${opp.id}`;
                 document.getElementById('opportunity-title').textContent = opp.title;
-                document.title = `${opp.title} · Katalyst`;
+                document.title = `${opp.title} · OppGrid`;
                 
                 // Use AI score if available, otherwise calculate
                 const score = opp.ai_opportunity_score || Math.min(100, Math.round(50 + (opp.validation_count / 10) + (opp.growth_rate || 0)));
@@ -4790,7 +4790,7 @@
             document.getElementById('console-thinking')?.remove();
         }
 
-        let bookmarkedMessages = JSON.parse(localStorage.getItem('katalyst_bookmarks') || '[]');
+        let bookmarkedMessages = JSON.parse(localStorage.getItem('oppgrid_bookmarks') || '[]');
 
         function renderConsoleMessages() {
             const messagesEl = document.getElementById('console-messages');
@@ -4861,7 +4861,7 @@
                     } else {
                         bookmarkedMessages.push(idx);
                     }
-                    localStorage.setItem('katalyst_bookmarks', JSON.stringify(bookmarkedMessages));
+                    localStorage.setItem('oppgrid_bookmarks', JSON.stringify(bookmarkedMessages));
                     renderConsoleMessages();
                 });
             });
@@ -4898,9 +4898,9 @@
             
             // Persist to localStorage
             try {
-                const saved = JSON.parse(localStorage.getItem('katalyst_saved_threads') || '[]');
+                const saved = JSON.parse(localStorage.getItem('oppgrid_saved_threads') || '[]');
                 saved.push(thread);
-                localStorage.setItem('katalyst_saved_threads', JSON.stringify(saved));
+                localStorage.setItem('oppgrid_saved_threads', JSON.stringify(saved));
             } catch (e) {
                 console.log('Could not save to localStorage:', e);
             }
@@ -4912,7 +4912,7 @@
         
         function loadSavedThreads() {
             try {
-                const saved = JSON.parse(localStorage.getItem('katalyst_saved_threads') || '[]');
+                const saved = JSON.parse(localStorage.getItem('oppgrid_saved_threads') || '[]');
                 deepDiveState.savedThreads = saved;
             } catch (e) {
                 console.log('Could not load saved threads:', e);
@@ -4940,7 +4940,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `katalyst-analysis-${Date.now()}.json`;
+                a.download = `oppgrid-analysis-${Date.now()}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
             } else if (format === 'markdown') {
@@ -4959,7 +4959,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `katalyst-analysis-${Date.now()}.md`;
+                a.download = `oppgrid-analysis-${Date.now()}.md`;
                 a.click();
                 URL.revokeObjectURL(url);
             } else if (format === 'text') {
@@ -4977,7 +4977,7 @@
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `katalyst-analysis-${Date.now()}.txt`;
+                a.download = `oppgrid-analysis-${Date.now()}.txt`;
                 a.click();
                 URL.revokeObjectURL(url);
             }
@@ -4993,7 +4993,7 @@
             const lightIcon = document.getElementById('theme-icon-light');
             const darkIcon = document.getElementById('theme-icon-dark');
             
-            const savedTheme = localStorage.getItem('katalyst_theme') || 'light';
+            const savedTheme = localStorage.getItem('oppgrid_theme') || 'light';
             if (savedTheme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
                 lightIcon.style.display = 'none';
@@ -5006,12 +5006,12 @@
                     document.documentElement.removeAttribute('data-theme');
                     lightIcon.style.display = 'block';
                     darkIcon.style.display = 'none';
-                    localStorage.setItem('katalyst_theme', 'light');
+                    localStorage.setItem('oppgrid_theme', 'light');
                 } else {
                     document.documentElement.setAttribute('data-theme', 'dark');
                     lightIcon.style.display = 'none';
                     darkIcon.style.display = 'block';
-                    localStorage.setItem('katalyst_theme', 'dark');
+                    localStorage.setItem('oppgrid_theme', 'dark');
                 }
             });
         }
@@ -5113,13 +5113,13 @@
         function deleteThread(threadId) {
             if (!confirm('Delete this saved thread?')) return;
             deepDiveState.savedThreads = deepDiveState.savedThreads.filter(t => t.id !== threadId);
-            localStorage.setItem('katalyst_saved_threads', JSON.stringify(deepDiveState.savedThreads));
+            localStorage.setItem('oppgrid_saved_threads', JSON.stringify(deepDiveState.savedThreads));
             renderSavedThreadsList();
         }
 
         // Project Panel
         let selectedProjectId = null;
-        let userProjects = JSON.parse(localStorage.getItem('katalyst_projects') || '[]');
+        let userProjects = JSON.parse(localStorage.getItem('oppgrid_projects') || '[]');
         
         function initProjectPanel() {
             const btn = document.getElementById('project-btn');
@@ -5163,7 +5163,7 @@
                     ideas: []
                 };
                 userProjects.push(project);
-                localStorage.setItem('katalyst_projects', JSON.stringify(userProjects));
+                localStorage.setItem('oppgrid_projects', JSON.stringify(userProjects));
                 document.getElementById('new-project-name').value = '';
                 document.getElementById('new-project-description').value = '';
                 document.querySelector('[data-tab="existing"]').click();
@@ -5185,7 +5185,7 @@
                         savedAt: new Date().toISOString(),
                         opportunityId: currentOpportunityId
                     });
-                    localStorage.setItem('katalyst_projects', JSON.stringify(userProjects));
+                    localStorage.setItem('oppgrid_projects', JSON.stringify(userProjects));
                     alert(`Saved to "${project.name}"!`);
                     closePanels();
                 }
@@ -5222,7 +5222,7 @@
             
             btn?.addEventListener('click', () => {
                 const shareId = Math.random().toString(36).substring(2, 15);
-                document.getElementById('share-link').value = `https://katalyst.app/share/${shareId}`;
+                document.getElementById('share-link').value = `https://oppgrid.com/share/${shareId}`;
                 modal.classList.add('active');
             });
             
@@ -5243,9 +5243,9 @@
         // Celebration Animation
         function checkCelebration() {
             const completed = Object.values(deepDiveState.categoryCompletion).filter(c => c.completed).length;
-            if (completed === 9 && !localStorage.getItem('katalyst_celebrated')) {
+            if (completed === 9 && !localStorage.getItem('oppgrid_celebrated')) {
                 document.getElementById('celebration-overlay').classList.add('active');
-                localStorage.setItem('katalyst_celebrated', 'true');
+                localStorage.setItem('oppgrid_celebrated', 'true');
             }
         }
         
