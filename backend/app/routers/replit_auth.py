@@ -152,8 +152,13 @@ async def replit_login(request: Request, redirect_url: Optional[str] = None):
         'scope': 'openid profile email offline_access',
         'state': state,
         'code_challenge': code_challenge,
-        'code_challenge_method': 'S256'
+        'code_challenge_method': 'S256',
+        'prompt': 'login consent'
     }
+    
+    print(f"[Replit Auth] Redirecting to: {ISSUER_URL}/auth")
+    print(f"[Replit Auth] Callback URL: {callback_url}")
+    print(f"[Replit Auth] Client ID: {REPL_ID}")
     
     auth_url = f"{ISSUER_URL}/auth?{urlencode(params)}"
     return RedirectResponse(url=auth_url)
