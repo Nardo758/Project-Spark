@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
 from app.models.opportunity import Opportunity
 
@@ -58,29 +59,42 @@ Respond in valid JSON format only with the following structure:
 
 def generate_raw_source_data(opp: Opportunity) -> dict:
     """Generate raw_source_data from existing opportunity fields"""
+    title: str = getattr(opp, 'title', None) or ""
+    description: str = getattr(opp, 'description', None) or ""
+    category: str = getattr(opp, 'category', None) or ""
+    validation_count: int = getattr(opp, 'validation_count', None) or 0
+    created_at = getattr(opp, 'created_at', None)
+    source_url: str = getattr(opp, 'source_url', None) or ""
+    source_platform: str = getattr(opp, 'source_platform', None) or "reddit"
+    
     return {
-        "original_title": opp.title or "",
-        "original_body": opp.description or "",
-        "subreddit": f"r/{opp.category.lower().replace(' ', '_').replace('&', 'and')}" if opp.category else "r/business",
-        "upvotes": opp.validation_count or 0,
-        "comments": max(1, (opp.validation_count or 0) // 3),
+        "original_title": title,
+        "original_body": description,
+        "subreddit": f"r/{category.lower().replace(' ', '_').replace('&', 'and')}" if category else "r/business",
+        "upvotes": validation_count,
+        "comments": max(1, validation_count // 3),
         "author": "reddit_user",
-        "created_utc": opp.created_at.timestamp() if opp.created_at else datetime.now().timestamp(),
-        "url": opp.source_url or "",
-        "platform": opp.source_platform or "reddit",
+        "created_utc": created_at.timestamp() if created_at is not None else datetime.now().timestamp(),
+        "url": source_url,
+        "platform": source_platform,
         "confidence_score": 0.85
     }
 
 def analyze_opportunity(opp: Opportunity) -> dict | None:
     """Call Anthropic API to analyze opportunity"""
+    title: str = getattr(opp, 'title', None) or ""
+    description: str = getattr(opp, 'description', None) or ""
+    category: str = getattr(opp, 'category', None) or ""
+    subcategory: str = getattr(opp, 'subcategory', None) or "N/A"
+    
     prompt = f"""Analyze this opportunity:
 
-TITLE: {opp.title}
+TITLE: {title}
 
-DESCRIPTION: {opp.description[:2000] if opp.description else 'No description'}
+DESCRIPTION: {description[:2000] if description else 'No description'}
 
-CATEGORY: {opp.category}
-SUBCATEGORY/SOURCE: {opp.subcategory or 'N/A'}
+CATEGORY: {category}
+SUBCATEGORY/SOURCE: {subcategory}
 VALIDATION COUNT (upvotes): {opp.validation_count}
 SEVERITY RATING: {opp.severity}/5
 GEOGRAPHIC SCOPE: {opp.geographic_scope}
@@ -95,7 +109,14 @@ Provide your structured JSON analysis."""
             messages=[{"role": "user", "content": prompt}]
         )
         
-        response_text = response.content[0].text
+        text_parts = []
+        for block in response.content:
+            if isinstance(block, TextBlock):
+                text_parts.append(block.text)
+        if not text_parts:
+            print("  Warning: No text content in API response")
+            return None
+        response_text = "".join(text_parts)
         start_idx = response_text.find('{')
         end_idx = response_text.rfind('}') + 1
         if start_idx != -1 and end_idx > start_idx:
@@ -108,8 +129,8 @@ Provide your structured JSON analysis."""
 
 def update_opportunity(db, opp: Opportunity, analysis: dict):
     """Update opportunity with analysis results"""
-    opp.ai_analyzed = True
-    opp.ai_analyzed_at = datetime.utcnow()
+    opp.ai_analyzed = True  # type: ignore[assignment]
+    opp.ai_analyzed_at = datetime.utcnow()  # type: ignore[assignment]
     opp.ai_opportunity_score = analysis.get("opportunity_score", 50)
     opp.ai_summary = analysis.get("summary", "")[:500]
     opp.ai_market_size_estimate = analysis.get("market_size_estimate", "Unknown")
@@ -117,10 +138,10 @@ def update_opportunity(db, opp: Opportunity, analysis: dict):
     opp.ai_urgency_level = analysis.get("urgency_level", "medium")
     opp.ai_target_audience = analysis.get("target_audience", "")[:255]
     opp.ai_pain_intensity = analysis.get("pain_intensity", 5)
-    opp.ai_business_model_suggestions = json.dumps(analysis.get("business_model_suggestions", []))
-    opp.ai_competitive_advantages = json.dumps(analysis.get("competitive_advantages", []))
-    opp.ai_key_risks = json.dumps(analysis.get("key_risks", []))
-    opp.ai_next_steps = json.dumps(analysis.get("next_steps", []))
+    opp.ai_business_model_suggestions = json.dumps(analysis.get("business_model_suggestions", []))  # type: ignore[assignment]
+    opp.ai_competitive_advantages = json.dumps(analysis.get("competitive_advantages", []))  # type: ignore[assignment]
+    opp.ai_key_risks = json.dumps(analysis.get("key_risks", []))  # type: ignore[assignment]
+    opp.ai_next_steps = json.dumps(analysis.get("next_steps", []))  # type: ignore[assignment]
     
     if analysis.get("idea_title"):
         opp.ai_generated_title = analysis.get("idea_title", "")[:500]
@@ -128,7 +149,8 @@ def update_opportunity(db, opp: Opportunity, analysis: dict):
     if analysis.get("problem_statement"):
         opp.ai_problem_statement = analysis.get("problem_statement", "")
     
-    if not opp.market_size and analysis.get("market_size_estimate"):
+    market_size: str = getattr(opp, 'market_size', None) or ""
+    if not market_size and analysis.get("market_size_estimate"):
         opp.market_size = analysis.get("market_size_estimate", "")
     
     db.commit()
@@ -136,12 +158,15 @@ def update_opportunity(db, opp: Opportunity, analysis: dict):
 def backfill_opportunity(db, opp: Opportunity) -> bool:
     """Backfill a single opportunity with AI content"""
     try:
-        if not opp.raw_source_data:
+        raw_source_data = getattr(opp, 'raw_source_data', None)
+        if not raw_source_data:
             raw_data = generate_raw_source_data(opp)
-            opp.raw_source_data = json.dumps(raw_data)
+            opp.raw_source_data = json.dumps(raw_data)  # type: ignore[assignment]
             db.commit()
         
-        if not opp.ai_generated_title or not opp.ai_problem_statement:
+        ai_generated_title = getattr(opp, 'ai_generated_title', None)
+        ai_problem_statement = getattr(opp, 'ai_problem_statement', None)
+        if not ai_generated_title or not ai_problem_statement:
             analysis = analyze_opportunity(opp)
             
             if analysis:
@@ -168,8 +193,8 @@ def main():
     
     print(f"\nFound {total} opportunities to process")
     
-    needs_raw_data = sum(1 for o in opportunities if not o.raw_source_data)
-    needs_ai = sum(1 for o in opportunities if not o.ai_generated_title or not o.ai_problem_statement)
+    needs_raw_data = sum(1 for o in opportunities if not getattr(o, 'raw_source_data', None))
+    needs_ai = sum(1 for o in opportunities if not getattr(o, 'ai_generated_title', None) or not getattr(o, 'ai_problem_statement', None))
     
     print(f"  - Need raw_source_data: {needs_raw_data}")
     print(f"  - Need AI content: {needs_ai}")
@@ -180,9 +205,10 @@ def main():
     skipped_count = 0
     
     for i, opp in enumerate(opportunities, 1):
-        needs_update = (not opp.raw_source_data or 
-                       not opp.ai_generated_title or 
-                       not opp.ai_problem_statement)
+        raw_data = getattr(opp, 'raw_source_data', None)
+        ai_title = getattr(opp, 'ai_generated_title', None)
+        ai_problem = getattr(opp, 'ai_problem_statement', None)
+        needs_update = (not raw_data or not ai_title or not ai_problem)
         
         if not needs_update:
             skipped_count += 1

@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
@@ -52,7 +53,14 @@ def analyze_and_update(db, opp_id, title, description, category):
             messages=[{"role": "user", "content": prompt}]
         )
         
-        response_text = response.content[0].text
+        text_parts = []
+        for block in response.content:
+            if isinstance(block, TextBlock):
+                text_parts.append(block.text)
+        if not text_parts:
+            print(f"Warning: No text content in API response for {opp_id}")
+            return False
+        response_text = "".join(text_parts)
         start = response_text.find('{')
         end = response_text.rfind('}') + 1
         if start != -1 and end > start:
