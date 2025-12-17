@@ -1314,8 +1314,70 @@
                 filterByCategory(e.target.value);
             });
             
+            document.getElementById('regionFilter').addEventListener('change', (e) => {
+                filterByRegion(e.target.value);
+            });
+            
+            document.getElementById('sortFilter').addEventListener('change', (e) => {
+                sortOpportunities(e.target.value);
+            });
+            
             document.getElementById('loadMoreBtn').addEventListener('click', loadMore);
         });
+        
+        function filterByRegion(region) {
+            if (region === 'all') {
+                displayOpportunities(allOpportunities.slice(0, PAGE_SIZE));
+                return;
+            }
+            
+            const regionMap = {
+                'us-national': ['usa', 'us', 'united states', 'national'],
+                'global': ['global', 'international', 'online', 'worldwide'],
+                'canada': ['canada', 'ca'],
+                'uk': ['uk', 'united kingdom', 'england'],
+                'australia': ['australia', 'au']
+            };
+            
+            const searchTerms = regionMap[region] || [region];
+            const filtered = allOpportunities.filter(opp => {
+                const oppRegion = (opp.region || opp.country || opp.geographic_scope || '').toLowerCase();
+                return searchTerms.some(term => oppRegion.includes(term));
+            });
+            displayOpportunities(filtered.slice(0, PAGE_SIZE));
+        }
+        
+        function sortOpportunities(sortBy) {
+            let sorted = [...allOpportunities];
+            
+            switch(sortBy) {
+                case 'trending':
+                    sorted.sort((a, b) => (b.growth_rate || 0) - (a.growth_rate || 0));
+                    break;
+                case 'validation':
+                    sorted.sort((a, b) => (b.ai_opportunity_score || b.validation_count || 0) - (a.ai_opportunity_score || a.validation_count || 0));
+                    break;
+                case 'market-size':
+                    sorted.sort((a, b) => {
+                        const getMarketValue = (str) => {
+                            if (!str) return 0;
+                            const match = str.match(/\$(\d+)/);
+                            return match ? parseInt(match[1]) : 0;
+                        };
+                        return getMarketValue(b.ai_market_size_estimate || b.market_size) - getMarketValue(a.ai_market_size_estimate || a.market_size);
+                    });
+                    break;
+                case 'growth':
+                    sorted.sort((a, b) => (b.growth_rate || 0) - (a.growth_rate || 0));
+                    break;
+                case 'submissions':
+                    sorted.sort((a, b) => (b.validation_count || 0) - (a.validation_count || 0));
+                    break;
+            }
+            
+            allOpportunities = sorted;
+            displayOpportunities(sorted.slice(0, PAGE_SIZE));
+        }
     </script>
 </body>
 </html>
