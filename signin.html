@@ -808,13 +808,15 @@
             }
         });
 
-        // Social signin handlers - Show message that social login is being configured
+        // Social signin handlers - Redirect to Replit Auth (supports Google, GitHub, etc.)
         document.getElementById('googleSignin').addEventListener('click', () => {
-            alert('Social login with Google is being configured. Please use email/password login for now.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
+            const redirectUrl = urlParams.get('redirect') || '/discover.html';
+            window.location.href = `${CONFIG.API_BASE_URL}/replit-auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`;
         });
 
         document.getElementById('githubSignin').addEventListener('click', () => {
-            alert('Social login with GitHub is being configured. Please use email/password login for now.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
+            const redirectUrl = urlParams.get('redirect') || '/discover.html';
+            window.location.href = `${CONFIG.API_BASE_URL}/replit-auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`;
         });
 
         // Forgot password handler

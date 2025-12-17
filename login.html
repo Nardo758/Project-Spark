@@ -510,10 +510,10 @@
             }
         });
 
-        // Social login handlers
+        // Social login handlers - Redirect to Replit Auth (supports Google, GitHub, etc.)
         document.querySelectorAll('.btn-social').forEach(btn => {
             btn.addEventListener('click', () => {
-                showError('Social login is being configured. Please use email or magic link login for now.');
+                window.location.href = `${CONFIG.API_BASE_URL}/replit-auth/login?redirect_url=/discover.html`;
             });
         });
 
