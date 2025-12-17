@@ -882,8 +882,16 @@
     <script src="js/api.js"></script>
     <script>
         // Check authentication
-        const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+        let user = {};
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr && userStr !== 'undefined') {
+                user = JSON.parse(userStr);
+            }
+        } catch (e) {
+            console.warn('Failed to parse user data:', e);
+        }
 
         if (!token) {
             window.location.href = 'signin.html';

@@ -710,7 +710,9 @@
                 
                 // Store token and redirect
                 localStorage.setItem('access_token', response.access_token);
-                localStorage.setItem('user', JSON.stringify(response.user));
+                if (response.user) {
+                    localStorage.setItem('user', JSON.stringify(response.user));
+                }
                 api.token = response.access_token;
                 
                 // Check for redirect parameter

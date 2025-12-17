@@ -121,7 +121,14 @@ def login(
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "requires_2fa": False
+        "requires_2fa": False,
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.name,
+            "is_verified": user.is_verified,
+            "is_admin": user.is_admin
+        }
     }
 
 
