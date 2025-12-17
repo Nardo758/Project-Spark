@@ -5,15 +5,20 @@ Uses Replit's OpenID Connect provider for seamless social login
 import os
 import secrets
 import httpx
+import time
+import hashlib
+import base64
+import json
 from datetime import timedelta
 from urllib.parse import urlencode
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from authlib.integrations.starlette_client import OAuth
 from authlib.common.security import generate_token
+import jwt
+from jwt import PyJWKClient
 
 from app.db.database import get_db
 from app.models.user import User
@@ -25,21 +30,81 @@ router = APIRouter()
 # Replit OIDC configuration
 REPL_ID = os.environ.get('REPL_ID', '')
 ISSUER_URL = os.environ.get('ISSUER_URL', 'https://replit.com/oidc')
+JWKS_URL = f"{ISSUER_URL}/.well-known/jwks.json"
 
-# In-memory state storage (for PKCE flow)
-# In production, use Redis or database
-_auth_states = {}
+# State storage with TTL (5 minutes)
+STATE_TTL_SECONDS = 300
+_auth_states: Dict[str, Dict[str, Any]] = {}
+
+# JWKS client for signature verification (cached)
+_jwks_client = None
+
+
+def get_jwks_client():
+    """Get cached JWKS client for token verification"""
+    global _jwks_client
+    if _jwks_client is None:
+        _jwks_client = PyJWKClient(JWKS_URL, cache_keys=True)
+    return _jwks_client
+
+
+def cleanup_expired_states():
+    """Remove expired states from memory"""
+    current_time = time.time()
+    expired_keys = [
+        key for key, value in _auth_states.items()
+        if current_time - value.get('created_at', 0) > STATE_TTL_SECONDS
+    ]
+    for key in expired_keys:
+        _auth_states.pop(key, None)
 
 
 def get_base_url(request: Request) -> str:
     """Get the base URL for OAuth callbacks"""
-    # Check for forwarded headers (behind proxy)
     forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
     forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
     
     if forwarded_host:
         return f"{forwarded_proto}://{forwarded_host}"
     return str(request.base_url).rstrip('/')
+
+
+def verify_id_token(id_token: str) -> Dict[str, Any]:
+    """
+    Verify and decode the ID token from Replit.
+    Validates signature, issuer, audience, and expiry.
+    """
+    try:
+        # Get the signing key from JWKS
+        jwks_client = get_jwks_client()
+        signing_key = jwks_client.get_signing_key_from_jwt(id_token)
+        
+        # Decode and verify the token
+        claims = jwt.decode(
+            id_token,
+            signing_key.key,
+            algorithms=["RS256"],
+            issuer=ISSUER_URL,
+            audience=REPL_ID,
+            options={
+                "verify_signature": True,
+                "verify_exp": True,
+                "verify_iat": True,
+                "verify_iss": True,
+                "verify_aud": True,
+            }
+        )
+        return claims
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token has expired")
+    except jwt.InvalidIssuerError:
+        raise ValueError("Invalid token issuer")
+    except jwt.InvalidAudienceError:
+        raise ValueError("Invalid token audience")
+    except jwt.InvalidSignatureError:
+        raise ValueError("Invalid token signature")
+    except Exception as e:
+        raise ValueError(f"Token validation failed: {str(e)}")
 
 
 @router.get("/login")
@@ -51,10 +116,11 @@ async def replit_login(request: Request, redirect_url: Optional[str] = None):
             detail="Replit Auth not configured - REPL_ID not set"
         )
     
+    # Cleanup expired states
+    cleanup_expired_states()
+    
     # Generate PKCE code verifier and challenge
     code_verifier = generate_token(64)
-    import hashlib
-    import base64
     code_challenge = base64.urlsafe_b64encode(
         hashlib.sha256(code_verifier.encode()).digest()
     ).decode().rstrip('=')
@@ -62,10 +128,11 @@ async def replit_login(request: Request, redirect_url: Optional[str] = None):
     # Generate state for CSRF protection
     state = secrets.token_urlsafe(32)
     
-    # Store state and code verifier
+    # Store state with TTL
     _auth_states[state] = {
         'code_verifier': code_verifier,
-        'redirect_url': redirect_url or '/discover.html'
+        'redirect_url': redirect_url or '/discover.html',
+        'created_at': time.time()
     }
     
     # Build authorization URL
@@ -102,10 +169,15 @@ async def replit_callback(
     if not code or not state:
         return RedirectResponse(url="/signin.html?error=missing_params")
     
-    # Verify state
+    # Cleanup and verify state
+    cleanup_expired_states()
     stored_data = _auth_states.pop(state, None)
     if not stored_data:
         return RedirectResponse(url="/signin.html?error=invalid_state")
+    
+    # Check if state is expired
+    if time.time() - stored_data.get('created_at', 0) > STATE_TTL_SECONDS:
+        return RedirectResponse(url="/signin.html?error=state_expired")
     
     code_verifier = stored_data['code_verifier']
     redirect_url = stored_data['redirect_url']
@@ -131,29 +203,29 @@ async def replit_callback(
             )
             
             if token_response.status_code != 200:
-                return RedirectResponse(url=f"/signin.html?error=token_exchange_failed")
+                print(f"Token exchange failed: {token_response.text}")
+                return RedirectResponse(url="/signin.html?error=token_exchange_failed")
             
             tokens = token_response.json()
     except Exception as e:
         print(f"Token exchange error: {e}")
         return RedirectResponse(url="/signin.html?error=token_exchange_error")
     
-    # Decode ID token to get user info
+    # Get and verify ID token
     id_token = tokens.get('id_token')
     if not id_token:
         return RedirectResponse(url="/signin.html?error=no_id_token")
     
-    # Decode JWT (without verification since it's from Replit)
-    import jwt
+    # Verify ID token signature, issuer, audience, and expiry
     try:
-        user_claims = jwt.decode(id_token, options={"verify_signature": False})
-    except Exception as e:
-        print(f"JWT decode error: {e}")
-        return RedirectResponse(url="/signin.html?error=invalid_token")
+        user_claims = verify_id_token(id_token)
+    except ValueError as e:
+        print(f"Token verification failed: {e}")
+        return RedirectResponse(url="/signin.html?error=token_verification_failed")
     
     # Extract user info
     replit_user_id = user_claims.get('sub')
-    email = user_claims.get('email')
+    email = user_claims.get('email')  # May be None
     first_name = user_claims.get('first_name', '')
     last_name = user_claims.get('last_name', '')
     profile_image = user_claims.get('profile_image_url')
@@ -162,7 +234,7 @@ async def replit_callback(
         return RedirectResponse(url="/signin.html?error=no_user_id")
     
     # Find or create user
-    # First try to find by OAuth ID
+    # First try to find by OAuth ID (stable identifier)
     user = db.query(User).filter(
         User.oauth_provider == 'replit',
         User.oauth_id == replit_user_id
@@ -180,9 +252,13 @@ async def replit_callback(
     
     if not user:
         # Create new user
-        full_name = f"{first_name} {last_name}".strip() or email or f"User_{replit_user_id}"
+        full_name = f"{first_name} {last_name}".strip() or f"User_{replit_user_id}"
+        
+        # Generate a placeholder email if not provided
+        user_email = email if email else f"{replit_user_id}@replit.user"
+        
         user = User(
-            email=email,
+            email=user_email,
             name=full_name,
             oauth_provider='replit',
             oauth_id=replit_user_id,
@@ -195,10 +271,10 @@ async def replit_callback(
     db.commit()
     db.refresh(user)
     
-    # Create JWT token for the app
+    # Create JWT token for the app using user ID (stable identifier)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email},
+        data={"sub": user.email, "user_id": user.id},
         expires_delta=access_token_expires
     )
     
@@ -213,8 +289,6 @@ async def replit_callback(
     }
     
     # Redirect to frontend with token
-    import json
-    import base64
     user_json = base64.urlsafe_b64encode(json.dumps(user_data).encode()).decode()
     
     return RedirectResponse(

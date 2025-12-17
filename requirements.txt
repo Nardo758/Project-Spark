@@ -58,3 +58,4 @@ anthropic
 authlib
 httpx
 itsdangerous
+PyJWT
