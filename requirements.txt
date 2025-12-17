@@ -55,3 +55,6 @@ sqlalchemy
 stripe
 uvicorn
 anthropic
+authlib
+httpx
+itsdangerous

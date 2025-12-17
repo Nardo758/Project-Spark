@@ -727,13 +727,15 @@
             }
         });
 
-        // Social signin handlers
+        // Social signin handlers - Use Replit Auth for OAuth
         document.getElementById('googleSignin').addEventListener('click', () => {
-            alert('Google signin coming soon. Please use email/password for now.');
+            const redirect = urlParams.get('redirect') || 'discover.html';
+            window.location.href = '/api/v1/replit-auth/login?redirect_url=' + encodeURIComponent(redirect);
         });
 
         document.getElementById('githubSignin').addEventListener('click', () => {
-            alert('GitHub signin coming soon. Please use email/password for now.');
+            const redirect = urlParams.get('redirect') || 'discover.html';
+            window.location.href = '/api/v1/replit-auth/login?redirect_url=' + encodeURIComponent(redirect);
         });
 
         // Forgot password handler

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signing in... - OppGrid</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f3ff 0%, #faf5ff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+            padding: 48px;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        h1 {
+            color: #1f2937;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h1>Signing you in...</h1>
+        <p>Please wait while we complete the authentication.</p>
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            const userBase64 = params.get('user');
+            const redirect = params.get('redirect') || '/discover.html';
+            const error = params.get('error');
+
+            // Immediately clear sensitive data from URL for security
+            if (token || userBase64) {
+                window.history.replaceState({}, document.title, '/auth-callback.html');
+            }
+
+            if (error) {
+                document.querySelector('.spinner').style.display = 'none';
+                document.querySelector('h1').textContent = 'Sign in failed';
+                document.querySelector('p').textContent = 'There was a problem signing you in.';
+                const errorEl = document.getElementById('error');
+                errorEl.style.display = 'block';
+                errorEl.textContent = 'Error: ' + error;
+                return;
+            }
+
+            if (token) {
+                // Store the token securely
+                localStorage.setItem('access_token', token);
+                localStorage.setItem('token', token);
+
+                // Store user data if provided
+                if (userBase64) {
+                    try {
+                        const userJson = atob(userBase64);
+                        localStorage.setItem('user', userJson);
+                    } catch (e) {
+                        console.error('Failed to decode user data:', e);
+                    }
+                }
+
+                // Redirect to the intended page
+                window.location.href = redirect;
+            } else {
+                document.querySelector('.spinner').style.display = 'none';
+                document.querySelector('h1').textContent = 'Sign in failed';
+                document.querySelector('p').textContent = 'No authentication token received.';
+            }
+        })();
+    </script>
+</body>
+</html>
