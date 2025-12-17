@@ -404,10 +404,10 @@
             }
         });
 
-        // Social login placeholders
+        // Social login - Use Replit Auth for OAuth
         document.querySelectorAll('.btn-social').forEach(btn => {
             btn.addEventListener('click', () => {
-                alert('Social login not yet implemented. Please use email/password.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
+                window.location.href = '/api/v1/replit-auth/login?redirect_url=' + encodeURIComponent('discover.html');
             });
         });
     </script>
