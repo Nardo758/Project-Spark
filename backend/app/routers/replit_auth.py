@@ -64,25 +64,20 @@ def cleanup_expired_states():
 
 def get_callback_url() -> str:
     """Get the fixed callback URL for OAuth using canonical Replit domain"""
-    # Priority: REPLIT_DOMAINS (comma-separated) > FRONTEND_URL > REPLIT_DEV_DOMAIN
+    # Standard Replit Auth callback path
+    callback_path = "/__repl_auth_callback"
+    
+    # Priority: FRONTEND_URL (.repl.co) > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN
+    frontend_url = os.environ.get('FRONTEND_URL', '')
+    if frontend_url and '.repl.co' in frontend_url:
+        return f"https://{frontend_url}{callback_path}"
+    
     replit_domains = os.environ.get('REPLIT_DOMAINS', '')
     if replit_domains:
-        # Use first domain from comma-separated list
         primary_domain = replit_domains.split(',')[0].strip()
-        # Check if it's not a spock/dev domain - prefer .repl.co
-        if '.repl.co' not in primary_domain:
-            # Try FRONTEND_URL which often has the canonical .repl.co domain
-            frontend_url = os.environ.get('FRONTEND_URL', '')
-            if frontend_url and '.repl.co' in frontend_url:
-                return f"https://{frontend_url}/api/v1/replit-auth/callback"
-        return f"https://{primary_domain}/api/v1/replit-auth/callback"
+        return f"https://{primary_domain}{callback_path}"
     
-    # Fallback to FRONTEND_URL
-    frontend_url = os.environ.get('FRONTEND_URL', '')
-    if frontend_url:
-        return f"https://{frontend_url}/api/v1/replit-auth/callback"
-    
-    return "http://localhost:5000/api/v1/replit-auth/callback"
+    return f"http://localhost:5000{callback_path}"
 
 
 def verify_id_token(id_token: str, nonce: Optional[str] = None) -> Dict[str, Any]:
@@ -176,6 +171,7 @@ async def replit_login(request: Request, redirect_url: Optional[str] = None):
 
 
 @router.get("/callback")
+@router.get("/__repl_auth_callback")
 async def replit_callback(
     request: Request,
     code: Optional[str] = None,

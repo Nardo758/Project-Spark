@@ -56,7 +56,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         super().end_headers()
     
     def do_GET(self):
-        if self.path.startswith('/api/') or self.path.startswith('/auth/') or self.path == '/docs' or self.path == '/openapi.json' or self.path == '/redoc' or self.path == '/health':
+        if self.path.startswith('/api/') or self.path.startswith('/auth/') or self.path.startswith('/__repl_auth') or self.path == '/docs' or self.path == '/openapi.json' or self.path == '/redoc' or self.path == '/health':
             self.proxy_request('GET')
         else:
             parsed = urlparse(self.path)

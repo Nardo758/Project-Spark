@@ -47,6 +47,8 @@ app.include_router(scraper.router, prefix=f"{settings.API_V1_PREFIX}/scraper", t
 app.include_router(replit_auth.router, prefix=f"{settings.API_V1_PREFIX}/replit-auth", tags=["Replit Auth"])
 # Also mount at /auth for Replit Auth compatibility
 app.include_router(replit_auth.router, prefix="/auth", tags=["Replit Auth"])
+# Mount callback at root level for standard Replit Auth callback path
+app.include_router(replit_auth.router, prefix="", tags=["Replit Auth Callback"])
 app.include_router(magic_link.router, prefix=f"{settings.API_V1_PREFIX}/magic-link", tags=["Magic Link Auth"])
 
 
