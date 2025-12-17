@@ -2,6 +2,23 @@
 
 ## Recent Changes (December 2024)
 
+- **Time-Decay Pricing & Pay-Per-Unlock** (December 17, 2024):
+  - NEW: Time-decay access control based on opportunity age (per pricing strategy document)
+    - Enterprise: Real-time (0+ days)
+    - Business: Fresh (8+ days) 
+    - Pro: Validated (31+ days)
+    - Free: Archive (91+ days, pay-per-unlock)
+  - NEW: `/api/v1/subscriptions/pay-per-unlock` - Create payment intent for $15 unlock
+  - NEW: `/api/v1/subscriptions/confirm-pay-per-unlock` - Confirm payment and grant 30-day access
+  - NEW: `/api/v1/subscriptions/access/{opportunity_id}` - Get detailed access info with freshness badge
+  - NEW: `/api/v1/subscriptions/stripe-key` - Get Stripe publishable key for frontend
+  - Updated tier pricing: Pro $99/mo, Business $499/mo, Enterprise $2,500+/mo
+  - Age badges on opportunity cards: 🔥 HOT, ⚡ FRESH, ✓ VALIDATED, 📚 ARCHIVE
+  - Countdown timers showing days until opportunity unlocks for user's tier
+  - Pay-per-unlock flow with Stripe Elements integration
+  - UnlockedOpportunity model updated with: unlock_method, amount_paid, stripe_payment_intent_id, expires_at
+  - Daily rate limit: 5 pay-per-unlocks per day for free tier
+
 - **Access Control & Admin Panel** (December 16, 2024):
   - NEW: `admin.html` - Full admin panel with dashboard, user management, opportunity moderation, and subscription controls
   - NEW: Subscription tier access control dependencies (`require_pro`, `require_business`, `require_enterprise`)

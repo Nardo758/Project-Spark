@@ -76,6 +76,12 @@ class UsageRecord(Base):
     user = relationship("User", back_populates="usage_records")
 
 
+class UnlockMethod(str, enum.Enum):
+    """How the opportunity was unlocked"""
+    SUBSCRIPTION = "subscription"  # Auto-unlocked by subscription tier
+    PAY_PER_UNLOCK = "pay_per_unlock"  # Paid $15 one-time
+
+
 class UnlockedOpportunity(Base):
     __tablename__ = "unlocked_opportunities"
 
@@ -83,8 +89,14 @@ class UnlockedOpportunity(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False)
 
+    # Unlock details
+    unlock_method = Column(Enum(UnlockMethod), default=UnlockMethod.SUBSCRIPTION, nullable=False)
+    amount_paid = Column(Integer, default=0)  # Amount in cents (for pay-per-unlock)
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+
     # Timestamp
     unlocked_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)  # For pay-per-unlock (30 days)
 
     # Relationships
     user = relationship("User")

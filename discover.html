@@ -1054,6 +1054,36 @@
             </svg>`;
         }
 
+        function getOpportunityAgeDays(opp) {
+            const createdAt = opp.created_at ? new Date(opp.created_at) : new Date();
+            const now = new Date();
+            return Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+        }
+
+        function getFreshnessBadge(ageDays) {
+            if (ageDays <= 7) {
+                return { icon: '🔥', label: 'HOT', color: '#ef4444', tierRequired: 'enterprise' };
+            } else if (ageDays <= 30) {
+                return { icon: '⚡', label: 'FRESH', color: '#f97316', tierRequired: 'business' };
+            } else if (ageDays <= 90) {
+                return { icon: '✓', label: 'VALIDATED', color: '#22c55e', tierRequired: 'pro' };
+            } else {
+                return { icon: '📚', label: 'ARCHIVE', color: '#6b7280', tierRequired: 'free' };
+            }
+        }
+
+        function getDaysUntilUnlock(tier, ageDays) {
+            const accessWindows = { free: 91, pro: 31, business: 8, enterprise: 0 };
+            const minAge = accessWindows[tier] || 91;
+            return Math.max(0, minAge - ageDays);
+        }
+
+        function canAccessOpportunity(tier, ageDays) {
+            const accessWindows = { free: 91, pro: 31, business: 8, enterprise: 0 };
+            const minAge = accessWindows[tier] || 91;
+            return ageDays >= minAge;
+        }
+
         function createOpportunityCard(opp, index) {
             const isTrending = opp.growth_rate > 20;
             const isAiAnalyzed = opp.ai_analyzed || false;
@@ -1061,7 +1091,74 @@
             const competitionLevel = opp.ai_competition_level || 'medium';
             const viewerCount = generateViewerCount(opp.id);
             
+            // Time-decay access control
+            const ageDays = getOpportunityAgeDays(opp);
+            const freshnessBadge = getFreshnessBadge(ageDays);
+            const isAccessible = canAccessOpportunity(userTier, ageDays);
+            const daysUntilUnlock = getDaysUntilUnlock(userTier, ageDays);
+            const canPayToUnlock = ageDays >= 91 && userTier === 'free';
+            
             const competitionBadge = `<span class="competition-badge ${competitionLevel}">${competitionLevel.charAt(0).toUpperCase() + competitionLevel.slice(1)} Competition</span>`;
+            
+            // Age badge HTML
+            const ageBadgeHtml = `
+                <span class="age-badge" style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    background: ${freshnessBadge.color}15;
+                    color: ${freshnessBadge.color};
+                    border: 1px solid ${freshnessBadge.color}30;
+                ">
+                    ${freshnessBadge.icon} ${freshnessBadge.label} · ${ageDays}d
+                </span>
+            `;
+            
+            // Countdown/access indicator
+            let accessIndicator = '';
+            if (!isAccessible && !canPayToUnlock) {
+                accessIndicator = `
+                    <div style="
+                        background: linear-gradient(135deg, var(--violet-50), var(--violet-100));
+                        border-radius: 8px;
+                        padding: 10px;
+                        margin-bottom: 12px;
+                        font-size: 12px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    ">
+                        <span style="font-size: 16px;">⏰</span>
+                        <span style="color: var(--stone-600);">
+                            ${daysUntilUnlock > 0 
+                                ? `Unlocks for you in <strong style="color: var(--violet-600);">${daysUntilUnlock} days</strong>` 
+                                : '✨ Available to you now'}
+                        </span>
+                    </div>
+                `;
+            } else if (canPayToUnlock) {
+                accessIndicator = `
+                    <div style="
+                        background: linear-gradient(135deg, #fef3c7, #fef9c3);
+                        border-radius: 8px;
+                        padding: 10px;
+                        margin-bottom: 12px;
+                        font-size: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                    ">
+                        <span style="color: var(--stone-600);">
+                            <span style="font-size: 16px;">🔓</span> Unlock for <strong style="color: var(--amber-700);">$15</strong>
+                        </span>
+                        <span style="color: var(--stone-500); font-size: 11px;">or upgrade to Pro</span>
+                    </div>
+                `;
+            }
             
             const aiSummaryPreview = opp.ai_summary 
                 ? `<div style="background: var(--violet-100); border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 13px; color: var(--stone-700);">
@@ -1077,12 +1174,23 @@
                    </div>`
                 : '';
             
+            // Card CTA based on access
+            let cardCta = '';
+            if (isAccessible || userTier !== 'free') {
+                cardCta = `View full analysis`;
+            } else if (canPayToUnlock) {
+                cardCta = `🔓 Unlock for $15`;
+            } else {
+                cardCta = `Preview opportunity`;
+            }
+
             return `
                 <a href="opportunity.html?id=${opp.id}" class="opportunity-card fade-in" style="animation-delay: ${index * 0.1}s">
                     <div class="card-header">
                         <div>
                             <div class="card-meta">
                                 <span class="category-tag">${opp.category}</span>
+                                ${ageBadgeHtml}
                                 ${isAiAnalyzed ? `
                                 <span class="ai-badge">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1108,6 +1216,7 @@
                             <div class="score-label">${isAiAnalyzed ? 'AI Score' : 'Score'}</div>
                         </div>
                     </div>
+                    ${accessIndicator}
                     ${aiSummaryPreview}
                     <p class="card-description">${opp.description.substring(0, 120)}${opp.description.length > 120 ? '...' : ''}</p>
                     <div class="metrics-grid">
@@ -1145,7 +1254,7 @@
                         <span class="viewers-count">${viewerCount} people</span> viewed this week
                     </div>
                     <div class="card-cta">
-                        ${userTier === 'free' ? 'Preview opportunity' : 'View full analysis'}
+                        ${cardCta}
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M7 17 17 7"/>
                             <path d="M7 7h10v10"/>

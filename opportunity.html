@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>On-Demand Home Maintenance · OppGrid</title>
     <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap&family=Roboto+Mono:wght@700" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         :root {
             --stone-50: #fafaf9;
@@ -4745,7 +4746,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     // Redirect to Stripe checkout
-                    window.location.href = data.checkout_url;
+                    window.location.href = data.url || data.checkout_url;
                 } else {
                     const error = await response.json();
                     if (error.detail && error.detail.includes('already')) {
@@ -4758,6 +4759,114 @@
             } catch (error) {
                 console.error('Checkout error:', error);
                 alert('Unable to start checkout. Please try again.');
+            }
+        }
+
+        // Pay-per-unlock for archive opportunities ($15)
+        let stripeInstance = null;
+        
+        async function initStripe() {
+            if (stripeInstance) return stripeInstance;
+            try {
+                const response = await fetch('/api/v1/subscriptions/stripe-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (window.Stripe && data.publishable_key) {
+                        stripeInstance = window.Stripe(data.publishable_key);
+                    }
+                }
+            } catch (e) {
+                console.log('Stripe init skipped');
+            }
+            return stripeInstance;
+        }
+
+        async function handlePayPerUnlock() {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            
+            if (!token) {
+                const returnUrl = encodeURIComponent(window.location.href);
+                window.location.href = `signin.html?redirect=${returnUrl}`;
+                return;
+            }
+            
+            try {
+                // Create payment intent
+                const response = await fetch('/api/v1/subscriptions/pay-per-unlock', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ opportunity_id: currentOpportunityId })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    if (error.detail && error.detail.includes('91+')) {
+                        // Opportunity not old enough - show upgrade prompt
+                        alert('This opportunity is not yet available for pay-per-unlock. Upgrade to Pro for immediate access.');
+                    } else if (error.detail && error.detail.includes('already')) {
+                        location.reload();
+                    } else {
+                        alert(error.detail || 'Unable to process. Please try again.');
+                    }
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                // Initialize Stripe and confirm payment
+                const stripe = await initStripe();
+                if (!stripe) {
+                    alert('Payment system not available. Please try again later.');
+                    return;
+                }
+                
+                // Show payment element (simplified - uses Stripe's payment sheet)
+                const { error } = await stripe.confirmPayment({
+                    clientSecret: data.client_secret,
+                    confirmParams: {
+                        return_url: window.location.href + '?payment_intent=' + data.payment_intent_id,
+                    }
+                });
+                
+                if (error) {
+                    alert(error.message);
+                }
+            } catch (error) {
+                console.error('Pay-per-unlock error:', error);
+                alert('Unable to process payment. Please try again.');
+            }
+        }
+
+        // Check for successful payment on page load
+        async function checkPaymentSuccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentIntentId = urlParams.get('payment_intent');
+            
+            if (paymentIntentId) {
+                const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+                if (!token) return;
+                
+                try {
+                    const response = await fetch(`/api/v1/subscriptions/confirm-pay-per-unlock?payment_intent_id=${paymentIntentId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // Remove payment_intent from URL and reload
+                        const newUrl = window.location.pathname + '?id=' + currentOpportunityId;
+                        window.history.replaceState({}, '', newUrl);
+                        location.reload();
+                    }
+                } catch (e) {
+                    console.error('Payment confirmation error:', e);
+                }
             }
         }
         

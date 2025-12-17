@@ -103,31 +103,47 @@ init_stripe()
 class StripeService:
     """Service for Stripe payment operations"""
 
-    # Subscription tier limits
+    # Time-decay access windows (days)
+    TIER_ACCESS_WINDOWS = {
+        SubscriptionTier.FREE: 91,       # Archive: 91+ days old
+        SubscriptionTier.PRO: 31,        # Validated: 31+ days old  
+        SubscriptionTier.BUSINESS: 8,    # Fresh: 8+ days old
+        SubscriptionTier.ENTERPRISE: 0,  # Real-time: all opportunities
+    }
+
+    # Pay-per-unlock pricing
+    PAY_PER_UNLOCK_PRICE = 1500  # $15.00 in cents
+
+    # Subscription tier limits (updated per pricing strategy)
     TIER_LIMITS = {
         SubscriptionTier.FREE: {
             "monthly_views": 10,
-            "monthly_unlocks": 10,
+            "monthly_unlocks": 0,  # Must pay per unlock
             "export_limit": 0,
             "export_batch_size": 0,
             "api_access": False,
-            "price": 0
+            "price": 0,
+            "access_window_days": 91,
+            "daily_unlock_limit": 5,  # Max pay-per-unlocks per day
         },
         SubscriptionTier.PRO: {
-            "monthly_views": 100,
-            "monthly_unlocks": 100,
+            "monthly_views": -1,  # Unlimited for 31+ day opportunities
+            "monthly_unlocks": -1,  # Unlimited for 31+ day opportunities
             "export_limit": 100,
-            "export_batch_size": 1,  # Single idea CSV only
+            "export_batch_size": 1,
             "api_access": False,
-            "price": 49
+            "price": 99,
+            "access_window_days": 31,
         },
         SubscriptionTier.BUSINESS: {
-            "monthly_views": 500,
-            "monthly_unlocks": 500,
+            "monthly_views": -1,  # Unlimited for 8+ day opportunities
+            "monthly_unlocks": -1,  # Unlimited
             "export_limit": 500,
             "export_batch_size": 50,
             "api_access": True,
-            "price": 199
+            "price": 499,
+            "access_window_days": 8,
+            "execution_packages_monthly": 5,
         },
         SubscriptionTier.ENTERPRISE: {
             "monthly_views": -1,  # Unlimited
@@ -135,7 +151,8 @@ class StripeService:
             "export_limit": -1,  # Unlimited
             "export_batch_size": -1,  # Unlimited
             "api_access": True,
-            "price": 0  # Custom pricing
+            "price": 2500,  # Starting price
+            "access_window_days": 0,
         }
     }
 
@@ -302,6 +319,96 @@ class StripeService:
     def get_tier_limits(tier: SubscriptionTier) -> Dict[str, Any]:
         """Get usage limits for a subscription tier"""
         return StripeService.TIER_LIMITS.get(tier, StripeService.TIER_LIMITS[SubscriptionTier.FREE])
+
+    @staticmethod
+    def get_access_window_days(tier: SubscriptionTier) -> int:
+        """Get minimum opportunity age (in days) accessible for a tier"""
+        return StripeService.TIER_ACCESS_WINDOWS.get(tier, 91)
+
+    @staticmethod
+    def can_access_opportunity_by_age(tier: SubscriptionTier, opportunity_age_days: int) -> bool:
+        """
+        Check if a tier can access an opportunity based on its age.
+        
+        Time-decay model:
+        - Enterprise: 0+ days (real-time)
+        - Business: 8+ days (fresh)
+        - Pro: 31+ days (validated)
+        - Free: 91+ days (archive, requires pay-per-unlock)
+        """
+        min_age = StripeService.get_access_window_days(tier)
+        return opportunity_age_days >= min_age
+
+    @staticmethod
+    def get_opportunity_freshness_badge(age_days: int) -> Dict[str, str]:
+        """
+        Get freshness badge based on opportunity age.
+        
+        Returns dict with badge info (icon, label, color, tier_required)
+        """
+        if age_days <= 7:
+            return {
+                "icon": "🔥",
+                "label": "HOT",
+                "color": "#ef4444",  # red-500
+                "tier_required": "enterprise",
+                "description": "Exclusive intelligence window"
+            }
+        elif age_days <= 30:
+            return {
+                "icon": "⚡",
+                "label": "FRESH",
+                "color": "#f97316",  # orange-500
+                "tier_required": "business",
+                "description": "Early mover advantage"
+            }
+        elif age_days <= 90:
+            return {
+                "icon": "✓",
+                "label": "VALIDATED",
+                "color": "#22c55e",  # green-500
+                "tier_required": "pro",
+                "description": "Market-validated opportunity"
+            }
+        else:
+            return {
+                "icon": "📚",
+                "label": "ARCHIVE",
+                "color": "#6b7280",  # gray-500
+                "tier_required": "free",
+                "description": "Historical intelligence"
+            }
+
+    @staticmethod
+    def get_days_until_unlock(tier: SubscriptionTier, opportunity_age_days: int) -> int:
+        """
+        Get number of days until an opportunity unlocks for a tier.
+        Returns 0 if already accessible, negative if past unlock date.
+        """
+        min_age = StripeService.get_access_window_days(tier)
+        return max(0, min_age - opportunity_age_days)
+
+    @staticmethod
+    def create_payment_intent_for_unlock(
+        customer_id: str,
+        opportunity_id: int,
+        user_id: int
+    ):
+        """
+        Create a Stripe PaymentIntent for pay-per-unlock ($15)
+        """
+        client = get_stripe_client()
+        return client.PaymentIntent.create(
+            amount=StripeService.PAY_PER_UNLOCK_PRICE,
+            currency="usd",
+            customer=customer_id,
+            metadata={
+                "type": "pay_per_unlock",
+                "opportunity_id": str(opportunity_id),
+                "user_id": str(user_id)
+            },
+            automatic_payment_methods={"enabled": True}
+        )
 
     @staticmethod
     def can_unlock_opportunity(tier: SubscriptionTier, current_unlocks: int) -> bool:

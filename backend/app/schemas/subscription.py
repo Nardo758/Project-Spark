@@ -82,3 +82,29 @@ class BillingInfo(BaseModel):
     has_payment_method: bool
     subscription: Optional[SubscriptionResponse]
     usage: Optional[UsageStats]
+
+
+class PayPerUnlockRequest(BaseModel):
+    """Request to create pay-per-unlock payment"""
+    opportunity_id: int
+
+
+class PayPerUnlockResponse(BaseModel):
+    """Response with payment intent for pay-per-unlock"""
+    client_secret: str
+    payment_intent_id: str
+    amount: int  # In cents
+    opportunity_id: int
+
+
+class OpportunityAccessInfo(BaseModel):
+    """Access info for an opportunity based on user's tier"""
+    opportunity_id: int
+    age_days: int
+    freshness_badge: dict
+    is_accessible: bool
+    is_unlocked: bool
+    unlock_method: Optional[str]
+    days_until_unlock: int
+    can_pay_to_unlock: bool
+    unlock_price: Optional[int]  # In cents, if pay-per-unlock available

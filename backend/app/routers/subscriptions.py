@@ -24,14 +24,31 @@ from app.schemas.subscription import (
     UnlockOpportunityRequest,
     UnlockOpportunityResponse,
     ExportRequest,
-    BillingInfo
+    BillingInfo,
+    PayPerUnlockRequest,
+    PayPerUnlockResponse,
+    OpportunityAccessInfo
 )
+from datetime import datetime, timedelta
 from app.core.dependencies import get_current_active_user
 from app.services.stripe_service import stripe_service
 from app.services.usage_service import usage_service
 from app.core.config import settings
 
 router = APIRouter()
+
+
+@router.get("/stripe-key")
+def get_stripe_publishable_key():
+    """Get Stripe publishable key for frontend"""
+    from app.services.stripe_service import get_stripe_credentials
+    _, publishable_key = get_stripe_credentials()
+    if not publishable_key:
+        raise HTTPException(
+            status_code=500,
+            detail="Stripe not configured"
+        )
+    return {"publishable_key": publishable_key}
 
 
 @router.get("/", response_model=BillingInfo)
@@ -262,6 +279,244 @@ def check_opportunity_unlocked(
     return {
         "unlocked": unlocked,
         "remaining_unlocks": remaining
+    }
+
+
+@router.get("/access/{opportunity_id}", response_model=OpportunityAccessInfo)
+def get_opportunity_access_info(
+    opportunity_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed access information for an opportunity.
+    
+    Returns tier-based access status, freshness badge, countdown timer info,
+    and whether pay-per-unlock is available.
+    """
+    from app.models.subscription import UnlockedOpportunity
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    
+    # Calculate opportunity age
+    now = datetime.utcnow()
+    created_at = opportunity.created_at or now
+    age_days = (now - created_at).days
+    
+    # Get freshness badge
+    freshness_badge = stripe_service.get_opportunity_freshness_badge(age_days)
+    
+    # Check if accessible by tier
+    is_accessible = stripe_service.can_access_opportunity_by_age(subscription.tier, age_days)
+    
+    # Check if already unlocked
+    unlock_record = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.user_id == current_user.id,
+        UnlockedOpportunity.opportunity_id == opportunity_id
+    ).first()
+    
+    is_unlocked = unlock_record is not None
+    unlock_method = unlock_record.unlock_method.value if unlock_record else None
+    
+    # Check expiration for pay-per-unlock
+    if is_unlocked and unlock_record.expires_at:
+        if now > unlock_record.expires_at:
+            is_unlocked = False  # Expired
+    
+    # Calculate days until unlock for user's tier
+    days_until_unlock = stripe_service.get_days_until_unlock(subscription.tier, age_days)
+    
+    # Check if pay-per-unlock is available (only for archive opportunities and free tier)
+    can_pay_to_unlock = (
+        age_days >= 91 and 
+        subscription.tier == SubscriptionTier.FREE and
+        not is_unlocked
+    )
+    
+    return {
+        "opportunity_id": opportunity_id,
+        "age_days": age_days,
+        "freshness_badge": freshness_badge,
+        "is_accessible": is_accessible or is_unlocked,
+        "is_unlocked": is_unlocked,
+        "unlock_method": unlock_method,
+        "days_until_unlock": days_until_unlock,
+        "can_pay_to_unlock": can_pay_to_unlock,
+        "unlock_price": stripe_service.PAY_PER_UNLOCK_PRICE if can_pay_to_unlock else None
+    }
+
+
+@router.post("/pay-per-unlock", response_model=PayPerUnlockResponse)
+def create_pay_per_unlock(
+    unlock_data: PayPerUnlockRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a payment intent for pay-per-unlock ($15).
+    
+    Only available for:
+    - Free tier users
+    - Archive opportunities (91+ days old)
+    - Max 5 unlocks per day
+    """
+    from app.models.subscription import UnlockedOpportunity
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == unlock_data.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    
+    # Calculate opportunity age
+    now = datetime.utcnow()
+    created_at = opportunity.created_at or now
+    age_days = (now - created_at).days
+    
+    # Check if already unlocked
+    existing = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.user_id == current_user.id,
+        UnlockedOpportunity.opportunity_id == unlock_data.opportunity_id
+    ).first()
+    
+    if existing and (not existing.expires_at or now <= existing.expires_at):
+        raise HTTPException(
+            status_code=400,
+            detail="Opportunity already unlocked"
+        )
+    
+    # Check eligibility for pay-per-unlock (free tier only)
+    if subscription.tier != SubscriptionTier.FREE:
+        raise HTTPException(
+            status_code=400,
+            detail="Pay-per-unlock is only available for free tier users. Your subscription already includes access to this opportunity."
+        )
+    
+    if age_days < 91:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Pay-per-unlock only available for opportunities 91+ days old. This opportunity is {age_days} days old."
+        )
+    
+    # Check daily limit (5 per day for free tier)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_unlocks = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.user_id == current_user.id,
+        UnlockedOpportunity.unlocked_at >= today_start,
+        UnlockedOpportunity.amount_paid > 0
+    ).count()
+    
+    if today_unlocks >= 5:
+        raise HTTPException(
+            status_code=429,
+            detail="Daily pay-per-unlock limit reached (5 per day). Try again tomorrow."
+        )
+    
+    # Get or create Stripe customer
+    if not subscription.stripe_customer_id:
+        customer = stripe_service.create_customer(
+            email=current_user.email,
+            name=current_user.name,
+            metadata={"user_id": current_user.id}
+        )
+        subscription.stripe_customer_id = customer.id
+        db.commit()
+    
+    # Create payment intent
+    payment_intent = stripe_service.create_payment_intent_for_unlock(
+        customer_id=subscription.stripe_customer_id,
+        opportunity_id=unlock_data.opportunity_id,
+        user_id=current_user.id
+    )
+    
+    return {
+        "client_secret": payment_intent.client_secret,
+        "payment_intent_id": payment_intent.id,
+        "amount": stripe_service.PAY_PER_UNLOCK_PRICE,
+        "opportunity_id": unlock_data.opportunity_id
+    }
+
+
+@router.post("/confirm-pay-per-unlock")
+def confirm_pay_per_unlock(
+    payment_intent_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Confirm a successful pay-per-unlock payment and grant access.
+    
+    Call this after payment is confirmed on the frontend.
+    """
+    from app.models.subscription import UnlockedOpportunity, UnlockMethod
+    import stripe
+    
+    # Verify payment intent
+    client = stripe_service.get_stripe_client() if hasattr(stripe_service, 'get_stripe_client') else None
+    if not client:
+        from app.services.stripe_service import get_stripe_client
+        client = get_stripe_client()
+    
+    try:
+        payment_intent = client.PaymentIntent.retrieve(payment_intent_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid payment intent: {str(e)}")
+    
+    # Verify payment was successful
+    if payment_intent.status != "succeeded":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Payment not completed. Status: {payment_intent.status}"
+        )
+    
+    # Verify metadata
+    if payment_intent.metadata.get("type") != "pay_per_unlock":
+        raise HTTPException(status_code=400, detail="Invalid payment type")
+    
+    opportunity_id = int(payment_intent.metadata.get("opportunity_id", 0))
+    user_id = int(payment_intent.metadata.get("user_id", 0))
+    
+    if user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Payment belongs to another user")
+    
+    # Check if already unlocked with this payment
+    existing = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.stripe_payment_intent_id == payment_intent_id
+    ).first()
+    
+    if existing:
+        return {
+            "success": True,
+            "message": "Already unlocked with this payment",
+            "opportunity_id": opportunity_id,
+            "expires_at": existing.expires_at.isoformat() if existing.expires_at else None
+        }
+    
+    # Create unlock record with 30-day expiration
+    now = datetime.utcnow()
+    expires_at = now + timedelta(days=30)
+    
+    unlock = UnlockedOpportunity(
+        user_id=current_user.id,
+        opportunity_id=opportunity_id,
+        unlock_method=UnlockMethod.PAY_PER_UNLOCK,
+        amount_paid=payment_intent.amount,
+        stripe_payment_intent_id=payment_intent_id,
+        expires_at=expires_at
+    )
+    db.add(unlock)
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": "Opportunity unlocked successfully",
+        "opportunity_id": opportunity_id,
+        "expires_at": expires_at.isoformat(),
+        "access_days": 30
     }
 
 
