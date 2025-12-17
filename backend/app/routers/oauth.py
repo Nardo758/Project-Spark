@@ -4,12 +4,13 @@ OAuth Authentication Router
 Endpoints for OAuth login with Google and GitHub
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime
 import jwt
 import secrets
+import os
 
 from app.db.database import get_db
 from app.models.user import User
@@ -19,6 +20,20 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 
 router = APIRouter()
+
+def get_base_url(request: Request) -> str:
+    """Get the base URL from the request, handling proxies and production"""
+    forwarded_proto = request.headers.get("x-forwarded-proto", "https")
+    forwarded_host = request.headers.get("x-forwarded-host")
+    
+    if forwarded_host:
+        return f"{forwarded_proto}://{forwarded_host}"
+    
+    if os.getenv("REPLIT_DOMAINS"):
+        domain = os.getenv("REPLIT_DOMAINS").split(",")[0]
+        return f"https://{domain}"
+    
+    return settings.BACKEND_URL
 
 def encode_oauth_state(provider: str, redirect_uri: str) -> str:
     """Encode OAuth state as a signed JWT token"""
@@ -43,6 +58,7 @@ def decode_oauth_state(state: str) -> dict:
 
 @router.get("/{provider}/login")
 async def oauth_login(
+    request: Request,
     provider: str,
     redirect_uri: str = Query(..., description="Frontend callback URL")
 ):
@@ -62,8 +78,9 @@ async def oauth_login(
     # Generate JWT-encoded state for CSRF protection (survives server restarts)
     state = encode_oauth_state(provider, redirect_uri)
 
-    # Build backend callback URL
-    backend_callback = f"{settings.BACKEND_URL}/api/v1/oauth/{provider}/callback"
+    # Build backend callback URL dynamically
+    base_url = get_base_url(request)
+    backend_callback = f"{base_url}/api/v1/oauth/{provider}/callback"
 
     # Get authorization URL
     auth_url = oauth_service.get_authorization_url(
@@ -77,6 +94,7 @@ async def oauth_login(
 
 @router.get("/{provider}/callback")
 async def oauth_callback(
+    request: Request,
     provider: str,
     code: str = Query(...),
     state: str = Query(...),
@@ -99,8 +117,9 @@ async def oauth_callback(
     
     frontend_redirect = state_data.get("redirect_uri")
 
-    # Build backend callback URL
-    backend_callback = f"{settings.BACKEND_URL}/api/v1/oauth/{provider}/callback"
+    # Build backend callback URL dynamically
+    base_url = get_base_url(request)
+    backend_callback = f"{base_url}/api/v1/oauth/{provider}/callback"
 
     # Complete OAuth flow
     user_info = await oauth_service.complete_oauth_flow(
