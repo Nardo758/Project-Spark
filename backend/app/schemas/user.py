@@ -46,6 +46,12 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+    @field_validator('impact_points', mode='before')
+    @classmethod
+    def set_impact_points_default(cls, v):
+        """Convert None to 0 for impact_points"""
+        return v if v is not None else 0
+
     @field_validator('badges', mode='before')
     @classmethod
     def parse_badges(cls, v):
