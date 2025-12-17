@@ -82,7 +82,7 @@ class OAuthService:
                     config["access_token_url"],
                     data=data,
                     headers=headers,
-                    timeout=10.0
+                    timeout=30.0
                 )
                 response.raise_for_status()
                 token_data = response.json()
@@ -118,7 +118,7 @@ class OAuthService:
                 response = await client.get(
                     config["userinfo_url"],
                     headers=headers,
-                    timeout=10.0
+                    timeout=30.0
                 )
                 response.raise_for_status()
                 user_data = response.json()
@@ -150,7 +150,7 @@ class OAuthService:
                 response = await client.get(
                     "https://api.github.com/user/emails",
                     headers=headers,
-                    timeout=10.0
+                    timeout=30.0
                 )
                 response.raise_for_status()
                 emails = response.json()
