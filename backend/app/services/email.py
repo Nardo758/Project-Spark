@@ -67,7 +67,17 @@ class EmailService:
         api_key, from_email = get_resend_credentials()
         if not api_key:
             raise ValueError("Resend API key not configured. Set up Resend connector or RESEND_API_KEY environment variable.")
-        return api_key, from_email or "noreply@friction.app"
+        
+        # Resend doesn't allow sending from personal email addresses (gmail, yahoo, etc.)
+        # Use Resend's testing domain as fallback
+        if from_email:
+            personal_domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'icloud.com']
+            email_domain = from_email.split('@')[-1].lower() if '@' in from_email else ''
+            if email_domain in personal_domains:
+                logger.warning(f"Cannot send from personal email {from_email}. Using Resend testing domain.")
+                from_email = "OppGrid <onboarding@resend.dev>"
+        
+        return api_key, from_email or "OppGrid <onboarding@resend.dev>"
 
     def send_email(
         self,
