@@ -61,6 +61,12 @@ def cleanup_expired_states():
 
 def get_base_url(request: Request) -> str:
     """Get the base URL for OAuth callbacks"""
+    # Use REPLIT_DEV_DOMAIN for consistent OAuth redirect URIs
+    replit_domain = os.environ.get('REPLIT_DEV_DOMAIN')
+    if replit_domain:
+        return f"https://{replit_domain}"
+    
+    # Fallback to request headers
     forwarded_proto = request.headers.get('x-forwarded-proto', 'https')
     forwarded_host = request.headers.get('x-forwarded-host') or request.headers.get('host')
     
