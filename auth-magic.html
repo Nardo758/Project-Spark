@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signing In... - OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-500: #78716c;
+            --stone-900: #1c1917;
+            --violet-600: #7c3aed;
+            --violet-700: #6d28d9;
+            --green-600: #059669;
+            --red-600: #dc2626;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            max-width: 400px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--stone-900);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .logo-text {
+            font-family: 'Spectral', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--stone-100);
+            border-top: 4px solid var(--violet-600);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            font-size: 18px;
+            color: var(--stone-500);
+            margin-bottom: 16px;
+        }
+
+        .message {
+            font-size: 14px;
+            color: var(--stone-500);
+        }
+
+        .error-container {
+            display: none;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .error-container.visible {
+            display: block;
+        }
+
+        .error-title {
+            color: var(--red-600);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .error-message {
+            color: #991b1b;
+            font-size: 14px;
+        }
+
+        .success-container {
+            display: none;
+        }
+
+        .success-container.visible {
+            display: block;
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .success-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--green-600);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--violet-600);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--violet-700);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+            </div>
+            <span class="logo-text">OppGrid</span>
+        </div>
+
+        <div id="loadingState">
+            <div class="spinner"></div>
+            <div class="status">Verifying your magic link...</div>
+            <div class="message">Please wait while we sign you in.</div>
+        </div>
+
+        <div id="successState" class="success-container">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5"/>
+                </svg>
+            </div>
+            <div class="status" style="color: var(--green-600);">You're signed in!</div>
+            <div class="message">Redirecting you now...</div>
+        </div>
+
+        <div id="errorContainer" class="error-container">
+            <div class="error-title">Unable to sign in</div>
+            <div class="error-message" id="errorMessage">The magic link is invalid or has expired.</div>
+            <a href="/signin.html" class="btn">Try Again</a>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        async function verifyMagicLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                showError('No magic link token found. Please request a new link.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/magic-link/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to verify magic link');
+                }
+
+                localStorage.setItem('access_token', data.access_token);
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('successState').classList.add('visible');
+
+                setTimeout(() => {
+                    window.location.href = '/discover.html';
+                }, 1500);
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorContainer').classList.add('visible');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        verifyMagicLink();
+    </script>
+</body>
+</html>

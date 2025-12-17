@@ -330,7 +330,27 @@
                 </button>
             </div>
 
-            <div class="divider">or</div>
+            <div class="divider">or use email</div>
+
+            <!-- Magic Link Section -->
+            <div class="magic-link-section">
+                <div class="form-group">
+                    <label for="magicEmail">Email address</label>
+                    <input type="email" id="magicEmail" placeholder="you@example.com">
+                </div>
+                <button type="button" class="btn-magic-link" id="sendMagicLink">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    Send me a magic link
+                </button>
+                <div class="magic-link-success" id="magicLinkSuccess">
+                    Check your email for the magic link!
+                </div>
+            </div>
+
+            <div class="divider">or with password</div>
 
             <form id="signin-form">
                 <div class="form-group">
