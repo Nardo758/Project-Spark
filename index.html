@@ -1342,7 +1342,7 @@
         </div>
         <div class="hero-content">
             <div>
-                <div class="hero-badge fade-in-up">2,847+ Validated Opportunities</div>
+                <div class="hero-badge fade-in-up" id="hero-badge-count">Loading...</div>
                 <h1 class="fade-in-up stagger-1">
                     Transform Market Signals into <span>Business Opportunities</span>
                 </h1>
@@ -1365,7 +1365,7 @@
                 </div>
                 <div class="hero-stats fade-in-up stagger-4">
                     <div class="hero-stat">
-                        <div class="hero-stat-value">2,847</div>
+                        <div class="hero-stat-value" id="stat-validated-ideas">--</div>
                         <div class="hero-stat-label">Validated Ideas</div>
                     </div>
                     <div class="hero-stat-divider"></div>
@@ -1915,8 +1915,8 @@
         }
 
         function updateStats(stats) {
-            const validatedEl = document.querySelector('.hero-stat:nth-child(1) .hero-stat-value');
-            const badgeEl = document.querySelector('.hero-badge');
+            const validatedEl = document.getElementById('stat-validated-ideas');
+            const badgeEl = document.getElementById('hero-badge-count');
 
             if (validatedEl && stats.analyzed_opportunities) {
                 validatedEl.textContent = stats.analyzed_opportunities.toLocaleString();
