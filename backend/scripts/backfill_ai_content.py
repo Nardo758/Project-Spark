@@ -71,7 +71,7 @@ def generate_raw_source_data(opp: Opportunity) -> dict:
         "confidence_score": 0.85
     }
 
-def analyze_opportunity(opp: Opportunity) -> dict:
+def analyze_opportunity(opp: Opportunity) -> dict | None:
     """Call Anthropic API to analyze opportunity"""
     prompt = f"""Analyze this opportunity:
 

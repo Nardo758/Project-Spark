@@ -13,6 +13,9 @@ from sqlalchemy.orm import sessionmaker
 from anthropic import Anthropic
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    print("ERROR: DATABASE_URL not set")
+    sys.exit(1)
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
@@ -49,11 +52,11 @@ def analyze_and_update(db, opp_id, title, description, category):
             messages=[{"role": "user", "content": prompt}]
         )
         
-        text = response.content[0].text
-        start = text.find('{')
-        end = text.rfind('}') + 1
+        response_text = response.content[0].text
+        start = response_text.find('{')
+        end = response_text.rfind('}') + 1
         if start != -1 and end > start:
-            data = json.loads(text[start:end])
+            data = json.loads(response_text[start:end])
             
             db.execute(text("""
                 UPDATE opportunities SET
