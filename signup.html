@@ -722,7 +722,7 @@
 
         // Google OAuth handler
         document.getElementById('googleSignup').addEventListener('click', async () => {
-            const frontendUrl = 'https://9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev';
+            const frontendUrl = window.location.origin;
             try {
                 const response = await fetch(`${CONFIG.API_BASE_URL}/oauth/google/login?redirect_uri=${encodeURIComponent(frontendUrl + '/discover.html')}`);
                 const data = await response.json();
