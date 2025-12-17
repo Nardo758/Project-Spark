@@ -819,7 +819,8 @@
         // Social signin handlers - Redirect to Replit Auth (supports Google, GitHub, etc.)
         document.getElementById('replitSignin').addEventListener('click', () => {
             const redirectUrl = urlParams.get('redirect') || '/discover.html';
-            window.location.href = `${CONFIG.API_BASE_URL}/replit-auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`;
+            // Use /auth/login path for Replit Auth compatibility
+            window.location.href = `/auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`;
         });
 
         document.getElementById('googleSignin').addEventListener('click', () => {

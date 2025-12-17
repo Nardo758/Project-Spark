@@ -45,6 +45,8 @@ app.include_router(idea_engine.router, prefix=f"{settings.API_V1_PREFIX}/idea-en
 app.include_router(webhook.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Webhooks"])
 app.include_router(scraper.router, prefix=f"{settings.API_V1_PREFIX}/scraper", tags=["Scraper"])
 app.include_router(replit_auth.router, prefix=f"{settings.API_V1_PREFIX}/replit-auth", tags=["Replit Auth"])
+# Also mount at /auth for Replit Auth compatibility
+app.include_router(replit_auth.router, prefix="/auth", tags=["Replit Auth"])
 app.include_router(magic_link.router, prefix=f"{settings.API_V1_PREFIX}/magic-link", tags=["Magic Link Auth"])
 
 
