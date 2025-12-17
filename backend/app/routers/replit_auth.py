@@ -149,11 +149,10 @@ async def replit_login(request: Request, redirect_url: Optional[str] = None):
         'client_id': REPL_ID,
         'response_type': 'code',
         'redirect_uri': callback_url,
-        'scope': 'openid profile email',
+        'scope': 'openid profile email offline_access',
         'state': state,
         'code_challenge': code_challenge,
-        'code_challenge_method': 'S256',
-        'prompt': 'login consent'
+        'code_challenge_method': 'S256'
     }
     
     auth_url = f"{ISSUER_URL}/auth?{urlencode(params)}"
