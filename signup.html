@@ -721,8 +721,19 @@
         });
 
         // Google OAuth handler
-        document.getElementById('googleSignup').addEventListener('click', () => {
-            window.location.href = `${CONFIG.API_BASE_URL}/oauth/google/login?redirect_url=/discover.html`;
+        document.getElementById('googleSignup').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/oauth/google/login?redirect_uri=${encodeURIComponent(window.location.origin + '/discover.html')}`);
+                const data = await response.json();
+                if (data.authorization_url) {
+                    window.location.href = data.authorization_url;
+                } else {
+                    showError('Failed to initiate Google sign-up');
+                }
+            } catch (error) {
+                console.error('Google OAuth error:', error);
+                showError('Failed to connect to Google');
+            }
         });
 
         // Check for plan parameter

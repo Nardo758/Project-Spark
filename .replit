@@ -107,5 +107,7 @@ outputType = "webview"
 [userenv]
 
 [userenv.shared]
+BACKEND_URL = "https://workspace.mdixon5030.repl.co"
+FRONTEND_URL = "https://workspace.mdixon5030.repl.co"
 # POSTGRES_URL removed - using Replit's native PostgreSQL via DATABASE_URL
 # If you need to override, set POSTGRES_URL in Secrets (not here)
