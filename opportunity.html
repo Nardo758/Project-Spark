@@ -2965,7 +2965,7 @@
                     <h3>Ready to go deeper?</h3>
                     <p>Unlock Research Dashboard with full market analysis, demographics, and competitive landscape</p>
                 </div>
-                <a href="index.html#pricing" class="btn btn-white">Unlock Research → $29</a>
+                <button onclick="handleUnlockResearch()" class="btn btn-white">Unlock Research → $29</button>
             </div>
         </div>
 
@@ -4714,6 +4714,50 @@
             } catch (error) {
                 console.error('Unlock error:', error);
                 alert('Unable to unlock. Please try again.');
+            }
+        }
+
+        async function handleUnlockResearch() {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            
+            if (!token) {
+                // Not logged in - redirect to signin with return URL
+                const returnUrl = encodeURIComponent(window.location.href);
+                window.location.href = `signin.html?redirect=${returnUrl}`;
+                return;
+            }
+            
+            try {
+                // User is logged in - create checkout session for pro tier
+                const response = await fetch('/api/v1/subscriptions/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tier: 'pro',
+                        success_url: window.location.href,
+                        cancel_url: window.location.href
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    // Redirect to Stripe checkout
+                    window.location.href = data.checkout_url;
+                } else {
+                    const error = await response.json();
+                    if (error.detail && error.detail.includes('already')) {
+                        // User already has pro or higher - just switch to research tab
+                        switchTier('research');
+                    } else {
+                        alert(error.detail || 'Unable to start checkout. Please try again.');
+                    }
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Unable to start checkout. Please try again.');
             }
         }
         
