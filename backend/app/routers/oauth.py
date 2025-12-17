@@ -7,7 +7,9 @@ Endpoints for OAuth login with Google and GitHub
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, datetime
+import jwt
+import secrets
 
 from app.db.database import get_db
 from app.models.user import User
@@ -18,9 +20,25 @@ from app.core.dependencies import get_current_user
 
 router = APIRouter()
 
-# In-memory state storage (in production, use Redis or database)
-# Format: {state_token: {provider, redirect_uri, created_at}}
-oauth_states = {}
+def encode_oauth_state(provider: str, redirect_uri: str) -> str:
+    """Encode OAuth state as a signed JWT token"""
+    payload = {
+        "provider": provider,
+        "redirect_uri": redirect_uri,
+        "nonce": secrets.token_urlsafe(8),
+        "exp": datetime.utcnow() + timedelta(minutes=10)
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+
+def decode_oauth_state(state: str) -> dict:
+    """Decode and verify OAuth state JWT token"""
+    try:
+        payload = jwt.decode(state, settings.SECRET_KEY, algorithms=["HS256"])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="State token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=400, detail="Invalid state token")
 
 
 @router.get("/{provider}/login")
@@ -41,14 +59,8 @@ async def oauth_login(
             detail="Unsupported OAuth provider"
         )
 
-    # Generate state for CSRF protection
-    state = oauth_service.generate_state()
-
-    # Store state temporarily (expires in 10 minutes)
-    oauth_states[state] = {
-        "provider": provider,
-        "frontend_redirect": redirect_uri,
-    }
+    # Generate JWT-encoded state for CSRF protection (survives server restarts)
+    state = encode_oauth_state(provider, redirect_uri)
 
     # Build backend callback URL
     backend_callback = f"{settings.BACKEND_URL}/api/v1/oauth/{provider}/callback"
@@ -78,15 +90,14 @@ async def oauth_callback(
         code: Authorization code from provider
         state: State token for CSRF verification
     """
-    # Verify state
-    if state not in oauth_states:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired state token"
-        )
-
-    state_data = oauth_states.pop(state)
-    frontend_redirect = state_data.get("frontend_redirect")
+    # Decode and verify JWT state token
+    state_data = decode_oauth_state(state)
+    
+    # Verify provider matches
+    if state_data.get("provider") != provider:
+        raise HTTPException(status_code=400, detail="Provider mismatch")
+    
+    frontend_redirect = state_data.get("redirect_uri")
 
     # Build backend callback URL
     backend_callback = f"{settings.BACKEND_URL}/api/v1/oauth/{provider}/callback"
