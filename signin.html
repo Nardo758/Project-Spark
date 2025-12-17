@@ -816,11 +816,10 @@
             }
         });
 
-        // Social signin handlers - Redirect to Replit Auth (supports Google, GitHub, etc.)
+        // Social signin handlers - Redirect to Replit Auth
         document.getElementById('replitSignin').addEventListener('click', () => {
             const redirectUrl = urlParams.get('redirect') || '/discover.html';
-            // Use /auth/login path for Replit Auth compatibility
-            window.location.href = `/auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`;
+            window.location.href = `${CONFIG.API_BASE_URL}/replit-auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`;
         });
 
         document.getElementById('googleSignin').addEventListener('click', () => {
