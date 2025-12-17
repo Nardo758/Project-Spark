@@ -852,7 +852,7 @@
             magicLinkBtn.innerHTML = 'Sending...';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/magic-link/send`, {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/magic-link/send`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
