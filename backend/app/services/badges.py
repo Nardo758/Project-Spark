@@ -199,14 +199,15 @@ class BadgeService:
         if comment_count >= 10 and BadgeService.add_badge(user, "commentator"):
             newly_awarded.append("commentator")
 
-        # Impact badges
-        if user.impact_points >= 100 and BadgeService.add_badge(user, "impact_100"):
+        # Impact badges (check for None)
+        impact_points = user.impact_points or 0
+        if impact_points >= 100 and BadgeService.add_badge(user, "impact_100"):
             newly_awarded.append("impact_100")
 
-        if user.impact_points >= 500 and BadgeService.add_badge(user, "impact_500"):
+        if impact_points >= 500 and BadgeService.add_badge(user, "impact_500"):
             newly_awarded.append("impact_500")
 
-        if user.impact_points >= 1000 and BadgeService.add_badge(user, "impact_1000"):
+        if impact_points >= 1000 and BadgeService.add_badge(user, "impact_1000"):
             newly_awarded.append("impact_1000")
 
         # Opportunity-based badges

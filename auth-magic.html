@@ -202,6 +202,21 @@
                 return;
             }
 
+            // Check if this token was already verified (prevents issues on page reload)
+            const verifiedToken = sessionStorage.getItem('verified_magic_token');
+            if (verifiedToken === token) {
+                // Already verified, check if we have a valid session
+                const accessToken = localStorage.getItem('access_token');
+                if (accessToken) {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('successState').classList.add('visible');
+                    setTimeout(() => {
+                        window.location.href = '/discover.html';
+                    }, 1000);
+                    return;
+                }
+            }
+
             try {
                 const response = await fetch(`${CONFIG.API_BASE_URL}/magic-link/verify`, {
                     method: 'POST',
@@ -216,6 +231,9 @@
                 if (!response.ok) {
                     throw new Error(data.detail || 'Failed to verify magic link');
                 }
+
+                // Mark this token as verified
+                sessionStorage.setItem('verified_magic_token', token);
 
                 localStorage.setItem('access_token', data.access_token);
                 if (data.user) {
@@ -237,7 +255,7 @@
         function showError(message) {
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('errorContainer').classList.add('visible');
-            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').textContent = 'Invalid or expired magic link. Please request a new one.';
         }
 
         verifyMagicLink();
