@@ -2,6 +2,13 @@
 
 ## Recent Changes (December 2024)
 
+- **Social Login Buttons** (December 17, 2024):
+  - Added "Continue with Google" and "Continue with GitHub" buttons to signin.html and login.html
+  - Backend Replit Auth router created with PKCE flow and JWT verification via JWKS
+  - Note: Social login redirect URI requires additional configuration with Replit OIDC
+  - Current status: Buttons show a message directing users to email/password login
+  - Backend code ready at `/api/v1/replit-auth/login` with full token validation
+
 - **Time-Decay Pricing & Pay-Per-Unlock** (December 17, 2024):
   - NEW: Time-decay access control based on opportunity age (per pricing strategy document)
     - Enterprise: Real-time (0+ days)

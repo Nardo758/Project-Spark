@@ -727,15 +727,13 @@
             }
         });
 
-        // Social signin handlers - Use Replit Auth for OAuth
+        // Social signin handlers - Show message that social login is being configured
         document.getElementById('googleSignin').addEventListener('click', () => {
-            const redirect = urlParams.get('redirect') || 'discover.html';
-            window.location.href = '/api/v1/replit-auth/login?redirect_url=' + encodeURIComponent(redirect);
+            alert('Social login with Google is being configured. Please use email/password login for now.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
         });
 
         document.getElementById('githubSignin').addEventListener('click', () => {
-            const redirect = urlParams.get('redirect') || 'discover.html';
-            window.location.href = '/api/v1/replit-auth/login?redirect_url=' + encodeURIComponent(redirect);
+            alert('Social login with GitHub is being configured. Please use email/password login for now.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
         });
 
         // Forgot password handler

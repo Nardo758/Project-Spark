@@ -404,10 +404,10 @@
             }
         });
 
-        // Social login - Use Replit Auth for OAuth
+        // Social login - Show message that social login is being configured
         document.querySelectorAll('.btn-social').forEach(btn => {
             btn.addEventListener('click', () => {
-                window.location.href = '/api/v1/replit-auth/login?redirect_url=' + encodeURIComponent('discover.html');
+                alert('Social login is being configured. Please use email/password login for now.\n\nDemo credentials:\nEmail: demo@example.com\nPassword: demo123');
             });
         });
     </script>

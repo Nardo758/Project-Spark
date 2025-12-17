@@ -169,6 +169,7 @@ def run_backend():
             print(f"[Backend] {line}", end='')
     return process
 
+
 def run_frontend():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     server = HTTPServer(('0.0.0.0', FRONTEND_PORT), ProxyHandler)
