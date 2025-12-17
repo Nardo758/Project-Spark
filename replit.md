@@ -2,6 +2,15 @@
 
 ## Recent Changes (December 2024)
 
+- **Magic Link Authentication** (December 17, 2024):
+  - Passwordless email authentication via magic links
+  - Backend endpoints: `/api/v1/magic-link/send` and `/api/v1/magic-link/verify`
+  - Magic links expire after 15 minutes for security
+  - Email sent via Resend from noreply@oppgrid.com (verified domain)
+  - Updated signin.html, login.html, and auth-magic.html with magic link UI
+  - Fixed user profile loading for new magic link users (impact_points null handling)
+  - Session storage prevents duplicate verification on page reload
+
 - **Social Login Buttons** (December 17, 2024):
   - Added "Continue with Google" and "Continue with GitHub" buttons to signin.html and login.html
   - Backend Replit Auth router created with PKCE flow and JWT verification via JWKS
