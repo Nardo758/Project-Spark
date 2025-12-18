@@ -33,13 +33,26 @@ AUTHORIZATION_ENDPOINT = f"{ISSUER_URL}/auth"
 TOKEN_ENDPOINT = f"{ISSUER_URL}/token"
 END_SESSION_ENDPOINT = f"{ISSUER_URL}/session/end"
 JWKS_URL = f"{ISSUER_URL}/jwks"
-SESSION_SECRET = os.environ.get('SESSION_SECRET', '')
+SESSION_SECRET = os.environ.get('SESSION_SECRET')
+
+if not SESSION_SECRET:
+    import logging
+    logging.warning("SESSION_SECRET not set - auth state tokens will use fallback key. Set SESSION_SECRET in production!")
+    SESSION_SECRET = "dev-fallback-key-not-for-production"
 
 SESSION_COOKIE_NAME = "oppgrid_session"
 STATE_COOKIE_NAME = "auth_state"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
 _jwks_client = None
+
+
+def is_secure_context(request: Request) -> bool:
+    """Determine if the request is over HTTPS (for cookie security)"""
+    forwarded_proto = request.headers.get('x-forwarded-proto', '')
+    if forwarded_proto == 'https':
+        return True
+    return request.url.scheme == 'https'
 
 
 def get_jwks_client():
@@ -229,13 +242,14 @@ async def replit_login(
     
     auth_url = f"{AUTHORIZATION_ENDPOINT}?{urlencode(params)}"
     
+    use_secure = is_secure_context(request)
     response = RedirectResponse(url=auth_url, status_code=302)
     response.set_cookie(
         key=STATE_COOKIE_NAME,
         value=state_token,
         max_age=600,
         httponly=True,
-        secure=True,
+        secure=use_secure,
         samesite="lax"
     )
     response.set_cookie(
@@ -243,7 +257,7 @@ async def replit_login(
         value=session_key,
         max_age=COOKIE_MAX_AGE,
         httponly=True,
-        secure=True,
+        secure=use_secure,
         samesite="lax"
     )
     
@@ -395,6 +409,7 @@ async def replit_callback(
     
     user_json = base64.urlsafe_b64encode(json.dumps(user_data).encode()).decode()
     
+    use_secure = is_secure_context(request)
     response = RedirectResponse(
         url=f"/auth-callback.html?token={access_token}&user={user_json}&redirect={redirect_url}"
     )
@@ -404,7 +419,7 @@ async def replit_callback(
         value=session_key,
         max_age=COOKIE_MAX_AGE,
         httponly=True,
-        secure=True,
+        secure=use_secure,
         samesite="lax"
     )
     
