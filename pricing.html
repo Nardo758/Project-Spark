@@ -735,7 +735,7 @@
                         Basic exports (CSV)
                     </li>
                 </ul>
-                <a href="signup.html?plan=pro" class="btn btn-violet btn-tier">Start Pro Trial</a>
+                <a id="proPlanCta" href="signup.html?plan=pro" class="btn btn-violet btn-tier">Start Pro Trial</a>
             </div>
 
             <!-- Business Tier -->
@@ -788,7 +788,7 @@
                         90-day execution playbook
                     </li>
                 </ul>
-                <a href="signup.html?plan=business" class="btn btn-outline btn-tier">Start Business Trial</a>
+                <a id="businessPlanCta" href="signup.html?plan=business" class="btn btn-outline btn-tier">Start Business Trial</a>
             </div>
 
             <!-- Enterprise Tier -->
@@ -959,6 +959,52 @@
             document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'inline-flex');
         }
 
+        async function startSubscriptionCheckout(tier) {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            if (!token) {
+                window.location.href = `signup.html?plan=${encodeURIComponent(tier)}`;
+                return;
+            }
+
+            api.token = token;
+            const origin = window.location.origin;
+            const successUrl = `${origin}/account.html#subscription`;
+            const cancelUrl = `${origin}/pricing.html`;
+
+            try {
+                const data = await api.createCheckoutSession(tier, successUrl, cancelUrl);
+                window.location.href = data.url || data.checkout_url;
+            } catch (error) {
+                alert(error?.message || 'Unable to start checkout. Please try again.');
+            }
+        }
+
+        function wirePlanButtons(isLoggedIn) {
+            const proBtn = document.getElementById('proPlanCta');
+            const businessBtn = document.getElementById('businessPlanCta');
+
+            if (isLoggedIn) {
+                if (proBtn) proBtn.textContent = 'Upgrade to Pro';
+                if (businessBtn) businessBtn.textContent = 'Upgrade to Business';
+            }
+
+            if (proBtn) {
+                proBtn.addEventListener('click', (e) => {
+                    if (!isLoggedIn) return;
+                    e.preventDefault();
+                    startSubscriptionCheckout('pro');
+                });
+            }
+
+            if (businessBtn) {
+                businessBtn.addEventListener('click', (e) => {
+                    if (!isLoggedIn) return;
+                    e.preventDefault();
+                    startSubscriptionCheckout('business');
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('access_token') || localStorage.getItem('token');
             if (token) {
@@ -966,14 +1012,17 @@
                 try {
                     await api.getCurrentUser();
                     showLoggedInUI();
+                    wirePlanButtons(true);
                 } catch (error) {
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('token');
                     api.token = null;
                     showLoggedOutUI();
+                    wirePlanButtons(false);
                 }
             } else {
                 showLoggedOutUI();
+                wirePlanButtons(false);
             }
         });
     </script>

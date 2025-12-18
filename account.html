@@ -961,6 +961,7 @@
         // Logout on user menu click
         document.getElementById('userMenu').addEventListener('click', () => {
             if (confirm('Do you want to sign out?')) {
+                localStorage.removeItem('access_token');
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 window.location.href = 'signin.html';

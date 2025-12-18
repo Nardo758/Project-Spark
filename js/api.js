@@ -364,6 +364,32 @@ class OppGridAPI {
         return this.handleResponse(response);
     }
 
+    // Subscriptions & billing
+    async createCheckoutSession(tier, success_url, cancel_url) {
+        const response = await fetch(`${this.baseURL}/subscriptions/checkout`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ tier, success_url, cancel_url })
+        });
+        return this.handleResponse(response);
+    }
+
+    async createPortalSession(return_url) {
+        const response = await fetch(`${this.baseURL}/subscriptions/portal`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ return_url })
+        });
+        return this.handleResponse(response);
+    }
+
+    async getMySubscription() {
+        const response = await fetch(`${this.baseURL}/subscriptions/my-subscription`, {
+            headers: this.getHeaders()
+        });
+        return this.handleResponse(response);
+    }
+
     // Helper: Check if user is authenticated
     isAuthenticated() {
         return !!this.token;
