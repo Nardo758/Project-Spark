@@ -2,21 +2,16 @@
 
 ## Recent Changes (December 2024)
 
-- **Magic Link Authentication** (December 17, 2024):
-  - Passwordless email authentication via magic links
-  - Backend endpoints: `/api/v1/magic-link/send` and `/api/v1/magic-link/verify`
-  - Magic links expire after 15 minutes for security
-  - Email sent via Resend from noreply@oppgrid.com (verified domain)
-  - Updated `signin.html` (canonical), `login.html` (legacy alias), and `auth-magic.html` with magic link UI
-  - Fixed user profile loading for new magic link users (impact_points null handling)
-  - Session storage prevents duplicate verification on page reload
-
-- **Social Login Buttons** (December 17, 2024):
-  - Added "Continue with Google" and "Continue with GitHub" buttons to signin.html and login.html
-  - Backend Replit Auth router created with PKCE flow and JWT verification via JWKS
-  - Note: Social login redirect URI requires additional configuration with Replit OIDC
-  - Current status: Buttons show a message directing users to email/password login
-  - Backend code ready at `/api/v1/replit-auth/login` with full token validation
+- **Unified Replit Auth** (December 18, 2024):
+  - Complete authentication refactoring using Replit's recommended OIDC patterns
+  - Database-backed session storage with OAuthToken model for reliability across restarts
+  - Unified "Sign In" button supporting Google, GitHub, X, Apple, and email
+  - PKCE flow with secure state tokens (JWT-signed with SESSION_SECRET)
+  - Conditional secure cookies (HTTPS-only in production, works in local dev)
+  - Token storage persists access/refresh tokens tied to user and browser session
+  - Backend endpoints: `/api/v1/replit-auth/login`, `/api/v1/replit-auth/callback`, `/api/v1/replit-auth/logout`
+  - Removed magic link authentication in favor of Replit Auth email login
+  - Note: Set SESSION_SECRET environment variable in production for security
 
 - **Time-Decay Pricing & Pay-Per-Unlock** (December 17, 2024):
   - NEW: Time-decay access control based on opportunity age (per pricing strategy document)
