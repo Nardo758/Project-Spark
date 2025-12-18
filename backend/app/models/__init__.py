@@ -6,6 +6,7 @@ from .notification import Notification
 from .subscription import Subscription, UsageRecord
 from .report import Report
 from .user import User
+from .oauth import OAuthToken
 
 __all__ = [
     "User",
@@ -17,4 +18,5 @@ __all__ = [
     "Subscription",
     "UsageRecord",
     "Report",
+    "OAuthToken",
 ]

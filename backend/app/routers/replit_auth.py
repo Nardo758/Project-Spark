@@ -1,45 +1,44 @@
 """
 Replit Auth Router - OIDC integration using Replit as identity provider
-Uses OIDC discovery for endpoint configuration
+Uses database-backed session storage following Replit's recommended patterns
 """
 import os
 import secrets
 import httpx
-import time
 import hashlib
 import base64
 import json
-from datetime import timedelta
+import uuid
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 from typing import Optional, Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status, Cookie
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from authlib.common.security import generate_token
 import jwt
 from jwt import PyJWKClient
 
 from app.db.database import get_db
 from app.models.user import User
+from app.models.oauth import OAuthToken
 from app.core.security import create_access_token
 from app.core.config import settings
 
 router = APIRouter()
 
-# Replit OIDC configuration from discovery document
 REPL_ID = os.environ.get('REPL_ID', '')
 ISSUER_URL = "https://replit.com/oidc"
 AUTHORIZATION_ENDPOINT = f"{ISSUER_URL}/auth"
 TOKEN_ENDPOINT = f"{ISSUER_URL}/token"
 END_SESSION_ENDPOINT = f"{ISSUER_URL}/session/end"
 JWKS_URL = f"{ISSUER_URL}/jwks"
+SESSION_SECRET = os.environ.get('SESSION_SECRET', '')
 
-# State storage with TTL (5 minutes)
-STATE_TTL_SECONDS = 300
-_auth_states: Dict[str, Dict[str, Any]] = {}
+SESSION_COOKIE_NAME = "oppgrid_session"
+STATE_COOKIE_NAME = "auth_state"
+COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
-# JWKS client for signature verification (cached)
 _jwks_client = None
 
 
@@ -51,23 +50,15 @@ def get_jwks_client():
     return _jwks_client
 
 
-def cleanup_expired_states():
-    """Remove expired states from memory"""
-    current_time = time.time()
-    expired_keys = [
-        key for key, value in _auth_states.items()
-        if current_time - value.get('created_at', 0) > STATE_TTL_SECONDS
-    ]
-    for key in expired_keys:
-        _auth_states.pop(key, None)
+def generate_browser_session_key() -> str:
+    """Generate a unique browser session key"""
+    return uuid.uuid4().hex
 
 
 def get_callback_url() -> str:
-    """Get the fixed callback URL for OAuth using canonical Replit domain"""
-    # Standard Replit Auth callback path
+    """Get the callback URL for OAuth"""
     callback_path = "/__repl_auth_callback"
     
-    # Priority: FRONTEND_URL (.repl.co) > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN
     frontend_url = os.environ.get('FRONTEND_URL', '')
     if frontend_url and '.repl.co' in frontend_url:
         base = frontend_url.strip().rstrip("/")
@@ -83,11 +74,33 @@ def get_callback_url() -> str:
     return f"http://localhost:5000{callback_path}"
 
 
+def generate_pkce_pair() -> tuple[str, str]:
+    """Generate PKCE code verifier and challenge"""
+    code_verifier = secrets.token_urlsafe(64)
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).decode().rstrip('=')
+    return code_verifier, code_challenge
+
+
+def create_state_token(data: dict) -> str:
+    """Create a signed state token for OAuth flow"""
+    data['exp'] = datetime.now(timezone.utc) + timedelta(minutes=10)
+    return jwt.encode(data, SESSION_SECRET, algorithm='HS256')
+
+
+def verify_state_token(token: str) -> Optional[dict]:
+    """Verify and decode a state token"""
+    try:
+        return jwt.decode(token, SESSION_SECRET, algorithms=['HS256'])
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+
 def verify_id_token(id_token: str, nonce: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Verify and decode the ID token from Replit.
-    Validates signature, issuer, audience, expiry, and nonce.
-    """
+    """Verify and decode the ID token from Replit"""
     try:
         jwks_client = get_jwks_client()
         signing_key = jwks_client.get_signing_key_from_jwt(id_token)
@@ -123,8 +136,62 @@ def verify_id_token(id_token: str, nonce: Optional[str] = None) -> Dict[str, Any
         raise ValueError(f"Token validation failed: {str(e)}")
 
 
+def get_or_create_session_key(request: Request, response: Response) -> str:
+    """Get existing session key from cookie or create a new one"""
+    session_key = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_key:
+        session_key = generate_browser_session_key()
+    return session_key
+
+
+def store_oauth_token(
+    db: Session,
+    user_id: int,
+    session_key: str,
+    access_token: str,
+    refresh_token: Optional[str],
+    expires_at: Optional[datetime]
+):
+    """Store OAuth token in database"""
+    existing = db.query(OAuthToken).filter(
+        OAuthToken.user_id == user_id,
+        OAuthToken.browser_session_key == session_key,
+        OAuthToken.provider == "replit"
+    ).first()
+    
+    if existing:
+        existing.access_token = access_token
+        existing.refresh_token = refresh_token
+        existing.expires_at = expires_at
+    else:
+        oauth_token = OAuthToken(
+            user_id=user_id,
+            browser_session_key=session_key,
+            provider="replit",
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_at=expires_at
+        )
+        db.add(oauth_token)
+    
+    db.commit()
+
+
+def delete_oauth_token(db: Session, user_id: int, session_key: str):
+    """Delete OAuth token from database"""
+    db.query(OAuthToken).filter(
+        OAuthToken.user_id == user_id,
+        OAuthToken.browser_session_key == session_key,
+        OAuthToken.provider == "replit"
+    ).delete()
+    db.commit()
+
+
 @router.get("/login")
-async def replit_login(request: Request, redirect_url: Optional[str] = None):
+async def replit_login(
+    request: Request,
+    redirect_url: Optional[str] = None
+):
     """Initiate Replit OIDC login flow with PKCE"""
     if not REPL_ID:
         raise HTTPException(
@@ -132,45 +199,56 @@ async def replit_login(request: Request, redirect_url: Optional[str] = None):
             detail="Replit Auth not configured - REPL_ID not set"
         )
     
-    cleanup_expired_states()
-    
-    code_verifier = generate_token(64)
-    code_challenge = base64.urlsafe_b64encode(
-        hashlib.sha256(code_verifier.encode()).digest()
-    ).decode().rstrip('=')
-    
+    code_verifier, code_challenge = generate_pkce_pair()
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(32)
-    
+    session_key = request.cookies.get(SESSION_COOKIE_NAME) or generate_browser_session_key()
     callback_url = get_callback_url()
     
-    _auth_states[state] = {
-        'code_verifier': code_verifier,
+    state_data = {
+        'state': state,
         'nonce': nonce,
+        'code_verifier': code_verifier,
         'redirect_url': redirect_url or '/discover.html',
         'callback_url': callback_url,
-        'created_at': time.time()
+        'session_key': session_key
     }
+    state_token = create_state_token(state_data)
     
     params = {
         'client_id': REPL_ID,
         'response_type': 'code',
         'redirect_uri': callback_url,
-        'scope': 'openid profile email',
+        'scope': 'openid profile email offline_access',
         'state': state,
         'nonce': nonce,
         'code_challenge': code_challenge,
-        'code_challenge_method': 'S256'
+        'code_challenge_method': 'S256',
+        'prompt': 'login consent'
     }
     
     auth_url = f"{AUTHORIZATION_ENDPOINT}?{urlencode(params)}"
     
-    print(f"[Replit Auth] === Authorization Request ===")
-    print(f"[Replit Auth] Client ID: {REPL_ID}")
-    print(f"[Replit Auth] Redirect URI: {callback_url}")
-    print(f"[Replit Auth] Auth URL: {auth_url}")
+    response = RedirectResponse(url=auth_url, status_code=302)
+    response.set_cookie(
+        key=STATE_COOKIE_NAME,
+        value=state_token,
+        max_age=600,
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_key,
+        max_age=COOKIE_MAX_AGE,
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
     
-    return RedirectResponse(url=auth_url, status_code=302)
+    print(f"[Replit Auth] Login initiated, redirecting to: {auth_url}")
+    return response
 
 
 @router.get("/callback")
@@ -184,11 +262,7 @@ async def replit_callback(
     db: Session = Depends(get_db)
 ):
     """Handle OIDC callback from Replit"""
-    print(f"[Replit Auth] === Callback Received ===")
-    print(f"[Replit Auth] Code: {'present' if code else 'missing'}")
-    print(f"[Replit Auth] State: {'present' if state else 'missing'}")
-    print(f"[Replit Auth] Error: {error}")
-    print(f"[Replit Auth] Error Description: {error_description}")
+    print(f"[Replit Auth] Callback received - code: {'present' if code else 'missing'}, state: {'present' if state else 'missing'}")
     
     if error:
         return RedirectResponse(url=f"/signin.html?error={error}&desc={error_description or ''}")
@@ -196,19 +270,21 @@ async def replit_callback(
     if not code or not state:
         return RedirectResponse(url="/signin.html?error=missing_params")
     
-    cleanup_expired_states()
-    stored_data = _auth_states.pop(state, None)
-    if not stored_data:
-        print(f"[Replit Auth] Invalid state - not found in storage")
+    state_token = request.cookies.get(STATE_COOKIE_NAME)
+    if not state_token:
+        print("[Replit Auth] No state cookie found")
         return RedirectResponse(url="/signin.html?error=invalid_state")
     
-    if time.time() - stored_data.get('created_at', 0) > STATE_TTL_SECONDS:
-        return RedirectResponse(url="/signin.html?error=state_expired")
+    state_data = verify_state_token(state_token)
+    if not state_data or state_data.get('state') != state:
+        print("[Replit Auth] State mismatch or expired")
+        return RedirectResponse(url="/signin.html?error=invalid_state")
     
-    code_verifier = stored_data['code_verifier']
-    nonce = stored_data['nonce']
-    redirect_url = stored_data['redirect_url']
-    callback_url = stored_data['callback_url']
+    code_verifier = state_data['code_verifier']
+    nonce = state_data['nonce']
+    redirect_url = state_data['redirect_url']
+    callback_url = state_data['callback_url']
+    session_key = state_data['session_key']
     
     token_data = {
         'grant_type': 'authorization_code',
@@ -218,10 +294,6 @@ async def replit_callback(
         'code_verifier': code_verifier
     }
     
-    print(f"[Replit Auth] Exchanging code for tokens...")
-    print(f"[Replit Auth] Token endpoint: {TOKEN_ENDPOINT}")
-    print(f"[Replit Auth] Redirect URI for token: {callback_url}")
-    
     try:
         async with httpx.AsyncClient() as client:
             token_response = await client.post(
@@ -229,8 +301,6 @@ async def replit_callback(
                 data=token_data,
                 headers={'Content-Type': 'application/x-www-form-urlencoded'}
             )
-            
-            print(f"[Replit Auth] Token response status: {token_response.status_code}")
             
             if token_response.status_code != 200:
                 print(f"[Replit Auth] Token exchange failed: {token_response.text}")
@@ -243,22 +313,19 @@ async def replit_callback(
     
     id_token = tokens.get('id_token')
     if not id_token:
-        print(f"[Replit Auth] No ID token in response")
         return RedirectResponse(url="/signin.html?error=no_id_token")
     
     try:
         user_claims = verify_id_token(id_token, nonce)
-        print(f"[Replit Auth] Token verified successfully")
-        print(f"[Replit Auth] User claims: {json.dumps(user_claims, default=str)}")
+        print(f"[Replit Auth] Token verified, claims: {json.dumps(user_claims, default=str)}")
     except ValueError as e:
         print(f"[Replit Auth] Token verification failed: {e}")
         return RedirectResponse(url="/signin.html?error=token_verification_failed")
     
-    replit_user_id = user_claims.get('sub')
+    replit_user_id = str(user_claims.get('sub'))
     email = user_claims.get('email')
     first_name = user_claims.get('first_name', '')
     last_name = user_claims.get('last_name', '')
-    username = user_claims.get('username', '')
     profile_image = user_claims.get('profile_image_url')
     
     if not replit_user_id:
@@ -278,7 +345,7 @@ async def replit_callback(
                 user.avatar_url = profile_image
     
     if not user:
-        full_name = f"{first_name} {last_name}".strip() or username or f"User_{replit_user_id}"
+        full_name = f"{first_name} {last_name}".strip() or f"User_{replit_user_id}"
         user_email = email if email else f"{replit_user_id}@replit.user"
         
         user = User(
@@ -297,6 +364,20 @@ async def replit_callback(
     
     print(f"[Replit Auth] User authenticated: {user.email}")
     
+    replit_access_token = tokens.get('access_token')
+    replit_refresh_token = tokens.get('refresh_token')
+    expires_in = tokens.get('expires_in', 3600)
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+    
+    store_oauth_token(
+        db=db,
+        user_id=user.id,
+        session_key=session_key,
+        access_token=replit_access_token,
+        refresh_token=replit_refresh_token,
+        expires_at=expires_at
+    )
+    
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email, "user_id": user.id},
@@ -314,37 +395,53 @@ async def replit_callback(
     
     user_json = base64.urlsafe_b64encode(json.dumps(user_data).encode()).decode()
     
-    return RedirectResponse(
+    response = RedirectResponse(
         url=f"/auth-callback.html?token={access_token}&user={user_json}&redirect={redirect_url}"
     )
+    response.delete_cookie(STATE_COOKIE_NAME)
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=session_key,
+        max_age=COOKIE_MAX_AGE,
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    
+    return response
 
 
 @router.get("/logout")
-async def replit_logout():
+async def replit_logout(
+    request: Request,
+    db: Session = Depends(get_db)
+):
     """Logout and end Replit session"""
-    callback_url = get_callback_url()
-    base_url = callback_url.rsplit('/api/', 1)[0]
+    session_key = request.cookies.get(SESSION_COOKIE_NAME)
     
     params = {
         'client_id': REPL_ID,
-        'post_logout_redirect_uri': base_url
+        'post_logout_redirect_uri': get_callback_url().rsplit('/', 1)[0]
     }
     
     logout_url = f"{END_SESSION_ENDPOINT}?{urlencode(params)}"
-    return RedirectResponse(url=logout_url)
+    
+    response = RedirectResponse(url=logout_url)
+    response.delete_cookie(SESSION_COOKIE_NAME)
+    
+    return response
 
 
 @router.get("/status")
-async def auth_status():
+async def auth_status(request: Request):
     """Check if Replit Auth is configured"""
-    callback_url = get_callback_url()
     return {
         "configured": bool(REPL_ID),
         "provider": "replit",
         "client_id": REPL_ID,
-        "callback_url": callback_url,
+        "callback_url": get_callback_url(),
         "authorization_endpoint": AUTHORIZATION_ENDPOINT,
-        "token_endpoint": TOKEN_ENDPOINT
+        "session_active": bool(request.cookies.get(SESSION_COOKIE_NAME))
     }
 
 
@@ -354,9 +451,11 @@ async def auth_debug():
     return {
         "repl_id": REPL_ID,
         "replit_dev_domain": os.environ.get('REPLIT_DEV_DOMAIN', 'not set'),
+        "replit_domains": os.environ.get('REPLIT_DOMAINS', 'not set'),
         "callback_url": get_callback_url(),
         "issuer": ISSUER_URL,
         "authorization_endpoint": AUTHORIZATION_ENDPOINT,
         "token_endpoint": TOKEN_ENDPOINT,
-        "jwks_url": JWKS_URL
+        "jwks_url": JWKS_URL,
+        "session_secret_configured": bool(SESSION_SECRET)
     }
