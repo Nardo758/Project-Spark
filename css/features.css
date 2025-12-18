@@ -42,8 +42,8 @@
     align-items: center;
     gap: 4px;
     padding: 4px 8px;
-    background: #EFF6FF;
-    color: #1E40AF;
+    background: #F1F5F9;
+    color: #475569;
     border-radius: 8px;
     font-size: 12px;
     font-weight: 500;
@@ -61,7 +61,7 @@
 }
 
 .opportunity-card:hover {
-    border-color: #3B82F6;
+    border-color: #D97757;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
@@ -100,12 +100,12 @@
 }
 
 .validation-count {
-    color: #059669;
+    color: #475569;
     font-weight: 600;
 }
 
 .growth {
-    color: #059669;
+    color: #475569;
     font-weight: 600;
 }
 
@@ -131,8 +131,8 @@
 }
 
 .duplicate-item {
-    background: #FEF3C7;
-    border: 1px solid #FDE047;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 12px;
@@ -141,18 +141,18 @@
 }
 
 .duplicate-item:hover {
-    background: #FDE047;
+    background: #F1F5F9;
 }
 
 .duplicate-item h4 {
     margin: 0 0 8px 0;
-    color: #92400E;
+    color: #334155;
 }
 
 .duplicate-item p {
     margin: 0 0 12px 0;
     font-size: 14px;
-    color: #78350F;
+    color: #475569;
 }
 
 /* Filters */

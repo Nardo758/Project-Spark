@@ -97,14 +97,16 @@ Friction is a problem discovery engine that helps founders, researchers, and inn
 
 ## Design System
 
-### Color Palette
-- **Background**: `#F8F9FA` - Light gray background
+### Color Palette (Professional Theme)
+- **Background**: `#FAFAF9` - Stone-50 light background
 - **Surface**: `#FFFFFF` - White cards and panels
-- **Primary**: `#1A73E8` - Google Blue for CTAs and accents
-- **Text**: `#202124` - Near-black for primary text
-- **Secondary Text**: `#5F6368` - Medium gray for secondary information
-- **Success**: `#0D9488` - Teal for positive indicators
-- **Danger**: `#DC2626` - Red for warnings and destructive actions
+- **Primary**: `#D97757` - Warm terracotta accent for CTAs
+- **Text**: `#1C1917` - Stone-900 near-black for primary text
+- **Secondary Text**: `#78716C` - Stone-500 for secondary information
+- **Muted**: `#A8A29E` - Stone-400 for subtle elements
+- **Neutral badges**: `#F1F5F9` - Slate-100 for professional badges
+- **Stat cards**: `#334155` - Slate-700 solid professional tone
+- **Danger**: `#DC2626` - Red for warnings only
 
 ### Typography
 - **Font Family**: Inter, SF Pro Display, Segoe UI, system-ui
