@@ -4,11 +4,17 @@ import os
 import signal
 import time
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-from urllib.request import urlopen, Request
+from urllib.request import urlopen, Request, HTTPRedirectHandler, build_opener
 from urllib.error import URLError, HTTPError
 from urllib.parse import urlparse, unquote
 import threading
 import json
+
+
+class NoRedirectHandler(HTTPRedirectHandler):
+    """Custom handler that doesn't follow redirects - returns them instead"""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None  # Don't follow redirects
 
 def get_frontend_port(default_port: int = 5000) -> int:
     """Return public HTTP port (deployment uses PORT env)."""
@@ -113,13 +119,17 @@ class ProxyHandler(SimpleHTTPRequestHandler):
             body = self.rfile.read(content_length) if content_length > 0 else None
             
             headers = {}
-            for header in ['Content-Type', 'Authorization', 'Accept']:
+            for header in ['Content-Type', 'Authorization', 'Accept', 'Cookie']:
                 if self.headers.get(header):
                     headers[header] = self.headers.get(header)
             
             req = Request(backend_url, data=body, headers=headers, method=method)
             
-            with urlopen(req, timeout=30) as response:
+            # Use opener that doesn't follow redirects
+            opener = build_opener(NoRedirectHandler)
+            
+            try:
+                response = opener.open(req, timeout=30)
                 self.send_response(response.status)
                 for header, value in response.headers.items():
                     if header.lower() not in ['transfer-encoding', 'connection']:
@@ -127,15 +137,25 @@ class ProxyHandler(SimpleHTTPRequestHandler):
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(response.read())
-        except HTTPError as e:
-            self.send_response(e.code)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            try:
-                self.wfile.write(e.read())
-            except:
-                self.wfile.write(json.dumps({'detail': str(e)}).encode())
+            except HTTPError as e:
+                # HTTPError is raised for redirects (3xx) and client/server errors (4xx, 5xx)
+                if e.code in (301, 302, 303, 307, 308):
+                    # Pass redirect back to client
+                    self.send_response(e.code)
+                    for header, value in e.headers.items():
+                        if header.lower() not in ['transfer-encoding', 'connection']:
+                            self.send_header(header, value)
+                    self.end_headers()
+                else:
+                    # Regular HTTP error
+                    self.send_response(e.code)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    try:
+                        self.wfile.write(e.read())
+                    except:
+                        self.wfile.write(json.dumps({'detail': str(e)}).encode())
         except URLError as e:
             self.send_response(503)
             self.send_header('Content-Type', 'application/json')
