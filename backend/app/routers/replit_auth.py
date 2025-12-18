@@ -410,15 +410,32 @@ async def replit_callback(
     user_json = base64.urlsafe_b64encode(json.dumps(user_data).encode()).decode()
     
     use_secure = is_secure_context(request)
-    response = RedirectResponse(
-        url=f"/auth-callback.html?token={access_token}&user={user_json}&redirect={redirect_url}"
-    )
+    
+    # Redirect directly to destination - use short-lived cookies for token handoff
+    response = RedirectResponse(url=redirect_url, status_code=302)
     response.delete_cookie(STATE_COOKIE_NAME)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=session_key,
         max_age=COOKIE_MAX_AGE,
         httponly=True,
+        secure=use_secure,
+        samesite="lax"
+    )
+    # Short-lived cookies to pass auth data to JavaScript (picked up on page load)
+    response.set_cookie(
+        key="auth_token",
+        value=access_token,
+        max_age=60,
+        httponly=False,
+        secure=use_secure,
+        samesite="lax"
+    )
+    response.set_cookie(
+        key="auth_user",
+        value=user_json,
+        max_age=60,
+        httponly=False,
         secure=use_secure,
         samesite="lax"
     )

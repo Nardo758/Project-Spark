@@ -9,6 +9,9 @@ class OppGridAPI {
             ? CONFIG.API_BASE_URL 
             : '/api/v1';
 
+        // Check for auth cookies from Replit Auth (short-lived, set after login)
+        this._processAuthCookies();
+
         // Token storage: canonical key is `access_token`.
         // Migrate legacy `token` (older builds) to `access_token` to avoid re-auth loops.
         const accessToken = localStorage.getItem('access_token');
@@ -21,6 +24,29 @@ class OppGridAPI {
             // Keep memory and storage aligned; drop legacy key if it exists.
             if (legacyToken) localStorage.removeItem('token');
             this.token = accessToken;
+        }
+    }
+
+    _processAuthCookies() {
+        // Pick up auth data from short-lived cookies (set after Replit Auth login)
+        const cookies = document.cookie.split(';').reduce((acc, c) => {
+            const [key, val] = c.trim().split('=');
+            if (key && val) acc[key] = val;
+            return acc;
+        }, {});
+
+        if (cookies.auth_token) {
+            localStorage.setItem('access_token', decodeURIComponent(cookies.auth_token));
+            document.cookie = 'auth_token=; max-age=0; path=/';
+        }
+        if (cookies.auth_user) {
+            try {
+                const userJson = atob(decodeURIComponent(cookies.auth_user));
+                localStorage.setItem('user', userJson);
+            } catch (e) {
+                console.error('Failed to decode user data:', e);
+            }
+            document.cookie = 'auth_user=; max-age=0; path=/';
         }
     }
 
