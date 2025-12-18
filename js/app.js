@@ -526,6 +526,10 @@ function showSuccess(message) {
 }
 
 function showLoginPrompt() {
+    if (window.OppGridAuth) {
+        window.OppGridAuth.redirectToSignin();
+        return;
+    }
     const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
     window.location.href = `signin.html?redirect=${redirect}`;
 }

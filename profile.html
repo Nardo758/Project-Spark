@@ -518,6 +518,7 @@
     </main>
 
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         let currentUser = null;
         let userOpportunities = [];
@@ -527,11 +528,7 @@
         // Load user profile data
         async function loadProfile() {
             try {
-                if (!api.isAuthenticated()) {
-                    const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
-                    window.location.href = `signin.html?redirect=${redirect}`;
-                    return;
-                }
+                if (!OppGridAuth.requireAuth()) return;
 
                 // Load current user data
                 currentUser = await api.getCurrentUser();
@@ -555,8 +552,7 @@
             } catch (error) {
                 console.error('Error loading profile:', error);
                 if (error.status === 401 || error.status === 403) {
-                    const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
-                    window.location.href = `signin.html?redirect=${redirect}`;
+                    OppGridAuth.redirectToSignin();
                 }
             }
         }
