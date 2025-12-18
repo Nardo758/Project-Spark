@@ -586,6 +586,33 @@
                 </div>
 
                 <div class="divider">
+                    <span>or sign up with email link</span>
+                </div>
+
+                <!-- Magic Link Option -->
+                <div class="magic-link-section" id="magicLinkSection">
+                    <div class="form-group">
+                        <label for="magicEmail">Email address</label>
+                        <input type="email" id="magicEmail" placeholder="you@example.com">
+                    </div>
+                    <button type="button" class="btn-submit" id="sendMagicLink" style="background: var(--stone-800);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        Send Magic Link
+                    </button>
+                    <p style="text-align: center; font-size: 13px; color: var(--stone-500); margin-top: 8px;">
+                        No password needed - we'll email you a secure link
+                    </p>
+                </div>
+
+                <!-- Success message for magic link -->
+                <div class="success-message" id="magicLinkSuccess" style="display: none; background: #d1fae5; border: 1px solid #059669; color: #047857; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px;">
+                    Check your email for a magic link to sign in!
+                </div>
+
+                <div class="divider">
                     <span>or create account with password</span>
                 </div>
 
@@ -726,6 +753,44 @@
         // Primary Sign Up button - redirects to Replit Auth (supports Google, GitHub, X, Apple, email)
         document.getElementById('primarySignup').addEventListener('click', () => {
             window.location.href = '/auth/login?redirect_url=' + encodeURIComponent('/discover.html');
+        });
+
+        // Magic Link functionality
+        const magicLinkBtn = document.getElementById('sendMagicLink');
+        const magicEmailInput = document.getElementById('magicEmail');
+        const magicLinkSuccess = document.getElementById('magicLinkSuccess');
+
+        magicLinkBtn.addEventListener('click', async () => {
+            const email = magicEmailInput.value.trim();
+            if (!email) {
+                showError('Please enter your email address');
+                return;
+            }
+
+            const originalText = magicLinkBtn.innerHTML;
+            magicLinkBtn.disabled = true;
+            magicLinkBtn.innerHTML = '<span>Sending...</span>';
+            hideError();
+
+            try {
+                const response = await fetch('/api/v1/magic-link/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to send magic link');
+                }
+
+                magicLinkSuccess.style.display = 'block';
+                document.getElementById('magicLinkSection').style.display = 'none';
+            } catch (error) {
+                showError(error.message || 'Failed to send magic link. Please try again.');
+                magicLinkBtn.disabled = false;
+                magicLinkBtn.innerHTML = originalText;
+            }
         });
 
         // Check for plan parameter
