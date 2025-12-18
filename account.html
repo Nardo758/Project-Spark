@@ -1060,8 +1060,38 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('checkout') === 'success') {
             document.getElementById('successMessage').style.display = 'block';
+            localStorage.removeItem('pending_plan');
             window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
         }
+
+        // Handle pending checkout plan (from signup flow)
+        async function handlePendingCheckout() {
+            const checkoutPlan = urlParams.get('checkout_plan') || localStorage.getItem('pending_plan');
+            if (checkoutPlan && (checkoutPlan === 'pro' || checkoutPlan === 'business')) {
+                // Clear URL parameter but keep pending_plan until checkout completes
+                if (urlParams.get('checkout_plan')) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                // Auto-initiate checkout
+                try {
+                    const origin = window.location.origin;
+                    const successUrl = `${origin}/account.html?checkout=success#subscription`;
+                    const cancelUrl = `${origin}/pricing.html?checkout=cancelled`;
+                    
+                    const data = await api.createCheckoutSession(checkoutPlan, successUrl, cancelUrl);
+                    localStorage.removeItem('pending_plan');
+                    window.location.href = data.url || data.checkout_url;
+                } catch (error) {
+                    console.error('Failed to start checkout:', error);
+                    localStorage.removeItem('pending_plan');
+                    alert('Unable to start checkout. Please try again from the pricing page.');
+                }
+            }
+        }
+
+        // Run pending checkout check after a brief delay to ensure auth is ready
+        setTimeout(handlePendingCheckout, 500);
 
         // Manage billing button click
         document.getElementById('manageBillingBtn').addEventListener('click', openBillingPortal);
