@@ -101,7 +101,11 @@ async def get_opportunity(
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional)
 ):
-    """Get a single opportunity by ID with gated content based on subscription"""
+    """Get a single opportunity by ID with gated content based on subscription and time-decay access"""
+    from datetime import datetime
+    from app.services.stripe_service import stripe_service
+    from app.models.subscription import SubscriptionTier
+    
     opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
 
     if not opportunity:
@@ -113,9 +117,64 @@ async def get_opportunity(
     # Build response with gating logic
     is_authenticated = current_user is not None
     is_unlocked = False
+    user_tier = SubscriptionTier.FREE
+    unlock_method = None
     
     if current_user:
         is_unlocked = usage_service.is_opportunity_unlocked(current_user, opportunity_id, db)
+        subscription = usage_service.get_or_create_subscription(current_user, db)
+        user_tier = subscription.tier if hasattr(subscription.tier, 'value') else SubscriptionTier(subscription.tier)
+        
+        # Get unlock method if unlocked
+        if is_unlocked:
+            from app.models.subscription import UnlockedOpportunity
+            unlock_record = db.query(UnlockedOpportunity).filter(
+                UnlockedOpportunity.user_id == current_user.id,
+                UnlockedOpportunity.opportunity_id == opportunity_id
+            ).first()
+            if unlock_record:
+                unlock_method = unlock_record.unlock_method.value if unlock_record.unlock_method else None
+    
+    # Calculate opportunity age and time-decay access
+    from datetime import timezone
+    now = datetime.now(timezone.utc)
+    created_at = opportunity.created_at
+    # Handle both timezone-aware and naive datetimes
+    if created_at is None:
+        created_at = now
+    elif created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    age_days = (now - created_at).days
+    
+    # Get freshness badge and access info
+    freshness_badge = stripe_service.get_opportunity_freshness_badge(age_days)
+    is_accessible = stripe_service.can_access_opportunity_by_age(user_tier, age_days) if is_authenticated else False
+    days_until_unlock = stripe_service.get_days_until_unlock(user_tier, age_days) if is_authenticated else stripe_service.get_days_until_unlock(SubscriptionTier.FREE, age_days)
+    
+    # Check if pay-per-unlock is available (Free tier, 91+ days, not already unlocked)
+    can_pay_to_unlock = (
+        age_days >= 91 and 
+        (not is_authenticated or user_tier == SubscriptionTier.FREE) and
+        not is_unlocked
+    )
+    
+    # Determine layer access based on tier
+    tier_value = user_tier.value if hasattr(user_tier, 'value') else str(user_tier)
+    deep_dive_available = tier_value in ['business', 'enterprise'] and (is_accessible or is_unlocked)
+    execution_package_available = tier_value in ['business', 'enterprise'] and (is_accessible or is_unlocked)
+    
+    # Build access info
+    access_info = {
+        "age_days": age_days,
+        "freshness_badge": freshness_badge,
+        "is_accessible": is_accessible or is_unlocked,
+        "is_unlocked": is_unlocked,
+        "unlock_method": unlock_method,
+        "days_until_unlock": days_until_unlock,
+        "can_pay_to_unlock": can_pay_to_unlock,
+        "unlock_price": stripe_service.PAY_PER_UNLOCK_PRICE if can_pay_to_unlock else None,
+        "user_tier": tier_value if is_authenticated else None
+    }
     
     # Create response dict from opportunity
     response_data = {
@@ -147,7 +206,10 @@ async def get_opportunity(
         "source_url": opportunity.source_url,
         "is_unlocked": is_unlocked,
         "is_authenticated": is_authenticated,
-        # Always show basic AI fields (hook content)
+        "access_info": access_info,
+        "deep_dive_available": deep_dive_available,
+        "execution_package_available": execution_package_available,
+        # Always show basic AI fields (Layer 0 - hook content)
         "ai_analyzed": opportunity.ai_analyzed,
         "ai_analyzed_at": opportunity.ai_analyzed_at,
         "ai_opportunity_score": opportunity.ai_opportunity_score,
@@ -164,18 +226,28 @@ async def get_opportunity(
         "raw_source_data": opportunity.raw_source_data,
     }
     
-    # Gate premium AI fields based on unlock status
-    if is_unlocked:
+    # Gate Layer 1 content (Problem Overview) based on access
+    if is_accessible or is_unlocked:
         response_data["ai_business_model_suggestions"] = json.loads(opportunity.ai_business_model_suggestions or "[]")
         response_data["ai_competitive_advantages"] = json.loads(opportunity.ai_competitive_advantages or "[]")
         response_data["ai_key_risks"] = json.loads(opportunity.ai_key_risks or "[]")
         response_data["ai_next_steps"] = json.loads(opportunity.ai_next_steps or "[]")
     else:
-        # Return None/empty for gated content
         response_data["ai_business_model_suggestions"] = None
         response_data["ai_competitive_advantages"] = None
         response_data["ai_key_risks"] = None
         response_data["ai_next_steps"] = None
+    
+    # Layer 2 content (Deep Dive) - only for Business+ tier
+    if deep_dive_available:
+        response_data["layer_2_content"] = {
+            "competitive_landscape": "Full competitive analysis available",
+            "tam_sam_som": opportunity.ai_market_size_estimate,
+            "geographic_breakdown": opportunity.geographic_scope,
+            "trend_trajectory": "growing"
+        }
+    else:
+        response_data["layer_2_content"] = None
     
     return response_data
 

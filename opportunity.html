@@ -2801,6 +2801,17 @@
         </div>
     </div>
 
+    <!-- Access Info Banner (Time-Decay Pricing) -->
+    <div id="access-info-banner" style="display: none; max-width: 1280px; margin: 0 auto; padding: 16px 32px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-radius: 12px; background: var(--stone-50); border: 1px solid var(--stone-200);">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span id="freshness-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;"></span>
+                <span id="access-message" style="font-size: 14px; color: var(--stone-600);"></span>
+            </div>
+            <div id="access-cta" style="display: flex; gap: 8px;"></div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <main class="main-content">
         <!-- TIER 1: Problem Detail (Free) -->
@@ -4368,10 +4379,78 @@
                 // Apply subscription-based gating
                 applySubscriptionGating();
                 
+                // Display access info banner
+                displayAccessInfo(opp);
+                
                 loadAISuggestions(opp);
                 
             } catch (error) {
                 console.error('Failed to load opportunity:', error);
+            }
+        }
+
+        function displayAccessInfo(opp) {
+            const banner = document.getElementById('access-info-banner');
+            const badge = document.getElementById('freshness-badge');
+            const message = document.getElementById('access-message');
+            const cta = document.getElementById('access-cta');
+            
+            if (!banner) return;
+            
+            // Check if we have access_info from API
+            if (opp.access_info) {
+                const info = opp.access_info;
+                const fb = info.freshness_badge;
+                
+                // Set freshness badge
+                badge.innerHTML = `${fb.icon} ${fb.label}`;
+                badge.style.background = `${fb.color}15`;
+                badge.style.color = fb.color;
+                badge.style.border = `1px solid ${fb.color}30`;
+                
+                // Set access message
+                if (info.is_accessible || info.is_unlocked) {
+                    message.innerHTML = `<span style="color: #22c55e;">✓</span> Full access available · <strong>${info.age_days} days old</strong>`;
+                    cta.innerHTML = '';
+                } else if (info.can_pay_to_unlock) {
+                    message.innerHTML = `Archive opportunity · <strong>${info.age_days} days old</strong>`;
+                    cta.innerHTML = `
+                        <button onclick="handlePayPerUnlock()" class="btn" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer;">
+                            🔓 Unlock for $${(info.unlock_price / 100).toFixed(0)}
+                        </button>
+                        <a href="pricing.html" class="btn" style="background: var(--violet-600); color: white; border: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none;">
+                            Upgrade to Pro
+                        </a>
+                    `;
+                } else if (info.days_until_unlock > 0) {
+                    message.innerHTML = `Unlocks for ${info.user_tier || 'your tier'} in <strong style="color: var(--violet-600);">${info.days_until_unlock} days</strong>`;
+                    cta.innerHTML = `
+                        <a href="pricing.html" class="btn" style="background: var(--violet-600); color: white; border: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none;">
+                            Get Earlier Access
+                        </a>
+                    `;
+                }
+                
+                banner.style.display = 'block';
+            } else {
+                // Fallback to calculating locally
+                const createdAt = opp.created_at ? new Date(opp.created_at) : new Date();
+                const now = new Date();
+                const ageDays = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+                
+                let fb = { icon: '📚', label: 'ARCHIVE', color: '#6b7280' };
+                if (ageDays <= 7) fb = { icon: '🔥', label: 'HOT', color: '#ef4444' };
+                else if (ageDays <= 30) fb = { icon: '⚡', label: 'FRESH', color: '#f97316' };
+                else if (ageDays <= 90) fb = { icon: '✓', label: 'VALIDATED', color: '#22c55e' };
+                
+                badge.innerHTML = `${fb.icon} ${fb.label}`;
+                badge.style.background = `${fb.color}15`;
+                badge.style.color = fb.color;
+                badge.style.border = `1px solid ${fb.color}30`;
+                
+                message.innerHTML = `<strong>${ageDays} days old</strong>`;
+                
+                banner.style.display = 'block';
             }
         }
 

@@ -94,13 +94,45 @@ class OpportunityList(BaseModel):
     page_size: int
 
 
+class FreshnessBadge(BaseModel):
+    """Freshness badge based on opportunity age"""
+    icon: str
+    label: str
+    color: str
+    tier_required: str
+    description: str
+
+
+class OpportunityAccessInfo(BaseModel):
+    """Access information for an opportunity based on user's tier"""
+    age_days: int
+    freshness_badge: FreshnessBadge
+    is_accessible: bool
+    is_unlocked: bool
+    unlock_method: Optional[str] = None
+    days_until_unlock: int
+    can_pay_to_unlock: bool
+    unlock_price: Optional[int] = None
+    user_tier: Optional[str] = None
+
+
 class OpportunityGatedResponse(Opportunity):
     """Response with gated AI fields based on subscription"""
     is_unlocked: bool = False
     is_authenticated: bool = False
     
-    # Gated AI fields - hidden unless unlocked
+    # Time-decay access information
+    access_info: Optional[OpportunityAccessInfo] = None
+    
+    # Gated AI fields - hidden unless unlocked (Layer 1)
     ai_business_model_suggestions: Optional[list] = None
     ai_competitive_advantages: Optional[list] = None
     ai_key_risks: Optional[list] = None
     ai_next_steps: Optional[list] = None
+    
+    # Layer 2 content (Business+ only)
+    deep_dive_available: bool = False
+    layer_2_content: Optional[dict] = None
+    
+    # Layer 3 content (Business with limits, Enterprise unlimited)
+    execution_package_available: bool = False

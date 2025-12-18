@@ -916,6 +916,92 @@
                 <option value="submissions">Submissions</option>
             </select>
         </div>
+        <div class="freshness-filters" style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 32px;
+            max-width: 1280px;
+            margin: 0 auto;
+            border-top: 1px solid var(--stone-200);
+        ">
+            <span style="font-size: 12px; color: var(--stone-500); font-weight: 500;">Filter by access:</span>
+            <button class="freshness-btn active" data-freshness="all" onclick="filterByFreshness('all')" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                border-radius: 16px;
+                font-size: 12px;
+                font-weight: 500;
+                border: 1px solid var(--stone-300);
+                background: var(--white);
+                cursor: pointer;
+                transition: all 0.2s;
+            ">All</button>
+            <button class="freshness-btn" data-freshness="hot" onclick="filterByFreshness('hot')" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                border-radius: 16px;
+                font-size: 12px;
+                font-weight: 500;
+                border: 1px solid #fecaca;
+                background: #fef2f2;
+                color: #ef4444;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">🔥 HOT</button>
+            <button class="freshness-btn" data-freshness="fresh" onclick="filterByFreshness('fresh')" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                border-radius: 16px;
+                font-size: 12px;
+                font-weight: 500;
+                border: 1px solid #fed7aa;
+                background: #fff7ed;
+                color: #f97316;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">⚡ FRESH</button>
+            <button class="freshness-btn" data-freshness="validated" onclick="filterByFreshness('validated')" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                border-radius: 16px;
+                font-size: 12px;
+                font-weight: 500;
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #22c55e;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">✓ VALIDATED</button>
+            <button class="freshness-btn" data-freshness="archive" onclick="filterByFreshness('archive')" style="
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 6px 12px;
+                border-radius: 16px;
+                font-size: 12px;
+                font-weight: 500;
+                border: 1px solid var(--stone-300);
+                background: var(--stone-100);
+                color: #6b7280;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">📚 ARCHIVE</button>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--stone-600); cursor: pointer;">
+                    <input type="checkbox" id="myAccessToggle" onchange="toggleMyAccess()" style="width: 14px; height: 14px;">
+                    Show only my access
+                </label>
+            </div>
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -1357,6 +1443,47 @@
             const filtered = allOpportunities.filter(opp => 
                 opp.category.toLowerCase().includes(mappedCategory.toLowerCase())
             );
+            displayOpportunities(filtered.slice(0, PAGE_SIZE));
+        }
+
+        let currentFreshnessFilter = 'all';
+        let showOnlyMyAccess = false;
+
+        function filterByFreshness(freshness) {
+            currentFreshnessFilter = freshness;
+            
+            document.querySelectorAll('.freshness-btn').forEach(btn => {
+                const isActive = btn.dataset.freshness === freshness;
+                btn.style.fontWeight = isActive ? '600' : '500';
+                btn.style.boxShadow = isActive ? '0 0 0 2px var(--violet-600)' : 'none';
+            });
+            
+            applyFilters();
+        }
+
+        function toggleMyAccess() {
+            showOnlyMyAccess = document.getElementById('myAccessToggle').checked;
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let filtered = [...allOpportunities];
+            
+            if (currentFreshnessFilter !== 'all') {
+                filtered = filtered.filter(opp => {
+                    const ageDays = getOpportunityAgeDays(opp);
+                    const badge = getFreshnessBadge(ageDays);
+                    return badge.label.toLowerCase() === currentFreshnessFilter.toLowerCase();
+                });
+            }
+            
+            if (showOnlyMyAccess) {
+                filtered = filtered.filter(opp => {
+                    const ageDays = getOpportunityAgeDays(opp);
+                    return canAccessOpportunity(userTier, ageDays);
+                });
+            }
+            
             displayOpportunities(filtered.slice(0, PAGE_SIZE));
         }
 
