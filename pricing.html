@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing · OppGrid</title>
     <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap&family=Roboto+Mono:wght@700" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         :root {
             --stone-50: #fafaf9;
@@ -1012,60 +1013,146 @@
             document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'inline-flex');
         }
 
-        async function startSubscriptionCheckout(tier) {
+        let currentUserTier = null;
+
+        async function startSubscriptionCheckout(tier, button) {
             const token = localStorage.getItem('access_token');
             if (!token) {
                 window.location.href = `signup.html?plan=${encodeURIComponent(tier)}`;
                 return;
             }
 
+            const originalText = button ? button.textContent : '';
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 8px;"><svg class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg>Processing...</span>';
+            }
+
             api.token = token;
             const origin = window.location.origin;
-            const successUrl = `${origin}/account.html#subscription`;
-            const cancelUrl = `${origin}/pricing.html`;
+            const successUrl = `${origin}/account.html?checkout=success#subscription`;
+            const cancelUrl = `${origin}/pricing.html?checkout=cancelled`;
 
             try {
                 const data = await api.createCheckoutSession(tier, successUrl, cancelUrl);
                 window.location.href = data.url || data.checkout_url;
             } catch (error) {
-                alert(error?.message || 'Unable to start checkout. Please try again.');
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = originalText || (tier === 'pro' ? 'Upgrade to Pro' : 'Upgrade to Business');
+                }
+                alert(error?.message || error?.detail || 'Unable to start checkout. Please try again.');
             }
         }
 
-        function wirePlanButtons(isLoggedIn) {
+        async function openBillingPortal(button) {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+
+            const originalText = button ? button.textContent : 'Manage Billing';
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Loading...';
+            }
+
+            api.token = token;
+            try {
+                const data = await api.createPortalSession(window.location.href);
+                window.location.href = data.url;
+            } catch (error) {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+                alert(error?.message || 'Unable to open billing portal. Please try again.');
+            }
+        }
+
+        function wirePlanButtons(isLoggedIn, userTier = 'free') {
             const proBtn = document.getElementById('proPlanCta');
             const businessBtn = document.getElementById('businessPlanCta');
+            currentUserTier = userTier;
 
             if (isLoggedIn) {
-                if (proBtn) proBtn.textContent = 'Upgrade to Pro';
-                if (businessBtn) businessBtn.textContent = 'Upgrade to Business';
+                if (userTier === 'pro') {
+                    if (proBtn) {
+                        proBtn.textContent = 'Current Plan';
+                        proBtn.classList.remove('btn-violet');
+                        proBtn.classList.add('btn-outline');
+                        proBtn.style.pointerEvents = 'none';
+                        proBtn.style.opacity = '0.7';
+                    }
+                    if (businessBtn) businessBtn.textContent = 'Upgrade to Business';
+                } else if (userTier === 'business') {
+                    if (proBtn) {
+                        proBtn.textContent = 'Downgrade to Pro';
+                    }
+                    if (businessBtn) {
+                        businessBtn.textContent = 'Current Plan';
+                        businessBtn.style.pointerEvents = 'none';
+                        businessBtn.style.opacity = '0.7';
+                    }
+                } else if (userTier === 'enterprise') {
+                    if (proBtn) {
+                        proBtn.textContent = 'Enterprise Plan Active';
+                        proBtn.style.pointerEvents = 'none';
+                        proBtn.style.opacity = '0.7';
+                    }
+                    if (businessBtn) {
+                        businessBtn.textContent = 'Enterprise Plan Active';
+                        businessBtn.style.pointerEvents = 'none';
+                        businessBtn.style.opacity = '0.7';
+                    }
+                } else {
+                    if (proBtn) proBtn.textContent = 'Upgrade to Pro';
+                    if (businessBtn) businessBtn.textContent = 'Upgrade to Business';
+                }
             }
 
             if (proBtn) {
                 proBtn.addEventListener('click', (e) => {
                     if (!isLoggedIn) return;
+                    if (currentUserTier === 'pro' || currentUserTier === 'enterprise') return;
                     e.preventDefault();
-                    startSubscriptionCheckout('pro');
+                    if (currentUserTier === 'business') {
+                        openBillingPortal(proBtn);
+                    } else {
+                        startSubscriptionCheckout('pro', proBtn);
+                    }
                 });
             }
 
             if (businessBtn) {
                 businessBtn.addEventListener('click', (e) => {
                     if (!isLoggedIn) return;
+                    if (currentUserTier === 'business' || currentUserTier === 'enterprise') return;
                     e.preventDefault();
-                    startSubscriptionCheckout('business');
+                    startSubscriptionCheckout('business', businessBtn);
                 });
             }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('checkout') === 'cancelled') {
+                console.log('Checkout was cancelled');
+            }
+
             const token = localStorage.getItem('access_token');
             if (token) {
                 api.token = token;
                 try {
                     await api.getCurrentUser();
                     showLoggedInUI();
-                    wirePlanButtons(true);
+                    
+                    let userTier = 'free';
+                    try {
+                        const subscription = await api.getMySubscription();
+                        userTier = subscription.tier || 'free';
+                    } catch (subError) {
+                        console.warn('Could not fetch subscription:', subError);
+                    }
+                    wirePlanButtons(true, userTier);
                 } catch (error) {
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('token');

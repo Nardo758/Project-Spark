@@ -806,7 +806,7 @@
                 <div class="section-body">
                     <div class="subscription-card">
                         <div class="subscription-info">
-                            <div class="subscription-icon">
+                            <div class="subscription-icon" id="subscriptionIcon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                                 </svg>
@@ -817,23 +817,40 @@
                                     <span class="plan-badge" id="planBadge">Free</span>
                                 </h3>
                                 <p id="planDescription">Browse opportunities and view basic insights</p>
+                                <p id="periodEndText" style="font-size: 12px; color: var(--stone-500); margin-top: 4px; display: none;"></p>
                             </div>
                         </div>
-                        <a href="pricing.html" class="btn-upgrade">Upgrade Plan</a>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <a href="pricing.html" class="btn-upgrade" id="upgradePlanBtn">Upgrade Plan</a>
+                            <button class="btn-outline" id="manageBillingBtn" style="display: none;">Manage Billing</button>
+                        </div>
                     </div>
 
                     <div class="usage-grid">
                         <div class="usage-stat">
-                            <div class="usage-value" id="opportunitiesViewed">12</div>
+                            <div class="usage-value" id="opportunitiesViewed">-</div>
                             <div class="usage-label">Opportunities Viewed</div>
                         </div>
                         <div class="usage-stat">
-                            <div class="usage-value" id="savedOpportunities">3</div>
-                            <div class="usage-label">Saved Opportunities</div>
+                            <div class="usage-value" id="unlocksRemaining">-</div>
+                            <div class="usage-label">Unlocks Remaining</div>
                         </div>
                         <div class="usage-stat">
-                            <div class="usage-value" id="ideasGenerated">1</div>
-                            <div class="usage-label">Ideas Generated</div>
+                            <div class="usage-value" id="unlocksLimit">-</div>
+                            <div class="usage-label">Monthly Unlock Limit</div>
+                        </div>
+                    </div>
+
+                    <div id="successMessage" style="display: none; background: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 16px; margin-top: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#047857" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            <div>
+                                <div style="font-weight: 600; color: #047857;">Subscription Updated!</div>
+                                <div style="font-size: 13px; color: #065f46;">Your plan has been successfully updated. Enjoy your new features!</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -924,6 +941,7 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://js.stripe.com/v3/"></script>
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
@@ -943,6 +961,84 @@
             window.location.href = 'signin.html';
         }
 
+        api.token = token;
+
+        const tierDescriptions = {
+            'free': 'Browse opportunities and view basic insights',
+            'pro': 'Access validated opportunities with 60-day early access',
+            'business': 'Full access with AI assistant and deep dive analysis',
+            'enterprise': 'Exclusive real-time access with custom features'
+        };
+
+        const tierBadgeStyles = {
+            'free': { bg: '#f5f5f4', color: '#57534e' },
+            'pro': { bg: '#ede9fe', color: '#7c3aed' },
+            'business': { bg: '#ffedd5', color: '#c2410c' },
+            'enterprise': { bg: '#1c1917', color: '#ffffff' }
+        };
+
+        async function loadSubscriptionData() {
+            try {
+                const subscription = await api.getMySubscription();
+                const tier = subscription.tier || 'free';
+                const planBadge = document.getElementById('planBadge');
+                const planDescription = document.getElementById('planDescription');
+                const upgradePlanBtn = document.getElementById('upgradePlanBtn');
+                const manageBillingBtn = document.getElementById('manageBillingBtn');
+                const periodEndText = document.getElementById('periodEndText');
+                const unlocksRemaining = document.getElementById('unlocksRemaining');
+                const unlocksLimit = document.getElementById('unlocksLimit');
+
+                planBadge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+                planDescription.textContent = tierDescriptions[tier] || tierDescriptions['free'];
+
+                const style = tierBadgeStyles[tier] || tierBadgeStyles['free'];
+                planBadge.style.background = style.bg;
+                planBadge.style.color = style.color;
+
+                if (tier !== 'free') {
+                    upgradePlanBtn.textContent = tier === 'enterprise' ? 'Enterprise Plan' : 'Change Plan';
+                    manageBillingBtn.style.display = 'inline-flex';
+                }
+
+                if (subscription.period_end) {
+                    const endDate = new Date(subscription.period_end);
+                    periodEndText.textContent = `Renews on ${endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+                    periodEndText.style.display = 'block';
+                }
+
+                const remaining = subscription.views_remaining ?? subscription.unlocks_remaining ?? '-';
+                const limit = subscription.views_limit ?? subscription.unlocks_limit;
+                unlocksRemaining.textContent = remaining;
+                unlocksLimit.textContent = limit !== undefined ? (limit === -1 ? 'Unlimited' : limit) : '-';
+                
+                const viewedEl = document.getElementById('opportunitiesViewed');
+                if (viewedEl && subscription.views_used !== undefined) {
+                    viewedEl.textContent = subscription.views_used;
+                } else if (viewedEl && subscription.opportunity_views !== undefined) {
+                    viewedEl.textContent = subscription.opportunity_views;
+                }
+
+            } catch (error) {
+                console.error('Failed to load subscription:', error);
+            }
+        }
+
+        async function openBillingPortal() {
+            const manageBillingBtn = document.getElementById('manageBillingBtn');
+            manageBillingBtn.disabled = true;
+            manageBillingBtn.textContent = 'Loading...';
+
+            try {
+                const data = await api.createPortalSession(window.location.href);
+                window.location.href = data.url;
+            } catch (error) {
+                manageBillingBtn.disabled = false;
+                manageBillingBtn.textContent = 'Manage Billing';
+                alert(error?.message || error?.detail || 'Unable to open billing portal. Please try again.');
+            }
+        }
+
         // Populate user data
         if (user.full_name) {
             const names = user.full_name.split(' ');
@@ -956,6 +1052,19 @@
             document.getElementById('profileEmail').value = user.email;
             document.getElementById('userEmail').textContent = user.email;
         }
+
+        // Load subscription data
+        loadSubscriptionData();
+
+        // Check for checkout success
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('checkout') === 'success') {
+            document.getElementById('successMessage').style.display = 'block';
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+        }
+
+        // Manage billing button click
+        document.getElementById('manageBillingBtn').addEventListener('click', openBillingPortal);
 
         // Sidebar navigation
         document.querySelectorAll('.sidebar-link').forEach(link => {
