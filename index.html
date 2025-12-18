@@ -1329,7 +1329,8 @@
             <div class="nav-actions" id="header-actions">
                 <a href="signin.html" class="btn guest-only" style="display: inline-flex;">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only" style="display: inline-flex;">Get Started</a>
-                <a href="account.html" class="btn btn-primary auth-required" style="display: none;">Account</a>
+                <a href="account.html" class="btn btn-ghost auth-required" style="display: none;">Account</a>
+                <button class="btn btn-primary auth-required" id="signOutBtn" style="display: none;">Sign Out</button>
             </div>
         </div>
     </nav>
@@ -1937,6 +1938,17 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeDemoModal();
         });
+        
+        // Sign out button handler
+        const signOutBtn = document.getElementById('signOutBtn');
+        if (signOutBtn) {
+            signOutBtn.addEventListener('click', () => {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'signin.html';
+            });
+        }
     </script>
 
     <!-- Demo Modal -->

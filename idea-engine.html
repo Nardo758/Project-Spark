@@ -761,8 +761,10 @@
                 <a href="pricing.html" class="nav-link">Pricing</a>
             </div>
             <div class="nav-actions">
-                <a href="signin.html" class="btn btn-ghost">Sign In</a>
-                <a href="signup.html" class="btn btn-primary">Get Started</a>
+                <a href="signin.html" class="btn btn-ghost guest-only" style="display: inline-flex;">Sign In</a>
+                <a href="signup.html" class="btn btn-primary guest-only" style="display: inline-flex;">Get Started</a>
+                <a href="account.html" class="btn btn-ghost auth-required" style="display: none;">Account</a>
+                <button class="btn btn-primary auth-required" id="signOutBtn" style="display: none;">Sign Out</button>
             </div>
         </div>
     </nav>
@@ -1309,6 +1311,36 @@
         newIdeaBtn.addEventListener('click', resetToStart);
 
         initStripe();
+        
+        // Auth state management
+        function showLoggedInUI() {
+            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'inline-flex');
+            document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'none');
+        }
+        
+        function showLoggedOutUI() {
+            document.querySelectorAll('.auth-required').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.guest-only').forEach(el => el.style.display = 'inline-flex');
+        }
+        
+        // Check auth status
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            showLoggedInUI();
+        } else {
+            showLoggedOutUI();
+        }
+        
+        // Sign out button handler
+        const signOutBtn = document.getElementById('signOutBtn');
+        if (signOutBtn) {
+            signOutBtn.addEventListener('click', () => {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'signin.html';
+            });
+        }
     </script>
 </body>
 </html>
