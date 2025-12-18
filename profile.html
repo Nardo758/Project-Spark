@@ -338,8 +338,8 @@
             </a>
 
             <div class="header-actions">
-                <a href="settings.html" class="btn">⚙️ Settings</a>
-                <a href="index.html" class="btn btn-primary">Discover</a>
+                <a href="account.html" class="btn">Account</a>
+                <button class="btn btn-primary" id="signOutBtn">Sign Out</button>
             </div>
         </div>
     </header>
@@ -855,6 +855,17 @@
 
         // Load profile data when page loads
         document.addEventListener('DOMContentLoaded', loadProfile);
+        
+        // Sign out button handler
+        const signOutBtn = document.getElementById('signOutBtn');
+        if (signOutBtn) {
+            signOutBtn.addEventListener('click', () => {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'signin.html';
+            });
+        }
     </script>
 </body>
 </html>
