@@ -547,7 +547,9 @@
         forgotPassword.addEventListener('click', (e) => {
             e.preventDefault();
             const email = emailInput.value.trim();
-            const target = email ? `reset-password.html?email=${encodeURIComponent(email)}` : 'reset-password.html';
+            const target = email
+                ? `reset-password.html?email=${encodeURIComponent(email)}&autosend=1`
+                : 'reset-password.html';
             window.location.href = target;
         });
 
