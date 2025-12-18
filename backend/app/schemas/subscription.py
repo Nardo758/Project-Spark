@@ -53,6 +53,11 @@ class CheckoutSessionResponse(BaseModel):
     url: str
 
 
+class PortalSessionCreate(BaseModel):
+    """Request to create customer portal session"""
+    return_url: str
+
+
 class PortalSessionResponse(BaseModel):
     """Customer portal session response"""
     url: str

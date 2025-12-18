@@ -20,6 +20,7 @@ from app.schemas.subscription import (
     UsageStats,
     CheckoutSessionCreate,
     CheckoutSessionResponse,
+    PortalSessionCreate,
     PortalSessionResponse,
     UnlockOpportunityRequest,
     UnlockOpportunityResponse,
@@ -188,12 +189,20 @@ def create_checkout_session(
 
 @router.post("/portal", response_model=PortalSessionResponse)
 def create_portal_session(
-    return_url: str,
+    request: Request,
+    portal_data: PortalSessionCreate | None = None,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """Create a Stripe Customer Portal session"""
     subscription = usage_service.get_or_create_subscription(current_user, db)
+
+    return_url = (portal_data.return_url if portal_data else None) or request.query_params.get("return_url")
+    if not return_url:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="return_url is required"
+        )
 
     if not subscription.stripe_customer_id:
         raise HTTPException(
