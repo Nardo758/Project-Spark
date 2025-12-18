@@ -256,12 +256,12 @@ class StripeService:
         """
         client = get_stripe_client()
         if at_period_end:
-            subscription = client.Subscription.modify(
+            subscription = client.subscriptions.update(
                 subscription_id,
                 cancel_at_period_end=True
             )
         else:
-            subscription = client.Subscription.delete(subscription_id)
+            subscription = client.subscriptions.cancel(subscription_id)
         return subscription
 
     @staticmethod

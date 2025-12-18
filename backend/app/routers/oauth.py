@@ -38,8 +38,9 @@ def get_base_url(request: Request) -> str:
     if forwarded_host:
         return f"{forwarded_proto}://{forwarded_host}"
     
-    if os.getenv("REPLIT_DOMAINS"):
-        domain = os.getenv("REPLIT_DOMAINS").split(",")[0]
+    replit_domains = os.getenv("REPLIT_DOMAINS")
+    if replit_domains:
+        domain = replit_domains.split(",")[0]
         return f"https://{domain}"
     
     return settings.BACKEND_URL
@@ -139,6 +140,8 @@ async def oauth_callback(
 
     if not user_info or not user_info.get("email"):
         # Redirect to frontend with error
+        if not frontend_redirect:
+            raise HTTPException(status_code=400, detail="Invalid redirect URI")
         error_url = add_query_params(frontend_redirect, {"error": "oauth_failed"})
         return RedirectResponse(url=error_url)
 
@@ -175,6 +178,8 @@ async def oauth_callback(
     )
 
     # Redirect to frontend with token
+    if not frontend_redirect:
+        raise HTTPException(status_code=400, detail="Invalid redirect URI")
     success_url = add_query_params(frontend_redirect, {"token": access_token, "provider": provider})
     return RedirectResponse(url=success_url)
 
