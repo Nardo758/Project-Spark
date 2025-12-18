@@ -22,7 +22,7 @@ try {
 Write-Host "" -ForegroundColor White
 Write-Host "✨ Starting frontend server on http://localhost:5500" -ForegroundColor Green
 Write-Host "🏠 Homepage: http://localhost:5500/index.html" -ForegroundColor Green
-Write-Host "🔐 Login: http://localhost:5500/login.html" -ForegroundColor Green
+Write-Host "🔐 Sign in: http://localhost:5500/signin.html" -ForegroundColor Green
 Write-Host "" -ForegroundColor White
 Write-Host "⚠️  Make sure backend is running on http://localhost:8000" -ForegroundColor Yellow
 Write-Host "   Run './start-backend.ps1' in another terminal" -ForegroundColor Yellow

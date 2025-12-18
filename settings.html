@@ -527,16 +527,14 @@
     </main>
 
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         let currentUser = null;
 
         // Load user data on page load
         async function loadUserData() {
             try {
-                if (!api.isAuthenticated()) {
-                    window.location.href = 'login.html';
-                    return;
-                }
+                if (!OppGridAuth.requireAuth()) return;
 
                 currentUser = await api.getCurrentUser();
 
@@ -546,8 +544,8 @@
                 document.getElementById('bio').value = currentUser.bio || '';
             } catch (error) {
                 console.error('Error loading user data:', error);
-                if (error.message.includes('401') || error.message.includes('403')) {
-                    window.location.href = 'login.html';
+                if (error.status === 401 || error.status === 403) {
+                    OppGridAuth.redirectToSignin();
                 }
             }
         }

@@ -9,8 +9,8 @@ let currentUser = null;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if user is logged in (accept either key for backwards compatibility)
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    // Check if user is logged in (canonical key is `access_token`)
+    const token = localStorage.getItem('access_token');
     if (token) {
         api.token = token;
         try {
@@ -526,7 +526,12 @@ function showSuccess(message) {
 }
 
 function showLoginPrompt() {
-    window.location.href = 'login.html';
+    if (window.OppGridAuth) {
+        window.OppGridAuth.redirectToSignin();
+        return;
+    }
+    const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+    window.location.href = `signin.html?redirect=${redirect}`;
 }
 
 // Export for global use

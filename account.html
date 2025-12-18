@@ -882,7 +882,7 @@
     <script src="js/api.js"></script>
     <script>
         // Check authentication
-        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         let user = {};
         try {
             const userStr = localStorage.getItem('user');

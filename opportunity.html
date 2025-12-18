@@ -2768,7 +2768,7 @@
                 </nav>
             </div>
             <div class="header-actions" id="header-actions">
-                <a href="login.html" class="btn guest-only">Sign In</a>
+                <a href="signin.html" class="btn guest-only">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
                 <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
                 <div class="user-menu auth-required" style="display: none; cursor: pointer;" onclick="window.location.href='profile.html'">
@@ -4082,6 +4082,7 @@
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         // Geographic data
         const geoData = {
@@ -4375,7 +4376,7 @@
         }
 
         async function checkUserSubscription() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 userSubscription = { tier: 'free', isUnlocked: false, viewsRemaining: 0 };
                 return;
@@ -4677,7 +4678,7 @@
         }
 
         async function unlockOpportunity() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 window.location.href = 'signin.html';
                 return;
@@ -4719,12 +4720,11 @@
         }
 
         async function handleUnlockResearch() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             
             if (!token) {
-                // Not logged in - redirect to signin with return URL
-                const returnUrl = encodeURIComponent(window.location.href);
-                window.location.href = `signin.html?redirect=${returnUrl}`;
+                // Not logged in - redirect to sign-in and return here
+                OppGridAuth.redirectToSignin({ redirect: window.location.href });
                 return;
             }
             
@@ -4782,11 +4782,10 @@
         }
 
         async function handlePayPerUnlock() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             
             if (!token) {
-                const returnUrl = encodeURIComponent(window.location.href);
-                window.location.href = `signin.html?redirect=${returnUrl}`;
+                OppGridAuth.redirectToSignin({ redirect: window.location.href });
                 return;
             }
             
@@ -4846,7 +4845,7 @@
             const paymentIntentId = urlParams.get('payment_intent');
             
             if (paymentIntentId) {
-                const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+                const token = localStorage.getItem('access_token');
                 if (!token) return;
                 
                 try {

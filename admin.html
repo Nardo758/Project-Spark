@@ -910,16 +910,14 @@
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script>
         const API_BASE_URL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) ? CONFIG.API_BASE_URL : '/api/v1';
         let currentUser = null;
 
         async function init() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'signin.html?redirect=admin.html';
-                return;
-            }
+            if (!OppGridAuth.requireAuth({ redirect: 'admin.html' })) return;
+            const token = OppGridAuth.getAccessToken();
 
             try {
                 const response = await fetch(`${API_BASE_URL}/users/me`, {
@@ -942,7 +940,7 @@
                 loadDashboard();
             } catch (error) {
                 console.error('Auth error:', error);
-                window.location.href = 'signin.html';
+                OppGridAuth.redirectToSignin({ redirect: 'admin.html' });
             }
         }
 
@@ -1344,7 +1342,7 @@
         }
 
         async function fetchWithAuth(url, options = {}) {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = OppGridAuth.getAccessToken();
             const response = await fetch(`${API_BASE_URL}${url}`, {
                 ...options,
                 headers: {

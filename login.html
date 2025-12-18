@@ -474,6 +474,13 @@
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script>
+        // `login.html` is a legacy alias. Keep one canonical sign-in page to avoid drift.
+        (function() {
+            const params = window.location.search || '';
+            const hash = window.location.hash || '';
+            window.location.replace(`signin.html${params}${hash}`);
+        })();
+
         const form = document.getElementById('signin-form');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');

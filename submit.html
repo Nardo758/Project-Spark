@@ -935,7 +935,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (token) {
                 api.token = token;
                 try {

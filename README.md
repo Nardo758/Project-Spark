@@ -89,7 +89,8 @@ Friction is a problem discovery engine that helps founders, researchers, and inn
     - Account deletion
 
 11. **Authentication**
-    - Sign In (`login.html`)
+    - Sign In (`signin.html`) *(canonical)*
+    - `login.html` is a legacy alias that redirects to `signin.html`
     - Sign Up (`signup.html`)
     - Password Reset (`reset-password.html`)
     - Social login support (Google, GitHub)
@@ -143,7 +144,8 @@ Friction is a problem discovery engine that helps founders, researchers, and inn
 
 ```
 index.html (Homepage)
-├── login.html (Sign In)
+├── signin.html (Sign In)
+│   └── login.html (Legacy alias → redirects to signin.html)
 ├── signup.html (Sign Up)
 │   └── reset-password.html (Password Reset)
 ├── search.html (Search Results)
@@ -172,7 +174,8 @@ index.html (Homepage)
 ```
 /
 ├── index.html              # Main application (6 integrated pages)
-├── login.html              # Authentication - Sign in
+├── signin.html             # Authentication - Sign in (canonical)
+├── login.html              # Authentication - legacy alias (redirects to signin.html)
 ├── signup.html             # Authentication - Sign up
 ├── reset-password.html     # Authentication - Password reset
 ├── search.html             # Search results page
