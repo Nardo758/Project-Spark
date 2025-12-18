@@ -18,11 +18,11 @@
             --stone-800: #292524;
             --stone-900: #1c1917;
             --emerald-100: #d1fae5;
-            --emerald-600: #059669;
+            --emerald-600: #57534e;
             --emerald-700: #047857;
-            --violet-100: #ede9fe;
-            --violet-600: #D97757;
-            --violet-700: #C96646;
+            --violet-100: #f5f5f4;
+            --violet-600: #57534e;
+            --violet-700: #44403c;
             --orange-100: #ffedd5;
             --orange-700: #c2410c;
             --white: #ffffff;
@@ -342,8 +342,8 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            background: var(--orange-100);
-            color: var(--orange-700);
+            background: var(--stone-200);
+            color: var(--stone-700);
             padding: 4px 8px;
             border-radius: 12px;
             font-size: 11px;
@@ -365,7 +365,7 @@
         }
 
         .opportunity-card:hover .card-title {
-            color: var(--violet-600);
+            color: var(--stone-700);
         }
 
         .validation-score {
@@ -457,7 +457,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            color: var(--violet-600);
+            color: var(--stone-700);
             font-size: 14px;
             font-weight: 500;
         }
@@ -477,7 +477,7 @@
             position: fixed;
             bottom: 24px;
             right: 24px;
-            background: linear-gradient(135deg, var(--violet-600), var(--violet-700));
+            background: var(--stone-800);
             color: var(--white);
             padding: 16px 24px;
             border-radius: 50px;
@@ -487,14 +487,14 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 10px 30px rgba(217, 119, 87, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             transition: all 0.2s;
             z-index: 100;
         }
 
         .submit-float:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(217, 119, 87, 0.4);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
         }
 
         .submit-float svg {
@@ -585,7 +585,7 @@
 
         .featured-card:hover {
             background: rgba(255, 255, 255, 0.08);
-            border-color: var(--violet-600);
+            border-color: var(--stone-500);
             transform: translateY(-4px);
         }
 
@@ -593,7 +593,7 @@
             position: absolute;
             top: 16px;
             right: 16px;
-            background: linear-gradient(135deg, var(--violet-600), var(--violet-700));
+            background: var(--stone-600);
             color: white;
             width: 32px;
             height: 32px;
@@ -609,7 +609,7 @@
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: var(--violet-500);
+            color: var(--stone-400);
             margin-bottom: 8px;
         }
 
@@ -623,8 +623,8 @@
         }
 
         .featured-card .ai-insight {
-            background: rgba(124, 58, 237, 0.15);
-            border: 1px solid rgba(124, 58, 237, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 16px;
@@ -634,7 +634,7 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: var(--violet-500);
+            color: var(--stone-400);
             margin-bottom: 4px;
             display: flex;
             align-items: center;
@@ -699,7 +699,7 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            background: linear-gradient(135deg, var(--violet-600), var(--violet-700));
+            background: var(--stone-700);
             color: white;
             padding: 4px 10px;
             border-radius: 12px;
@@ -731,8 +731,8 @@
         }
 
         .unlock-prompt {
-            background: linear-gradient(135deg, var(--violet-100), #f3e8ff);
-            border: 1px dashed var(--violet-600);
+            background: var(--stone-100);
+            border: 1px dashed var(--stone-400);
             border-radius: 8px;
             padding: 16px;
             text-align: center;
@@ -746,7 +746,7 @@
         }
 
         .unlock-prompt .btn-unlock {
-            background: var(--violet-600);
+            background: var(--stone-800);
             color: white;
             padding: 8px 16px;
             border-radius: 6px;
@@ -758,7 +758,7 @@
         }
 
         .unlock-prompt .btn-unlock:hover {
-            background: var(--violet-700);
+            background: var(--stone-900);
         }
 
         /* Competition Level Badges */
@@ -773,18 +773,18 @@
         }
 
         .competition-badge.low {
-            background: var(--emerald-100);
-            color: var(--emerald-700);
+            background: var(--stone-100);
+            color: var(--stone-600);
         }
 
         .competition-badge.medium {
-            background: var(--orange-100);
-            color: var(--orange-700);
+            background: var(--stone-200);
+            color: var(--stone-700);
         }
 
         .competition-badge.high {
-            background: #fee2e2;
-            color: #b91c1c;
+            background: var(--stone-300);
+            color: var(--stone-800);
         }
 
         /* Urgency Indicator */
@@ -948,9 +948,9 @@
                 border-radius: 16px;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid #fecaca;
-                background: #fef2f2;
-                color: #ef4444;
+                border: 1px solid var(--stone-300);
+                background: var(--stone-100);
+                color: var(--stone-700);
                 cursor: pointer;
                 transition: all 0.2s;
             ">🔥 HOT</button>
@@ -962,9 +962,9 @@
                 border-radius: 16px;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid #fed7aa;
-                background: #fff7ed;
-                color: #f97316;
+                border: 1px solid var(--stone-300);
+                background: var(--stone-100);
+                color: var(--stone-700);
                 cursor: pointer;
                 transition: all 0.2s;
             ">⚡ FRESH</button>
@@ -976,9 +976,9 @@
                 border-radius: 16px;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid #bbf7d0;
-                background: #f0fdf4;
-                color: #22c55e;
+                border: 1px solid var(--stone-300);
+                background: var(--stone-100);
+                color: var(--stone-700);
                 cursor: pointer;
                 transition: all 0.2s;
             ">✓ VALIDATED</button>
@@ -992,7 +992,7 @@
                 font-weight: 500;
                 border: 1px solid var(--stone-300);
                 background: var(--stone-100);
-                color: #6b7280;
+                color: var(--stone-700);
                 cursor: pointer;
                 transition: all 0.2s;
             ">📚 ARCHIVE</button>
@@ -1149,13 +1149,13 @@
 
         function getFreshnessBadge(ageDays) {
             if (ageDays <= 7) {
-                return { icon: '🔥', label: 'HOT', color: '#ef4444', tierRequired: 'enterprise' };
+                return { icon: '🔥', label: 'HOT', color: '#57534e', tierRequired: 'enterprise' };
             } else if (ageDays <= 30) {
-                return { icon: '⚡', label: 'FRESH', color: '#f97316', tierRequired: 'business' };
+                return { icon: '⚡', label: 'FRESH', color: '#57534e', tierRequired: 'business' };
             } else if (ageDays <= 90) {
-                return { icon: '✓', label: 'VALIDATED', color: '#22c55e', tierRequired: 'pro' };
+                return { icon: '✓', label: 'VALIDATED', color: '#57534e', tierRequired: 'pro' };
             } else {
-                return { icon: '📚', label: 'ARCHIVE', color: '#6b7280', tierRequired: 'free' };
+                return { icon: '📚', label: 'ARCHIVE', color: '#78716c', tierRequired: 'free' };
             }
         }
 
@@ -1210,7 +1210,7 @@
             if (!isAccessible && !canPayToUnlock) {
                 accessIndicator = `
                     <div style="
-                        background: linear-gradient(135deg, var(--violet-50), var(--violet-100));
+                        background: var(--stone-100);
                         border-radius: 8px;
                         padding: 10px;
                         margin-bottom: 12px;
@@ -1222,7 +1222,7 @@
                         <span style="font-size: 16px;">⏰</span>
                         <span style="color: var(--stone-600);">
                             ${daysUntilUnlock > 0 
-                                ? `Unlocks for you in <strong style="color: var(--violet-600);">${daysUntilUnlock} days</strong>` 
+                                ? `Unlocks for you in <strong style="color: var(--stone-800);">${daysUntilUnlock} days</strong>` 
                                 : '✨ Available to you now'}
                         </span>
                     </div>
@@ -1248,8 +1248,8 @@
             }
             
             const aiSummaryPreview = opp.ai_summary 
-                ? `<div style="background: var(--violet-100); border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 13px; color: var(--stone-700);">
-                    <span style="color: var(--violet-600); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">AI Insight:</span>
+                ? `<div style="background: var(--stone-100); border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 13px; color: var(--stone-700);">
+                    <span style="color: var(--stone-600); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">AI Insight:</span>
                     ${opp.ai_summary}
                    </div>`
                 : '';

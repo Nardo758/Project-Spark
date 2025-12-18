@@ -2,12 +2,14 @@
 
 ## Recent Changes (December 2024)
 
-- **Professional Color Scheme Update** (December 18, 2024):
-  - Replaced gamified purple/violet accents (#7c3aed, #9333ea, #8b5cf6) with professional terracotta (#D97757, #C96646, #E08A6B)
-  - Updated bright greens (#059669) and blues (#3b82f6) to muted slate grays (#475569, #64748B)
-  - Redesigned stat cards, badges, and progress bars with solid professional backgrounds
-  - Color palette now matches landing page aesthetic: stone grays + terracotta accent
-  - Updated across all 15+ HTML files and CSS for consistency
+- **Unified Professional Color Scheme** (December 18, 2024):
+  - Simplified color palette to use consistent stone/neutral tones across all pages
+  - All filter buttons, badges (HOT, FRESH, VALIDATED, ARCHIVE) now use uniform gray styling
+  - AI badges, competition badges, and category labels now use muted stone colors
+  - Removed colorful accent variety (red, orange, green, purple) in favor of unified neutral palette
+  - Primary colors: Stone grays (#57534e, #78716c, #a8a29e) with dark text (#1c1917)
+  - Buttons and CTAs use dark stone backgrounds (#292524, #44403c)
+  - Updated discover.html, opportunity.html, and dashboard.html for consistency
 
 - **Unified Replit Auth** (December 18, 2024):
   - Complete authentication refactoring using Replit's recommended OIDC patterns
