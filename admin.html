@@ -915,7 +915,7 @@
         let currentUser = null;
 
         async function init() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 window.location.href = 'signin.html?redirect=admin.html';
                 return;
@@ -1344,7 +1344,7 @@
         }
 
         async function fetchWithAuth(url, options = {}) {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             const response = await fetch(`${API_BASE_URL}${url}`, {
                 ...options,
                 headers: {

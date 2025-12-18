@@ -8,7 +8,20 @@ class OppGridAPI {
         this.baseURL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) 
             ? CONFIG.API_BASE_URL 
             : '/api/v1';
-        this.token = localStorage.getItem('access_token') || localStorage.getItem('token');
+
+        // Token storage: canonical key is `access_token`.
+        // Migrate legacy `token` (older builds) to `access_token` to avoid re-auth loops.
+        const accessToken = localStorage.getItem('access_token');
+        const legacyToken = localStorage.getItem('token');
+        if (!accessToken && legacyToken) {
+            localStorage.setItem('access_token', legacyToken);
+            localStorage.removeItem('token');
+            this.token = legacyToken;
+        } else {
+            // Keep memory and storage aligned; drop legacy key if it exists.
+            if (legacyToken) localStorage.removeItem('token');
+            this.token = accessToken;
+        }
     }
 
     // Helper method to get headers
@@ -28,7 +41,10 @@ class OppGridAPI {
     async handleResponse(response) {
         if (!response.ok) {
             const error = await response.json().catch(() => ({ detail: 'An error occurred' }));
-            throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+            const err = new Error(error.detail || `HTTP error! status: ${response.status}`);
+            // Attach status for callers that want to branch on auth/permission errors.
+            err.status = response.status;
+            throw err;
         }
         return response.json();
     }
@@ -83,6 +99,7 @@ class OppGridAPI {
     logout() {
         this.token = null;
         localStorage.removeItem('access_token');
+        localStorage.removeItem('token');
     }
 
     // Users

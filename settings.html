@@ -534,7 +534,8 @@
         async function loadUserData() {
             try {
                 if (!api.isAuthenticated()) {
-                    window.location.href = 'login.html';
+                    const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+                    window.location.href = `signin.html?redirect=${redirect}`;
                     return;
                 }
 
@@ -546,8 +547,9 @@
                 document.getElementById('bio').value = currentUser.bio || '';
             } catch (error) {
                 console.error('Error loading user data:', error);
-                if (error.message.includes('401') || error.message.includes('403')) {
-                    window.location.href = 'login.html';
+                if (error.status === 401 || error.status === 403) {
+                    const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+                    window.location.href = `signin.html?redirect=${redirect}`;
                 }
             }
         }

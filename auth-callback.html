@@ -87,7 +87,8 @@
             if (token) {
                 // Store the token securely
                 localStorage.setItem('access_token', token);
-                localStorage.setItem('token', token);
+                // Legacy key cleanup (older builds used `token`)
+                localStorage.removeItem('token');
 
                 // Store user data if provided
                 if (userBase64) {

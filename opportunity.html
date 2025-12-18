@@ -2768,7 +2768,7 @@
                 </nav>
             </div>
             <div class="header-actions" id="header-actions">
-                <a href="login.html" class="btn guest-only">Sign In</a>
+                <a href="signin.html" class="btn guest-only">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only">Get Started</a>
                 <a href="dashboard.html" class="btn btn-primary auth-required" style="display: none;">Dashboard</a>
                 <div class="user-menu auth-required" style="display: none; cursor: pointer;" onclick="window.location.href='profile.html'">
@@ -4375,7 +4375,7 @@
         }
 
         async function checkUserSubscription() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 userSubscription = { tier: 'free', isUnlocked: false, viewsRemaining: 0 };
                 return;
@@ -4677,7 +4677,7 @@
         }
 
         async function unlockOpportunity() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token) {
                 window.location.href = 'signin.html';
                 return;
@@ -4719,7 +4719,7 @@
         }
 
         async function handleUnlockResearch() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             
             if (!token) {
                 // Not logged in - redirect to signin with return URL
@@ -4782,7 +4782,7 @@
         }
 
         async function handlePayPerUnlock() {
-            const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             
             if (!token) {
                 const returnUrl = encodeURIComponent(window.location.href);
@@ -4846,7 +4846,7 @@
             const paymentIntentId = urlParams.get('payment_intent');
             
             if (paymentIntentId) {
-                const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+                const token = localStorage.getItem('access_token');
                 if (!token) return;
                 
                 try {

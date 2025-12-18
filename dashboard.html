@@ -760,7 +760,8 @@
             const token = localStorage.getItem('access_token');
             
             if (!token) {
-                window.location.href = 'login.html';
+                const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+                window.location.href = `signin.html?redirect=${redirect}`;
                 return;
             }
             
@@ -781,7 +782,8 @@
             } catch (error) {
                 console.error('Auth error:', error);
                 localStorage.removeItem('access_token');
-                window.location.href = 'login.html';
+                const redirect = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+                window.location.href = `signin.html?redirect=${redirect}`;
             }
             
             const userMenu = document.getElementById('user-menu');
