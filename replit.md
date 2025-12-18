@@ -2,17 +2,17 @@
 
 ## Recent Changes (December 2024)
 
-- **Purple Accent with Complementary Colors** (December 18, 2024):
-  - Primary accent: Purple (#7c3aed, #6d28d9) replacing terracotta
-  - Complementary badge colors restored for visual distinction:
+- **Black Accent with Complementary Colors** (December 18, 2024):
+  - Primary accent: Black/Dark stone (#1c1917, #292524) for professional look
+  - Complementary badge colors for visual distinction:
     - HOT badge: Red (#dc2626)
     - FRESH badge: Orange (#f97316)
     - VALIDATED badge: Green (#16a34a)
     - ARCHIVE badge: Gray (#6b7280)
   - Competition badges: Green (low), Amber (medium), Red (high)
   - Growth metrics displayed in green (#16a34a)
-  - Card hover states and CTAs use purple accent
-  - Professional balance: Purple accent + semantic colors for badges
+  - Card hover states and CTAs use dark stone accent
+  - Professional balance: Black accent + semantic colors for badges
 
 - **Unified Replit Auth** (December 18, 2024):
   - Complete authentication refactoring using Replit's recommended OIDC patterns
