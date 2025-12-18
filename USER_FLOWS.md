@@ -34,7 +34,7 @@ END
 ```
 START → Landing Page
   ↓
-Click "Login" → Login Page (login.html)
+Click "Sign in" → Sign-in Page (signin.html)
   ↓
 Enter Credentials:
   - Email
@@ -56,7 +56,7 @@ END
 
 #### 1C. Password Reset Flow (Partial - Backend Missing)
 ```
-START → Login Page
+START → Sign-in Page
   ↓
 Click "Forgot Password?" → Reset Password Page (reset-password.html)
   ↓
@@ -70,7 +70,7 @@ Enter Email Address
   ↓
 [MISSING] Enter new password → POST /api/auth/reset-password
   ↓
-Redirect to Login
+Redirect to Sign-in
 END
 ```
 
@@ -168,7 +168,7 @@ START → Viewing opportunity card/details
 Click "I Need This Too" button
   ↓
 [CHECK] User authenticated?
-  ├─ NO → Redirect to login
+  ├─ NO → Redirect to sign-in (signin.html?redirect=...)
   └─ YES → Continue
   ↓
 POST /api/validations
@@ -206,7 +206,7 @@ Scroll to comments section
 Click "Add Comment"
   ↓
 [CHECK] User authenticated?
-  ├─ NO → Redirect to login
+  ├─ NO → Redirect to sign-in (signin.html?redirect=...)
   └─ YES → Continue
   ↓
 Enter comment text
@@ -240,7 +240,7 @@ START → Dashboard
 Click "Share a Friction" / "Submit Opportunity"
   ↓
 [CHECK] User authenticated?
-  ├─ NO → Redirect to login
+  ├─ NO → Redirect to sign-in (signin.html?redirect=...)
   └─ YES → Continue
   ↓
 FORM APPEARS:

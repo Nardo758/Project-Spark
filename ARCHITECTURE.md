@@ -24,7 +24,7 @@
 ```
 User Browser (localhost:5500)
     │
-    ├── Loads HTML pages (index.html, login.html, etc.)
+    ├── Loads HTML pages (index.html, signin.html, etc.)
     ├── Loads js/config.js (API configuration)
     └── Loads js/api.js (API client)
          │
@@ -72,7 +72,7 @@ PostgreSQL Database
 ### Testing Connection:
 ```javascript
 // In browser console at localhost:5500
-const api = new FrictionAPI();
+const api = new OppGridAPI();
 
 // Test health
 fetch('http://localhost:8000/health')

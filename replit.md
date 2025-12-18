@@ -7,7 +7,7 @@
   - Backend endpoints: `/api/v1/magic-link/send` and `/api/v1/magic-link/verify`
   - Magic links expire after 15 minutes for security
   - Email sent via Resend from noreply@oppgrid.com (verified domain)
-  - Updated signin.html, login.html, and auth-magic.html with magic link UI
+  - Updated `signin.html` (canonical), `login.html` (legacy alias), and `auth-magic.html` with magic link UI
   - Fixed user profile loading for new magic link users (impact_points null handling)
   - Session storage prevents duplicate verification on page reload
 
@@ -176,7 +176,7 @@ Add these secrets in Tools → Secrets for additional features:
 │   └── requirements.txt # Python dependencies
 ├── js/                  # Frontend JavaScript
 ├── css/                 # Frontend CSS
-└── *.html               # Frontend pages (index, login, signup, etc.)
+└── *.html               # Frontend pages (index, signin, signup, etc.)
 ```
 
 ## Key Features
