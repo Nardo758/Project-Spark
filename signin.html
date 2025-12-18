@@ -735,6 +735,24 @@
                     </button>
                 </form>
 
+                <!-- 2FA Step (shown only if account requires it) -->
+                <div class="success-message" id="twoFactorMessage" style="display:none;">
+                    Two-factor authentication required. Enter the 6-digit code from your authenticator app.
+                </div>
+                <form class="auth-form" id="twoFactorForm" style="display:none; margin-top: 16px;">
+                    <div class="form-group">
+                        <label for="otp">2FA code</label>
+                        <input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" required>
+                    </div>
+                    <button type="submit" class="btn-submit" id="twoFactorBtn">
+                        Verify Code
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14"/>
+                            <path d="m12 5 7 7-7 7"/>
+                        </svg>
+                    </button>
+                </form>
+
                 <div class="form-footer">
                     Don't have an account? <a href="signup.html">Create one</a>
                 </div>
@@ -767,6 +785,19 @@
             errorMessage.classList.remove('visible');
         }
 
+        const twoFactorForm = document.getElementById('twoFactorForm');
+        const twoFactorBtn = document.getElementById('twoFactorBtn');
+        const twoFactorMessage = document.getElementById('twoFactorMessage');
+        let pending2FAEmail = null;
+
+        function showTwoFactor(email) {
+            pending2FAEmail = email;
+            twoFactorMessage.style.display = 'block';
+            twoFactorMessage.classList.add('visible');
+            twoFactorForm.style.display = 'block';
+            document.getElementById('otp').focus();
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             hideError();
@@ -782,15 +813,24 @@
                 const response = await api.login(email, password);
 
                 console.log('Login successful!', response);
-                
-                // Store token and redirect
-                localStorage.setItem('access_token', response.access_token);
-                if (response.user) {
-                    localStorage.setItem('user', JSON.stringify(response.user));
+
+                if (response.requires_2fa) {
+                    // Proceed to 2FA step
+                    showTwoFactor(response.email || email);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    return;
                 }
-                api.token = response.access_token;
-                
-                // Check for redirect parameter
+
+                if (response.access_token) {
+                    // Store token and redirect
+                    localStorage.setItem('access_token', response.access_token);
+                    if (response.user) {
+                        localStorage.setItem('user', JSON.stringify(response.user));
+                    }
+                    api.token = response.access_token;
+                }
+
                 const redirectUrl = urlParams.get('redirect') || 'discover.html';
                 window.location.href = redirectUrl;
 
@@ -824,10 +864,39 @@
         document.getElementById('forgotPassword').addEventListener('click', (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
-            if (email) {
-                alert('Password reset instructions would be sent to: ' + email);
-            } else {
-                alert('Please enter your email address first.');
+            const target = email ? `reset-password.html?email=${encodeURIComponent(email)}` : 'reset-password.html';
+            window.location.href = target;
+        });
+
+        // 2FA verify handler
+        twoFactorForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const otp = document.getElementById('otp').value.trim();
+            if (!pending2FAEmail) {
+                showError('Missing email for 2FA. Please sign in again.');
+                return;
+            }
+
+            const originalText = twoFactorBtn.innerHTML;
+            try {
+                twoFactorBtn.disabled = true;
+                twoFactorBtn.innerHTML = '<span>Verifying...</span>';
+                const data = await api.verifyTwoFactor(pending2FAEmail, otp);
+
+                if (data.access_token) {
+                    localStorage.setItem('access_token', data.access_token);
+                    api.token = data.access_token;
+                }
+
+                const redirectUrl = urlParams.get('redirect') || 'discover.html';
+                window.location.href = redirectUrl;
+            } catch (error) {
+                console.error('2FA error:', error);
+                showError(error.message || 'Invalid 2FA code. Please try again.');
+                twoFactorBtn.disabled = false;
+                twoFactorBtn.innerHTML = originalText;
             }
         });
 

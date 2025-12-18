@@ -70,7 +70,10 @@ def get_callback_url() -> str:
     # Priority: FRONTEND_URL (.repl.co) > REPLIT_DOMAINS > REPLIT_DEV_DOMAIN
     frontend_url = os.environ.get('FRONTEND_URL', '')
     if frontend_url and '.repl.co' in frontend_url:
-        return f"https://{frontend_url}{callback_path}"
+        base = frontend_url.strip().rstrip("/")
+        if not (base.startswith("http://") or base.startswith("https://")):
+            base = f"https://{base}"
+        return f"{base}{callback_path}"
     
     replit_domains = os.environ.get('REPLIT_DOMAINS', '')
     if replit_domains:

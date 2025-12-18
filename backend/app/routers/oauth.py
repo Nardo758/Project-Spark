@@ -11,6 +11,7 @@ from datetime import timedelta, datetime
 import jwt
 import secrets
 import os
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 from app.db.database import get_db
 from app.models.user import User
@@ -20,6 +21,14 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 
 router = APIRouter()
+
+def add_query_params(url: str, params: dict) -> str:
+    """Safely add/replace query params on a URL."""
+    parsed = urlparse(url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query.update({k: v for k, v in params.items() if v is not None})
+    new_query = urlencode(query, doseq=True)
+    return urlunparse(parsed._replace(query=new_query))
 
 def get_base_url(request: Request) -> str:
     """Get the base URL from the request, handling proxies and production"""
@@ -130,7 +139,7 @@ async def oauth_callback(
 
     if not user_info or not user_info.get("email"):
         # Redirect to frontend with error
-        error_url = f"{frontend_redirect}?error=oauth_failed"
+        error_url = add_query_params(frontend_redirect, {"error": "oauth_failed"})
         return RedirectResponse(url=error_url)
 
     # Check if user exists
@@ -166,7 +175,7 @@ async def oauth_callback(
     )
 
     # Redirect to frontend with token
-    success_url = f"{frontend_redirect}?token={access_token}&provider={provider}"
+    success_url = add_query_params(frontend_redirect, {"token": access_token, "provider": provider})
     return RedirectResponse(url=success_url)
 
 
