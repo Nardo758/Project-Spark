@@ -775,6 +775,19 @@
             successMessage.classList.add('visible');
         }
 
+        function getSafeRedirectPath(defaultPath = '/discover.html') {
+            const raw = urlParams.get('redirect');
+            if (!raw) return defaultPath;
+            try {
+                // Allow only same-origin redirects to avoid open-redirect vulnerabilities.
+                const url = new URL(raw, window.location.origin);
+                if (url.origin !== window.location.origin) return defaultPath;
+                return `${url.pathname}${url.search}${url.hash}` || defaultPath;
+            } catch (e) {
+                return defaultPath;
+            }
+        }
+
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.add('visible');
@@ -831,8 +844,7 @@
                     api.token = response.access_token;
                 }
 
-                const redirectUrl = urlParams.get('redirect') || 'discover.html';
-                window.location.href = redirectUrl;
+                window.location.href = getSafeRedirectPath('/discover.html');
 
             } catch (error) {
                 console.error('Login error:', error);
@@ -844,10 +856,10 @@
 
         // Google OAuth handler
         document.getElementById('googleSignin').addEventListener('click', async () => {
-            const redirectUrl = urlParams.get('redirect') || '/discover.html';
-            const frontendUrl = window.location.origin;
+            const redirectPath = getSafeRedirectPath('/discover.html');
+            const redirectUri = `${window.location.origin}${redirectPath}`;
             try {
-                const response = await fetch(`${CONFIG.API_BASE_URL}/oauth/google/login?redirect_uri=${encodeURIComponent(frontendUrl + redirectUrl)}`);
+                const response = await fetch(`${CONFIG.API_BASE_URL}/oauth/google/login?redirect_uri=${encodeURIComponent(redirectUri)}`);
                 const data = await response.json();
                 if (data.authorization_url) {
                     window.location.href = data.authorization_url;
@@ -892,8 +904,7 @@
                     api.token = data.access_token;
                 }
 
-                const redirectUrl = urlParams.get('redirect') || 'discover.html';
-                window.location.href = redirectUrl;
+                window.location.href = getSafeRedirectPath('/discover.html');
             } catch (error) {
                 console.error('2FA error:', error);
                 showError(error.message || 'Invalid 2FA code. Please try again.');

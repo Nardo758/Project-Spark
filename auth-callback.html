@@ -66,8 +66,19 @@
             const params = new URLSearchParams(window.location.search);
             const token = params.get('token');
             const userBase64 = params.get('user');
-            const redirect = params.get('redirect') || '/discover.html';
+            const redirectRaw = params.get('redirect');
             const error = params.get('error');
+
+            function getSafeRedirectPath(defaultPath = '/discover.html') {
+                if (!redirectRaw) return defaultPath;
+                try {
+                    const url = new URL(redirectRaw, window.location.origin);
+                    if (url.origin !== window.location.origin) return defaultPath;
+                    return `${url.pathname}${url.search}${url.hash}` || defaultPath;
+                } catch (e) {
+                    return defaultPath;
+                }
+            }
 
             // Immediately clear sensitive data from URL for security
             if (token || userBase64) {
@@ -101,7 +112,7 @@
                 }
 
                 // Redirect to the intended page
-                window.location.href = redirect;
+                window.location.href = getSafeRedirectPath('/discover.html');
             } else {
                 document.querySelector('.spinner').style.display = 'none';
                 document.querySelector('h1').textContent = 'Sign in failed';
