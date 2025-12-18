@@ -18,11 +18,15 @@
             --stone-800: #292524;
             --stone-900: #1c1917;
             --emerald-100: #d1fae5;
-            --emerald-600: #57534e;
+            --emerald-600: #16a34a;
             --emerald-700: #047857;
-            --violet-100: #f5f5f4;
-            --violet-600: #57534e;
-            --violet-700: #44403c;
+            --violet-100: #f3e8ff;
+            --violet-600: #7c3aed;
+            --violet-700: #6d28d9;
+            --accent-primary: #111827;
+            --accent-aubergine: #4C3A57;
+            --accent-sage: #4A5A4F;
+            --accent-steel: #4C6070;
             --orange-100: #ffedd5;
             --orange-700: #c2410c;
             --white: #ffffff;
@@ -365,7 +369,7 @@
         }
 
         .opportunity-card:hover .card-title {
-            color: var(--stone-700);
+            color: #7c3aed;
         }
 
         .validation-score {
@@ -434,7 +438,7 @@
         }
 
         .metric-value.growth {
-            color: var(--emerald-600);
+            color: #16a34a;
         }
 
         /* Pain Points */
@@ -457,7 +461,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            color: var(--stone-700);
+            color: #7c3aed;
             font-size: 14px;
             font-weight: 500;
         }
@@ -699,7 +703,7 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            background: var(--stone-700);
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
             color: white;
             padding: 4px 10px;
             border-radius: 12px;
@@ -773,18 +777,18 @@
         }
 
         .competition-badge.low {
-            background: var(--stone-100);
-            color: var(--stone-600);
+            background: #dcfce7;
+            color: #166534;
         }
 
         .competition-badge.medium {
-            background: var(--stone-200);
-            color: var(--stone-700);
+            background: #fef3c7;
+            color: #92400e;
         }
 
         .competition-badge.high {
-            background: var(--stone-300);
-            color: var(--stone-800);
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         /* Urgency Indicator */
@@ -948,9 +952,9 @@
                 border-radius: 16px;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid var(--stone-300);
-                background: var(--stone-100);
-                color: var(--stone-700);
+                border: 1px solid #fecaca;
+                background: #fef2f2;
+                color: #dc2626;
                 cursor: pointer;
                 transition: all 0.2s;
             ">🔥 HOT</button>
@@ -962,9 +966,9 @@
                 border-radius: 16px;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid var(--stone-300);
-                background: var(--stone-100);
-                color: var(--stone-700);
+                border: 1px solid #fed7aa;
+                background: #fff7ed;
+                color: #ea580c;
                 cursor: pointer;
                 transition: all 0.2s;
             ">⚡ FRESH</button>
@@ -976,9 +980,9 @@
                 border-radius: 16px;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid var(--stone-300);
-                background: var(--stone-100);
-                color: var(--stone-700);
+                border: 1px solid #bbf7d0;
+                background: #f0fdf4;
+                color: #16a34a;
                 cursor: pointer;
                 transition: all 0.2s;
             ">✓ VALIDATED</button>
@@ -990,9 +994,9 @@
                 border-radius: 16px;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid var(--stone-300);
-                background: var(--stone-100);
-                color: var(--stone-700);
+                border: 1px solid #d1d5db;
+                background: #f3f4f6;
+                color: #6b7280;
                 cursor: pointer;
                 transition: all 0.2s;
             ">📚 ARCHIVE</button>
@@ -1149,13 +1153,13 @@
 
         function getFreshnessBadge(ageDays) {
             if (ageDays <= 7) {
-                return { icon: '🔥', label: 'HOT', color: '#57534e', tierRequired: 'enterprise' };
+                return { icon: '🔥', label: 'HOT', color: '#dc2626', tierRequired: 'enterprise' };
             } else if (ageDays <= 30) {
-                return { icon: '⚡', label: 'FRESH', color: '#57534e', tierRequired: 'business' };
+                return { icon: '⚡', label: 'FRESH', color: '#f97316', tierRequired: 'business' };
             } else if (ageDays <= 90) {
-                return { icon: '✓', label: 'VALIDATED', color: '#57534e', tierRequired: 'pro' };
+                return { icon: '✓', label: 'VALIDATED', color: '#16a34a', tierRequired: 'pro' };
             } else {
-                return { icon: '📚', label: 'ARCHIVE', color: '#78716c', tierRequired: 'free' };
+                return { icon: '📚', label: 'ARCHIVE', color: '#6b7280', tierRequired: 'free' };
             }
         }
 

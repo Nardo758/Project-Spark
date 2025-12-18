@@ -2,14 +2,17 @@
 
 ## Recent Changes (December 2024)
 
-- **Unified Professional Color Scheme** (December 18, 2024):
-  - Simplified color palette to use consistent stone/neutral tones across all pages
-  - All filter buttons, badges (HOT, FRESH, VALIDATED, ARCHIVE) now use uniform gray styling
-  - AI badges, competition badges, and category labels now use muted stone colors
-  - Removed colorful accent variety (red, orange, green, purple) in favor of unified neutral palette
-  - Primary colors: Stone grays (#57534e, #78716c, #a8a29e) with dark text (#1c1917)
-  - Buttons and CTAs use dark stone backgrounds (#292524, #44403c)
-  - Updated discover.html, opportunity.html, and dashboard.html for consistency
+- **Purple Accent with Complementary Colors** (December 18, 2024):
+  - Primary accent: Purple (#7c3aed, #6d28d9) replacing terracotta
+  - Complementary badge colors restored for visual distinction:
+    - HOT badge: Red (#dc2626)
+    - FRESH badge: Orange (#f97316)
+    - VALIDATED badge: Green (#16a34a)
+    - ARCHIVE badge: Gray (#6b7280)
+  - Competition badges: Green (low), Amber (medium), Red (high)
+  - Growth metrics displayed in green (#16a34a)
+  - Card hover states and CTAs use purple accent
+  - Professional balance: Purple accent + semantic colors for badges
 
 - **Unified Replit Auth** (December 18, 2024):
   - Complete authentication refactoring using Replit's recommended OIDC patterns
