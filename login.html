@@ -589,12 +589,55 @@
             }
         });
 
-        // Social login handlers - Redirect to Replit Auth (supports Google, GitHub, etc.)
-        document.querySelectorAll('.btn-social').forEach(btn => {
-            btn.addEventListener('click', () => {
-                window.location.href = `${CONFIG.API_BASE_URL}/replit-auth/login?redirect_url=/discover.html`;
+        // Social login handlers
+        const socialButtons = document.querySelectorAll('.btn-social');
+        
+        // Google login (first button)
+        if (socialButtons[0]) {
+            socialButtons[0].addEventListener('click', async () => {
+                try {
+                    // Get the current page URL for redirect after auth
+                    const currentUrl = window.location.origin;
+                    const redirectUri = `${currentUrl}/auth-callback.html`;
+                    
+                    // Call backend to get Google OAuth URL
+                    const response = await fetch(`${CONFIG.API_BASE_URL}/oauth/google/login?redirect_uri=${encodeURIComponent(redirectUri)}`);
+                    const data = await response.json();
+                    
+                    if (data.authorization_url) {
+                        // Redirect to Google OAuth
+                        window.location.href = data.authorization_url;
+                    } else {
+                        showError('Google login not configured. Please contact administrator.');
+                    }
+                } catch (error) {
+                    console.error('Google OAuth error:', error);
+                    showError('Failed to initiate Google login. Please try again.');
+                }
             });
-        });
+        }
+        
+        // GitHub login (second button)
+        if (socialButtons[1]) {
+            socialButtons[1].addEventListener('click', async () => {
+                try {
+                    const currentUrl = window.location.origin;
+                    const redirectUri = `${currentUrl}/auth-callback.html`;
+                    
+                    const response = await fetch(`${CONFIG.API_BASE_URL}/oauth/github/login?redirect_uri=${encodeURIComponent(redirectUri)}`);
+                    const data = await response.json();
+                    
+                    if (data.authorization_url) {
+                        window.location.href = data.authorization_url;
+                    } else {
+                        showError('GitHub login not configured. Please contact administrator.');
+                    }
+                } catch (error) {
+                    console.error('GitHub OAuth error:', error);
+                    showError('Failed to initiate GitHub login. Please try again.');
+                }
+            });
+        }
 
         // Magic link handler
         const magicLinkBtn = document.getElementById('sendMagicLink');
