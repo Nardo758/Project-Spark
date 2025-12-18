@@ -138,8 +138,8 @@ class EmailService:
         Returns:
             dict: Response from Resend API
         """
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-        verification_link = f"{frontend_url}/verify-email?token={verification_token}"
+        frontend_url = settings.FRONTEND_URL
+        verification_link = f"{frontend_url}/verify-email.html?token={verification_token}"
 
         html_content = f"""
         <!DOCTYPE html>
@@ -264,8 +264,8 @@ class EmailService:
         Returns:
             dict: Response from Resend API
         """
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-        reset_link = f"{frontend_url}/reset-password?token={reset_token}"
+        frontend_url = settings.FRONTEND_URL
+        reset_link = f"{frontend_url}/reset-password.html?token={reset_token}"
 
         html_content = f"""
         <!DOCTYPE html>
@@ -405,7 +405,7 @@ class EmailService:
         Returns:
             dict: Response from Resend API
         """
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        frontend_url = settings.FRONTEND_URL
         view_link = f"{frontend_url}{notification_link}" if notification_link else f"{frontend_url}/notifications"
 
         html_content = f"""

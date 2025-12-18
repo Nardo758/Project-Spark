@@ -57,8 +57,26 @@ class OppGridAPI {
         });
 
         const data = await this.handleResponse(response);
-        this.token = data.access_token;
-        localStorage.setItem('access_token', data.access_token);
+        // If 2FA is enabled, backend will not return an access token yet.
+        if (!data.requires_2fa && data.access_token) {
+            this.token = data.access_token;
+            localStorage.setItem('access_token', data.access_token);
+        }
+        return data;
+    }
+
+    async verifyTwoFactor(email, otp_code) {
+        const response = await fetch(`${this.baseURL}/2fa/verify`, {
+            method: 'POST',
+            headers: this.getHeaders(false),
+            body: JSON.stringify({ email, otp_code })
+        });
+
+        const data = await this.handleResponse(response);
+        if (data.access_token) {
+            this.token = data.access_token;
+            localStorage.setItem('access_token', data.access_token);
+        }
         return data;
     }
 

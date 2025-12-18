@@ -69,6 +69,28 @@ class Settings(BaseSettings):
             if self.FRONTEND_URL == "http://localhost:3000":
                 self.FRONTEND_URL = base_url
 
+        # Normalize URLs (support env values like "foo.repl.co" without scheme)
+        self.BACKEND_URL = self._normalize_base_url(self.BACKEND_URL, default_scheme="http")
+        self.FRONTEND_URL = self._normalize_base_url(self.FRONTEND_URL, default_scheme="http")
+
+    @staticmethod
+    def _normalize_base_url(url: str, default_scheme: str = "http") -> str:
+        if not url:
+            return url
+
+        url = url.strip()
+
+        # Strip trailing slash for consistent joining
+        if url.endswith("/"):
+            url = url.rstrip("/")
+
+        if url.startswith("http://") or url.startswith("https://"):
+            return url
+
+        # Heuristic: Replit domains should be https by default.
+        scheme = "https" if (".repl.co" in url or ".replit.dev" in url) else default_scheme
+        return f"{scheme}://{url}"
+
     def get_cors_origins(self) -> List[str]:
         """Parse CORS origins if they're stored as JSON string"""
         if isinstance(self.BACKEND_CORS_ORIGINS, str):
