@@ -3,10 +3,9 @@ Initialize the database with sample data
 Run this script after starting the database to populate it with test data
 """
 
-import sys
 import time
 import logging
-from app.db.database import SessionLocal, engine, Base
+from app.db.database import SessionLocal
 from app.models.user import User
 from app.models.opportunity import Opportunity
 from app.core.security import get_password_hash
@@ -66,14 +65,17 @@ def init_db():
         return
 
     try:
-        # Create tables
-        logger.info("Creating database tables...")
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created successfully!")
+        # Apply migrations (preferred) to ensure schema consistency.
+        logger.info("Applying database migrations (alembic upgrade head)...")
+        from alembic.config import Config
+        from alembic import command
+
+        cfg = Config("alembic.ini")
+        command.upgrade(cfg, "head")
+        logger.info("Database migrations applied successfully!")
     except Exception as e:
-        logger.error(f"Failed to create tables: {e}")
-        logger.warning("Tables will be created on first API request")
-        return
+        logger.error(f"Failed to apply migrations: {e}")
+        logger.warning("Continuing without applying migrations (database may be inconsistent).")
 
     db = SessionLocal()
 

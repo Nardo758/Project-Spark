@@ -72,15 +72,26 @@ def root():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database tables on startup"""
+    """Initialize database connection on startup"""
     try:
-        from app.db.database import initialize_database, Base
-        import app.models  # ensure all models are registered on Base.metadata
+        from app.db.database import initialize_database
+        from sqlalchemy import text
+
         logger.info("Initializing database connection...")
         engine = initialize_database()
-        logger.info("Creating database tables...")
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created successfully")
+
+        # Best practice: rely on Alembic migrations, not runtime create_all().
+        # We do a lightweight check and log a clear warning if migrations haven't run.
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1 FROM alembic_version LIMIT 1"))
+        except Exception as e:
+            logger.warning(
+                "Database migrations may not have been applied yet. "
+                "Run `alembic upgrade head` in /workspace/backend. "
+                "Details: %s",
+                e,
+            )
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         logger.warning("Application starting without database connection. Check DATABASE_URL in Secrets.")
