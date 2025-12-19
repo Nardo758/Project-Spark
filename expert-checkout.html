@@ -206,9 +206,22 @@
         let selectedService = 'consultation';
         let selectedPaymentModel = 'fixed';
 
+        function getAuthToken() {
+            return localStorage.getItem('access_token') || localStorage.getItem('token');
+        }
+
         if (!expertId) {
-            alert('No expert specified');
-            window.location.href = 'expert-marketplace.html';
+            document.getElementById('loading').innerHTML = `
+                <div class="success-message">
+                    <h2 style="margin-bottom: 8px;">Choose an expert to book</h2>
+                    <p class="subtitle" style="margin-bottom: 24px;">
+                        This page needs an expert ID. Please start from the marketplace.
+                    </p>
+                    <button class="btn btn-primary" style="width: auto;" onclick="window.location.href='expert-marketplace.html'">
+                        Go to Expert Marketplace
+                    </button>
+                </div>
+            `;
         }
 
         function selectService(element) {
@@ -295,7 +308,7 @@
         }
 
         async function getQuote() {
-            const token = localStorage.getItem('token');
+            const token = getAuthToken();
             if (!token) return;
 
             try {
@@ -320,13 +333,15 @@
             }
         }
 
-        document.getElementById('duration').addEventListener('change', () => {
-            updateSummary();
-            getQuote();
-        });
+        if (expertId) {
+            document.getElementById('duration').addEventListener('change', () => {
+                updateSummary();
+                getQuote();
+            });
+        }
 
         async function bookExpert() {
-            const token = localStorage.getItem('token');
+            const token = getAuthToken();
             if (!token) {
                 alert('Please sign in first');
                 window.location.href = 'signin.html';
@@ -370,7 +385,7 @@
             }
         }
 
-        loadExpert();
+        if (expertId) loadExpert();
     </script>
 </body>
 </html>

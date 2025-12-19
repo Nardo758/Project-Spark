@@ -73,6 +73,20 @@
         <h1>AI Match Analysis</h1>
         <p class="subtitle">See how well this opportunity fits your profile</p>
 
+        <div id="missing-context" class="match-card" style="display: none;">
+            <h2 style="margin-bottom: 8px;">Choose an opportunity to analyze</h2>
+            <p class="subtitle" style="margin-bottom: 16px;">
+                AI Match needs an opportunity ID. Paste one below, or browse opportunities to pick one.
+            </p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                <input id="opportunity-id-input" type="number" inputmode="numeric" min="1"
+                       placeholder="Opportunity ID (e.g. 123)"
+                       style="flex: 1; min-width: 220px; padding: 12px 16px; border: 1px solid var(--stone-300); border-radius: 8px; font-size: 1rem;">
+                <button class="btn btn-primary" onclick="goToMatchWithId()">Analyze</button>
+                <a href="discover.html" class="btn btn-secondary">Browse Opportunities</a>
+            </div>
+        </div>
+
         <div id="loading" class="loading">
             <div class="spinner"></div>
             <p>Analyzing opportunity match...</p>
@@ -132,13 +146,27 @@
         const urlParams = new URLSearchParams(window.location.search);
         const opportunityId = urlParams.get('id');
 
+        function getAuthToken() {
+            return localStorage.getItem('access_token') || localStorage.getItem('token');
+        }
+
+        function goToMatchWithId() {
+            const raw = (document.getElementById('opportunity-id-input')?.value || '').trim();
+            const id = Number(raw);
+            if (!Number.isFinite(id) || id <= 0) {
+                alert('Please enter a valid opportunity ID.');
+                return;
+            }
+            window.location.href = `ai-match.html?id=${encodeURIComponent(String(id))}`;
+        }
+
         if (!opportunityId) {
-            alert('No opportunity specified');
-            window.location.href = 'discover.html';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('missing-context').style.display = 'block';
         }
 
         async function loadMatchAnalysis() {
-            const token = localStorage.getItem('token');
+            const token = getAuthToken();
             if (!token) {
                 alert('Please sign in first');
                 window.location.href = 'signin.html';
@@ -244,7 +272,7 @@
             document.getElementById('validate-btn').href = `ai-validate.html?id=${opportunityId}`;
         }
 
-        loadMatchAnalysis();
+        if (opportunityId) loadMatchAnalysis();
     </script>
 </body>
 </html>

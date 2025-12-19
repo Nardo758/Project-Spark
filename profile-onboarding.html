@@ -406,6 +406,10 @@
 
     <script src="js/config.js"></script>
     <script>
+        function getAuthToken() {
+            return localStorage.getItem('access_token') || localStorage.getItem('token');
+        }
+
         let currentStep = 1;
         const totalSteps = 4;
         let selectedSkills = [];
@@ -487,7 +491,7 @@
             };
 
             try {
-                const token = localStorage.getItem('token');
+                const token = getAuthToken();
                 if (!token) {
                     alert('Please sign in first');
                     window.location.href = 'signin.html';
