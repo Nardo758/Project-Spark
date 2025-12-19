@@ -69,6 +69,12 @@
     .notice { color: var(--stone-500); font-size: 12px; margin-top: 8px; }
     .error { color: var(--red-600); font-weight: 800; margin-top: 10px; }
     .ok { color: var(--green-600); font-weight: 900; margin-top: 10px; }
+
+    .milestone-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .milestone-item { border: 1px solid var(--stone-200); border-radius: 14px; padding: 14px; background: #fafaf9; }
+    .milestone-title { font-weight: 900; margin-bottom: 4px; }
+    .milestone-meta { font-size: 12px; color: var(--stone-500); display:flex; gap: 10px; flex-wrap: wrap; }
+    .milestone-actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -176,6 +182,48 @@
       <div id="activeErr" class="error" style="display:none;"></div>
     </div>
 
+    <div class="card" id="milestonesCard" style="display:none;">
+      <div class="row">
+        <h2 style="font-family:'Spectral', serif; font-size: 1.4rem;">Milestones</h2>
+        <button class="btn" id="refreshMilestonesBtn">Refresh milestones</button>
+      </div>
+      <div class="notice">Use milestones when your agreement trigger is <b>milestone_completion</b> or the agreement type is <b>milestone_based</b>.</div>
+
+      <div id="milestonesStatus" class="notice">Loading…</div>
+      <div id="milestonesErr" class="error" style="display:none;"></div>
+      <div id="milestonesList" class="milestone-list" style="display:none;"></div>
+
+      <div style="margin-top: 14px; border-top: 1px solid var(--stone-200); padding-top: 14px;">
+        <h3 style="margin-bottom: 10px;">Create milestone</h3>
+        <div class="grid">
+          <div>
+            <label for="msTitle">Title</label>
+            <input id="msTitle" type="text" placeholder="e.g. Ship landing page + waitlist" />
+          </div>
+          <div>
+            <label for="msDue">Due date (optional)</label>
+            <input id="msDue" type="datetime-local" />
+          </div>
+          <div>
+            <label for="msPayment">Payment (USD, optional)</label>
+            <input id="msPayment" type="number" min="0" step="1" inputmode="decimal" placeholder="e.g. 2500" />
+          </div>
+          <div>
+            <label for="msOrder">Order</label>
+            <input id="msOrder" type="number" min="0" step="1" inputmode="numeric" value="0" />
+          </div>
+        </div>
+        <div style="margin-top: 10px;">
+          <label for="msDescription">Description (optional)</label>
+          <textarea id="msDescription" placeholder="Acceptance criteria, scope notes, deliverables…"></textarea>
+        </div>
+        <div class="row" style="margin-top: 10px;">
+          <button class="btn btn-primary" id="createMilestoneBtn">Create milestone</button>
+        </div>
+        <div id="milestonesOk" class="ok" style="display:none;"></div>
+      </div>
+    </div>
+
     <div class="card" id="errorCard" style="display:none;">
       <div class="error" id="pageError"></div>
     </div>
@@ -222,6 +270,19 @@
       completeBtn: document.getElementById('completeBtn'),
       activeOk: document.getElementById('activeOk'),
       activeErr: document.getElementById('activeErr'),
+
+      milestonesCard: document.getElementById('milestonesCard'),
+      refreshMilestonesBtn: document.getElementById('refreshMilestonesBtn'),
+      milestonesStatus: document.getElementById('milestonesStatus'),
+      milestonesErr: document.getElementById('milestonesErr'),
+      milestonesList: document.getElementById('milestonesList'),
+      msTitle: document.getElementById('msTitle'),
+      msDue: document.getElementById('msDue'),
+      msPayment: document.getElementById('msPayment'),
+      msOrder: document.getElementById('msOrder'),
+      msDescription: document.getElementById('msDescription'),
+      createMilestoneBtn: document.getElementById('createMilestoneBtn'),
+      milestonesOk: document.getElementById('milestonesOk'),
 
       errorCard: document.getElementById('errorCard'),
       pageError: document.getElementById('pageError'),
@@ -292,6 +353,7 @@
       els.summary.style.display = 'block';
       els.editCard.style.display = 'none';
       els.activeCard.style.display = 'none';
+      els.milestonesCard.style.display = 'none';
 
       const title = a.title || `Agreement #${a.id}`;
       els.title.textContent = title;
@@ -322,6 +384,217 @@
       } else if (a.status === 'active') {
         els.activeCard.style.display = 'block';
         els.activeMeta.textContent = `Triggered: ${a.is_triggered ? 'yes' : 'no'} • Revenue tracked: $${Number(a.total_revenue_tracked || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} • Payouts: $${Number(a.total_payouts_made || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+      }
+
+      const needsMilestones =
+        a.trigger_type === 'milestone_completion' ||
+        a.agreement_type === 'milestone_based';
+
+      if (needsMilestones) {
+        els.milestonesCard.style.display = 'block';
+        loadMilestones();
+      }
+    }
+
+    function fmtMoneyCents(cents) {
+      if (cents === null || cents === undefined) return '—';
+      const n = Number(cents);
+      if (!Number.isFinite(n)) return '—';
+      return '$' + (n / 100).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+
+    async function loadMilestones() {
+      if (!agreementId) return;
+      els.milestonesErr.style.display = 'none';
+      els.milestonesOk.style.display = 'none';
+      els.milestonesList.style.display = 'none';
+      els.milestonesList.innerHTML = '';
+      els.milestonesStatus.style.display = 'block';
+      els.milestonesStatus.textContent = 'Loading…';
+
+      try {
+        const res = await apiCall(`/milestones/?agreement_id=${encodeURIComponent(String(agreementId))}&limit=50`);
+        const data = await res.json().catch(() => ([]));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to load milestones');
+        const milestones = Array.isArray(data) ? data : [];
+
+        els.milestonesStatus.style.display = 'none';
+        els.milestonesList.style.display = 'flex';
+
+        if (milestones.length === 0) {
+          els.milestonesList.innerHTML = `<div class="notice">No milestones yet. Create the first one below.</div>`;
+          return;
+        }
+
+        els.milestonesList.innerHTML = milestones.map(m => {
+          const due = m.due_date ? new Date(m.due_date).toLocaleString() : '—';
+          const amount = m.payment_amount_cents ? fmtMoneyCents(m.payment_amount_cents) : '—';
+          const desc = m.description ? `<div class="notice" style="margin-top:6px;">${m.description}</div>` : '';
+
+          const btnStart = (m.status === 'pending') ? `<button class="btn btn-primary" data-action="start" data-id="${m.id}">Start</button>` : '';
+          const btnSubmit = (m.status === 'pending' || m.status === 'in_progress' || m.status === 'rejected')
+            ? `<button class="btn btn-warn" data-action="submit" data-id="${m.id}">Submit</button>` : '';
+          const btnApprove = (m.status === 'submitted')
+            ? `<button class="btn btn-primary" data-action="approve" data-id="${m.id}">Approve</button>` : '';
+          const btnReject = (m.status === 'submitted')
+            ? `<button class="btn btn-danger" data-action="reject" data-id="${m.id}">Reject</button>` : '';
+          const btnPay = (m.status === 'approved')
+            ? `<button class="btn btn-primary" data-action="pay" data-id="${m.id}">Pay</button>` : '';
+          const btnDelete = (m.status === 'pending')
+            ? `<button class="btn btn-danger" data-action="delete" data-id="${m.id}">Delete</button>` : '';
+
+          return `
+            <div class="milestone-item">
+              <div class="row">
+                <div>
+                  <div class="milestone-title">${m.title}</div>
+                  <div class="milestone-meta">
+                    <span>Status: <b>${m.status}</b></span>
+                    <span>Due: ${due}</span>
+                    <span>Payment: ${amount}</span>
+                  </div>
+                </div>
+              </div>
+              ${desc}
+              <div class="milestone-actions">
+                ${btnStart}
+                ${btnSubmit}
+                ${btnApprove}
+                ${btnReject}
+                ${btnPay}
+                ${btnDelete}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Wire actions
+        els.milestonesList.querySelectorAll('button[data-action]').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const action = e.currentTarget.getAttribute('data-action');
+            const id = e.currentTarget.getAttribute('data-id');
+            if (!action || !id) return;
+            await handleMilestoneAction(action, id);
+          });
+        });
+      } catch (e) {
+        els.milestonesStatus.style.display = 'none';
+        els.milestonesErr.style.display = 'block';
+        els.milestonesErr.textContent = e?.message || 'Failed to load milestones.';
+      }
+    }
+
+    async function handleMilestoneAction(action, milestoneId) {
+      els.milestonesErr.style.display = 'none';
+      els.milestonesOk.style.display = 'none';
+
+      try {
+        if (action === 'start') {
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/start`, { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to start milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone started.';
+        } else if (action === 'submit') {
+          const deliverables = prompt('Optional: deliverables / proof (paste a link or notes):') || '';
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(deliverables.trim() ? { deliverables } : {}),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to submit milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone submitted.';
+        } else if (action === 'approve') {
+          const approval_notes = prompt('Optional: approval notes:') || '';
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(approval_notes.trim() ? { approval_notes } : {}),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to approve milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone approved.';
+        } else if (action === 'reject') {
+          const reason = prompt('Rejection reason:') || '';
+          if (!reason.trim()) throw new Error('Rejection reason is required.');
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to reject milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone rejected.';
+        } else if (action === 'pay') {
+          if (!confirm('Pay this milestone now?')) return;
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/pay`, { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to pay milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone payment processed.';
+        } else if (action === 'delete') {
+          if (!confirm('Delete this milestone?')) return;
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}`, { method: 'DELETE' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to delete milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone deleted.';
+        }
+        await loadMilestones();
+      } catch (e) {
+        els.milestonesErr.style.display = 'block';
+        els.milestonesErr.textContent = e?.message || 'Milestone action failed.';
+      }
+    }
+
+    async function createMilestone() {
+      els.milestonesErr.style.display = 'none';
+      els.milestonesOk.style.display = 'none';
+      els.createMilestoneBtn.disabled = true;
+      els.createMilestoneBtn.textContent = 'Creating…';
+      try {
+        const title = (els.msTitle.value || '').trim();
+        if (!title) throw new Error('Milestone title is required.');
+
+        const dueIso = fromDatetimeLocal((els.msDue.value || '').trim());
+        const paymentCents = dollarsToCents((els.msPayment.value || '').trim());
+        const orderIndex = Number((els.msOrder.value || '0').trim());
+
+        const payload = {
+          agreement_id: Number(agreementId),
+          title,
+          description: (els.msDescription.value || '').trim() || null,
+          order_index: Number.isFinite(orderIndex) ? orderIndex : 0,
+          payment_amount_cents: paymentCents,
+          due_date: dueIso,
+        };
+        Object.keys(payload).forEach(k => (payload[k] === null || payload[k] === undefined || Number.isNaN(payload[k])) && delete payload[k]);
+
+        const res = await apiCall('/milestones/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to create milestone');
+
+        els.milestonesOk.style.display = 'block';
+        els.milestonesOk.textContent = 'Milestone created.';
+        els.msTitle.value = '';
+        els.msDescription.value = '';
+        els.msPayment.value = '';
+        els.msDue.value = '';
+        await loadMilestones();
+      } catch (e) {
+        els.milestonesErr.style.display = 'block';
+        els.milestonesErr.textContent = e?.message || 'Failed to create milestone.';
+      } finally {
+        els.createMilestoneBtn.disabled = false;
+        els.createMilestoneBtn.textContent = 'Create milestone';
       }
     }
 
@@ -498,6 +771,8 @@
     els.recordRevenueBtn.addEventListener('click', () => recordRevenue());
     els.triggerPayoutBtn.addEventListener('click', () => triggerPayout());
     els.completeBtn.addEventListener('click', () => completeAgreement());
+    els.refreshMilestonesBtn.addEventListener('click', () => loadMilestones());
+    els.createMilestoneBtn.addEventListener('click', () => createMilestone());
 
     loadAgreement();
   </script>

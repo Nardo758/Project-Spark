@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Validate · OppGrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5e4; --stone-300: #d6d3d1;
+      --stone-500: #78716c; --stone-700: #44403c; --stone-800: #292524; --stone-900: #1c1917;
+      --green-100: #dcfce7; --green-600: #16a34a;
+      --amber-100: #fef3c7; --amber-600: #d97706;
+      --red-100: #fee2e2; --red-600: #dc2626;
+      --violet-100: #ede9fe; --violet-600: #7c3aed;
+      --white: #ffffff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); min-height: 100vh; }
+    nav { background: var(--white); border-bottom: 1px solid var(--stone-200); padding: 16px 32px; }
+    .nav-content { max-width: 1100px; margin: 0 auto; display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    .logo { display:flex; align-items:center; gap: 8px; text-decoration:none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight: 700; font-size: 1.1rem; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-family: 'Spectral', serif; font-size: 2rem; margin-bottom: 6px; }
+    .subtitle { color: var(--stone-500); margin-bottom: 18px; }
+
+    .card { background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 20px; margin-top: 14px; }
+    .row { display:flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .pill { display:inline-flex; align-items:center; gap: 8px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+    .pill.green { background: var(--green-100); color: var(--green-600); }
+    .pill.amber { background: var(--amber-100); color: var(--amber-600); }
+    .pill.red { background: var(--red-100); color: var(--red-600); }
+
+    .btn { padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; border: 1px solid var(--stone-300); text-decoration: none; background: var(--white); color: var(--stone-900); display:inline-flex; align-items:center; gap: 8px; }
+    .btn-primary { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn-violet { background: var(--violet-100); color: var(--violet-600); border-color: var(--violet-100); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .loading { text-align: center; padding: 26px; color: var(--stone-500); }
+    .error { color: var(--red-600); font-weight: 800; }
+    .ok { color: var(--green-600); font-weight: 900; }
+
+    .list { margin-top: 10px; display:flex; flex-direction: column; gap: 10px; }
+    .item { display:flex; gap: 12px; align-items:flex-start; padding: 12px; border: 1px solid var(--stone-200); border-radius: 12px; background: #fafaf9; }
+    .num { width: 24px; height: 24px; border-radius: 50%; background: var(--stone-900); color: white; display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 900; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="logo">OppGrid</a>
+      <div class="row">
+        <a class="btn" id="backToOpp" href="discover.html">Back to opportunity</a>
+        <a class="btn" id="matchBtn" href="ai-match.html">AI Match</a>
+        <a class="btn" id="roadmapBtn" href="ai-roadmap.html">Roadmap</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>AI Validate</h1>
+    <p class="subtitle">Get an AI validation verdict + optionally add your “I need this too” validation.</p>
+
+    <div class="card" id="loadingCard">
+      <div class="loading">Loading…</div>
+    </div>
+
+    <div class="card" id="contentCard" style="display:none;">
+      <div class="row">
+        <div>
+          <div style="font-weight: 900; font-size: 18px;" id="oppTitle">—</div>
+          <div style="color: var(--stone-500); font-size: 13px;" id="oppMeta">—</div>
+        </div>
+        <div class="row">
+          <span class="pill" id="verdictPill" style="display:none;"></span>
+          <button class="btn btn-primary" id="addValidationBtn">Add my validation</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px; color: var(--stone-700);" id="verdictText"></div>
+
+      <div class="list" id="nextSteps"></div>
+
+      <div id="msg" style="margin-top: 10px;"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const opportunityId = urlParams.get('id');
+
+    const loadingCard = document.getElementById('loadingCard');
+    const contentCard = document.getElementById('contentCard');
+    const oppTitle = document.getElementById('oppTitle');
+    const oppMeta = document.getElementById('oppMeta');
+    const verdictPill = document.getElementById('verdictPill');
+    const verdictText = document.getElementById('verdictText');
+    const nextStepsEl = document.getElementById('nextSteps');
+    const msg = document.getElementById('msg');
+    const addValidationBtn = document.getElementById('addValidationBtn');
+
+    function showMsg(kind, text) {
+      msg.className = kind === 'ok' ? 'ok' : 'error';
+      msg.textContent = text;
+    }
+
+    function verdictToPill(verdict) {
+      // backend returns verdict like "fast_track" | "refine" | "pivot"
+      const v = String(verdict || '').toLowerCase();
+      if (v === 'fast_track') return { cls: 'green', label: 'Fast track' };
+      if (v === 'refine') return { cls: 'amber', label: 'Refine' };
+      if (v === 'pivot') return { cls: 'red', label: 'Pivot' };
+      return { cls: 'amber', label: v || 'Verdict' };
+    }
+
+    async function load() {
+      if (!opportunityId) {
+        loadingCard.innerHTML = '<div class="error">Missing opportunity id.</div>';
+        return;
+      }
+
+      document.getElementById('backToOpp').href = `opportunity.html?id=${encodeURIComponent(String(opportunityId))}`;
+      document.getElementById('matchBtn').href = `ai-match.html?id=${encodeURIComponent(String(opportunityId))}`;
+      document.getElementById('roadmapBtn').href = `ai-roadmap.html?id=${encodeURIComponent(String(opportunityId))}`;
+
+      if (!window.OppGridAuth?.requireAuth) {
+        window.location.href = 'signin.html';
+        return;
+      }
+      if (!window.OppGridAuth.requireAuth()) return;
+
+      const token = localStorage.getItem('access_token');
+
+      try {
+        const [oppRes, validateRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/opportunities/${encodeURIComponent(String(opportunityId))}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          }),
+          fetch(`${API_BASE_URL}/ai-engine/validate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ opportunity_id: Number(opportunityId) })
+          })
+        ]);
+
+        const opp = await oppRes.json().catch(() => ({}));
+        const val = await validateRes.json().catch(() => ({}));
+        if (!oppRes.ok) throw new Error(opp?.detail || 'Failed to load opportunity');
+        if (!validateRes.ok) throw new Error(val?.detail || 'Failed to validate opportunity');
+
+        loadingCard.style.display = 'none';
+        contentCard.style.display = 'block';
+
+        oppTitle.textContent = opp.ai_generated_title || opp.title || `Opportunity #${opportunityId}`;
+        oppMeta.textContent = `${opp.category || 'General'} • ${opp.validation_count || 0} validations`;
+
+        const pill = verdictToPill(val.verdict);
+        verdictPill.style.display = 'inline-flex';
+        verdictPill.className = `pill ${pill.cls}`;
+        verdictPill.textContent = pill.label;
+
+        verdictText.textContent = `Score: ${val.score}/100`;
+
+        const steps = Array.isArray(val.next_steps) ? val.next_steps : [];
+        nextStepsEl.innerHTML = steps.length
+          ? steps.map((s, i) => `<div class="item"><div class="num">${i + 1}</div><div>${s}</div></div>`).join('')
+          : '<div class="loading">No next steps returned.</div>';
+
+        addValidationBtn.onclick = async () => {
+          msg.textContent = '';
+          addValidationBtn.disabled = true;
+          addValidationBtn.textContent = 'Adding…';
+          try {
+            // Use existing API client helper
+            api.token = token;
+            await api.createValidation(Number(opportunityId));
+            showMsg('ok', 'Validation added. Thank you!');
+          } catch (e) {
+            showMsg('error', e?.message || 'Failed to add validation.');
+          } finally {
+            addValidationBtn.disabled = false;
+            addValidationBtn.textContent = 'Add my validation';
+          }
+        };
+      } catch (e) {
+        loadingCard.innerHTML = `<div class="error">${e?.message || 'Failed to load.'}</div>`;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
+
