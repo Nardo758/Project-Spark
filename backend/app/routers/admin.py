@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List, Optional
+from datetime import date
 
 from app.db.database import get_db
 from app.models.user import User
@@ -21,7 +22,9 @@ from app.schemas.admin import (
     AdminUserUpdate,
     AdminBanUser,
     AdminStats,
-    AdminOpportunityListItem
+    AdminOpportunityListItem,
+    AdminStripeWebhookEventList,
+    AdminPayPerUnlockAttemptList,
 )
 from app.core.dependencies import get_current_admin_user
 
@@ -54,6 +57,76 @@ def get_admin_stats(
         "total_comments": total_comments,
         "total_notifications": total_notifications
     }
+
+
+@router.get("/stripe/webhook-events", response_model=AdminStripeWebhookEventList)
+def list_stripe_webhook_events(
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    status_filter: Optional[str] = Query(None, description="processing|processed|failed"),
+    event_type: Optional[str] = Query(None),
+    livemode: Optional[bool] = Query(None),
+    search_event_id: Optional[str] = Query(None, description="Substring match on evt_* id"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """List recent Stripe webhook events for debugging and reliability monitoring."""
+    from app.models.stripe_event import StripeWebhookEvent, StripeWebhookEventStatus
+
+    q = db.query(StripeWebhookEvent)
+
+    if status_filter:
+        try:
+            q = q.filter(StripeWebhookEvent.status == StripeWebhookEventStatus(status_filter))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status_filter")
+
+    if event_type:
+        q = q.filter(StripeWebhookEvent.event_type == event_type)
+
+    if livemode is not None:
+        q = q.filter(StripeWebhookEvent.livemode == livemode)
+
+    if search_event_id:
+        q = q.filter(StripeWebhookEvent.stripe_event_id.ilike(f"%{search_event_id}%"))
+
+    total = q.count()
+    items = q.order_by(desc(StripeWebhookEvent.received_at)).offset(skip).limit(limit).all()
+    return {"items": items, "total": total}
+
+
+@router.get("/stripe/pay-per-unlock-attempts", response_model=AdminPayPerUnlockAttemptList)
+def list_pay_per_unlock_attempts(
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    user_id: Optional[int] = Query(None),
+    opportunity_id: Optional[int] = Query(None),
+    attempt_date: Optional[date] = Query(None),
+    status_filter: Optional[str] = Query(None, description="created|succeeded|failed|canceled"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """List pay-per-unlock attempts (includes pre-payment attempts to detect spam/race)."""
+    from app.models.stripe_event import PayPerUnlockAttempt, PayPerUnlockAttemptStatus
+
+    q = db.query(PayPerUnlockAttempt)
+
+    if user_id is not None:
+        q = q.filter(PayPerUnlockAttempt.user_id == user_id)
+    if opportunity_id is not None:
+        q = q.filter(PayPerUnlockAttempt.opportunity_id == opportunity_id)
+    if attempt_date is not None:
+        q = q.filter(PayPerUnlockAttempt.attempt_date == attempt_date)
+
+    if status_filter:
+        try:
+            q = q.filter(PayPerUnlockAttempt.status == PayPerUnlockAttemptStatus(status_filter))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status_filter")
+
+    total = q.count()
+    items = q.order_by(desc(PayPerUnlockAttempt.created_at)).offset(skip).limit(limit).all()
+    return {"items": items, "total": total}
 
 
 @router.get("/users", response_model=List[AdminUserListItem])

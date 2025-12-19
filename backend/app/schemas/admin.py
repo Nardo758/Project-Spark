@@ -4,7 +4,7 @@ Pydantic schemas for admin operations
 
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 
 
 class AdminUserListItem(BaseModel):
@@ -100,3 +100,43 @@ class AdminActivityLog(BaseModel):
     resource_type: str
     resource_id: int
     timestamp: datetime
+
+
+class AdminStripeWebhookEvent(BaseModel):
+    """Stripe webhook event processing record (idempotency + status)."""
+    stripe_event_id: str
+    event_type: str
+    livemode: bool
+    status: str
+    attempt_count: int
+    stripe_created_at: Optional[datetime] = None
+    received_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminStripeWebhookEventList(BaseModel):
+    items: List[AdminStripeWebhookEvent]
+    total: int
+
+
+class AdminPayPerUnlockAttempt(BaseModel):
+    """Pay-per-unlock attempt record (prevents concurrency limit bypass)."""
+    id: int
+    user_id: int
+    opportunity_id: int
+    attempt_date: date
+    status: str
+    stripe_payment_intent_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminPayPerUnlockAttemptList(BaseModel):
+    items: List[AdminPayPerUnlockAttempt]
+    total: int
