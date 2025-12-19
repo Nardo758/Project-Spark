@@ -39,6 +39,27 @@ type PayPerUnlockAttemptList = {
   total: number;
 };
 
+type IdeaValidation = {
+  id: number;
+  user_id: number;
+  title: string;
+  category: string;
+  status: 'pending_payment' | 'paid' | 'processing' | 'completed' | 'failed' | string;
+  stripe_payment_intent_id?: string | null;
+  amount_cents?: number | null;
+  currency?: string | null;
+  opportunity_score?: number | null;
+  validation_confidence?: number | null;
+  summary?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+type IdeaValidationList = {
+  items: IdeaValidation[];
+  total: number;
+};
+
 export function Admin() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
@@ -51,6 +72,12 @@ export function Admin() {
   const [attemptsError, setAttemptsError] = useState<string | null>(null);
   const [attemptsStatus, setAttemptsStatus] = useState<string>('');
   const [attemptsDate, setAttemptsDate] = useState<string>('');
+
+  const [ideaValidations, setIdeaValidations] = useState<IdeaValidationList | null>(null);
+  const [ideaValidationsError, setIdeaValidationsError] = useState<string | null>(null);
+  const [ideaValidationsStatus, setIdeaValidationsStatus] = useState<string>('failed');
+  const [ideaValidationsUserId, setIdeaValidationsUserId] = useState<string>('');
+  const [ideaValidationsTitle, setIdeaValidationsTitle] = useState<string>('');
 
   useEffect(() => {
     let cancelled = false;
@@ -109,6 +136,29 @@ export function Admin() {
     };
   }, [attemptsQuery]);
 
+  const ideaValidationsQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('limit', '50');
+    if (ideaValidationsStatus) params.set('status_filter', ideaValidationsStatus);
+    if (ideaValidationsUserId) params.set('user_id', ideaValidationsUserId);
+    if (ideaValidationsTitle) params.set('search_title', ideaValidationsTitle);
+    return params.toString();
+  }, [ideaValidationsStatus, ideaValidationsTitle, ideaValidationsUserId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchJson<IdeaValidationList>(`/admin/idea-validations?${ideaValidationsQuery}`)
+      .then((data) => {
+        if (!cancelled) setIdeaValidations(data);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setIdeaValidationsError(e instanceof Error ? e.message : String(e));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ideaValidationsQuery]);
+
   return (
     <div style={{ padding: 16 }}>
       <h1>Admin (React)</h1>
@@ -119,6 +169,126 @@ export function Admin() {
           <pre style={{ background: '#f7f7f7', padding: 12, borderRadius: 8 }}>{JSON.stringify(stats, null, 2)}</pre>
         ) : statsError ? (
           <pre style={{ background: '#fff5f5', padding: 12, borderRadius: 8 }}>{statsError}</pre>
+        ) : (
+          <p>Loading…</p>
+        )}
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2>Idea Validations (persisted)</h2>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            Status
+            <select
+              value={ideaValidationsStatus}
+              onChange={(e) => {
+                setIdeaValidations(null);
+                setIdeaValidationsError(null);
+                setIdeaValidationsStatus(e.target.value);
+              }}
+            >
+              <option value="">All</option>
+              <option value="failed">failed</option>
+              <option value="processing">processing</option>
+              <option value="pending_payment">pending_payment</option>
+              <option value="paid">paid</option>
+              <option value="completed">completed</option>
+            </select>
+          </label>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            User ID
+            <input
+              inputMode="numeric"
+              value={ideaValidationsUserId}
+              onChange={(e) => {
+                setIdeaValidations(null);
+                setIdeaValidationsError(null);
+                setIdeaValidationsUserId(e.target.value.replace(/[^\d]/g, ''));
+              }}
+              placeholder="e.g. 123"
+              style={{ width: 120 }}
+            />
+          </label>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            Title contains
+            <input
+              value={ideaValidationsTitle}
+              onChange={(e) => {
+                setIdeaValidations(null);
+                setIdeaValidationsError(null);
+                setIdeaValidationsTitle(e.target.value);
+              }}
+              placeholder="search…"
+              style={{ width: 220 }}
+            />
+          </label>
+          <button
+            onClick={() => {
+              setIdeaValidations(null);
+              setIdeaValidationsError(null);
+              setIdeaValidationsStatus('failed');
+              setIdeaValidationsUserId('');
+              setIdeaValidationsTitle('');
+            }}
+          >
+            Show failures
+          </button>
+          <button
+            onClick={() => {
+              setIdeaValidations(null);
+              setIdeaValidationsError(null);
+              setIdeaValidationsStatus('');
+              setIdeaValidationsUserId('');
+              setIdeaValidationsTitle('');
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+
+        {ideaValidations ? (
+          ideaValidations.items.length ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>ID</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>User</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>Title</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>Status</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>Score</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>PaymentIntent</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #eee', padding: 8 }}>Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ideaValidations.items.map((v) => (
+                    <tr key={v.id}>
+                      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>
+                        <a href={`/validations/${v.id}`}>{v.id}</a>
+                      </td>
+                      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.user_id}</td>
+                      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.title}</td>
+                      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.status}</td>
+                      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>
+                        {v.opportunity_score != null ? v.opportunity_score : '—'}
+                      </td>
+                      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8, fontFamily: 'monospace' }}>
+                        {v.stripe_payment_intent_id ?? '—'}
+                      </td>
+                      <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>
+                        {v.created_at ? new Date(v.created_at).toLocaleString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>No idea validations found.</p>
+          )
+        ) : ideaValidationsError ? (
+          <pre style={{ background: '#fff5f5', padding: 12, borderRadius: 8 }}>{ideaValidationsError}</pre>
         ) : (
           <p>Loading…</p>
         )}

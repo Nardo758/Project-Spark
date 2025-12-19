@@ -197,26 +197,56 @@ def run_frontend():
     server.serve_forever()
 
 def init_database():
-    """Initialize database tables on startup"""
+    """
+    Apply database migrations on startup.
+
+    Notes:
+    - Deployments should always apply migrations.
+    - Seeding demo data is optional and controlled via SEED_DB=1.
+    """
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.join(repo_root, "backend")
+    env = os.environ.copy()
+
     try:
-        print("Initializing database...")
-        env = os.environ.copy()
+        print("[DB] Applying migrations (alembic upgrade head)...")
+        env["PYTHONPATH"] = backend_dir
         result = subprocess.run(
-            [sys.executable, 'backend/init_db.py'],
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,
             env=env,
-            cwd=os.path.dirname(os.path.abspath(__file__))
+            cwd=backend_dir,
         )
-        print(result.stdout)
+        if result.stdout:
+            print(result.stdout)
         if result.returncode == 0:
-            print("Database initialized successfully")
+            print("[DB] Migrations applied successfully")
         else:
             if result.stderr:
-                print(f"Database init errors: {result.stderr}")
+                print(f"[DB] Migration errors: {result.stderr}")
+            print("[DB] Warning: migrations failed (app may be inconsistent).")
     except Exception as e:
-        print(f"Database initialization error (will retry on first request): {e}")
+        print(f"[DB] Migration error (app may be inconsistent): {e}")
+
+    if os.getenv("SEED_DB") == "1":
+        try:
+            print("[DB] SEED_DB=1 set; running backend/init_db.py (demo seed)...")
+            seed_result = subprocess.run(
+                [sys.executable, "init_db.py"],
+                capture_output=True,
+                text=True,
+                timeout=180,
+                env=env,
+                cwd=backend_dir,
+            )
+            if seed_result.stdout:
+                print(seed_result.stdout)
+            if seed_result.returncode != 0 and seed_result.stderr:
+                print(f"[DB] Seed errors: {seed_result.stderr}")
+        except Exception as e:
+            print(f"[DB] Seed error: {e}")
 
 if __name__ == '__main__':
     init_database()
