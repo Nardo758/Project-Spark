@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --violet-600: #7c3aed;
+            --violet-700: #6d28d9;
+            --green-500: #22c55e;
+            --green-600: #16a34a;
+            --white: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            padding: 16px 32px;
+        }
+        .nav-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--stone-900);
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+        h1 {
+            font-family: 'Spectral', serif;
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: var(--stone-500);
+            margin-bottom: 32px;
+        }
+        .progress-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+        .progress-step {
+            flex: 1;
+            height: 4px;
+            background: var(--stone-200);
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+        .progress-step.active {
+            background: var(--stone-800);
+        }
+        .progress-step.completed {
+            background: var(--green-500);
+        }
+        .step-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .step-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .step-description {
+            color: var(--stone-500);
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--stone-300);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--stone-800);
+            box-shadow: 0 0 0 3px rgba(41, 37, 36, 0.1);
+        }
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .skill-tag {
+            padding: 8px 16px;
+            background: var(--stone-100);
+            border: 1px solid var(--stone-300);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        .skill-tag:hover {
+            background: var(--stone-200);
+        }
+        .skill-tag.selected {
+            background: var(--stone-800);
+            color: var(--white);
+            border-color: var(--stone-800);
+        }
+        .range-group {
+            margin-bottom: 24px;
+        }
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--stone-500);
+            margin-top: 8px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: var(--stone-200);
+            border-radius: 4px;
+            border: none;
+            padding: 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--stone-800);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .range-value {
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-primary {
+            background: var(--stone-800);
+            color: var(--white);
+        }
+        .btn-primary:hover {
+            background: var(--stone-900);
+        }
+        .btn-secondary {
+            background: var(--white);
+            color: var(--stone-700);
+            border: 1px solid var(--stone-300);
+        }
+        .btn-secondary:hover {
+            background: var(--stone-100);
+        }
+        .experience-options {
+            display: grid;
+            gap: 12px;
+        }
+        .experience-option {
+            padding: 16px;
+            border: 2px solid var(--stone-200);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .experience-option:hover {
+            border-color: var(--stone-400);
+        }
+        .experience-option.selected {
+            border-color: var(--stone-800);
+            background: var(--stone-50);
+        }
+        .experience-option h4 {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .experience-option p {
+            font-size: 0.875rem;
+            color: var(--stone-500);
+        }
+        .success-message {
+            text-align: center;
+            padding: 48px 24px;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--green-500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">OppGrid</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Complete Your Profile</h1>
+        <p class="subtitle">Help us personalize your opportunity matches</p>
+
+        <div class="progress-bar">
+            <div class="progress-step active" id="prog-1"></div>
+            <div class="progress-step" id="prog-2"></div>
+            <div class="progress-step" id="prog-3"></div>
+            <div class="progress-step" id="prog-4"></div>
+        </div>
+
+        <div class="step-content active" id="step-1">
+            <h3 class="step-title">What are your skills?</h3>
+            <p class="step-description">Select all that apply to help us find the best opportunities for you.</p>
+            
+            <div class="skill-tags" id="skills-container">
+                <span class="skill-tag" data-skill="product">Product</span>
+                <span class="skill-tag" data-skill="engineering">Engineering</span>
+                <span class="skill-tag" data-skill="design">Design</span>
+                <span class="skill-tag" data-skill="marketing">Marketing</span>
+                <span class="skill-tag" data-skill="sales">Sales</span>
+                <span class="skill-tag" data-skill="finance">Finance</span>
+                <span class="skill-tag" data-skill="operations">Operations</span>
+                <span class="skill-tag" data-skill="data">Data</span>
+                <span class="skill-tag" data-skill="growth">Growth</span>
+                <span class="skill-tag" data-skill="content">Content</span>
+                <span class="skill-tag" data-skill="community">Community</span>
+                <span class="skill-tag" data-skill="legal">Legal</span>
+            </div>
+
+            <div class="form-group">
+                <label for="other-skills">Other skills (comma-separated)</label>
+                <input type="text" id="other-skills" placeholder="e.g., AI/ML, blockchain, healthcare">
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="nextStep()">Continue</button>
+            </div>
+        </div>
+
+        <div class="step-content" id="step-2">
+            <h3 class="step-title">Your experience level</h3>
+            <p class="step-description">This helps us recommend opportunities that match your background.</p>
+            
+            <div class="experience-options">
+                <div class="experience-option" data-level="beginner" onclick="selectExperience(this)">
+                    <h4>Just Starting Out</h4>
+                    <p>I'm new to entrepreneurship and looking to learn</p>
+                </div>
+                <div class="experience-option" data-level="intermediate" onclick="selectExperience(this)">
+                    <h4>Some Experience</h4>
+                    <p>I've built side projects or worked at startups</p>
+                </div>
+                <div class="experience-option" data-level="experienced" onclick="selectExperience(this)">
+                    <h4>Experienced</h4>
+                    <p>I've launched products or co-founded companies</p>
+                </div>
+                <div class="experience-option" data-level="expert" onclick="selectExperience(this)">
+                    <h4>Serial Entrepreneur</h4>
+                    <p>I've built and exited multiple ventures</p>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+                <button class="btn btn-primary" onclick="nextStep()">Continue</button>
+            </div>
+        </div>
+
+        <div class="step-content" id="step-3">
+            <h3 class="step-title">Your resources</h3>
+            <p class="step-description">Help us understand what you can invest in opportunities.</p>
+            
+            <div class="range-group">
+                <label>Available capital to invest</label>
+                <div class="range-value" id="capital-value">$10,000</div>
+                <input type="range" id="capital-range" min="0" max="500000" step="5000" value="10000" oninput="updateCapitalValue()">
+                <div class="range-labels">
+                    <span>$0</span>
+                    <span>$500k+</span>
+                </div>
+            </div>
+
+            <div class="range-group">
+                <label>Hours per week you can commit</label>
+                <div class="range-value" id="time-value">10 hours</div>
+                <input type="range" id="time-range" min="0" max="60" step="5" value="10" oninput="updateTimeValue()">
+                <div class="range-labels">
+                    <span>0 hrs</span>
+                    <span>60+ hrs</span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+                <button class="btn btn-primary" onclick="nextStep()">Continue</button>
+            </div>
+        </div>
+
+        <div class="step-content" id="step-4">
+            <h3 class="step-title">Risk tolerance</h3>
+            <p class="step-description">How comfortable are you with uncertainty?</p>
+            
+            <div class="range-group">
+                <label>Risk tolerance</label>
+                <div class="range-value" id="risk-value">Moderate</div>
+                <input type="range" id="risk-range" min="1" max="5" step="1" value="3" oninput="updateRiskValue()">
+                <div class="range-labels">
+                    <span>Conservative</span>
+                    <span>Aggressive</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="interests">Industries of interest (optional)</label>
+                <textarea id="interests" rows="3" placeholder="e.g., SaaS, healthcare, fintech, e-commerce..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+                <button class="btn btn-primary" onclick="saveProfile()">Complete Profile</button>
+            </div>
+        </div>
+
+        <div class="step-content" id="step-success">
+            <div class="success-message">
+                <div class="success-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2>Profile Complete!</h2>
+                <p class="subtitle">We'll now personalize your opportunity matches based on your profile.</p>
+                <button class="btn btn-primary" style="margin-top: 24px;" onclick="window.location.href='discover.html'">Browse Opportunities</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        let currentStep = 1;
+        const totalSteps = 4;
+        let selectedSkills = [];
+        let experienceLevel = null;
+
+        document.querySelectorAll('.skill-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('selected');
+                const skill = tag.dataset.skill;
+                if (tag.classList.contains('selected')) {
+                    selectedSkills.push(skill);
+                } else {
+                    selectedSkills = selectedSkills.filter(s => s !== skill);
+                }
+            });
+        });
+
+        function selectExperience(element) {
+            document.querySelectorAll('.experience-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            experienceLevel = element.dataset.level;
+        }
+
+        function updateCapitalValue() {
+            const value = document.getElementById('capital-range').value;
+            document.getElementById('capital-value').textContent = '$' + parseInt(value).toLocaleString();
+        }
+
+        function updateTimeValue() {
+            const value = document.getElementById('time-range').value;
+            document.getElementById('time-value').textContent = value + ' hours';
+        }
+
+        function updateRiskValue() {
+            const value = document.getElementById('risk-range').value;
+            const labels = ['Very Conservative', 'Conservative', 'Moderate', 'Aggressive', 'Very Aggressive'];
+            document.getElementById('risk-value').textContent = labels[value - 1];
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                document.getElementById(`step-${currentStep}`).classList.remove('active');
+                document.getElementById(`prog-${currentStep}`).classList.remove('active');
+                document.getElementById(`prog-${currentStep}`).classList.add('completed');
+                currentStep++;
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+                document.getElementById(`prog-${currentStep}`).classList.add('active');
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                document.getElementById(`step-${currentStep}`).classList.remove('active');
+                document.getElementById(`prog-${currentStep}`).classList.remove('active');
+                currentStep--;
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+                document.getElementById(`prog-${currentStep}`).classList.remove('completed');
+                document.getElementById(`prog-${currentStep}`).classList.add('active');
+            }
+        }
+
+        async function saveProfile() {
+            const otherSkills = document.getElementById('other-skills').value
+                .split(',')
+                .map(s => s.trim())
+                .filter(s => s);
+            
+            const allSkills = [...selectedSkills, ...otherSkills];
+            
+            const profileData = {
+                skills: allSkills,
+                experience_level: experienceLevel,
+                available_capital: parseFloat(document.getElementById('capital-range').value),
+                time_commitment_hours_per_week: parseInt(document.getElementById('time-range').value),
+                risk_tolerance: parseInt(document.getElementById('risk-range').value),
+                interests: document.getElementById('interests').value
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    alert('Please sign in first');
+                    window.location.href = 'signin.html';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/profiles/me`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                if (response.ok) {
+                    document.getElementById(`step-${currentStep}`).classList.remove('active');
+                    document.getElementById(`prog-${currentStep}`).classList.add('completed');
+                    document.getElementById('step-success').classList.add('active');
+                } else {
+                    const error = await response.json();
+                    alert('Error saving profile: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to save profile. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

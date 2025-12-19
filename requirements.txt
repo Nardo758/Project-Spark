@@ -63,3 +63,4 @@ flask-dance
 flask-login
 oauthlib
 pyjwt
+alembic

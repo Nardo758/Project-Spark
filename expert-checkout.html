@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Expert - OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5e4; --stone-300: #d6d3d1;
+            --stone-400: #a8a29e; --stone-500: #78716c; --stone-600: #57534e; --stone-700: #44403c;
+            --stone-800: #292524; --stone-900: #1c1917;
+            --green-100: #dcfce7; --green-500: #22c55e; --green-600: #16a34a;
+            --violet-100: #ede9fe; --violet-500: #8b5cf6; --violet-600: #7c3aed;
+            --amber-100: #fef3c7; --amber-500: #f59e0b;
+            --red-100: #fee2e2; --red-500: #ef4444;
+            --white: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); min-height: 100vh; }
+        nav { background: var(--white); border-bottom: 1px solid var(--stone-200); padding: 16px 32px; }
+        .nav-content { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight: 700; font-size: 1.25rem; }
+        .container { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+        h1 { font-family: 'Spectral', serif; font-size: 2rem; margin-bottom: 8px; }
+        .subtitle { color: var(--stone-500); margin-bottom: 32px; }
+        .checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap: 32px; }
+        @media (max-width: 768px) { .checkout-grid { grid-template-columns: 1fr; } }
+        .main-section { background: var(--white); border-radius: 16px; padding: 32px; border: 1px solid var(--stone-200); }
+        .expert-header { display: flex; gap: 20px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--stone-200); }
+        .expert-avatar { width: 80px; height: 80px; background: var(--stone-300); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; color: var(--stone-600); flex-shrink: 0; }
+        .expert-details h2 { font-size: 1.25rem; margin-bottom: 4px; }
+        .expert-details p { color: var(--stone-500); margin-bottom: 8px; }
+        .skills-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .skill-tag { padding: 4px 10px; background: var(--stone-100); border-radius: 4px; font-size: 0.75rem; color: var(--stone-600); }
+        .form-section { margin-bottom: 24px; }
+        .form-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 12px 16px; border: 1px solid var(--stone-300); border-radius: 8px; font-size: 1rem; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--stone-800); box-shadow: 0 0 0 3px rgba(41, 37, 36, 0.1); }
+        .service-options { display: grid; gap: 12px; }
+        .service-option { padding: 16px; border: 2px solid var(--stone-200); border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .service-option:hover { border-color: var(--stone-400); }
+        .service-option.selected { border-color: var(--stone-800); background: var(--stone-50); }
+        .service-option h4 { font-weight: 600; margin-bottom: 4px; }
+        .service-option p { font-size: 0.875rem; color: var(--stone-500); }
+        .service-option .price { font-weight: 600; color: var(--stone-800); margin-top: 8px; }
+        .payment-options { display: flex; gap: 12px; margin-bottom: 24px; }
+        .payment-option { flex: 1; padding: 16px; border: 2px solid var(--stone-200); border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .payment-option:hover { border-color: var(--stone-400); }
+        .payment-option.selected { border-color: var(--stone-800); background: var(--stone-50); }
+        .payment-option h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 4px; }
+        .payment-option p { font-size: 0.75rem; color: var(--stone-500); }
+        .sidebar { position: sticky; top: 24px; }
+        .order-summary { background: var(--white); border-radius: 16px; padding: 24px; border: 1px solid var(--stone-200); }
+        .order-summary h3 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; }
+        .summary-row.total { border-top: 1px solid var(--stone-200); margin-top: 12px; padding-top: 16px; font-weight: 600; }
+        .btn { width: 100%; padding: 14px 24px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+        .btn-primary { background: var(--stone-800); color: var(--white); }
+        .btn-primary:hover { background: var(--stone-900); }
+        .btn-primary:disabled { background: var(--stone-300); cursor: not-allowed; }
+        .btn-secondary { background: var(--white); color: var(--stone-700); border: 1px solid var(--stone-300); }
+        .guarantee { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 12px; background: var(--green-100); border-radius: 8px; }
+        .guarantee p { font-size: 0.875rem; color: var(--green-600); }
+        .loading { text-align: center; padding: 48px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--stone-200); border-top-color: var(--stone-800); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .success-message { text-align: center; padding: 48px; }
+        .success-icon { width: 80px; height: 80px; background: var(--green-500); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+        .success-icon svg { width: 40px; height: 40px; color: white; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">OppGrid</a>
+            <a href="expert-marketplace.html" class="btn btn-secondary" style="width: auto;">Back to Marketplace</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Book Expert Session</h1>
+        <p class="subtitle">Configure your engagement with this expert</p>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading expert details...</p>
+        </div>
+
+        <div id="checkout-content" style="display: none;">
+            <div class="checkout-grid">
+                <div class="main-section">
+                    <div class="expert-header">
+                        <div class="expert-avatar" id="expert-avatar">E</div>
+                        <div class="expert-details">
+                            <h2 id="expert-name">Expert Name</h2>
+                            <p id="expert-headline">Expert Consultant</p>
+                            <div class="skills-list" id="expert-skills"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Select Service Type</h3>
+                        <div class="service-options" id="service-options"></div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Payment Model</h3>
+                        <div class="payment-options">
+                            <div class="payment-option selected" data-model="fixed" onclick="selectPaymentModel(this)">
+                                <h4>Fixed Price</h4>
+                                <p>Pay upfront</p>
+                            </div>
+                            <div class="payment-option" data-model="hourly" onclick="selectPaymentModel(this)">
+                                <h4>Hourly</h4>
+                                <p>Pay per hour worked</p>
+                            </div>
+                            <div class="payment-option" data-model="success_fee" onclick="selectPaymentModel(this)" id="success-fee-option" style="display: none;">
+                                <h4>Success Fee</h4>
+                                <p>Pay when you succeed</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Session Details</h3>
+                        <div class="form-group">
+                            <label for="title">Session Title</label>
+                            <input type="text" id="title" placeholder="e.g., Product strategy consultation">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">What do you need help with?</label>
+                            <textarea id="description" rows="4" placeholder="Describe your goals and challenges..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="duration">Duration (minutes)</label>
+                            <select id="duration">
+                                <option value="30">30 minutes</option>
+                                <option value="60" selected>60 minutes</option>
+                                <option value="90">90 minutes</option>
+                                <option value="120">2 hours</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <div class="order-summary">
+                        <h3>Order Summary</h3>
+                        <div class="summary-row">
+                            <span>Service</span>
+                            <span id="summary-service">Consultation</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Duration</span>
+                            <span id="summary-duration">60 min</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Payment Model</span>
+                            <span id="summary-payment">Fixed</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Estimated Total</span>
+                            <span id="summary-total">$0</span>
+                        </div>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="bookExpert()" id="book-btn">
+                            Book Now
+                        </button>
+                        <div class="guarantee">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--green-600);">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            <p>Satisfaction guaranteed or your money back</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="success-content" style="display: none;">
+            <div class="success-message">
+                <div class="success-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2>Booking Confirmed!</h2>
+                <p class="subtitle">Your session has been scheduled. You'll receive a confirmation email shortly.</p>
+                <button class="btn btn-primary" style="width: auto; margin-top: 24px;" onclick="window.location.href='dashboard.html'">
+                    Go to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const expertId = urlParams.get('id');
+        const autoBook = urlParams.get('book');
+
+        let expertData = null;
+        let quoteData = null;
+        let selectedService = 'consultation';
+        let selectedPaymentModel = 'fixed';
+
+        if (!expertId) {
+            alert('No expert specified');
+            window.location.href = 'expert-marketplace.html';
+        }
+
+        function selectService(element) {
+            document.querySelectorAll('.service-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedService = element.dataset.service;
+            updateSummary();
+            getQuote();
+        }
+
+        function selectPaymentModel(element) {
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedPaymentModel = element.dataset.model;
+            document.getElementById('summary-payment').textContent = 
+                selectedPaymentModel === 'success_fee' ? 'Success Fee' : 
+                selectedPaymentModel.charAt(0).toUpperCase() + selectedPaymentModel.slice(1);
+            updateSummary();
+        }
+
+        function updateSummary() {
+            document.getElementById('summary-service').textContent = 
+                selectedService.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            const duration = document.getElementById('duration').value;
+            document.getElementById('summary-duration').textContent = duration + ' min';
+            
+            if (quoteData) {
+                const amount = quoteData.amount_cents / 100;
+                document.getElementById('summary-total').textContent = '$' + amount.toFixed(0);
+            }
+        }
+
+        async function loadExpert() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/experts/${expertId}`);
+                if (!response.ok) throw new Error('Failed to load expert');
+                
+                expertData = await response.json();
+                renderExpert();
+                await getQuote();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').innerHTML = '<p style="color: var(--red-500);">Failed to load expert.</p>';
+            }
+        }
+
+        function renderExpert() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('checkout-content').style.display = 'block';
+
+            document.getElementById('expert-avatar').textContent = 
+                expertData.name ? expertData.name.charAt(0).toUpperCase() : 'E';
+            document.getElementById('expert-name').textContent = expertData.name;
+            document.getElementById('expert-headline').textContent = expertData.headline || 'Expert Consultant';
+
+            const skills = expertData.skills || [];
+            document.getElementById('expert-skills').innerHTML = skills.slice(0, 4).map(skill =>
+                `<span class="skill-tag">${skill}</span>`
+            ).join('');
+
+            if (expertData.success_fee_bps) {
+                document.getElementById('success-fee-option').style.display = 'block';
+            }
+
+            const services = [
+                { id: 'quick_question', name: 'Quick Question', desc: 'Get a quick answer to a specific question', price: 0.25 },
+                { id: 'consultation', name: 'Consultation', desc: 'In-depth discussion and advice', price: 1 },
+                { id: 'review', name: 'Review', desc: 'Detailed review of your work or strategy', price: 1.5 },
+                { id: 'project', name: 'Project', desc: 'Extended engagement on a specific project', price: 5 },
+            ];
+
+            const basePrice = (expertData.hourly_rate_cents || expertData.fixed_price_cents || 5000) / 100;
+
+            document.getElementById('service-options').innerHTML = services.map(service => {
+                const estimatedPrice = basePrice * service.price;
+                return `<div class="service-option ${service.id === 'consultation' ? 'selected' : ''}" 
+                             data-service="${service.id}" onclick="selectService(this)">
+                    <h4>${service.name}</h4>
+                    <p>${service.desc}</p>
+                    <div class="price">Est. $${estimatedPrice.toFixed(0)}</div>
+                </div>`;
+            }).join('');
+        }
+
+        async function getQuote() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/experts/${expertId}/quote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        service_type: selectedService,
+                        estimated_hours: parseInt(document.getElementById('duration').value) / 60
+                    })
+                });
+
+                if (response.ok) {
+                    quoteData = await response.json();
+                    updateSummary();
+                }
+            } catch (error) {
+                console.error('Quote error:', error);
+            }
+        }
+
+        document.getElementById('duration').addEventListener('change', () => {
+            updateSummary();
+            getQuote();
+        });
+
+        async function bookExpert() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please sign in first');
+                window.location.href = 'signin.html';
+                return;
+            }
+
+            const btn = document.getElementById('book-btn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/experts/${expertId}/book`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        booking_type: 'session',
+                        payment_model: selectedPaymentModel,
+                        title: document.getElementById('title').value || `${selectedService} session`,
+                        description: document.getElementById('description').value,
+                        duration_minutes: parseInt(document.getElementById('duration').value),
+                        amount_cents: quoteData ? quoteData.amount_cents : null
+                    })
+                });
+
+                if (response.ok) {
+                    const booking = await response.json();
+                    document.getElementById('checkout-content').style.display = 'none';
+                    document.getElementById('success-content').style.display = 'block';
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Booking failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to book: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Book Now';
+            }
+        }
+
+        loadExpert();
+    </script>
+</body>
+</html>

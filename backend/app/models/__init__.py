@@ -11,6 +11,9 @@ from .success_pattern import SuccessPattern
 from .report import Report
 from .user import User
 from .oauth import OAuthToken
+from .agreement import SuccessFeeAgreement, AgreementType, AgreementStatus, TriggerType
+from .milestone import Milestone, MilestoneStatus
+from .booking import ExpertBooking, BookingType, BookingStatus, PaymentModel
 
 __all__ = [
     "User",
@@ -27,4 +30,14 @@ __all__ = [
     "SuccessPattern",
     "Report",
     "OAuthToken",
+    "SuccessFeeAgreement",
+    "AgreementType",
+    "AgreementStatus",
+    "TriggerType",
+    "Milestone",
+    "MilestoneStatus",
+    "ExpertBooking",
+    "BookingType",
+    "BookingStatus",
+    "PaymentModel",
 ]

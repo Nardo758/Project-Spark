@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Marketplace - OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5e4; --stone-300: #d6d3d1;
+            --stone-400: #a8a29e; --stone-500: #78716c; --stone-600: #57534e; --stone-700: #44403c;
+            --stone-800: #292524; --stone-900: #1c1917;
+            --green-100: #dcfce7; --green-500: #22c55e; --green-600: #16a34a;
+            --violet-100: #ede9fe; --violet-500: #8b5cf6; --violet-600: #7c3aed;
+            --amber-100: #fef3c7; --amber-500: #f59e0b;
+            --white: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); min-height: 100vh; }
+        nav { background: var(--white); border-bottom: 1px solid var(--stone-200); padding: 16px 32px; }
+        .nav-content { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight: 700; font-size: 1.25rem; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 48px 24px; }
+        h1 { font-family: 'Spectral', serif; font-size: 2rem; margin-bottom: 8px; }
+        .subtitle { color: var(--stone-500); margin-bottom: 32px; }
+        .filters { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border-radius: 20px; background: var(--white); border: 1px solid var(--stone-300); font-size: 0.875rem; cursor: pointer; transition: all 0.2s; }
+        .filter-btn:hover, .filter-btn.active { background: var(--stone-800); color: var(--white); border-color: var(--stone-800); }
+        .experts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+        .expert-card { background: var(--white); border-radius: 16px; padding: 24px; border: 1px solid var(--stone-200); transition: all 0.2s; }
+        .expert-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); transform: translateY(-2px); }
+        .expert-header { display: flex; gap: 16px; margin-bottom: 16px; }
+        .expert-avatar { width: 64px; height: 64px; background: var(--stone-300); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 600; color: var(--stone-600); flex-shrink: 0; }
+        .expert-info h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 4px; }
+        .expert-info p { font-size: 0.875rem; color: var(--stone-500); }
+        .expert-bio { color: var(--stone-600); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .skills-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .skill-tag { padding: 4px 10px; background: var(--stone-100); border-radius: 4px; font-size: 0.75rem; color: var(--stone-600); }
+        .pricing-section { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .pricing-badge { padding: 6px 12px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; }
+        .pricing-badge.hourly { background: var(--violet-100); color: var(--violet-600); }
+        .pricing-badge.fixed { background: var(--green-100); color: var(--green-600); }
+        .pricing-badge.success { background: var(--amber-100); color: var(--amber-500); }
+        .card-actions { display: flex; gap: 12px; }
+        .btn { flex: 1; padding: 10px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; text-align: center; }
+        .btn-primary { background: var(--stone-800); color: var(--white); }
+        .btn-primary:hover { background: var(--stone-900); }
+        .btn-secondary { background: var(--white); color: var(--stone-700); border: 1px solid var(--stone-300); }
+        .btn-secondary:hover { background: var(--stone-100); }
+        .loading { text-align: center; padding: 48px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--stone-200); border-top-color: var(--stone-800); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 64px; background: var(--white); border-radius: 16px; border: 1px solid var(--stone-200); }
+        .empty-state h3 { margin-bottom: 8px; }
+        .empty-state p { color: var(--stone-500); }
+        .success-rate { display: flex; align-items: center; gap: 4px; font-size: 0.875rem; color: var(--green-600); margin-bottom: 8px; }
+        .match-section { background: var(--violet-100); border-radius: 12px; padding: 24px; margin-bottom: 32px; }
+        .match-section h3 { color: var(--violet-600); margin-bottom: 8px; }
+        .match-section p { color: var(--stone-600); margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">OppGrid</a>
+            <div style="display: flex; gap: 12px;">
+                <a href="discover.html" class="btn btn-secondary">Browse Opportunities</a>
+                <a href="dashboard.html" class="btn btn-primary">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Expert Marketplace</h1>
+        <p class="subtitle">Connect with vetted experts to accelerate your journey</p>
+
+        <div class="match-section" id="ai-match-section" style="display: none;">
+            <h3>AI-Powered Expert Matching</h3>
+            <p id="match-description">Based on your selected opportunity, we recommend these experts.</p>
+            <button class="btn btn-primary" onclick="runAIMatch()" id="match-btn">Find Best Matches</button>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All Experts</button>
+            <button class="filter-btn" data-filter="product">Product</button>
+            <button class="filter-btn" data-filter="engineering">Engineering</button>
+            <button class="filter-btn" data-filter="marketing">Marketing</button>
+            <button class="filter-btn" data-filter="sales">Sales</button>
+            <button class="filter-btn" data-filter="finance">Finance</button>
+            <button class="filter-btn" data-filter="design">Design</button>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading experts...</p>
+        </div>
+
+        <div class="experts-grid" id="experts-grid" style="display: none;"></div>
+
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <h3>No experts found</h3>
+            <p>Try adjusting your filters or check back later.</p>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        let allExperts = [];
+        const urlParams = new URLSearchParams(window.location.search);
+        const opportunityId = urlParams.get('opportunity_id');
+
+        if (opportunityId) {
+            document.getElementById('ai-match-section').style.display = 'block';
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filterExperts(btn.dataset.filter);
+            });
+        });
+
+        async function loadExperts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/experts/`);
+                if (!response.ok) throw new Error('Failed to load experts');
+                
+                allExperts = await response.json();
+                renderExperts(allExperts);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').innerHTML = '<p style="color: var(--red-500);">Failed to load experts.</p>';
+            }
+        }
+
+        function filterExperts(filter) {
+            if (filter === 'all') {
+                renderExperts(allExperts);
+                return;
+            }
+
+            const filtered = allExperts.filter(expert => {
+                const skills = expert.skills || [];
+                const specs = expert.specialization || [];
+                const combined = [...skills, ...specs].map(s => s.toLowerCase());
+                return combined.some(s => s.includes(filter.toLowerCase()));
+            });
+            renderExperts(filtered);
+        }
+
+        function renderExperts(experts) {
+            document.getElementById('loading').style.display = 'none';
+            const grid = document.getElementById('experts-grid');
+            const empty = document.getElementById('empty-state');
+
+            if (experts.length === 0) {
+                grid.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            grid.style.display = 'grid';
+
+            grid.innerHTML = experts.map(expert => {
+                const skills = expert.skills || [];
+                const pricingBadges = [];
+                
+                if (expert.hourly_rate_cents) {
+                    pricingBadges.push(`<span class="pricing-badge hourly">$${(expert.hourly_rate_cents / 100).toFixed(0)}/hr</span>`);
+                }
+                if (expert.fixed_price_cents) {
+                    pricingBadges.push(`<span class="pricing-badge fixed">$${(expert.fixed_price_cents / 100).toFixed(0)} fixed</span>`);
+                }
+                if (expert.success_fee_bps) {
+                    pricingBadges.push(`<span class="pricing-badge success">${(expert.success_fee_bps / 100).toFixed(0)}% success fee</span>`);
+                }
+
+                return `<div class="expert-card">
+                    <div class="expert-header">
+                        <div class="expert-avatar">${expert.name ? expert.name.charAt(0).toUpperCase() : 'E'}</div>
+                        <div class="expert-info">
+                            <h3>${expert.name}</h3>
+                            <p>${expert.headline || 'Expert Consultant'}</p>
+                        </div>
+                    </div>
+                    ${expert.bio ? `<p class="expert-bio">${expert.bio}</p>` : ''}
+                    ${skills.length > 0 ? `
+                        <div class="skills-list">
+                            ${skills.slice(0, 5).map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+                            ${skills.length > 5 ? `<span class="skill-tag">+${skills.length - 5}</span>` : ''}
+                        </div>
+                    ` : ''}
+                    <div class="pricing-section">
+                        ${pricingBadges.join('')}
+                    </div>
+                    <div class="card-actions">
+                        <a href="expert-checkout.html?id=${expert.id}" class="btn btn-secondary">Get Quote</a>
+                        <a href="expert-checkout.html?id=${expert.id}&book=true" class="btn btn-primary">Book Now</a>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function runAIMatch() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please sign in first');
+                window.location.href = 'signin.html';
+                return;
+            }
+
+            document.getElementById('match-btn').textContent = 'Finding matches...';
+            document.getElementById('match-btn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/experts/match`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        opportunity_id: parseInt(opportunityId)
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to find matches');
+                
+                const matches = await response.json();
+                
+                if (matches.length > 0) {
+                    const matchedExperts = matches.map(m => {
+                        const expert = allExperts.find(e => e.id === m.expert_id);
+                        return expert ? { ...expert, match_score: m.match_score } : null;
+                    }).filter(Boolean);
+
+                    renderExperts(matchedExperts);
+                    document.getElementById('match-description').textContent = 
+                        `Found ${matches.length} experts matching your opportunity!`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to find matches. Please try again.');
+            } finally {
+                document.getElementById('match-btn').textContent = 'Find Best Matches';
+                document.getElementById('match-btn').disabled = false;
+            }
+        }
+
+        loadExperts();
+    </script>
+</body>
+</html>
