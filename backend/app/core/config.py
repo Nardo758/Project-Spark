@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # CORS - allow all origins by default for development
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
 
+    # Basic rate limiting (single-process best-effort).
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_DEFAULT_PER_MINUTE: int = 300
+
     # Email Configuration (Resend)
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: Optional[str] = "noreply@yourdomain.com"

@@ -4,7 +4,7 @@ Admin Router
 Administrative endpoints for managing users, content, and platform
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List, Optional
@@ -18,6 +18,7 @@ from app.models.comment import Comment
 from app.models.notification import Notification
 from app.models.partner import PartnerOutreach, PartnerOutreachStatus
 from app.models.tracking import TrackingEvent
+from app.models.audit_log import AuditLog
 from app.schemas.admin import (
     AdminUserListItem,
     AdminUserDetail,
@@ -32,6 +33,7 @@ from app.schemas.admin import (
     AdminPartnerOutreachUpdate,
 )
 from app.core.dependencies import get_current_admin_user
+from app.services.audit import log_event
 
 router = APIRouter()
 
@@ -165,6 +167,7 @@ def list_partners(
 @router.post("/partners", response_model=AdminPartnerOutreach, status_code=status.HTTP_201_CREATED)
 def create_partner(
     payload: AdminPartnerOutreachCreate,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ):
@@ -186,6 +189,17 @@ def create_partner(
     db.add(partner)
     db.commit()
     db.refresh(partner)
+
+    log_event(
+        db,
+        action="admin.partner.create",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="partner_outreach",
+        resource_id=partner.id,
+        metadata={"name": partner.name, "status": partner.status.value if hasattr(partner.status, "value") else str(partner.status)},
+    )
     return partner
 
 
@@ -193,6 +207,7 @@ def create_partner(
 def update_partner(
     partner_id: int,
     payload: AdminPartnerOutreachUpdate,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ):
@@ -213,20 +228,44 @@ def update_partner(
 
     db.commit()
     db.refresh(partner)
+
+    log_event(
+        db,
+        action="admin.partner.update",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="partner_outreach",
+        resource_id=partner_id,
+        metadata={"fields": list(payload.dict(exclude_unset=True).keys())},
+    )
     return partner
 
 
 @router.delete("/partners/{partner_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_partner(
     partner_id: int,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ):
     partner = db.query(PartnerOutreach).filter(PartnerOutreach.id == partner_id).first()
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
+    name = partner.name
     db.delete(partner)
     db.commit()
+
+    log_event(
+        db,
+        action="admin.partner.delete",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="partner_outreach",
+        resource_id=partner_id,
+        metadata={"name": name},
+    )
     return None
 
 
@@ -436,6 +475,7 @@ def update_user(
 def ban_user(
     user_id: int,
     ban_data: AdminBanUser,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -467,12 +507,24 @@ def ban_user(
     user.is_active = False
     db.commit()
 
+    log_event(
+        db,
+        action="admin.user.ban",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="user",
+        resource_id=user_id,
+        metadata={"ban_reason": ban_data.ban_reason},
+    )
+
     return {"message": "User banned successfully"}
 
 
 @router.post("/users/{user_id}/unban")
 def unban_user(
     user_id: int,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -490,12 +542,23 @@ def unban_user(
     user.is_active = True
     db.commit()
 
+    log_event(
+        db,
+        action="admin.user.unban",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="user",
+        resource_id=user_id,
+    )
+
     return {"message": "User unbanned successfully"}
 
 
 @router.delete("/users/{user_id}")
 def delete_user(
     user_id: int,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -524,6 +587,16 @@ def delete_user(
 
     db.delete(user)
     db.commit()
+
+    log_event(
+        db,
+        action="admin.user.delete",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="user",
+        resource_id=user_id,
+    )
 
     return {"message": "User deleted successfully"}
 
@@ -578,6 +651,7 @@ def list_opportunities(
 @router.delete("/opportunities/{opportunity_id}")
 def delete_opportunity(
     opportunity_id: int,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -593,12 +667,24 @@ def delete_opportunity(
     db.delete(opportunity)
     db.commit()
 
+    log_event(
+        db,
+        action="admin.opportunity.delete",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="opportunity",
+        resource_id=opportunity_id,
+        metadata={"title": getattr(opportunity, "title", None)},
+    )
+
     return {"message": "Opportunity deleted successfully"}
 
 
 @router.delete("/comments/{comment_id}")
 def delete_comment(
     comment_id: int,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -614,12 +700,23 @@ def delete_comment(
     db.delete(comment)
     db.commit()
 
+    log_event(
+        db,
+        action="admin.comment.delete",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="comment",
+        resource_id=comment_id,
+    )
+
     return {"message": "Comment deleted successfully"}
 
 
 @router.post("/users/{user_id}/promote")
 def promote_to_admin(
     user_id: int,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -641,12 +738,23 @@ def promote_to_admin(
     user.is_admin = True
     db.commit()
 
+    log_event(
+        db,
+        action="admin.user.promote",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="user",
+        resource_id=user_id,
+    )
+
     return {"message": f"User {user.name} promoted to admin"}
 
 
 @router.post("/users/{user_id}/demote")
 def demote_from_admin(
     user_id: int,
+    request: Request,
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -674,7 +782,55 @@ def demote_from_admin(
     user.is_admin = False
     db.commit()
 
+    log_event(
+        db,
+        action="admin.user.demote",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="user",
+        resource_id=user_id,
+    )
+
     return {"message": f"User {user.name} demoted from admin"}
+
+
+@router.get("/audit-logs")
+def list_audit_logs(
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    action: Optional[str] = Query(None),
+    resource_type: Optional[str] = Query(None),
+    resource_id: Optional[str] = Query(None),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    q = db.query(AuditLog)
+    if action:
+        q = q.filter(AuditLog.action == action)
+    if resource_type:
+        q = q.filter(AuditLog.resource_type == resource_type)
+    if resource_id:
+        q = q.filter(AuditLog.resource_id == resource_id)
+    total = q.count()
+    items = q.order_by(desc(AuditLog.created_at)).offset(skip).limit(limit).all()
+    return {
+        "total": total,
+        "items": [
+            {
+                "id": a.id,
+                "actor_user_id": a.actor_user_id,
+                "actor_type": a.actor_type,
+                "action": a.action,
+                "resource_type": a.resource_type,
+                "resource_id": a.resource_id,
+                "ip_address": a.ip_address,
+                "created_at": a.created_at,
+                "metadata_json": a.metadata_json,
+            }
+            for a in items
+        ],
+    }
 
 
 from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus
