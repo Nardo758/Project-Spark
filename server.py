@@ -9,6 +9,21 @@ from urllib.error import URLError, HTTPError
 from urllib.parse import urlparse, unquote
 import threading
 import json
+from functools import partial
+
+
+def get_static_root() -> str:
+    """
+    Static root for the frontend server.
+
+    Prefer the built React app (frontend/dist). Fall back to repo root
+    to preserve legacy static HTML during transition.
+    """
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    react_dist = os.path.join(repo_root, "frontend", "dist")
+    if os.path.isdir(react_dist):
+        return react_dist
+    return repo_root
 
 
 class NoRedirectHandler(HTTPRedirectHandler):
@@ -67,6 +82,19 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         else:
             parsed = urlparse(self.path)
             self.path = unquote(parsed.path)
+
+            # SPA fallback: if the requested path isn't a real file, serve index.html
+            # so React Router can handle client-side routes (e.g., /validations).
+            try:
+                local_path = self.translate_path(self.path)
+                basename = os.path.basename(local_path)
+                has_extension = '.' in basename
+                if (not has_extension) and (not os.path.exists(local_path)):
+                    self.path = '/index.html'
+            except Exception:
+                # If path translation fails, fall back to default behavior.
+                pass
+
             super().do_GET()
     
     def do_POST(self):
@@ -191,8 +219,10 @@ def run_backend():
 
 
 def run_frontend():
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    server = HTTPServer(('0.0.0.0', FRONTEND_PORT), ProxyHandler)
+    static_root = get_static_root()
+    handler = partial(ProxyHandler, directory=static_root)
+    server = HTTPServer(('0.0.0.0', FRONTEND_PORT), handler)
+    print(f"[Frontend] Serving static files from: {static_root}")
     print(f"[Frontend] Serving on http://0.0.0.0:{FRONTEND_PORT}")
     server.serve_forever()
 
