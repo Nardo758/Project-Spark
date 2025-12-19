@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
@@ -104,5 +104,6 @@ class UnlockedOpportunity(Base):
 
     # Unique constraint - user can only unlock each opportunity once
     __table_args__ = (
-        {'sqlite_autoincrement': True},
+        UniqueConstraint("user_id", "opportunity_id", name="uq_unlocked_opportunity_user_opportunity"),
+        {"sqlite_autoincrement": True},
     )
