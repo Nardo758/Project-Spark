@@ -28,6 +28,7 @@ from app.schemas.admin import (
     AdminOpportunityListItem,
     AdminStripeWebhookEventList,
     AdminPayPerUnlockAttemptList,
+    AdminIdeaValidationList,
     AdminPartnerOutreach,
     AdminPartnerOutreachCreate,
     AdminPartnerOutreachUpdate,
@@ -133,6 +134,70 @@ def list_pay_per_unlock_attempts(
 
     total = q.count()
     items = q.order_by(desc(PayPerUnlockAttempt.created_at)).offset(skip).limit(limit).all()
+    return {"items": items, "total": total}
+
+
+@router.get("/idea-validations", response_model=AdminIdeaValidationList)
+def list_idea_validations(
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    status_filter: Optional[str] = Query(
+        None,
+        description="pending_payment|paid|processing|completed|failed",
+    ),
+    user_id: Optional[int] = Query(None),
+    search_title: Optional[str] = Query(None),
+    payment_intent: Optional[str] = Query(None, description="Substring match on pi_* id"),
+    include_result: bool = Query(False, description="When true, include result_json and error_message"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """List persisted Idea Validations for debugging (processing/failed/paid)."""
+    from app.models.idea_validation import IdeaValidation, IdeaValidationStatus
+
+    q = db.query(IdeaValidation)
+
+    if status_filter:
+        try:
+            q = q.filter(IdeaValidation.status == IdeaValidationStatus(status_filter))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status_filter")
+
+    if user_id is not None:
+        q = q.filter(IdeaValidation.user_id == user_id)
+
+    if search_title:
+        q = q.filter(IdeaValidation.title.ilike(f"%{search_title}%"))
+
+    if payment_intent:
+        q = q.filter(IdeaValidation.stripe_payment_intent_id.ilike(f"%{payment_intent}%"))
+
+    total = q.count()
+    rows = q.order_by(desc(IdeaValidation.created_at)).offset(skip).limit(limit).all()
+
+    # Return dicts so we can omit large fields unless explicitly requested.
+    items = []
+    for iv in rows:
+        item = {
+            "id": iv.id,
+            "user_id": iv.user_id,
+            "title": iv.title,
+            "category": iv.category,
+            "status": iv.status.value if hasattr(iv.status, "value") else str(iv.status),
+            "stripe_payment_intent_id": iv.stripe_payment_intent_id,
+            "amount_cents": iv.amount_cents,
+            "currency": iv.currency,
+            "opportunity_score": iv.opportunity_score,
+            "validation_confidence": iv.validation_confidence,
+            "summary": iv.summary,
+            "created_at": iv.created_at,
+            "updated_at": iv.updated_at,
+        }
+        if include_result:
+            item["result_json"] = iv.result_json
+            item["error_message"] = iv.error_message
+        items.append(item)
+
     return {"items": items, "total": total}
 
 
