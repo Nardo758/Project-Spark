@@ -2,6 +2,23 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { fetchJson } from '../lib/http';
 
+function asString(v: unknown): string | null {
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number') return String(v);
+  return null;
+}
+
+function asNumber(v: unknown): number | null {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && v.trim() && Number.isFinite(Number(v))) return Number(v);
+  return null;
+}
+
+function asStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map((x) => asString(x)).filter((x): x is string => Boolean(x));
+}
+
 type IdeaValidationDetail = {
   id: number;
   title: string;
@@ -72,18 +89,123 @@ export function ValidationDetail() {
                 <b>Error:</b> {data.error_message}
               </p>
             ) : null}
+
+            <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => {
+                  if (!data.result) return;
+                  const blob = new Blob([JSON.stringify(data.result, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `idea-validation-${data.id}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                disabled={!data.result}
+              >
+                Download JSON
+              </button>
+              {data.summary ? (
+                <button
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(data.summary ?? '');
+                  }}
+                >
+                  Copy summary
+                </button>
+              ) : null}
+            </div>
           </div>
 
-          <div style={{ marginTop: 16 }}>
-            <h3>Raw result</h3>
-            {data.result ? (
-              <pre style={{ background: '#f7f7f7', padding: 12, borderRadius: 8, overflowX: 'auto' }}>
-                {JSON.stringify(data.result, null, 2)}
-              </pre>
-            ) : (
-              <p>No result saved yet.</p>
-            )}
-          </div>
+          {data.result ? (
+            <>
+              <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                <div style={{ border: '1px solid #eee', borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontSize: 12, color: '#666' }}>Market size</div>
+                  <div style={{ fontWeight: 700 }}>{asString(data.result.market_size_estimate) ?? '—'}</div>
+                </div>
+                <div style={{ border: '1px solid #eee', borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontSize: 12, color: '#666' }}>Competition</div>
+                  <div style={{ fontWeight: 700 }}>{asString(data.result.competition_level) ?? '—'}</div>
+                </div>
+                <div style={{ border: '1px solid #eee', borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontSize: 12, color: '#666' }}>Urgency</div>
+                  <div style={{ fontWeight: 700 }}>{asString(data.result.urgency_level) ?? '—'}</div>
+                </div>
+                <div style={{ border: '1px solid #eee', borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontSize: 12, color: '#666' }}>Revenue potential</div>
+                  <div style={{ fontWeight: 700 }}>{asString(data.result.revenue_potential) ?? '—'}</div>
+                </div>
+                <div style={{ border: '1px solid #eee', borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontSize: 12, color: '#666' }}>Time to market</div>
+                  <div style={{ fontWeight: 700 }}>{asString(data.result.time_to_market) ?? '—'}</div>
+                </div>
+                <div style={{ border: '1px solid #eee', borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontSize: 12, color: '#666' }}>Pain intensity</div>
+                  <div style={{ fontWeight: 700 }}>
+                    {asNumber(data.result.pain_intensity) != null ? `${asNumber(data.result.pain_intensity)}/10` : '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 16, border: '1px solid #eee', borderRadius: 12, padding: 16 }}>
+                <h3 style={{ marginTop: 0 }}>Business model suggestions</h3>
+                <ul>
+                  {asStringArray(data.result.business_model_suggestions).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div style={{ marginTop: 12, border: '1px solid #eee', borderRadius: 12, padding: 16 }}>
+                <h3 style={{ marginTop: 0 }}>Competitive advantages</h3>
+                <ul>
+                  {asStringArray(data.result.competitive_advantages).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div style={{ marginTop: 12, border: '1px solid #eee', borderRadius: 12, padding: 16 }}>
+                <h3 style={{ marginTop: 0 }}>Key risks</h3>
+                <ul>
+                  {asStringArray(data.result.key_risks).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div style={{ marginTop: 12, border: '1px solid #eee', borderRadius: 12, padding: 16 }}>
+                <h3 style={{ marginTop: 0 }}>Next steps</h3>
+                <ol>
+                  {asStringArray(data.result.next_steps).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ol>
+              </div>
+
+              <div style={{ marginTop: 12, border: '1px solid #eee', borderRadius: 12, padding: 16 }}>
+                <h3 style={{ marginTop: 0 }}>Market trends</h3>
+                <ul>
+                  {asStringArray(data.result.market_trends).map((x, i) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <details style={{ marginTop: 16 }}>
+                <summary>Raw JSON</summary>
+                <pre style={{ background: '#f7f7f7', padding: 12, borderRadius: 8, overflowX: 'auto' }}>
+                  {JSON.stringify(data.result, null, 2)}
+                </pre>
+              </details>
+            </>
+          ) : (
+            <div style={{ marginTop: 16, background: '#fffdf0', padding: 12, borderRadius: 8 }}>
+              No result saved yet. Status: <b>{data.status}</b>
+            </div>
+          )}
         </>
       ) : error ? (
         <pre style={{ marginTop: 12, background: '#fff5f5', padding: 12, borderRadius: 8 }}>{error}</pre>
