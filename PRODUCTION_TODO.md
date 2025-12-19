@@ -57,21 +57,21 @@
 ## Performance & Security
 
 - [ ] Enable HTTPS (automatic on Replit deployments)
-- [ ] Verify CORS configuration for production domain
-- [ ] Test rate limiting on API endpoints
+- [x] Verify CORS configuration for production domain *(app now disables credentials when origins="*"; set explicit origins for prod)*
+- [x] Test rate limiting on API endpoints *(basic in-app rate limiter added; tune via env vars)*
 - [ ] Audit for exposed secrets in client-side code
 - [ ] Enable production logging level
 
 ## Advanced Features (Future)
 
-- [ ] Implement automated escrow release scheduler (30-day holds)
+- [x] Implement automated escrow release scheduler (30-day holds) *(in-app job runner; marks escrow tx released when due)*
 - [ ] Add Stripe Connect for direct expert payouts
 - [ ] Set up email notifications via Resend for:
   - Payment confirmations
   - Milestone approvals
   - Agreement triggers
-- [ ] Implement scheduled opportunity import from Apify
-- [ ] Add analytics tracking
+- [x] Implement scheduled opportunity import from Apify *(in-app job runner; enable via env flags)*
+- [x] Add analytics tracking *(best-effort event capture + admin tracking dashboard)*
 
 ## Architecture Notes (Circle back)
 
@@ -84,9 +84,9 @@
 - Agreements/milestones foundations (models + routers; basic UI flows wired)
 
 **Still thin / needs an architecture pass before “production-grade”:**
-- Observability: logging/metrics/tracing, audit logs for money-moving actions
+- Observability: logging/metrics/tracing, audit logs for money-moving actions *(initial audit log added; expand coverage + dashboards)*
 - Background jobs: retries/idempotency/DLQ strategy (webhooks, escrow releases, scheduled tasks)
-- Security hardening: CORS tightening, rate limiting/abuse protection, secrets rotation, access auditing
+- Security hardening: CORS tightening, rate limiting/abuse protection, secrets rotation, access auditing *(rate limiting + security headers added; tighten CORS + add abuse rules)*
 - Data lifecycle & privacy: retention, export/delete flows, PII handling strategy
 - Frontend strategy: two UIs (static HTML + React/Vite) needs a single long-term plan
 

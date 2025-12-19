@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 import json
 
@@ -14,6 +14,7 @@ from app.schemas.payment import (
     ConfirmPaymentResponse,
 )
 from app.services.stripe_service import get_stripe_client
+from app.services.audit import log_event
 
 
 router = APIRouter()
@@ -30,6 +31,7 @@ def _create_payment_intent_or_503(**kwargs):
 @router.post("/micro", response_model=CreatePaymentIntentResponse)
 def create_micro_payment_intent(
     payload: CreateMicroPaymentIntentRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -64,12 +66,24 @@ def create_micro_payment_intent(
     tx.stripe_payment_intent_id = intent.id
     db.commit()
 
+    log_event(
+        db,
+        action="payments.micro.intent_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="transaction",
+        resource_id=tx.id,
+        metadata={"payment_intent_id": intent.id, "amount_cents": payload.amount_cents},
+    )
+
     return CreatePaymentIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, transaction_id=tx.id)
 
 
 @router.post("/project", response_model=CreatePaymentIntentResponse)
 def create_project_payment_intent(
     payload: CreateProjectPaymentIntentRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -104,12 +118,24 @@ def create_project_payment_intent(
     tx.stripe_payment_intent_id = intent.id
     db.commit()
 
+    log_event(
+        db,
+        action="payments.project.intent_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="transaction",
+        resource_id=tx.id,
+        metadata={"payment_intent_id": intent.id, "amount_cents": payload.amount_cents},
+    )
+
     return CreatePaymentIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, transaction_id=tx.id)
 
 
 @router.post("/confirm", response_model=ConfirmPaymentResponse)
 def confirm_payment(
     payload: ConfirmPaymentRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -137,6 +163,17 @@ def confirm_payment(
     if tx:
         tx.status = mapped
         db.commit()
+
+    log_event(
+        db,
+        action="payments.confirm",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="transaction",
+        resource_id=(tx.id if tx else None),
+        metadata={"payment_intent_id": payload.payment_intent_id, "stripe_status": intent.status},
+    )
 
     return ConfirmPaymentResponse(success=intent.status == "succeeded", status=intent.status, transaction_id=tx.id if tx else None)
 

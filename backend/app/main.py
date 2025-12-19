@@ -15,12 +15,22 @@ app = FastAPI(
 )
 
 # Configure CORS
+_cors_origins = settings.get_cors_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.get_cors_origins(),
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    # Credentials cannot be used with wildcard origins; automatically disable in that case.
+    allow_credentials=False if settings.is_cors_wildcard() else True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Basic platform hardening (best-effort, single-runtime).
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    RateLimitMiddleware,
+    enabled=settings.RATE_LIMIT_ENABLED,
+    default_limit_per_minute=settings.RATE_LIMIT_DEFAULT_PER_MINUTE,
 )
 
 # Include routers
@@ -77,6 +87,7 @@ async def startup_event():
     try:
         from app.db.database import initialize_database
         from sqlalchemy import text
+        from app.services.job_runner import start_background_jobs
 
         logger.info("Initializing database connection...")
         engine = initialize_database()
@@ -101,6 +112,12 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         logger.warning("Application starting without database connection. Check DATABASE_URL in Secrets.")
+
+    # Start background jobs (best-effort; will no-op if disabled)
+    try:
+        start_background_jobs()
+    except Exception as e:
+        logger.warning("Failed to start background jobs: %s", e)
 
 
 @app.get("/health")

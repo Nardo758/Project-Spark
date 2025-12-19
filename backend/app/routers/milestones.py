@@ -4,7 +4,7 @@ Milestones Router
 Endpoints for managing project milestones tied to agreements or bookings.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List, Optional
@@ -18,6 +18,7 @@ from app.models.milestone import Milestone, MilestoneStatus
 from app.models.agreement import SuccessFeeAgreement, AgreementStatus
 from app.models.booking import ExpertBooking
 from pydantic import BaseModel
+from app.services.audit import log_event
 
 
 router = APIRouter(prefix="/milestones", tags=["Milestones"])
@@ -282,6 +283,7 @@ def submit_milestone(
 def approve_milestone(
     milestone_id: int,
     payload: ApproveMilestoneRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -304,6 +306,17 @@ def approve_milestone(
 
     _maybe_trigger_agreement_from_milestone(db, milestone)
     db.commit()
+
+    log_event(
+        db,
+        action="milestone.approve",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="milestone",
+        resource_id=milestone_id,
+        metadata={"agreement_id": milestone.agreement_id, "booking_id": milestone.booking_id},
+    )
     
     return {"message": "Milestone approved", "status": milestone.status.value}
 
@@ -312,6 +325,7 @@ def approve_milestone(
 def reject_milestone(
     milestone_id: int,
     payload: RejectMilestoneRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -330,6 +344,17 @@ def reject_milestone(
     milestone.status = MilestoneStatus.REJECTED
     milestone.rejection_reason = payload.reason
     db.commit()
+
+    log_event(
+        db,
+        action="milestone.reject",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="milestone",
+        resource_id=milestone_id,
+        metadata={"reason": payload.reason, "agreement_id": milestone.agreement_id, "booking_id": milestone.booking_id},
+    )
     
     return {"message": "Milestone rejected", "status": milestone.status.value}
 
@@ -337,6 +362,7 @@ def reject_milestone(
 @router.post("/{milestone_id}/pay")
 def pay_milestone(
     milestone_id: int,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -382,6 +408,17 @@ def pay_milestone(
 
     _maybe_trigger_agreement_from_milestone(db, milestone)
     db.commit()
+
+    log_event(
+        db,
+        action="milestone.pay",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="milestone",
+        resource_id=milestone_id,
+        metadata={"amount_cents": payment_amount, "agreement_id": milestone.agreement_id, "booking_id": milestone.booking_id},
+    )
     
     return {
         "message": "Milestone payment processed",

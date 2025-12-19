@@ -36,6 +36,7 @@ from app.services.stripe_service import stripe_service
 from app.services.usage_service import usage_service
 from app.core.config import settings
 from app.services.entitlements import get_opportunity_entitlements
+from app.services.audit import log_event
 
 router = APIRouter()
 
@@ -125,6 +126,7 @@ def get_usage_stats(
 @router.post("/checkout", response_model=CheckoutSessionResponse)
 def create_checkout_session(
     checkout_data: CheckoutSessionCreate,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -182,6 +184,17 @@ def create_checkout_session(
         }
     )
 
+    log_event(
+        db,
+        action="subscription.checkout_session.create",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="subscription",
+        resource_id=str(getattr(subscription, "id", "")),
+        metadata={"tier": tier.value, "session_id": session.id},
+    )
+
     return {
         "session_id": session.id,
         "url": session.url
@@ -221,6 +234,7 @@ def create_portal_session(
 
 @router.post("/cancel")
 def cancel_subscription(
+    request: Request,
     at_period_end: bool = True,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -245,12 +259,24 @@ def cancel_subscription(
 
     db.commit()
 
+    log_event(
+        db,
+        action="subscription.cancel",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="subscription",
+        resource_id=str(getattr(subscription, "id", "")),
+        metadata={"at_period_end": at_period_end},
+    )
+
     return {"message": "Subscription canceled successfully"}
 
 
 @router.post("/unlock", response_model=UnlockOpportunityResponse)
 def unlock_opportunity(
     unlock_data: UnlockOpportunityRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -266,6 +292,16 @@ def unlock_opportunity(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=message
         )
+
+    log_event(
+        db,
+        action="subscription.unlock",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=unlock_data.opportunity_id,
+    )
 
     remaining = usage_service.get_remaining_unlocks(current_user, db)
 
@@ -325,6 +361,7 @@ def get_opportunity_access_info(
 @router.post("/pay-per-unlock", response_model=PayPerUnlockResponse)
 def create_pay_per_unlock(
     unlock_data: PayPerUnlockRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -440,6 +477,17 @@ def create_pay_per_unlock(
 
     attempt.stripe_payment_intent_id = payment_intent.id
     db.commit()
+
+    log_event(
+        db,
+        action="subscription.pay_per_unlock.intent_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=unlock_data.opportunity_id,
+        metadata={"payment_intent_id": payment_intent.id},
+    )
     
     return {
         "client_secret": payment_intent.client_secret,
@@ -452,6 +500,7 @@ def create_pay_per_unlock(
 @router.post("/confirm-pay-per-unlock")
 def confirm_pay_per_unlock(
     payment_intent_id: str,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -499,6 +548,16 @@ def confirm_pay_per_unlock(
     ).first()
     
     if existing:
+        log_event(
+            db,
+            action="subscription.pay_per_unlock.confirm_already_unlocked",
+            actor=current_user,
+            actor_type="user",
+            request=request,
+            resource_type="opportunity",
+            resource_id=opportunity_id,
+            metadata={"payment_intent_id": payment_intent_id},
+        )
         return {
             "success": True,
             "message": "Already unlocked with this payment",
@@ -527,6 +586,17 @@ def confirm_pay_per_unlock(
     if attempt:
         attempt.status = PayPerUnlockAttemptStatus.SUCCEEDED
         db.commit()
+
+    log_event(
+        db,
+        action="subscription.pay_per_unlock.confirm_succeeded",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=opportunity_id,
+        metadata={"payment_intent_id": payment_intent_id, "expires_at": expires_at.isoformat()},
+    )
     
     return {
         "success": True,

@@ -5,6 +5,7 @@ Pydantic schemas for admin operations
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, date
+from pydantic import Field
 
 
 class AdminUserListItem(BaseModel):
@@ -142,30 +143,29 @@ class AdminPayPerUnlockAttemptList(BaseModel):
     total: int
 
 
-class AdminIdeaValidation(BaseModel):
-    """Persisted Idea Validation record (admin visibility)."""
+class AdminPartnerOutreachBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    category: Optional[str] = None
+    website_url: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_email: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
 
+
+class AdminPartnerOutreachCreate(AdminPartnerOutreachBase):
+    name: str
+
+
+class AdminPartnerOutreachUpdate(AdminPartnerOutreachBase):
+    pass
+
+
+class AdminPartnerOutreach(AdminPartnerOutreachBase):
     id: int
-    user_id: int
-    title: str
-    category: str
-    status: str
-
-    stripe_payment_intent_id: Optional[str] = None
-    amount_cents: Optional[int] = None
-    currency: Optional[str] = None
-
-    opportunity_score: Optional[int] = None
-    validation_confidence: Optional[int] = None
-    summary: Optional[str] = None
-
-    created_at: Optional[datetime] = None
+    created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
-
-class AdminIdeaValidationList(BaseModel):
-    items: List[AdminIdeaValidation]
-    total: int

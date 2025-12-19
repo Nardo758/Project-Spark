@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Next Steps · OppGrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-500: #78716c;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --stone-900: #1c1917;
+      --violet-100: #ede9fe;
+      --violet-600: #7c3aed;
+      --green-100: #dcfce7;
+      --green-600: #16a34a;
+      --white: #ffffff;
+      --red-600: #dc2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); min-height: 100vh; }
+    nav { background: var(--white); border-bottom: 1px solid var(--stone-200); padding: 16px 24px; }
+    .nav-content { max-width: 1100px; margin: 0 auto; display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+    .logo { display:flex; align-items:center; gap:8px; text-decoration:none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight:700; font-size: 1.1rem; }
+    .container { max-width: 900px; margin: 0 auto; padding: 44px 24px 80px; }
+    h1 { font-family: 'Spectral', serif; font-size: 2rem; margin-bottom: 6px; }
+    .subtitle { color: var(--stone-500); margin-bottom: 20px; }
+
+    .card { background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 22px; margin-top: 14px; }
+    .row { display:flex; gap: 12px; flex-wrap: wrap; align-items:center; justify-content: space-between; }
+    .pill { display:inline-flex; align-items:center; gap: 8px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--violet-100); color: var(--violet-600); }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid var(--stone-300);
+      text-decoration:none;
+      background: var(--white);
+      color: var(--stone-900);
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn-violet { background: var(--violet-100); color: var(--violet-600); border-color: var(--violet-100); }
+    .btn:hover { filter: brightness(0.98); }
+
+    .list { display:flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .item { display:flex; gap: 12px; align-items:flex-start; padding: 14px; border: 1px solid var(--stone-200); border-radius: 14px; background: #fafaf9; }
+    .num { width: 24px; height: 24px; border-radius: 999px; background: var(--stone-900); color: white; display:flex; align-items:center; justify-content:center; font-size: 12px; font-weight: 900; flex-shrink: 0; }
+    .item h3 { font-size: 14px; margin-bottom: 4px; }
+    .item p { font-size: 13px; color: var(--stone-700); }
+
+    .ok { color: var(--green-600); font-weight: 900; }
+    .error { color: var(--red-600); font-weight: 900; }
+    .notice { font-size: 12px; color: var(--stone-500); margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="logo">OppGrid</a>
+      <div class="row">
+        <a class="btn" href="discover.html">Browse</a>
+        <a class="btn" href="learn.html">Learn</a>
+        <a class="btn" href="account.html">Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Your next steps</h1>
+    <p class="subtitle">Based on your onboarding answers, here’s the fastest path to value.</p>
+
+    <div class="card" id="summaryCard">
+      <div class="row">
+        <div>
+          <div class="pill" id="personaPill" style="display:none;"></div>
+          <div style="margin-top: 8px; font-weight: 900;" id="headline">Loading…</div>
+          <div class="notice" id="subhead"></div>
+        </div>
+        <div class="row">
+          <a class="btn btn-primary" id="primaryCta" href="discover.html">Continue</a>
+          <a class="btn btn-violet" id="secondaryCta" href="success-pilot.html">Start Success-Based</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-family:'Spectral', serif; font-size: 1.4rem;">Recommended actions</h2>
+      <div class="list" id="actions"></div>
+    </div>
+
+    <div class="card" id="handoffCard" style="display:none;">
+      <div class="row">
+        <div>
+          <div style="font-weight: 900;">Continue where you intended</div>
+          <div class="notice">You came here from a specific flow (e.g. success-based pilot). Use the button to continue.</div>
+        </div>
+        <a class="btn btn-primary" id="handoffBtn" href="discover.html">Continue</a>
+      </div>
+    </div>
+
+    <div id="error" class="error" style="display:none; margin-top: 12px;"></div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const qs = new URLSearchParams(window.location.search);
+    const next = qs.get('next');           // e.g. learn
+    const successFlow = qs.get('success_flow'); // "1"
+
+    const personaPill = document.getElementById('personaPill');
+    const headline = document.getElementById('headline');
+    const subhead = document.getElementById('subhead');
+    const actions = document.getElementById('actions');
+    const errorEl = document.getElementById('error');
+    const primaryCta = document.getElementById('primaryCta');
+    const secondaryCta = document.getElementById('secondaryCta');
+    const handoffCard = document.getElementById('handoffCard');
+    const handoffBtn = document.getElementById('handoffBtn');
+
+    function setActions(list) {
+      actions.innerHTML = list.map((a, i) => `
+        <div class="item">
+          <div class="num">${i + 1}</div>
+          <div>
+            <h3>${a.title}</h3>
+            <p>${a.body}</p>
+            ${a.href ? `<div style="margin-top: 10px;"><a class="btn" href="${a.href}">${a.cta || 'Open'}</a></div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function load() {
+      if (!window.OppGridAuth?.requireAuth) {
+        window.location.href = 'signin.html';
+        return;
+      }
+      if (!window.OppGridAuth.requireAuth()) return;
+
+      const token = localStorage.getItem('access_token');
+      api.token = token;
+
+      try {
+        const profile = await (await fetch(`${API_BASE_URL}/profiles/me`, { headers: { 'Authorization': `Bearer ${token}` } })).json();
+        const meta = profile?.past_successes || {};
+        const persona = meta?.persona || 'builder';
+        const goal = meta?.primary_goal || null;
+
+        personaPill.style.display = 'inline-flex';
+        personaPill.textContent = persona === 'builder' ? 'Builder / Founder'
+          : persona === 'investor' ? 'Investor'
+          : persona === 'researcher' ? 'Researcher'
+          : persona === 'expert' ? 'Expert / Operator'
+          : 'User';
+
+        // Default CTAs
+        primaryCta.href = 'discover.html';
+        primaryCta.textContent = 'Browse opportunities';
+        secondaryCta.href = 'success-pilot.html';
+
+        // Personalized copy + actions
+        if (persona === 'investor') {
+          headline.textContent = 'Build a lightweight dealflow loop.';
+          subhead.textContent = goal ? `Goal: ${goal}` : 'Start by browsing, then shortlist and track conviction.';
+          setActions([
+            { title: 'Browse and shortlist', body: 'Scan opportunities and open the top 3 in your thesis.', href: 'discover.html', cta: 'Browse' },
+            { title: 'Run AI Match on a candidate', body: 'Use AI Match to see skill gaps and recommended experts for diligence.', href: 'ai-match.html', cta: 'Open AI Match' },
+            { title: 'Set up success-based diligence', body: 'Use success-based agreements for structured, aligned expert diligence.', href: 'success-pilot.html', cta: 'Create agreement' },
+            { title: 'Learn equity templates', body: 'If you use equity/SAFE/advisory arrangements, use the templates as a starting point.', href: 'learn.html#equity-models', cta: 'Open equity templates' },
+          ]);
+        } else if (persona === 'researcher') {
+          headline.textContent = 'Turn exploration into structured research.';
+          subhead.textContent = goal ? `Goal: ${goal}` : 'Pick one vertical and capture insights consistently.';
+          setActions([
+            { title: 'Browse with focus', body: 'Pick a vertical and open 5 opportunities. Capture patterns.', href: 'discover.html', cta: 'Browse' },
+            { title: 'Validate with AI', body: 'Use AI Validate to get a verdict and next steps.', href: 'ai-validate.html', cta: 'Open AI Validate' },
+            { title: 'Roadmap one opportunity', body: 'Generate an execution roadmap for a single high-conviction idea.', href: 'ai-roadmap.html', cta: 'Open Roadmap' },
+            { title: 'Use templates', body: 'Pull templates and checklists from Learn.', href: 'learn.html', cta: 'Open Learn' },
+          ]);
+        } else if (persona === 'expert') {
+          headline.textContent = 'Get matched to work that fits your strengths.';
+          subhead.textContent = goal ? `Goal: ${goal}` : 'Start by browsing opportunities and taking aligned engagements.';
+          primaryCta.href = 'expert-marketplace.html';
+          primaryCta.textContent = 'Open expert marketplace';
+          setActions([
+            { title: 'Browse expert engagements', body: 'Explore opportunities where expert help is requested.', href: 'expert-marketplace.html', cta: 'Open experts' },
+            { title: 'Use success-based alignment', body: 'Create aligned agreements so you only get paid on outcomes.', href: 'success-pilot.html', cta: 'Create agreement' },
+            { title: 'Review templates', body: 'Use the success-based and equity templates as starting points.', href: 'learn.html', cta: 'Open Learn' },
+          ]);
+        } else {
+          // builder (default)
+          headline.textContent = 'Pick one idea and move it forward fast.';
+          subhead.textContent = goal ? `Goal: ${goal}` : 'We’ll keep it simple: choose, validate, build.';
+          setActions([
+            { title: 'Pick an opportunity', body: 'Browse opportunities and open one you’re excited about.', href: 'discover.html', cta: 'Browse' },
+            { title: 'Validate quickly', body: 'Use AI Validate and add your validation signal.', href: 'ai-validate.html', cta: 'AI Validate' },
+            { title: 'Get expert help (aligned)', body: 'Start a success-based agreement with an expert.', href: 'success-pilot.html', cta: 'Start Success-Based' },
+            { title: 'Use equity templates if needed', body: 'If you’re trading equity for services/advisory, use templates as a starting point.', href: 'learn.html#equity-models', cta: 'Equity templates' },
+          ]);
+        }
+
+        // Handoff routing (if onboarding was part of a larger flow)
+        if (next === 'learn' || successFlow === '1') {
+          handoffCard.style.display = 'block';
+          handoffBtn.href = 'learn.html#success-based';
+          handoffBtn.textContent = 'Continue to Learn';
+        }
+      } catch (e) {
+        errorEl.style.display = 'block';
+        errorEl.textContent = e?.message || 'Failed to load profile.';
+        headline.textContent = 'Continue';
+        subhead.textContent = 'We couldn’t load personalization—continue anyway.';
+        setActions([{ title: 'Browse opportunities', body: 'Explore ideas and pick one to start.', href: 'discover.html', cta: 'Browse' }]);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
+

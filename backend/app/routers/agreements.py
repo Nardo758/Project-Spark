@@ -4,7 +4,7 @@ Agreements Router
 Endpoints for managing success-fee and revenue-share agreements.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List, Optional
@@ -18,6 +18,7 @@ from app.models.agreement import SuccessFeeAgreement, AgreementType, AgreementSt
 from app.models.expert import Expert
 from app.models.success_pattern import SuccessPattern
 from pydantic import BaseModel
+from app.services.audit import log_event
 
 
 router = APIRouter(prefix="/agreements", tags=["Agreements"])
@@ -111,6 +112,7 @@ def list_agreements(
 @router.post("/", response_model=AgreementResponse, status_code=status.HTTP_201_CREATED)
 def create_agreement(
     payload: AgreementCreate,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -152,6 +154,22 @@ def create_agreement(
     db.add(agreement)
     db.commit()
     db.refresh(agreement)
+
+    log_event(
+        db,
+        action="agreement.create",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="agreement",
+        resource_id=agreement.id,
+        metadata={
+            "expert_id": payload.expert_id,
+            "opportunity_id": payload.opportunity_id,
+            "agreement_type": agreement.agreement_type.value,
+            "trigger_type": agreement.trigger_type.value,
+        },
+    )
     
     return agreement
 
@@ -210,6 +228,7 @@ def update_agreement(
 @router.post("/{agreement_id}/submit")
 def submit_agreement(
     agreement_id: int,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -229,6 +248,16 @@ def submit_agreement(
     
     agreement.status = AgreementStatus.PENDING_SIGNATURE
     db.commit()
+
+    log_event(
+        db,
+        action="agreement.submit",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="agreement",
+        resource_id=agreement_id,
+    )
     
     return {"message": "Agreement submitted for expert signature", "status": agreement.status.value}
 
@@ -236,6 +265,7 @@ def submit_agreement(
 @router.post("/{agreement_id}/activate")
 def activate_agreement(
     agreement_id: int,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -261,6 +291,16 @@ def activate_agreement(
         agreement.starts_at = now
     
     db.commit()
+
+    log_event(
+        db,
+        action="agreement.activate",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="agreement",
+        resource_id=agreement_id,
+    )
     
     return {"message": "Agreement activated", "status": agreement.status.value}
 
@@ -269,6 +309,7 @@ def activate_agreement(
 def record_revenue(
     agreement_id: int,
     payload: RecordRevenueRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -304,6 +345,21 @@ def record_revenue(
         agreement.triggered_at = datetime.utcnow()
     
     db.commit()
+
+    log_event(
+        db,
+        action="agreement.record_revenue",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="agreement",
+        resource_id=agreement_id,
+        metadata={
+            "amount_cents": payload.amount_cents,
+            "new_total_revenue_tracked": new_total,
+            "triggered": bool(agreement.is_triggered),
+        },
+    )
     
     return {
         "message": "Revenue recorded",
@@ -317,6 +373,7 @@ def record_revenue(
 def trigger_payout(
     agreement_id: int,
     payload: TriggerPayoutRequest,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -420,6 +477,22 @@ def trigger_payout(
     
     agreement.total_payouts_made = (float(agreement.total_payouts_made or 0)) + (payout_amount / 100.0)
     db.commit()
+
+    log_event(
+        db,
+        action="agreement.trigger_payout",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="agreement",
+        resource_id=agreement_id,
+        metadata={
+            "payout_amount_cents": payout_amount,
+            "expert_share_cents": expert_share,
+            "platform_share_cents": platform_share,
+            "escrow_share_cents": escrow_share,
+        },
+    )
     
     return {
         "message": "Payout processed",
@@ -435,6 +508,7 @@ def trigger_payout(
 @router.post("/{agreement_id}/complete")
 def complete_agreement(
     agreement_id: int,
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -472,6 +546,17 @@ def complete_agreement(
     )
     db.add(success_pattern)
     db.commit()
+
+    log_event(
+        db,
+        action="agreement.complete",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="agreement",
+        resource_id=agreement_id,
+        metadata={"success_pattern_id": success_pattern.id},
+    )
     
     return {
         "message": "Agreement completed and outcome recorded",

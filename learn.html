@@ -107,6 +107,7 @@
         <a class="nav-link" href="discover.html">Browse</a>
         <a class="nav-link" href="pricing.html">Pricing</a>
         <a class="nav-link" href="#success-based">Success-Based Pilot</a>
+        <a class="nav-link" href="#equity-models">Equity templates</a>
         <a class="nav-link" href="#resources">Resources</a>
       </div>
     </div>
@@ -221,6 +222,98 @@ Acceptance:
 Change control:
 - Any scope changes must be written and agreed.
 </div>
+    </div>
+
+    <div class="card" id="equity-models">
+      <h2>Equity-model templates <span class="pill">Template</span></h2>
+      <p>These are starting points for equity/SAFE/advisory arrangements. Use counsel for anything binding.</p>
+
+      <h3>Template: Advisor equity (time-based)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">Typical for recurring advisory calls.</div>
+        <button class="btn" onclick="copyTemplate('tpl-advisor-equity')">Copy</button>
+      </div>
+      <div class="template" id="tpl-advisor-equity">ADVISOR EQUITY AGREEMENT (TEMPLATE)
+
+Parties:
+- Company: {{COMPANY_NAME}}
+- Advisor: {{ADVISOR_NAME}}
+
+Scope:
+- Advisory services: {{SCOPE}}
+- Cadence: {{CADENCE}} (e.g., 2 calls/month + async review)
+
+Equity:
+- Type: Advisory equity grant OR option
+- Amount: {{EQUITY_PERCENT}}% fully diluted (or {{SHARES}} shares)
+- Vesting: {{VESTING_MONTHS}} months, with {{CLIFF_MONTHS}}-month cliff
+- Termination: unvested portion returns to the company
+
+Confidentiality / IP / conflicts:
+- Advisor agrees to confidentiality obligations
+- Define IP assignment rules for any deliverables
+- Disclose conflicts of interest
+
+Notes:
+- Clarify whether equity is diluted, and what happens on financing.
+</div>
+
+      <h3>Template: Equity for services (project-based)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">Typical when you exchange deliverables for equity.</div>
+        <button class="btn" onclick="copyTemplate('tpl-equity-for-services')">Copy</button>
+      </div>
+      <div class="template" id="tpl-equity-for-services">EQUITY FOR SERVICES AGREEMENT (TEMPLATE)
+
+Parties:
+- Company: {{COMPANY_NAME}}
+- Provider: {{PROVIDER_NAME}}
+
+Services:
+- Deliverables: {{DELIVERABLES}}
+- Acceptance criteria: {{ACCEPTANCE_CRITERIA}}
+- Timeline: {{TIMELINE}}
+
+Consideration:
+- Equity: {{EQUITY_PERCENT}}% fully diluted (or {{SHARES}} shares) in exchange for services
+- Vesting: milestone-based OR time-based vesting
+
+Milestones (if milestone-based):
+1) {{M1}} → {{EQUITY_TRANCHE_1}}%
+2) {{M2}} → {{EQUITY_TRANCHE_2}}%
+3) {{M3}} → {{EQUITY_TRANCHE_3}}%
+
+IP / assignment:
+- Provider assigns IP created under this agreement to the company upon payment/vesting (define the rule clearly)
+
+Termination:
+- If terminated early, define what happens to partial work and unvested equity.
+</div>
+
+      <h3>Template: SAFE side letter (discount/cap concept)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">A lightweight “deal memo” style template.</div>
+        <button class="btn" onclick="copyTemplate('tpl-safe-side-letter')">Copy</button>
+      </div>
+      <div class="template" id="tpl-safe-side-letter">SAFE SIDE LETTER (TEMPLATE)
+
+Parties:
+- Company: {{COMPANY_NAME}}
+- Investor/Contributor: {{NAME}}
+
+Instrument:
+- SAFE (or similar) referencing {{SAFE_DATE}} template
+- Amount: {{AMOUNT_USD}}
+- Valuation cap: {{CAP_USD}} (optional)
+- Discount: {{DISCOUNT_PERCENT}}% (optional)
+
+Most-favored nation (MFN):
+- {{YES_NO}}
+
+Notes:
+- This is not a full instrument; attach/execute the actual SAFE template.
+</div>
+
     </div>
 
     <div class="card" id="resources">

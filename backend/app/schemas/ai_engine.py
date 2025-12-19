@@ -19,6 +19,10 @@ class RoadmapResponse(BaseModel):
     timeline_weeks: int = Field(..., ge=1)
     milestones: List[dict]
     risks: List[str] = []
+    # Optional enrichment fields (frontend tolerates absence, but we prefer to include them).
+    llm_enhanced: bool = False
+    success_probability: Optional[int] = Field(default=None, ge=0, le=100)
+    capital_estimate_cents: Optional[int] = Field(default=None, ge=0)
     assumptions: Optional[Any] = None
 
 
