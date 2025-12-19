@@ -1,0 +1,49 @@
+SYSTEM CONFIGURATION
+Platform Settings:
+text
+SYSTEM • PLATFORM SETTINGS
+┌─────────────────────────────────────────────────────┐
+│ [General] [Payments] [Email] [API] [Security] [Advanced]│
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 🌐 GENERAL SETTINGS                                │ │
+│ Platform Name: [OppGrid]                           │ │
+│ Contact Email: [support@oppgrid.com]               │ │
+│ Support Phone: [+1 (555) 123-4567]                 │ │
+│ Timezone: [America/New_York] ▼                     │ │
+│ Default Language: [English] ▼                      │ │
+│ Maintenance Mode: [Disabled] ▼ [Enable]            │ │
+│                                                     │
+│ 💰 PAYMENT SETTINGS                               │ │
+│ Currency: [USD] ▼ [EUR] [GBP] [CAD] [AUD]         │ │
+│ Stripe Mode: [Live] ▼ [Test]                      │ │
+│ Platform Commission: [30]%                         │ │
+│ Minimum Payout: [$50]                             │ │
+│ Tax Rate (VAT/GST): [0]%                          │ │
+│                                                     │
+│ 📧 EMAIL TEMPLATES                                │ │
+│ Welcome Email: [Edit] [Preview] [Test]            │ │
+│ Payment Receipt: [Edit] [Preview] [Test]          │ │
+│ Refund Notification: [Edit] [Preview] [Test]      │ │
+│ Newsletter: [Edit] [Preview] [Test]               │ │
+│                                                     │
+│ 🔐 SECURITY SETTINGS                              │ │
+│ Require 2FA for Admins: [Yes]                     │ │
+│ Session Timeout: [24] hours                       │ │
+│ Max Login Attempts: [5]                           │ │
+│ Allowed Admin IPs: [192.168.1.1, 10.0.0.1]        │ │
+│                                                     │
+│ 🤖 AI SETTINGS                                    │ │
+│ AI Content Generation: [Enabled]                  │ │
+│ AI Model: [GPT-4] ▼ [Claude] [Custom]            │ │
+│ Max Tokens per Request: [4000]                    │ │
+│ Auto-approve AI Content: [Disabled]               │ │
+│                                                     │
+│ 📊 ANALYTICS SETTINGS                             │ │
+│ Google Analytics ID: [UA-12345678-1]              │ │
+│ Sentry DSN: [https://...@sentry.io/12345]         │ │
+│ Log Retention: [90] days                          │ │
+│ Error Reporting: [Enabled]                        │ │
+│                                                     │
+│ [Save Changes] [Reset to Defaults] [Export Config] │
+└─────────────────────────────────────────────────────┘
