@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import Layout from './components/Layout'
+import RequireAuth from './components/RequireAuth'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Discover from './pages/Discover'
@@ -24,8 +25,22 @@ function App() {
         <Route path="pricing" element={<Pricing />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="brain" element={<BrainDashboard />} />
+        <Route
+          path="dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="brain"
+          element={
+            <RequireAuth>
+              <BrainDashboard />
+            </RequireAuth>
+          }
+        />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />

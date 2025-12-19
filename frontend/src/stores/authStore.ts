@@ -17,6 +17,8 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  isBootstrapped: boolean
+  bootstrap: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string) => Promise<void>
   startReplitAuth: (next?: string) => void
@@ -26,6 +28,24 @@ interface AuthState {
   logout: () => void
   setUser: (user: User) => void
   setToken: (token: string) => void
+}
+
+const ACCESS_TOKEN_KEYS = ['access_token', 'token'] as const
+
+function setLegacyAccessToken(token: string) {
+  try {
+    for (const k of ACCESS_TOKEN_KEYS) localStorage.setItem(k, token)
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearLegacyAccessToken() {
+  try {
+    for (const k of ACCESS_TOKEN_KEYS) localStorage.removeItem(k)
+  } catch {
+    // ignore storage errors
+  }
 }
 
 function parseCookies(): Record<string, string> {
@@ -64,11 +84,61 @@ function normalizeUser(raw: any): User | null {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      isBootstrapped: false,
+
+      bootstrap: async () => {
+        try {
+          // 1) Pick up Replit Auth cookies if present.
+          if (!get().token) {
+            get().consumeReplitAuthCookies()
+          }
+
+          const token = get().token
+          if (!token) {
+            set({ isAuthenticated: false, user: null })
+            return
+          }
+
+          // 2) Hydrate user from backend (authoritative) if missing.
+          if (!get().user) {
+            const res = await fetch('/api/v1/users/me', {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (!res.ok) {
+              throw new Error('Unauthorized')
+            }
+            const data = await res.json().catch(() => ({}))
+            const user = normalizeUser(data)
+            if (user) {
+              set({ user, isAuthenticated: true })
+              try {
+                localStorage.setItem('user', JSON.stringify(user))
+              } catch {
+                // ignore
+              }
+            }
+          } else {
+            // Ensure flags line up if token exists.
+            set({ isAuthenticated: true })
+          }
+        } catch {
+          // Token invalid/expired; clear local auth state
+          clearLegacyAccessToken()
+          try {
+            localStorage.removeItem('user')
+          } catch {
+            // ignore
+          }
+          set({ user: null, token: null, isAuthenticated: false })
+        } finally {
+          set({ isBootstrapped: true })
+        }
+      },
       
       login: async (email: string, password: string) => {
         set({ isLoading: true })
@@ -92,12 +162,18 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const user = normalizeUser(data.user)
+          if (data.access_token) setLegacyAccessToken(data.access_token)
           set({
             user,
             token: data.access_token,
             isAuthenticated: true,
             isLoading: false,
           })
+          try {
+            if (user) localStorage.setItem('user', JSON.stringify(user))
+          } catch {
+            // ignore
+          }
         } catch (error) {
           set({ isLoading: false })
           throw error
@@ -159,11 +235,17 @@ export const useAuthStore = create<AuthState>()(
           }
 
           if (token) {
+            setLegacyAccessToken(token)
             set({
               token,
               user,
               isAuthenticated: true,
             })
+            try {
+              if (user) localStorage.setItem('user', JSON.stringify(user))
+            } catch {
+              // ignore
+            }
             return true
           }
           return false
@@ -192,14 +274,27 @@ export const useAuthStore = create<AuthState>()(
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data?.detail || 'Failed to verify magic link')
         const user = normalizeUser(data.user)
+        if (data.access_token) setLegacyAccessToken(data.access_token)
         set({
           user,
           token: data.access_token,
           isAuthenticated: true,
         })
+        try {
+          if (user) localStorage.setItem('user', JSON.stringify(user))
+        } catch {
+          // ignore
+        }
       },
       
       logout: () => {
+        clearLegacyAccessToken()
+        try {
+          localStorage.removeItem('user')
+          localStorage.removeItem('auth-storage')
+        } catch {
+          // ignore
+        }
         set({
           user: null,
           token: null,
@@ -208,7 +303,10 @@ export const useAuthStore = create<AuthState>()(
       },
       
       setUser: (user: User) => set({ user, isAuthenticated: true }),
-      setToken: (token: string) => set({ token }),
+      setToken: (token: string) => {
+        setLegacyAccessToken(token)
+        set({ token, isAuthenticated: true })
+      },
     }),
     {
       name: 'auth-storage',
