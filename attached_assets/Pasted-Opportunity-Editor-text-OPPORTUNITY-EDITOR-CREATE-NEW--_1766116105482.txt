@@ -1,0 +1,51 @@
+Opportunity Editor:
+text
+OPPORTUNITY EDITOR • CREATE/NEW
+┌─────────────────────────────────────────────────────┐
+│ [← Back] Save Draft • Preview • Publish            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ BASIC INFORMATION                                  │ │
+│ Title: [AI-powered meal planning for busy parents] │ │
+│ Slug: [ai-meal-planning-busy-parents]              │ │
+│ Category: [Technology & Software] ▼                │ │
+│ Tags: [AI, healthcare, SaaS, foodtech]             │ │
+│                                                     │
+│ MARKET DATA                                        │ │
+│ Market Size Min: [$500,000,000]                    │ │
+│ Market Size Max: [$2,000,000,000]                  │ │
+│ Growth Rate: [34] % monthly                        │ │
+│ Target Regions: [North America, Europe, Asia]      │ │
+│ Validation Score: [87] /100                        │ │
+│                                                     │
+│ CONTENT                                            │ │
+│ Problem Statement: [Busy professionals waste...]   │ │
+│ Solution Overview: [AI-powered app that...]        │ │
+│ Competitive Landscape: [Mealime, Yummly...]        │ │
+│ Technical Requirements: [iOS/Android, ML backend...]│
+│ Monetization Strategy: [Subscription, $9.99/mo...] │
+│                                                     │
+│ ACCESS & PRICING                                   │ │
+│ Status: [Draft] ▼ [Published] [Scheduled] [Archived]│
+│ Access Tier: [Pro] ▼ [Free] [Explorer] [Enterprise]│
+│ Unlock Price: [$29]                                │ │
+│ Archive Price: [$9]                                │ │
+│ Fast Pass Price: [$99]                             │ │
+│                                                     │
+│ PREVIEW SETTINGS                                   │ │
+│ Show in Preview: [Problem, Market Size, Growth]    │ │
+│ Preview Word Limit: [250] words                    │ │
+│ Featured Image: [Upload]                           │ │
+│                                                     │
+│ SCHEDULING                                         │ │
+│ Publish Date: [Immediately] ▼ [Schedule]           │ │
+│ Archive After: [90] days                           │ │
+│ Auto-unlock for: [Pro after 31 days]               │ │
+│                                                     │
+│ AI GENERATION                                      │ │
+│ [🤖 Generate with AI] [✏️ Enhance with AI]         │ │
+│ [📊 Auto-calculate market size]                    │ │
+│ [🎯 Suggest pricing]                               │ │
+│                                                     │
+│ [Save Draft] [Preview] [Schedule] [Publish Now]    │
+└─────────────────────────────────────────────────────┘
