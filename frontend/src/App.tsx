@@ -6,6 +6,7 @@ import { Pricing } from './pages/Pricing'
 import { Admin } from './pages/Admin'
 import { AuthCallback } from './pages/AuthCallback'
 import { Validations } from './pages/Validations'
+import { IdeaEngine } from './pages/IdeaEngine'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/idea-engine" element={<IdeaEngine />} />
         <Route path="/validations" element={<Validations />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
