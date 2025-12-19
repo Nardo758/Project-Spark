@@ -223,9 +223,14 @@
             else if (score >= 40) scoreCircle.classList.add('medium');
             else scoreCircle.classList.add('low');
 
-            if (matchData.confidence) {
-                document.getElementById('confidence-text').textContent = 
-                    `Confidence: ${Math.round(matchData.confidence * 100)}%`;
+            if (matchData.confidence !== undefined && matchData.confidence !== null) {
+                // Backend may return confidence as 0-100 (int) or 0-1 (float); normalize to percent.
+                let c = Number(matchData.confidence);
+                if (Number.isFinite(c)) {
+                    if (c <= 1) c = c * 100;
+                    c = Math.max(0, Math.min(100, Math.round(c)));
+                    document.getElementById('confidence-text').textContent = `Confidence: ${c}%`;
+                }
             }
 
             if (matchData.llm_enhanced) {
