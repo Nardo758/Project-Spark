@@ -19,6 +19,7 @@ from .booking import ExpertBooking, BookingType, BookingStatus, PaymentModel
 from .partner import PartnerOutreach, PartnerOutreachStatus
 from .tracking import TrackingEvent
 from .audit_log import AuditLog
+from .job_run import JobRun
 
 __all__ = [
     "User",
@@ -55,4 +56,5 @@ __all__ = [
     "PartnerOutreachStatus",
     "TrackingEvent",
     "AuditLog",
+    "JobRun",
 ]

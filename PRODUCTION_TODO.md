@@ -57,20 +57,20 @@
 ## Performance & Security
 
 - [ ] Enable HTTPS (automatic on Replit deployments)
-- [ ] Verify CORS configuration for production domain
+- [x] Verify CORS configuration for production domain *(app now disables credentials when origins="*"; set explicit origins for prod)*
 - [x] Test rate limiting on API endpoints *(basic in-app rate limiter added; tune via env vars)*
 - [ ] Audit for exposed secrets in client-side code
 - [ ] Enable production logging level
 
 ## Advanced Features (Future)
 
-- [ ] Implement automated escrow release scheduler (30-day holds)
+- [x] Implement automated escrow release scheduler (30-day holds) *(in-app job runner; marks escrow tx released when due)*
 - [ ] Add Stripe Connect for direct expert payouts
 - [ ] Set up email notifications via Resend for:
   - Payment confirmations
   - Milestone approvals
   - Agreement triggers
-- [ ] Implement scheduled opportunity import from Apify
+- [x] Implement scheduled opportunity import from Apify *(in-app job runner; enable via env flags)*
 - [x] Add analytics tracking *(best-effort event capture + admin tracking dashboard)*
 
 ## Architecture Notes (Circle back)

@@ -833,6 +833,41 @@ def list_audit_logs(
     }
 
 
+@router.get("/job-runs")
+def list_job_runs(
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    job_name: Optional[str] = Query(None),
+    status_filter: Optional[str] = Query(None, description="running|succeeded|failed"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    from app.models.job_run import JobRun
+
+    q = db.query(JobRun)
+    if job_name:
+        q = q.filter(JobRun.job_name == job_name)
+    if status_filter:
+        q = q.filter(JobRun.status == status_filter)
+    total = q.count()
+    items = q.order_by(desc(JobRun.started_at)).offset(skip).limit(limit).all()
+    return {
+        "total": total,
+        "items": [
+            {
+                "id": r.id,
+                "job_name": r.job_name,
+                "status": r.status,
+                "started_at": r.started_at,
+                "finished_at": r.finished_at,
+                "error": r.error,
+                "details_json": r.details_json,
+            }
+            for r in items
+        ],
+    }
+
+
 from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus
 
 
