@@ -1,257 +1,46 @@
 # OppGrid - Opportunity Intelligence Platform
 
-## Recent Changes (December 2024)
+## Overview
+OppGrid is an AI-powered opportunity intelligence platform designed to help users discover, validate, and act on business opportunities. It provides a structured approach to identifying market frictions, generating and validating business ideas, and connecting users with experts and resources. The platform aims to be an "AI Startup Factory" by offering a full lifecycle from idea generation to expert-led execution, leveraging AI for analysis, matching, and monetization. Key capabilities include AI-driven opportunity analysis, expert marketplaces, subscription-based content gating, and pay-per-unlock features, all designed to foster innovation and entrepreneurial success.
 
-- **Black Accent with Complementary Colors** (December 18, 2024):
-  - Primary accent: Black/Dark stone (#1c1917, #292524) for professional look
-  - Complementary badge colors for visual distinction:
-    - HOT badge: Red (#dc2626)
-    - FRESH badge: Orange (#f97316)
-    - VALIDATED badge: Green (#16a34a)
-    - ARCHIVE badge: Gray (#6b7280)
-  - Competition badges: Green (low), Amber (medium), Red (high)
-  - Growth metrics displayed in green (#16a34a)
-  - Card hover states and CTAs use dark stone accent
-  - Professional balance: Black accent + semantic colors for badges
+## User Preferences
+I want iterative development, with a focus on delivering core features quickly and refining them based on feedback. Prioritize modular and reusable code. I prefer clear, concise explanations and direct answers. Ask before making major architectural changes or introducing new external dependencies. Do not make changes to the `replit.nix` file.
 
-- **Unified Replit Auth** (December 18, 2024):
-  - Complete authentication refactoring using Replit's recommended OIDC patterns
-  - Database-backed session storage with OAuthToken model for reliability across restarts
-  - Unified "Sign In" button supporting Google, GitHub, X, Apple, and email
-  - PKCE flow with secure state tokens (JWT-signed with SESSION_SECRET)
-  - Conditional secure cookies (HTTPS-only in production, works in local dev)
-  - Token storage persists access/refresh tokens tied to user and browser session
-  - Backend endpoints: `/api/v1/replit-auth/login`, `/api/v1/replit-auth/callback`, `/api/v1/replit-auth/logout`
-  - Removed magic link authentication in favor of Replit Auth email login
-  - Note: Set SESSION_SECRET environment variable in production for security
+## System Architecture
+OppGrid utilizes a hybrid architecture with a FastAPI backend (Python) handling business logic, API endpoints, and AI integrations, and a static HTML/CSS/JavaScript frontend for user interaction. The frontend is served on Port 5000 and the backend on Port 8000, with the frontend proxying `/api/*` requests to the backend. Replit's PostgreSQL serves as the primary database.
 
-- **Time-Decay Pricing & Pay-Per-Unlock** (December 17, 2024):
-  - NEW: Time-decay access control based on opportunity age (per pricing strategy document)
-    - Enterprise: Real-time (0+ days)
-    - Business: Fresh (8+ days) 
-    - Pro: Validated (31+ days)
-    - Free: Archive (91+ days, pay-per-unlock)
-  - NEW: `/api/v1/subscriptions/pay-per-unlock` - Create payment intent for $15 unlock
-  - NEW: `/api/v1/subscriptions/confirm-pay-per-unlock` - Confirm payment and grant 30-day access
-  - NEW: `/api/v1/subscriptions/access/{opportunity_id}` - Get detailed access info with freshness badge
-  - NEW: `/api/v1/subscriptions/stripe-key` - Get Stripe publishable key for frontend
-  - Updated tier pricing: Pro $99/mo, Business $499/mo, Enterprise $2,500+/mo
-  - Age badges on opportunity cards: 🔥 HOT, ⚡ FRESH, ✓ VALIDATED, 📚 ARCHIVE
-  - Countdown timers showing days until opportunity unlocks for user's tier
-  - Pay-per-unlock flow with Stripe Elements integration
-  - UnlockedOpportunity model updated with: unlock_method, amount_paid, stripe_payment_intent_id, expires_at
-  - Daily rate limit: 5 pay-per-unlocks per day for free tier
+**Key Architectural Decisions & Features:**
+*   **Monetization & Access Control:** Implements a tiered subscription model (Pro, Business, Enterprise) with time-decay access control for opportunities (Hot, Fresh, Validated, Archive). A pay-per-unlock mechanism for archived opportunities is also integrated.
+*   **AI Engine:** Integrates with LLMs (e.g., Claude-Haiku, Claude-Sonnet) for AI-powered idea generation, comprehensive idea validation, expert matching, and detailed opportunity analysis (scoring, market size, competition, business models).
+*   **Authentication:** Uses Replit's OIDC patterns for secure, database-backed user authentication supporting Google, GitHub, X, Apple, and email logins with PKCE flow.
+*   **User Interface:** Features a professional design with a black/dark stone primary accent and complementary semantic colors for badges (e.g., Red for HOT, Green for VALIDATED). The UI includes a deep dive console with dark mode, keyboard shortcuts, message actions, and export capabilities.
+*   **Admin Panel:** A comprehensive `admin.html` provides tools for user management, subscription control, opportunity moderation, and platform statistics.
+*   **Automated Data Pipeline:** A daily scheduler (`backend/scheduler.py`) automates data scraping (via Apify), import, and AI analysis to keep opportunity data fresh.
+*   **Payments & Transactions:** Integrates Stripe for payment processing, subscription management, and pay-per-unlock features. It includes a `SuccessFeeAgreement` infrastructure with milestone tracking and payout splitting for expert services.
+*   **Opportunity Analysis:** AI generates opportunity scores, market size estimates, competition levels, and business model suggestions, which are displayed on opportunity cards and detailed pages. Content gating is enforced server-side based on user subscription tiers or unlock status.
 
-- **Access Control & Admin Panel** (December 16, 2024):
-  - NEW: `admin.html` - Full admin panel with dashboard, user management, opportunity moderation, and subscription controls
-  - NEW: Subscription tier access control dependencies (`require_pro`, `require_business`, `require_enterprise`)
-  - NEW: `/api/v1/admin/subscriptions` - List and filter all subscriptions
-  - NEW: `/api/v1/admin/subscriptions/{id}/tier` - Manually update subscription tier
-  - NEW: `/api/v1/admin/users/{id}/grant-subscription` - Grant subscription to user
-  - NEW: `/api/v1/admin/users/{id}/demote` - Remove admin privileges
-  - Admin panel features: Platform stats, user search/filter, ban/unban users, promote/demote admins
-  - Opportunity management: View, search, and delete opportunities
-  - Subscription management: View all subscriptions, change tiers, grant access
-  - Report moderation: View pending reports, resolve or dismiss
-  - Frontend access control: Admin-only page with token verification and redirect
+## Recent Changes (December 19, 2024)
 
-- **Stripe & Resend Integration** (December 16, 2024):
-  - Connected Stripe sandbox via Replit connector for payment processing
-  - Connected Resend via Replit connector for transactional emails
-  - Both services use Replit connector API for secure key management
+**DeepSeek Transformation - Navigation & User Flows:**
+- Updated navigation with conditional display based on auth state:
+  - Guest users: Home, Browse Ideas, Idea Engine, Pricing, Sign In/Get Started
+  - Logged-in users (9 items): Dashboard, Discover, Builder (dropdown), Leads, Content, Network, Funding, Tools, Learn
+- Builder dropdown contains: Idea Engine, AI Expert Match, AI Roadmap, Expert Marketplace
+- New users redirected to Profile Onboarding after signup before accessing dashboard
+- Added success-fee/revenue-share infrastructure with transaction record creation
+- Payout splitting: 70% expert, 20% escrow (30-day hold), 10% platform
 
-- **Idea Engine - AI-Powered Idea Generation & Validation** (December 16, 2024):
-  - NEW: `/api/v1/idea-engine/generate` - Free AI idea generation and refinement
-  - NEW: `/api/v1/idea-engine/validate` - Paid comprehensive idea validation ($9.99)
-  - NEW: `/api/v1/idea-engine/create-payment-intent` - Stripe payment intent creation
-  - NEW: `/api/v1/idea-engine/stripe-key` - Stripe publishable key endpoint
-  - NEW: `idea-engine.html` - 3-step wizard UI (input → generation → validation)
-  - Business model pivot: Free idea generation, paid validation service
-  - Updated navigation across all pages to include "Idea Engine" link
-  - Updated hero CTA to "Validate Your Idea" pointing to Idea Engine
-  - Uses claude-haiku-4-5 for fast free generation, claude-sonnet-4-5 for deep validation
+**Personalized Dashboard (dashboard.html):**
+- Welcome Bar with AI Match Score and daily opportunity digest
+- Quick Actions grid (6 buttons): Find Opportunity, Validate Idea, Generate Leads, Create Business Plan, Find Co-founder, Check Funding
+- AI-curated Opportunity Feed with match scores and HOT/FRESH/VALIDATED status badges
+- Progress Trackers: Active projects, lead generation stats, content sales metrics
+- AI Recommendations: Personalized co-pilot suggestions based on user profile
+- Trending in Network: Community activity feed with success stories
 
-- **Rebranding to OppGrid** (December 15, 2024):
-  - Updated logo across all pages with new grid-based animated design
-  - Violet (#7c3aed) active cells with hover animation (matches site accent color)
-  - Roboto Mono font for brand text
-  - Updated all page titles from "Katalyst" to "OppGrid"
-
-- **AI-Powered Opportunity Analysis & Tiered Monetization** (December 15, 2024):
-  - Created `/api/v1/ai-analysis/` endpoints for AI-powered opportunity analysis
-  - AI generates: opportunity scores (0-100), market size estimates, competition levels, business model suggestions
-  - Updated Opportunity model with AI analysis fields (ai_analyzed, ai_opportunity_score, ai_summary, etc.)
-  - Added "Top Curated Opportunities" featured section on discover page
-  - AI badges and insights displayed on opportunity cards
-  - Competition level badges (low/medium/high) and viewer count urgency indicators
-  - Subscription-based content gating on opportunity detail page
-  - Paywall overlays for Research and Deep Dive sections for free users
-  - Unlock functionality for individual opportunities with view quota tracking
-  - Added `/api/v1/subscriptions/my-subscription` endpoint for frontend subscription status
-  - **Server-side gating enforced**: Opportunity detail endpoint now returns gated content based on unlock status
-  - Premium AI fields (business_model_suggestions, competitive_advantages, key_risks, next_steps) hidden from non-unlocked users
-  - Added `OpportunityGatedResponse` schema with is_unlocked and is_authenticated flags
-  - Optional authentication dependency (`get_current_user_optional`) for public access with personalized gating
-
-- **Daily Automated Data Pipeline** (December 15, 2024):
-  - Created `backend/scheduler.py` for automated daily syncs
-  - Scheduler can trigger Apify scraper, wait for completion, import data, and run AI analysis
-  - Added `/api/v1/webhook/apify/trigger-scrape` endpoint to manually trigger scraper
-  - Configured scheduled deployment for daily execution
-  - Searches for pain points: "frustrated with", "wish there was", "why is it so hard to", etc.
-
-- **Apify Webhook Integration** (December 14, 2024):
-  - Created `/api/v1/webhook/apify` endpoint to receive scraped Reddit data
-  - `/api/v1/webhook/apify/fetch-latest` - Pull latest data from Apify without webhook
-  - Auto-categorizes posts into opportunity categories
-  - Calculates severity based on upvotes/comments/frustration keywords
-  - Added source tracking columns (source_id, source_url, source_platform) to opportunities
-
-- **Browse Opportunities Flow Fix** (December 14, 2024):
-  - Fixed "Browse Opportunities" hero button to link to discover.html instead of opportunity.html
-  - Complete user flow now works: Landing → Discovery Feed → Opportunity Detail
-
-- **Deep Dive Console Improvements** (December 13, 2024):
-  - Dark Mode toggle with CSS custom properties and localStorage persistence
-  - Keyboard Shortcuts: Cmd+Enter to send, Cmd+S to save, arrow keys for navigation, Escape to close panels
-  - Message Actions: Copy, bookmark (with persistence), expand/collapse for long messages
-  - Saved Threads Panel: Slide-out drawer to view, load, and delete saved conversations
-  - Animated Celebration: Overlay animation when all 9 analysis sections completed
-  - Export Templates: Markdown, JSON, and Plain Text exports for conversations
-  - Share Analysis: Modal with shareable link generation and copy functionality
-  - Save to Project: Panel for managing projects and saving opportunities to them
-- **Complete Frontend Redesign**: Rebranded from "Friction" to "Katalyst" with new design system
-- **New Pages Built**: discover.html, submit.html, pricing.html, signup.html, signin.html, account.html
-- **Design System**: Spectral/Inter fonts, stone color palette, violet/purple accents
-- **Consistent Navigation**: Home, Browse Ideas, Pricing, Sign In, Get Started across all pages
-- **Database Configuration Simplified**: Now uses PG* variables from .replit file (PGHOST=db, PGDATABASE=replit, PGUSER=replit)
-- **Resend Integration**: Email service configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables
-- **Stripe Integration**: Payment processing configured via Replit connector - automatically fetches API keys from connector or falls back to environment variables  
-- **Database Migration**: Added missing user columns (oauth_provider, oauth_id, bio, avatar_url, is_admin, etc.)
-- **Model Import Fix**: Fixed WatchlistItem mapper error by updating models/__init__.py import order
-
-## 🚀 Quick Start on Replit
-
-This project is fully configured for Replit deployment!
-
-### Get Started in 3 Steps:
-
-1. **Enable PostgreSQL Database**
-   - Click Tools → Database → PostgreSQL → Enable
-   - Database URL is automatically configured
-
-2. **Click Run**
-   - The app will auto-install dependencies and start
-   - Frontend + Backend run together seamlessly
-
-3. **Access Your App**
-   - Open the webview to see your application
-   - API docs available at `/docs`
-
-### Optional Configuration
-
-Add these secrets in Tools → Secrets for additional features:
-- `RESEND_API_KEY` - Email notifications
-- `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET` - Google OAuth
-- `GITHUB_CLIENT_ID` & `GITHUB_CLIENT_SECRET` - GitHub OAuth
-
-**📖 Full Documentation**: See [REPLIT_DEPLOYMENT.md](./REPLIT_DEPLOYMENT.md)
-
----
-
-## Architecture
-
-- **Frontend**: Static HTML/CSS/JavaScript (Port 5000 → External Port 80)
-- **Backend**: Python FastAPI (Port 8000 - internal only)
-- **Database**: Replit PostgreSQL (Managed)
-- **Proxy**: Frontend proxies `/api/*` requests to backend
-
-## Project Structure
-
-```
-├── .replit              # Replit configuration
-├── replit.nix           # Nix dependencies
-├── server.py            # Main entry point (starts both services)
-├── backend/             # FastAPI backend
-│   ├── app/
-│   │   ├── core/        # Configuration, security
-│   │   ├── db/          # Database setup
-│   │   ├── models/      # SQLAlchemy models
-│   │   ├── routers/     # API routes (auth, opportunities, etc.)
-│   │   └── schemas/     # Pydantic schemas
-│   ├── init_db.py       # Database initialization
-│   └── requirements.txt # Python dependencies
-├── js/                  # Frontend JavaScript
-├── css/                 # Frontend CSS
-└── *.html               # Frontend pages (index, signin, signup, etc.)
-```
-
-## Key Features
-
-✨ **User Authentication**
-- Email/password registration and login
-- OAuth (Google & GitHub)
-- Two-factor authentication (2FA/TOTP)
-- Password reset with email verification
-
-🎯 **Opportunity Management**
-- Create, edit, and discover problems/opportunities
-- Search and filter by category, scope, location
-- Validate opportunities (upvote system)
-- Comment and discuss opportunities
-- Personal watchlist
-
-📊 **Analytics**
-- Feasibility scoring
-- Geographic distribution
-- Completion statistics
-- Duplicate detection
-
-🔔 **Notifications**
-- In-app notifications
-- Email notifications (with Resend)
-- Activity tracking
-
-## API Endpoints
-
-Access Swagger docs at `/docs` or ReDoc at `/redoc` when running.
-
-**Main endpoints:**
-- `POST /api/v1/auth/register` - User registration
-- `POST /api/v1/auth/login` - User login
-- `GET /api/v1/opportunities` - List opportunities
-- `POST /api/v1/opportunities` - Create opportunity
-- `GET /api/v1/opportunities/search` - Search opportunities
-- And many more...
-
-## Environment Variables
-
-**Auto-configured in .replit:**
-- `PGHOST=db` - PostgreSQL host  
-- `PGDATABASE=replit` - Database name
-- `PGUSER=replit` - Database user
-- `REPL_SLUG`, `REPL_OWNER` - For URL generation
-- `SECRET_KEY` - JWT signing (change for production)
-
-**Optional (add via Secrets):**
-- `RESEND_API_KEY` - Email service API key
-- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` - Payment processing
-- OAuth credentials for Google/GitHub
-
-See [REPLIT_DEPLOYMENT.md](./REPLIT_DEPLOYMENT.md) for complete details.
-
-## Local Development
-
-To run locally (outside Replit):
-1. Set up PostgreSQL
-2. Copy `.env.example` to `.env` and configure
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run: `python server.py`
-
-## Deployment
-
-Ready to deploy? Click "Deploy" in Replit and choose:
-- **Autoscale**: Scales automatically (recommended)
-- **Reserved VM**: Dedicated resources
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for production best practices.
+## External Dependencies
+*   **PostgreSQL:** Managed database provided by Replit.
+*   **Stripe:** Payment gateway for subscriptions, pay-per-unlock, and expert service transactions. Integrated via Replit connector.
+*   **Resend:** Email service for transactional emails (e.g., password resets, notifications). Integrated via Replit connector.
+*   **Apify:** Web scraping platform used for daily automated data collection (e.g., from Reddit).
+*   **OpenAI/Anthropic (LLMs):** Integrated for AI capabilities like idea generation, validation, opportunity analysis, and expert matching. Specific models like Claude-Haiku and Claude-Sonnet are used.

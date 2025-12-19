@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agreement · OppGrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-500: #78716c;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --stone-900: #1c1917;
+      --violet-100: #ede9fe;
+      --violet-600: #7c3aed;
+      --white: #ffffff;
+      --green-600: #16a34a;
+      --red-600: #dc2626;
+      --amber-600: #d97706;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); line-height: 1.6; }
+    nav { background: var(--white); border-bottom: 1px solid var(--stone-200); }
+    .nav-content { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+    .logo { display:flex; align-items:center; gap:8px; text-decoration:none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight:700; }
+    .nav-links { display:flex; gap: 18px; flex-wrap: wrap; }
+    .nav-link { color: var(--stone-700); text-decoration:none; font-size: 14px; font-weight: 600; }
+    .nav-link:hover { text-decoration: underline; }
+
+    .container { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-family: 'Spectral', serif; font-size: 2.1rem; margin-bottom: 8px; }
+    .subtitle { color: var(--stone-500); margin-bottom: 18px; }
+
+    .card { background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 18px; margin-top: 12px; }
+    .row { display:flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+    .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--violet-100); color: var(--violet-600); font-weight: 900; }
+    .meta { font-size: 12px; color: var(--stone-500); display:flex; gap: 10px; flex-wrap: wrap; }
+
+    label { display:block; font-weight: 800; font-size: 12px; margin-bottom: 6px; color: var(--stone-700); }
+    input, select, textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--stone-300); border-radius: 12px; font-size: 14px; background: white; }
+    textarea { min-height: 96px; resize: vertical; }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--stone-300);
+      background: var(--white);
+      color: var(--stone-900);
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration:none;
+      font-size: 14px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn-warn { background: #fff7ed; color: var(--amber-600); border-color: #fed7aa; }
+    .btn-danger { background: #fef2f2; color: var(--red-600); border-color: #fecaca; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .notice { color: var(--stone-500); font-size: 12px; margin-top: 8px; }
+    .error { color: var(--red-600); font-weight: 800; margin-top: 10px; }
+    .ok { color: var(--green-600); font-weight: 900; margin-top: 10px; }
+
+    .milestone-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .milestone-item { border: 1px solid var(--stone-200); border-radius: 14px; padding: 14px; background: #fafaf9; }
+    .milestone-title { font-weight: 900; margin-bottom: 4px; }
+    .milestone-meta { font-size: 12px; color: var(--stone-500); display:flex; gap: 10px; flex-wrap: wrap; }
+    .milestone-actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="logo">OppGrid</a>
+      <div class="nav-links">
+        <a class="nav-link" href="agreements.html">Agreements</a>
+        <a class="nav-link" href="success-pilot.html">Create</a>
+        <a class="nav-link" href="learn.html#success-based">Learn</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1 id="title">Agreement</h1>
+    <p class="subtitle" id="subtitle">Loading…</p>
+
+    <div class="card" id="summary" style="display:none;">
+      <div class="row">
+        <div>
+          <div class="meta">
+            <span class="pill" id="statusPill">—</span>
+            <span id="typeMeta">—</span>
+            <span id="triggerMeta">—</span>
+            <span id="oppMeta">—</span>
+          </div>
+          <div class="notice" id="timingMeta"></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="refreshBtn">Refresh</button>
+          <a class="btn" href="agreements.html">Back</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="editCard" style="display:none;">
+      <div class="row">
+        <h2 style="font-family:'Spectral', serif; font-size: 1.4rem;">Terms</h2>
+        <div class="meta" id="termsMeta"></div>
+      </div>
+
+      <div class="grid" style="margin-top: 10px;">
+        <div>
+          <label for="feePercent">Fee percent (%)</label>
+          <input id="feePercent" type="number" min="0" max="100" step="0.5" inputmode="decimal" />
+        </div>
+        <div>
+          <label for="feeCap">Fee cap (USD, optional)</label>
+          <input id="feeCap" type="number" min="0" step="1" inputmode="decimal" />
+        </div>
+        <div>
+          <label for="triggerThreshold">Trigger threshold (USD, optional)</label>
+          <input id="triggerThreshold" type="number" min="0" step="1" inputmode="decimal" />
+        </div>
+        <div>
+          <label for="expiresAt">Expires at (optional)</label>
+          <input id="expiresAt" type="datetime-local" />
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <label for="agreementTitle">Title</label>
+        <input id="agreementTitle" type="text" />
+      </div>
+      <div style="margin-top: 12px;">
+        <label for="agreementDescription">Description</label>
+        <textarea id="agreementDescription"></textarea>
+      </div>
+
+      <div class="row" style="margin-top: 14px;">
+        <div class="row">
+          <button class="btn btn-primary" id="saveBtn">Save changes</button>
+          <button class="btn btn-warn" id="submitBtn">Submit</button>
+          <button class="btn btn-primary" id="activateBtn">Activate</button>
+        </div>
+        <button class="btn btn-danger" id="cancelBtn">Cancel agreement</button>
+      </div>
+      <div class="notice">Submit moves the agreement to <b>pending_signature</b>. Activate simulates expert acceptance and sets it to <b>active</b>.</div>
+      <div id="editOk" class="ok" style="display:none;"></div>
+      <div id="editErr" class="error" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="activeCard" style="display:none;">
+      <h2 style="font-family:'Spectral', serif; font-size: 1.4rem;">Revenue & payouts</h2>
+      <div class="meta" id="activeMeta"></div>
+
+      <div class="grid" style="margin-top: 12px;">
+        <div>
+          <label for="revAmount">Record revenue (USD)</label>
+          <input id="revAmount" type="number" min="0" step="1" inputmode="decimal" placeholder="e.g. 1000" />
+        </div>
+        <div>
+          <label for="revDesc">Description (optional)</label>
+          <input id="revDesc" type="text" placeholder="e.g. Stripe payout 2025-12-19" />
+        </div>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <button class="btn btn-primary" id="recordRevenueBtn">Record revenue</button>
+        <button class="btn btn-warn" id="triggerPayoutBtn">Trigger payout</button>
+        <button class="btn" id="completeBtn">Complete</button>
+      </div>
+      <div class="notice">Payout requires the agreement to be triggered. Triggering depends on your trigger type.</div>
+      <div id="activeOk" class="ok" style="display:none;"></div>
+      <div id="activeErr" class="error" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="milestonesCard" style="display:none;">
+      <div class="row">
+        <h2 style="font-family:'Spectral', serif; font-size: 1.4rem;">Milestones</h2>
+        <button class="btn" id="refreshMilestonesBtn">Refresh milestones</button>
+      </div>
+      <div class="notice">Use milestones when your agreement trigger is <b>milestone_completion</b> or the agreement type is <b>milestone_based</b>.</div>
+
+      <div id="milestonesStatus" class="notice">Loading…</div>
+      <div id="milestonesErr" class="error" style="display:none;"></div>
+      <div id="milestonesList" class="milestone-list" style="display:none;"></div>
+
+      <div style="margin-top: 14px; border-top: 1px solid var(--stone-200); padding-top: 14px;">
+        <h3 style="margin-bottom: 10px;">Create milestone</h3>
+        <div class="grid">
+          <div>
+            <label for="msTitle">Title</label>
+            <input id="msTitle" type="text" placeholder="e.g. Ship landing page + waitlist" />
+          </div>
+          <div>
+            <label for="msDue">Due date (optional)</label>
+            <input id="msDue" type="datetime-local" />
+          </div>
+          <div>
+            <label for="msPayment">Payment (USD, optional)</label>
+            <input id="msPayment" type="number" min="0" step="1" inputmode="decimal" placeholder="e.g. 2500" />
+          </div>
+          <div>
+            <label for="msOrder">Order</label>
+            <input id="msOrder" type="number" min="0" step="1" inputmode="numeric" value="0" />
+          </div>
+        </div>
+        <div style="margin-top: 10px;">
+          <label for="msDescription">Description (optional)</label>
+          <textarea id="msDescription" placeholder="Acceptance criteria, scope notes, deliverables…"></textarea>
+        </div>
+        <div class="row" style="margin-top: 10px;">
+          <button class="btn btn-primary" id="createMilestoneBtn">Create milestone</button>
+        </div>
+        <div id="milestonesOk" class="ok" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="card" id="errorCard" style="display:none;">
+      <div class="error" id="pageError"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const qs = new URLSearchParams(window.location.search);
+    const agreementId = qs.get('id');
+
+    const els = {
+      title: document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      summary: document.getElementById('summary'),
+      statusPill: document.getElementById('statusPill'),
+      typeMeta: document.getElementById('typeMeta'),
+      triggerMeta: document.getElementById('triggerMeta'),
+      oppMeta: document.getElementById('oppMeta'),
+      timingMeta: document.getElementById('timingMeta'),
+
+      editCard: document.getElementById('editCard'),
+      termsMeta: document.getElementById('termsMeta'),
+      agreementTitle: document.getElementById('agreementTitle'),
+      agreementDescription: document.getElementById('agreementDescription'),
+      feePercent: document.getElementById('feePercent'),
+      feeCap: document.getElementById('feeCap'),
+      triggerThreshold: document.getElementById('triggerThreshold'),
+      expiresAt: document.getElementById('expiresAt'),
+      saveBtn: document.getElementById('saveBtn'),
+      submitBtn: document.getElementById('submitBtn'),
+      activateBtn: document.getElementById('activateBtn'),
+      cancelBtn: document.getElementById('cancelBtn'),
+      editOk: document.getElementById('editOk'),
+      editErr: document.getElementById('editErr'),
+
+      activeCard: document.getElementById('activeCard'),
+      activeMeta: document.getElementById('activeMeta'),
+      revAmount: document.getElementById('revAmount'),
+      revDesc: document.getElementById('revDesc'),
+      recordRevenueBtn: document.getElementById('recordRevenueBtn'),
+      triggerPayoutBtn: document.getElementById('triggerPayoutBtn'),
+      completeBtn: document.getElementById('completeBtn'),
+      activeOk: document.getElementById('activeOk'),
+      activeErr: document.getElementById('activeErr'),
+
+      milestonesCard: document.getElementById('milestonesCard'),
+      refreshMilestonesBtn: document.getElementById('refreshMilestonesBtn'),
+      milestonesStatus: document.getElementById('milestonesStatus'),
+      milestonesErr: document.getElementById('milestonesErr'),
+      milestonesList: document.getElementById('milestonesList'),
+      msTitle: document.getElementById('msTitle'),
+      msDue: document.getElementById('msDue'),
+      msPayment: document.getElementById('msPayment'),
+      msOrder: document.getElementById('msOrder'),
+      msDescription: document.getElementById('msDescription'),
+      createMilestoneBtn: document.getElementById('createMilestoneBtn'),
+      milestonesOk: document.getElementById('milestonesOk'),
+
+      errorCard: document.getElementById('errorCard'),
+      pageError: document.getElementById('pageError'),
+      refreshBtn: document.getElementById('refreshBtn'),
+    };
+
+    function centsToDollars(cents) {
+      if (cents === null || cents === undefined) return '';
+      const n = Number(cents);
+      if (!Number.isFinite(n)) return '';
+      return String((n / 100).toFixed(0));
+    }
+    function dollarsToCents(v) {
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return null;
+      return Math.round(n * 100);
+    }
+    function bpsToPercent(bps) {
+      if (bps === null || bps === undefined) return '';
+      const n = Number(bps);
+      if (!Number.isFinite(n)) return '';
+      return String((n / 100).toFixed(1));
+    }
+    function percentToBps(v) {
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return null;
+      return Math.round(n * 100);
+    }
+    function setMsg(okEl, errEl, okMsg, errMsg) {
+      okEl.style.display = okMsg ? 'block' : 'none';
+      errEl.style.display = errMsg ? 'block' : 'none';
+      okEl.textContent = okMsg || '';
+      errEl.textContent = errMsg || '';
+    }
+    function toDatetimeLocal(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '';
+      const pad = (n) => String(n).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth() + 1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mi = pad(d.getMinutes());
+      return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    }
+    function fromDatetimeLocal(val) {
+      if (!val) return null;
+      const d = new Date(val);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toISOString();
+    }
+
+    let agreement = null;
+
+    async function apiCall(path, options = {}) {
+      const token = localStorage.getItem('access_token');
+      const headers = Object.assign({}, options.headers || {});
+      headers['Authorization'] = `Bearer ${token}`;
+      return fetch(`${API_BASE_URL}${path}`, Object.assign({}, options, { headers }));
+    }
+
+    function render(a) {
+      agreement = a;
+
+      els.summary.style.display = 'block';
+      els.editCard.style.display = 'none';
+      els.activeCard.style.display = 'none';
+      els.milestonesCard.style.display = 'none';
+
+      const title = a.title || `Agreement #${a.id}`;
+      els.title.textContent = title;
+      els.subtitle.textContent = a.description ? a.description : 'Review terms and take actions below.';
+
+      els.statusPill.textContent = a.status;
+      els.typeMeta.textContent = `Type: ${a.agreement_type}`;
+      els.triggerMeta.textContent = `Trigger: ${a.trigger_type}`;
+      els.oppMeta.textContent = a.opportunity_id ? `Opportunity: ${a.opportunity_id}` : 'Opportunity: —';
+      els.timingMeta.textContent = `Created: ${a.created_at ? new Date(a.created_at).toLocaleString() : '—'} • Starts: ${a.starts_at ? new Date(a.starts_at).toLocaleString() : '—'} • Expires: ${a.expires_at ? new Date(a.expires_at).toLocaleString() : '—'}`;
+
+      els.termsMeta.textContent = `Fee: ${bpsToPercent(a.fee_percentage_bps)}% • Cap: ${a.fee_cap_cents ? '$' + (a.fee_cap_cents/100).toLocaleString() : '—'} • Trigger threshold: ${a.trigger_threshold_cents ? '$' + (a.trigger_threshold_cents/100).toLocaleString() : '—'}`;
+
+      // Draft/Pending: allow editing; Active: show revenue actions; Completed/Cancelled: mostly read-only.
+      if (a.status === 'draft' || a.status === 'pending_signature') {
+        els.editCard.style.display = 'block';
+        els.agreementTitle.value = a.title || '';
+        els.agreementDescription.value = a.description || '';
+        els.feePercent.value = bpsToPercent(a.fee_percentage_bps);
+        els.feeCap.value = centsToDollars(a.fee_cap_cents);
+        els.triggerThreshold.value = centsToDollars(a.trigger_threshold_cents);
+        els.expiresAt.value = toDatetimeLocal(a.expires_at);
+
+        const isDraft = a.status === 'draft';
+        els.saveBtn.disabled = !isDraft;
+        els.submitBtn.disabled = !isDraft;
+        els.activateBtn.disabled = !(a.status === 'draft' || a.status === 'pending_signature');
+      } else if (a.status === 'active') {
+        els.activeCard.style.display = 'block';
+        els.activeMeta.textContent = `Triggered: ${a.is_triggered ? 'yes' : 'no'} • Revenue tracked: $${Number(a.total_revenue_tracked || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} • Payouts: $${Number(a.total_payouts_made || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+      }
+
+      const needsMilestones =
+        a.trigger_type === 'milestone_completion' ||
+        a.agreement_type === 'milestone_based';
+
+      if (needsMilestones) {
+        els.milestonesCard.style.display = 'block';
+        loadMilestones();
+      }
+    }
+
+    function fmtMoneyCents(cents) {
+      if (cents === null || cents === undefined) return '—';
+      const n = Number(cents);
+      if (!Number.isFinite(n)) return '—';
+      return '$' + (n / 100).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+
+    async function loadMilestones() {
+      if (!agreementId) return;
+      els.milestonesErr.style.display = 'none';
+      els.milestonesOk.style.display = 'none';
+      els.milestonesList.style.display = 'none';
+      els.milestonesList.innerHTML = '';
+      els.milestonesStatus.style.display = 'block';
+      els.milestonesStatus.textContent = 'Loading…';
+
+      try {
+        const res = await apiCall(`/milestones/?agreement_id=${encodeURIComponent(String(agreementId))}&limit=50`);
+        const data = await res.json().catch(() => ([]));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to load milestones');
+        const milestones = Array.isArray(data) ? data : [];
+
+        els.milestonesStatus.style.display = 'none';
+        els.milestonesList.style.display = 'flex';
+
+        if (milestones.length === 0) {
+          els.milestonesList.innerHTML = `<div class="notice">No milestones yet. Create the first one below.</div>`;
+          return;
+        }
+
+        els.milestonesList.innerHTML = milestones.map(m => {
+          const due = m.due_date ? new Date(m.due_date).toLocaleString() : '—';
+          const amount = m.payment_amount_cents ? fmtMoneyCents(m.payment_amount_cents) : '—';
+          const desc = m.description ? `<div class="notice" style="margin-top:6px;">${m.description}</div>` : '';
+
+          const btnStart = (m.status === 'pending') ? `<button class="btn btn-primary" data-action="start" data-id="${m.id}">Start</button>` : '';
+          const btnSubmit = (m.status === 'pending' || m.status === 'in_progress' || m.status === 'rejected')
+            ? `<button class="btn btn-warn" data-action="submit" data-id="${m.id}">Submit</button>` : '';
+          const btnApprove = (m.status === 'submitted')
+            ? `<button class="btn btn-primary" data-action="approve" data-id="${m.id}">Approve</button>` : '';
+          const btnReject = (m.status === 'submitted')
+            ? `<button class="btn btn-danger" data-action="reject" data-id="${m.id}">Reject</button>` : '';
+          const btnPay = (m.status === 'approved')
+            ? `<button class="btn btn-primary" data-action="pay" data-id="${m.id}">Pay</button>` : '';
+          const btnDelete = (m.status === 'pending')
+            ? `<button class="btn btn-danger" data-action="delete" data-id="${m.id}">Delete</button>` : '';
+
+          return `
+            <div class="milestone-item">
+              <div class="row">
+                <div>
+                  <div class="milestone-title">${m.title}</div>
+                  <div class="milestone-meta">
+                    <span>Status: <b>${m.status}</b></span>
+                    <span>Due: ${due}</span>
+                    <span>Payment: ${amount}</span>
+                  </div>
+                </div>
+              </div>
+              ${desc}
+              <div class="milestone-actions">
+                ${btnStart}
+                ${btnSubmit}
+                ${btnApprove}
+                ${btnReject}
+                ${btnPay}
+                ${btnDelete}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Wire actions
+        els.milestonesList.querySelectorAll('button[data-action]').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const action = e.currentTarget.getAttribute('data-action');
+            const id = e.currentTarget.getAttribute('data-id');
+            if (!action || !id) return;
+            await handleMilestoneAction(action, id);
+          });
+        });
+      } catch (e) {
+        els.milestonesStatus.style.display = 'none';
+        els.milestonesErr.style.display = 'block';
+        els.milestonesErr.textContent = e?.message || 'Failed to load milestones.';
+      }
+    }
+
+    async function handleMilestoneAction(action, milestoneId) {
+      els.milestonesErr.style.display = 'none';
+      els.milestonesOk.style.display = 'none';
+
+      try {
+        if (action === 'start') {
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/start`, { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to start milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone started.';
+        } else if (action === 'submit') {
+          const deliverables = prompt('Optional: deliverables / proof (paste a link or notes):') || '';
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(deliverables.trim() ? { deliverables } : {}),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to submit milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone submitted.';
+        } else if (action === 'approve') {
+          const approval_notes = prompt('Optional: approval notes:') || '';
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(approval_notes.trim() ? { approval_notes } : {}),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to approve milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone approved.';
+        } else if (action === 'reject') {
+          const reason = prompt('Rejection reason:') || '';
+          if (!reason.trim()) throw new Error('Rejection reason is required.');
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to reject milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone rejected.';
+        } else if (action === 'pay') {
+          if (!confirm('Pay this milestone now?')) return;
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}/pay`, { method: 'POST' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to pay milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone payment processed.';
+        } else if (action === 'delete') {
+          if (!confirm('Delete this milestone?')) return;
+          const res = await apiCall(`/milestones/${encodeURIComponent(String(milestoneId))}`, { method: 'DELETE' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.detail || 'Failed to delete milestone');
+          els.milestonesOk.style.display = 'block';
+          els.milestonesOk.textContent = 'Milestone deleted.';
+        }
+        await loadMilestones();
+      } catch (e) {
+        els.milestonesErr.style.display = 'block';
+        els.milestonesErr.textContent = e?.message || 'Milestone action failed.';
+      }
+    }
+
+    async function createMilestone() {
+      els.milestonesErr.style.display = 'none';
+      els.milestonesOk.style.display = 'none';
+      els.createMilestoneBtn.disabled = true;
+      els.createMilestoneBtn.textContent = 'Creating…';
+      try {
+        const title = (els.msTitle.value || '').trim();
+        if (!title) throw new Error('Milestone title is required.');
+
+        const dueIso = fromDatetimeLocal((els.msDue.value || '').trim());
+        const paymentCents = dollarsToCents((els.msPayment.value || '').trim());
+        const orderIndex = Number((els.msOrder.value || '0').trim());
+
+        const payload = {
+          agreement_id: Number(agreementId),
+          title,
+          description: (els.msDescription.value || '').trim() || null,
+          order_index: Number.isFinite(orderIndex) ? orderIndex : 0,
+          payment_amount_cents: paymentCents,
+          due_date: dueIso,
+        };
+        Object.keys(payload).forEach(k => (payload[k] === null || payload[k] === undefined || Number.isNaN(payload[k])) && delete payload[k]);
+
+        const res = await apiCall('/milestones/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to create milestone');
+
+        els.milestonesOk.style.display = 'block';
+        els.milestonesOk.textContent = 'Milestone created.';
+        els.msTitle.value = '';
+        els.msDescription.value = '';
+        els.msPayment.value = '';
+        els.msDue.value = '';
+        await loadMilestones();
+      } catch (e) {
+        els.milestonesErr.style.display = 'block';
+        els.milestonesErr.textContent = e?.message || 'Failed to create milestone.';
+      } finally {
+        els.createMilestoneBtn.disabled = false;
+        els.createMilestoneBtn.textContent = 'Create milestone';
+      }
+    }
+
+    async function loadAgreement() {
+      els.errorCard.style.display = 'none';
+      if (!agreementId) {
+        els.errorCard.style.display = 'block';
+        els.pageError.textContent = 'Missing agreement id.';
+        return;
+      }
+
+      if (!window.OppGridAuth?.requireAuth) {
+        window.location.href = 'signin.html';
+        return;
+      }
+      if (!window.OppGridAuth.requireAuth()) return;
+
+      try {
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to load agreement');
+        render(data);
+      } catch (e) {
+        els.errorCard.style.display = 'block';
+        els.pageError.textContent = e?.message || 'Failed to load agreement.';
+      }
+    }
+
+    async function saveAgreement() {
+      setMsg(els.editOk, els.editErr, null, null);
+      els.saveBtn.disabled = true;
+      try {
+        const payload = {
+          title: (els.agreementTitle.value || '').trim() || null,
+          description: (els.agreementDescription.value || '').trim() || null,
+          fee_percentage_bps: percentToBps((els.feePercent.value || '').trim()),
+          fee_cap_cents: dollarsToCents((els.feeCap.value || '').trim()),
+          trigger_threshold_cents: dollarsToCents((els.triggerThreshold.value || '').trim()),
+          expires_at: fromDatetimeLocal((els.expiresAt.value || '').trim()),
+        };
+        Object.keys(payload).forEach(k => (payload[k] === null || payload[k] === undefined || Number.isNaN(payload[k])) && delete payload[k]);
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to save');
+        setMsg(els.editOk, els.editErr, 'Saved.', null);
+        render(data);
+      } catch (e) {
+        setMsg(els.editOk, els.editErr, null, e?.message || 'Failed to save.');
+      } finally {
+        els.saveBtn.disabled = false;
+      }
+    }
+
+    async function submitAgreement() {
+      setMsg(els.editOk, els.editErr, null, null);
+      els.submitBtn.disabled = true;
+      try {
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}/submit`, { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to submit');
+        setMsg(els.editOk, els.editErr, 'Submitted.', null);
+        await loadAgreement();
+      } catch (e) {
+        setMsg(els.editOk, els.editErr, null, e?.message || 'Failed to submit.');
+      } finally {
+        els.submitBtn.disabled = false;
+      }
+    }
+
+    async function activateAgreement() {
+      setMsg(els.editOk, els.editErr, null, null);
+      els.activateBtn.disabled = true;
+      try {
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}/activate`, { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to activate');
+        setMsg(els.editOk, els.editErr, 'Activated.', null);
+        await loadAgreement();
+      } catch (e) {
+        setMsg(els.editOk, els.editErr, null, e?.message || 'Failed to activate.');
+      } finally {
+        els.activateBtn.disabled = false;
+      }
+    }
+
+    async function cancelAgreement() {
+      setMsg(els.editOk, els.editErr, null, null);
+      if (!confirm('Cancel this agreement?')) return;
+      els.cancelBtn.disabled = true;
+      try {
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}`, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to cancel');
+        window.location.href = 'agreements.html';
+      } catch (e) {
+        setMsg(els.editOk, els.editErr, null, e?.message || 'Failed to cancel.');
+      } finally {
+        els.cancelBtn.disabled = false;
+      }
+    }
+
+    async function recordRevenue() {
+      setMsg(els.activeOk, els.activeErr, null, null);
+      els.recordRevenueBtn.disabled = true;
+      try {
+        const amt = dollarsToCents((els.revAmount.value || '').trim());
+        if (!amt || amt <= 0) throw new Error('Enter a revenue amount in USD.');
+        const payload = { amount_cents: amt, description: (els.revDesc.value || '').trim() || null };
+        Object.keys(payload).forEach(k => payload[k] === null && delete payload[k]);
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}/record-revenue`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to record revenue');
+        setMsg(els.activeOk, els.activeErr, 'Revenue recorded.', null);
+        els.revAmount.value = '';
+        els.revDesc.value = '';
+        await loadAgreement();
+      } catch (e) {
+        setMsg(els.activeOk, els.activeErr, null, e?.message || 'Failed to record revenue.');
+      } finally {
+        els.recordRevenueBtn.disabled = false;
+      }
+    }
+
+    async function triggerPayout() {
+      setMsg(els.activeOk, els.activeErr, null, null);
+      els.triggerPayoutBtn.disabled = true;
+      try {
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}/trigger-payout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to trigger payout');
+        setMsg(els.activeOk, els.activeErr, `Payout processed: $${Number((data.total_payout_cents || 0) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`, null);
+        await loadAgreement();
+      } catch (e) {
+        setMsg(els.activeOk, els.activeErr, null, e?.message || 'Failed to trigger payout.');
+      } finally {
+        els.triggerPayoutBtn.disabled = false;
+      }
+    }
+
+    async function completeAgreement() {
+      setMsg(els.activeOk, els.activeErr, null, null);
+      if (!confirm('Mark this agreement as completed?')) return;
+      els.completeBtn.disabled = true;
+      try {
+        const res = await apiCall(`/agreements/${encodeURIComponent(String(agreementId))}/complete`, { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to complete agreement');
+        setMsg(els.activeOk, els.activeErr, 'Agreement completed.', null);
+        await loadAgreement();
+      } catch (e) {
+        setMsg(els.activeOk, els.activeErr, null, e?.message || 'Failed to complete agreement.');
+      } finally {
+        els.completeBtn.disabled = false;
+      }
+    }
+
+    els.refreshBtn.addEventListener('click', () => loadAgreement());
+    els.saveBtn.addEventListener('click', () => saveAgreement());
+    els.submitBtn.addEventListener('click', () => submitAgreement());
+    els.activateBtn.addEventListener('click', () => activateAgreement());
+    els.cancelBtn.addEventListener('click', () => cancelAgreement());
+    els.recordRevenueBtn.addEventListener('click', () => recordRevenue());
+    els.triggerPayoutBtn.addEventListener('click', () => triggerPayout());
+    els.completeBtn.addEventListener('click', () => completeAgreement());
+    els.refreshMilestonesBtn.addEventListener('click', () => loadMilestones());
+    els.createMilestoneBtn.addEventListener('click', () => createMilestone());
+
+    loadAgreement();
+  </script>
+</body>
+</html>
+

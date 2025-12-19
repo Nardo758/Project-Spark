@@ -131,7 +131,7 @@ Publishable Key: SET
 If you need webhooks (for subscription updates):
 
 1. **In Stripe dashboard, go to Developers → Webhooks**
-2. **Add endpoint:** `https://your-repl-url.replit.dev/api/v1/subscriptions/webhook`
+2. **Add endpoint:** `https://your-repl-url.replit.dev/api/v1/webhook/stripe`
 3. **Select events:** 
    - `customer.subscription.created`
    - `customer.subscription.updated`

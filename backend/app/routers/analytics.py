@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List, Dict, Any
@@ -6,8 +6,12 @@ from datetime import datetime, timedelta
 import re
 
 from app.db.database import get_db
+from app.core.dependencies import get_current_user_optional
+from app.models.user import User
 from app.models.opportunity import Opportunity
 from app.schemas.opportunity import Opportunity as OpportunitySchema
+from app.models.tracking import TrackingEvent
+from app.schemas.tracking import TrackingEventCreate
 
 router = APIRouter()
 
@@ -330,3 +334,43 @@ def get_geographic_distribution(db: Session = Depends(get_db)) -> Dict[str, Any]
             for country, count in country_counts
         ]
     }
+
+
+@router.post("/events", status_code=status.HTTP_201_CREATED)
+def track_event(
+    payload: TrackingEventCreate,
+    request: Request,
+    user: User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    Record a lightweight product analytics event.
+
+    Auth is optional; if present we attach user_id.
+    """
+    # Best-effort request metadata.
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+
+    props = payload.properties
+    props_json = None
+    if props is not None:
+        try:
+            import json
+            props_json = json.dumps(props)
+        except Exception:
+            props_json = None
+
+    ev = TrackingEvent(
+        name=payload.name,
+        path=payload.path,
+        referrer=payload.referrer,
+        user_id=(user.id if user else None),
+        anonymous_id=payload.anonymous_id,
+        properties=props_json,
+        ip_address=ip,
+        user_agent=ua,
+    )
+    db.add(ev)
+    db.commit()
+    return {"ok": True, "event_id": ev.id}

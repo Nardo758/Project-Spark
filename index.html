@@ -1321,10 +1321,31 @@
                 </div>
             </a>
             <div class="nav-links">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="idea-engine.html" class="nav-link">Idea Engine</a>
-                <a href="discover.html" class="nav-link">Browse Ideas</a>
-                <a href="pricing.html" class="nav-link">Pricing</a>
+                <!-- Guest Navigation -->
+                <a href="index.html" class="nav-link guest-only">Home</a>
+                <a href="discover.html" class="nav-link guest-only">Browse Ideas</a>
+                <a href="idea-engine.html" class="nav-link guest-only">Idea Engine</a>
+                <a href="pricing.html" class="nav-link guest-only">Pricing</a>
+                
+                <!-- Logged-In Navigation (9 items) -->
+                <a href="dashboard.html" class="nav-link auth-required" style="display: none;">Dashboard</a>
+                <a href="discover.html" class="nav-link auth-required" style="display: none;">Discover</a>
+                <div class="nav-dropdown auth-required" style="display: none; position: relative;">
+                    <a href="#" class="nav-link nav-dropdown-trigger">Builder <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></a>
+                    <div class="nav-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 0; min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100;">
+                        <a href="idea-engine.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">Idea Engine</a>
+                        <a href="/validations" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">My Validations</a>
+                        <a href="ai-match.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">AI Expert Match</a>
+                        <a href="ai-roadmap.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">AI Roadmap</a>
+                        <a href="expert-marketplace.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">Expert Marketplace</a>
+                    </div>
+                </div>
+                <a href="leads.html" class="nav-link auth-required" style="display: none;">Leads</a>
+                <a href="content.html" class="nav-link auth-required" style="display: none;">Content</a>
+                <a href="network.html" class="nav-link auth-required" style="display: none;">Network</a>
+                <a href="funding.html" class="nav-link auth-required" style="display: none;">Funding</a>
+                <a href="tools.html" class="nav-link auth-required" style="display: none;">Tools</a>
+                <a href="learn.html" class="nav-link auth-required" style="display: none;">Learn</a>
             </div>
             <div class="nav-actions" id="header-actions">
                 <a href="signin.html" class="btn guest-only" style="display: inline-flex;">Sign In</a>
@@ -1351,7 +1372,7 @@
                     Discover validated market opportunities backed by real consumer insights. From idea validation to execution playbooks, everything you need to build what people actually want.
                 </p>
                 <div class="hero-buttons fade-in-up stagger-3">
-                    <a href="idea-engine.html" class="btn btn-primary btn-large">
+                    <a href="/idea-engine" class="btn btn-primary btn-large">
                         Validate Your Idea
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
                             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
@@ -1949,6 +1970,35 @@
                 window.location.href = 'signin.html';
             });
         }
+        
+        // Dropdown hover behavior for AI Tools menu
+        document.querySelectorAll('.nav-dropdown').forEach(dropdown => {
+            const trigger = dropdown.querySelector('.nav-dropdown-trigger');
+            const menu = dropdown.querySelector('.nav-dropdown-menu');
+            
+            if (trigger && menu) {
+                dropdown.addEventListener('mouseenter', () => {
+                    menu.style.display = 'block';
+                });
+                dropdown.addEventListener('mouseleave', () => {
+                    menu.style.display = 'none';
+                });
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                });
+            }
+        });
+        
+        // Add hover effect to dropdown items
+        document.querySelectorAll('.nav-dropdown-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                item.style.backgroundColor = '#f5f5f4';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.backgroundColor = 'transparent';
+            });
+        });
     </script>
 
     <!-- Demo Modal -->

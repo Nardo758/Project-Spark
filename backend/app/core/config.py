@@ -11,11 +11,6 @@ class Settings(BaseSettings):
     # Database - Support both DATABASE_URL and REPLIT_DB_URL
     DATABASE_URL: str = ""
 
-    # Supabase (optional - for REST API access)
-    SUPABASE_URL: Optional[str] = None
-    SUPABASE_ANON_KEY: Optional[str] = None
-    SUPABASE_SERVICE_KEY: Optional[str] = None
-
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -25,8 +20,22 @@ class Settings(BaseSettings):
     BACKEND_URL: str = "http://localhost:8000"
     FRONTEND_URL: str = "http://localhost:3000"
 
-    # CORS - allow all origins by default for development
+    # CORS - allow all origins by default for development (set explicit origins in production).
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
+
+    # Basic rate limiting (single-process best-effort).
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_DEFAULT_PER_MINUTE: int = 300
+
+    # Background jobs (single-runtime in-process scheduler)
+    JOBS_ENABLED: bool = True
+    ESCROW_RELEASE_JOB_ENABLED: bool = True
+    ESCROW_RELEASE_JOB_INTERVAL_SECONDS: int = 900  # 15 minutes
+    APIFY_IMPORT_JOB_ENABLED: bool = False  # enable when APIFY_API_TOKEN is configured
+    APIFY_IMPORT_JOB_INTERVAL_SECONDS: int = 86400  # daily
+    APIFY_ACTOR_ID: str = "trudax/reddit-scraper-lite"
+    AI_ANALYSIS_JOB_ENABLED: bool = True
+    AI_ANALYSIS_BATCH_SIZE: int = 20
 
     # Email Configuration (Resend)
     RESEND_API_KEY: Optional[str] = None
@@ -99,6 +108,10 @@ class Settings(BaseSettings):
             except json.JSONDecodeError:
                 return [origin.strip() for origin in self.BACKEND_CORS_ORIGINS.split(",")]
         return self.BACKEND_CORS_ORIGINS
+
+    def is_cors_wildcard(self) -> bool:
+        origins = self.get_cors_origins()
+        return len(origins) == 1 and origins[0] == "*"
 
 
 settings = Settings()

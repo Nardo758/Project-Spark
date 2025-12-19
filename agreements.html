@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agreements · OppGrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-500: #78716c;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --stone-900: #1c1917;
+      --violet-100: #ede9fe;
+      --violet-600: #7c3aed;
+      --white: #ffffff;
+      --red-600: #dc2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); line-height: 1.6; }
+    nav { background: var(--white); border-bottom: 1px solid var(--stone-200); }
+    .nav-content { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+    .logo { display:flex; align-items:center; gap:8px; text-decoration:none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight:700; }
+    .nav-links { display:flex; gap: 18px; flex-wrap: wrap; }
+    .nav-link { color: var(--stone-700); text-decoration:none; font-size: 14px; font-weight: 600; }
+    .nav-link:hover { text-decoration: underline; }
+
+    .container { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-family: 'Spectral', serif; font-size: 2.1rem; margin-bottom: 8px; }
+    .subtitle { color: var(--stone-500); margin-bottom: 18px; }
+
+    .card { background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 18px; margin-top: 12px; }
+    .row { display:flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--stone-300);
+      background: var(--white);
+      color: var(--stone-900);
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration:none;
+      font-size: 14px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn:hover { filter: brightness(0.98); }
+
+    .filters { display:flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    label { font-size: 12px; font-weight: 800; color: var(--stone-700); }
+    select { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--stone-300); background: white; }
+
+    .list { display:flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .item { border: 1px solid var(--stone-200); border-radius: 14px; padding: 14px; background: white; }
+    .item h3 { font-size: 15px; margin-bottom: 4px; }
+    .meta { font-size: 12px; color: var(--stone-500); display:flex; gap: 10px; flex-wrap: wrap; }
+    .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--violet-100); color: var(--violet-600); font-weight: 900; }
+    .error { color: var(--red-600); font-weight: 800; margin-top: 10px; }
+    .notice { color: var(--stone-500); font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="logo">OppGrid</a>
+      <div class="nav-links">
+        <a class="nav-link" href="success-pilot.html">Create</a>
+        <a class="nav-link" href="learn.html#success-based">Learn</a>
+        <a class="nav-link" href="account.html">Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Agreements</h1>
+    <p class="subtitle">Your success-fee / revenue-share / milestone agreements.</p>
+
+    <div class="card">
+      <div class="row">
+        <div class="filters">
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter">
+            <option value="">All</option>
+            <option value="draft">Draft</option>
+            <option value="pending_signature">Pending signature</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+        <a class="btn btn-primary" href="success-pilot.html">New agreement</a>
+      </div>
+      <div class="notice">Tip: Drafts can be edited; active agreements can record revenue and trigger payouts.</div>
+    </div>
+
+    <div class="card">
+      <div id="status" class="notice">Loading…</div>
+      <div id="error" class="error" style="display:none;"></div>
+      <div id="list" class="list" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+    const listEl = document.getElementById('list');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function fmtMoneyCents(cents) {
+      if (cents === null || cents === undefined) return '—';
+      const n = Number(cents);
+      if (!Number.isFinite(n)) return '—';
+      return '$' + (n / 100).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    }
+
+    function fmtPctBps(bps) {
+      if (bps === null || bps === undefined) return '—';
+      const n = Number(bps);
+      if (!Number.isFinite(n)) return '—';
+      return (n / 100).toFixed(1) + '%';
+    }
+
+    async function loadAgreements() {
+      errorEl.style.display = 'none';
+      listEl.style.display = 'none';
+      listEl.innerHTML = '';
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Loading…';
+
+      if (!window.OppGridAuth?.requireAuth) {
+        window.location.href = 'signin.html';
+        return;
+      }
+      if (!window.OppGridAuth.requireAuth()) return;
+
+      const token = localStorage.getItem('access_token');
+      const params = new URLSearchParams();
+      if (statusFilter.value) params.set('status_filter', statusFilter.value);
+      params.set('limit', '50');
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/agreements/?${params.toString()}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json().catch(() => ([]));
+        if (!res.ok) throw new Error(data?.detail || 'Failed to load agreements');
+
+        const agreements = Array.isArray(data) ? data : [];
+        statusEl.style.display = 'none';
+        listEl.style.display = 'flex';
+
+        if (agreements.length === 0) {
+          listEl.innerHTML = `<div class="notice">No agreements yet. Create your first one from <a href="success-pilot.html">Success-Based Pilot</a>.</div>`;
+          return;
+        }
+
+        agreements.forEach(a => {
+          const title = a.title || `Agreement #${a.id}`;
+          const item = document.createElement('div');
+          item.className = 'item';
+          item.innerHTML = `
+            <div class="row">
+              <div>
+                <h3>${title}</h3>
+                <div class="meta">
+                  <span class="pill">${a.status}</span>
+                  <span>${a.agreement_type}</span>
+                  <span>Trigger: ${a.trigger_type}</span>
+                </div>
+              </div>
+              <a class="btn" href="agreement.html?id=${encodeURIComponent(String(a.id))}">Open</a>
+            </div>
+            <div class="meta" style="margin-top: 8px;">
+              <span>Fee: ${fmtPctBps(a.fee_percentage_bps)} (cap ${fmtMoneyCents(a.fee_cap_cents)})</span>
+              <span>Revenue tracked: $${Number(a.total_revenue_tracked || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+              <span>Payouts: $${Number(a.total_payouts_made || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            </div>
+          `;
+          listEl.appendChild(item);
+        });
+      } catch (e) {
+        statusEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = e?.message || 'Failed to load agreements.';
+      }
+    }
+
+    statusFilter.addEventListener('change', () => loadAgreements());
+    loadAgreements();
+  </script>
+</body>
+</html>
+

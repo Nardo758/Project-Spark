@@ -46,7 +46,7 @@ Visit: **http://localhost:5500/index.html**
 ## 🎯 Features Now Available
 
 ### 1. **Real-Time Opportunity Loading**
-- Opportunities load from your Supabase database
+- Opportunities load from your PostgreSQL database via the backend API
 - Automatic refresh on filters
 - Pagination support
 
@@ -439,7 +439,7 @@ Create a full analytics page:
 
 - **API Documentation**: http://localhost:8000/docs
 - **Features Guide**: FEATURES_GUIDE.md
-- **Backend Setup**: QUICKSTART_SUPABASE.md
+- **Backend Setup**: GET_STARTED.md
 - **Main README**: README.md
 
 ---

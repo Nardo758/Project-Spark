@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard · OppGrid</title>
-    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap&family=Roboto+Mono:wght@700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap&family=Roboto+Mono:wght@700" rel="stylesheet">
     <style>
         :root {
             --stone-50: #fafaf9;
@@ -17,67 +17,61 @@
             --stone-700: #44403c;
             --stone-800: #292524;
             --stone-900: #1c1917;
+            --emerald-50: #ecfdf5;
             --emerald-100: #d1fae5;
+            --emerald-500: #10b981;
             --emerald-600: #059669;
-            --emerald-700: #047857;
+            --violet-50: #f5f3ff;
+            --violet-100: #ede9fe;
+            --violet-500: #8b5cf6;
+            --violet-600: #7c3aed;
+            --amber-50: #fffbeb;
+            --amber-100: #fef3c7;
+            --amber-500: #f59e0b;
+            --amber-600: #d97706;
+            --red-50: #fef2f2;
+            --red-500: #ef4444;
+            --blue-50: #eff6ff;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
             --bg: var(--stone-50);
             --surface: #FFFFFF;
-            --panel-border: var(--stone-200);
             --text: var(--stone-900);
             --text-secondary: var(--stone-500);
-            --muted: var(--stone-400);
-            --accent: #1c1917;
-            --accent-2: #292524;
-            --accent-light: #FEF3E8;
-            --success: #475569;
-            --success-bg: #F1F5F9;
-            --danger: #DC2626;
-            --danger-bg: #FEE2E2;
-            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --border: var(--stone-200);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --border-radius: 12px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        .spektral {
-            font-family: 'Spectral', serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
             line-height: 1.5;
         }
 
-        .layout {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
+        .spektral { font-family: 'Spectral', serif; }
 
         .header {
             background: var(--surface);
-            border-bottom: 1px solid var(--panel-border);
-            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
         .header-inner {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 24px;
         }
 
         .header-left {
@@ -88,7 +82,7 @@
 
         .logo {
             font-family: 'Spectral', serif;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--stone-900);
             text-decoration: none;
@@ -96,40 +90,49 @@
             align-items: center;
             gap: 8px;
         }
-        
-        .logo span {
-            color: #d97757;
-        }
 
-        .logo-text-group {
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--stone-900);
+            border-radius: 8px;
             display: flex;
-            flex-direction: column;
-            line-height: 1.2;
+            align-items: center;
+            justify-content: center;
+            color: white;
         }
 
-        .logo-text {
-            font-family: 'Spectral', serif;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--stone-900);
+        .header-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--stone-100);
+            padding: 8px 16px;
+            border-radius: 8px;
+            min-width: 280px;
         }
 
-        .logo-tagline {
-            font-family: 'Inter', sans-serif;
-            font-size: 10px;
-            font-weight: 500;
-            color: var(--stone-500);
-            letter-spacing: 0.02em;
+        .header-search input {
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 14px;
+            width: 100%;
+            color: var(--text);
+        }
+
+        .header-search input::placeholder {
+            color: var(--stone-400);
         }
 
         .header-nav {
             display: flex;
-            gap: 8px;
+            gap: 4px;
         }
 
         .nav-link {
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 14px;
@@ -138,8 +141,43 @@
         }
 
         .nav-link:hover, .nav-link.active {
-            background: #F3F4F6;
+            background: var(--stone-100);
             color: var(--text);
+        }
+
+        .nav-dropdown {
+            position: relative;
+        }
+
+        .nav-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 180px;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+        }
+
+        .nav-dropdown:hover .nav-dropdown-menu {
+            display: block;
+        }
+
+        .nav-dropdown-item {
+            display: block;
+            padding: 8px 16px;
+            color: var(--stone-700);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .nav-dropdown-item:hover {
+            background: var(--stone-100);
         }
 
         .header-actions {
@@ -148,67 +186,184 @@
             align-items: center;
         }
 
+        .notification-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            background: var(--red-500);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .user-menu {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 6px 12px;
             border-radius: 8px;
-            background: #F3F4F6;
+            background: var(--stone-100);
             cursor: pointer;
             transition: background 0.2s;
         }
 
         .user-menu:hover {
-            background: #E5E7EB;
+            background: var(--stone-200);
         }
 
         .user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            background: var(--accent);
+            background: var(--stone-900);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 14px;
-        }
-
-        .btn {
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 14px;
-            border: 1px solid var(--panel-border);
-            cursor: pointer;
-            background: var(--surface);
-            color: var(--text);
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            background: #F3F4F6;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-2);
+            font-size: 12px;
         }
 
         .main-content {
-            padding: 32px 0;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
         }
 
-        .section {
+        .welcome-bar {
+            background: linear-gradient(135deg, var(--stone-900) 0%, var(--stone-800) 100%);
+            color: white;
+            padding: 24px 32px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .welcome-text h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .welcome-text p {
+            color: var(--stone-300);
+            font-size: 14px;
+        }
+
+        .welcome-stats {
+            display: flex;
+            gap: 32px;
+        }
+
+        .welcome-stat {
+            text-align: center;
+        }
+
+        .welcome-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--emerald-500);
+        }
+
+        .welcome-stat-label {
+            font-size: 12px;
+            color: var(--stone-400);
+        }
+
+        .quick-actions {
             margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 20px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .quick-action-btn:hover {
+            border-color: var(--stone-900);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .quick-action-icon.blue { background: var(--blue-50); }
+        .quick-action-icon.violet { background: var(--violet-50); }
+        .quick-action-icon.emerald { background: var(--emerald-50); }
+        .quick-action-icon.amber { background: var(--amber-50); }
+
+        .quick-action-btn span {
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .opportunity-feed, .progress-section, .ai-recommendations, .trending-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
         }
 
         .section-header {
@@ -219,297 +374,328 @@
         }
 
         .section-header h2 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            color: var(--text);
         }
 
-        .section-meta {
+        .see-more {
             font-size: 13px;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .realtime-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--success);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .trending-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-
-        .trending-card {
-            background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .trending-card:hover {
-            border-color: var(--accent);
-            box-shadow: var(--shadow-md);
-        }
-
-        .trending-card h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-
-        .growth-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .growth-badge.up {
-            background: #F1F5F9;
-            color: #334155;
-        }
-
-        .growth-badge.down {
-            background: #F1F5F9;
-            color: #64748B;
-        }
-
-        .trending-card .validations {
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 8px;
-        }
-
-        .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-
-        .category-card {
-            background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .category-card:hover {
-            border-color: var(--accent);
-            background: var(--accent-light);
-        }
-
-        .category-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .category-icon.work { background: #F1F5F9; }
-        .category-icon.finance { background: #F5F5F4; }
-        .category-icon.health { background: #F8FAFC; }
-        .category-icon.home { background: #F1F5F9; }
-        .category-icon.tech { background: #F5F5F4; }
-        .category-icon.transport { background: #F8FAFC; }
-        .category-icon.education { background: #F1F5F9; }
-        .category-icon.shopping { background: #F5F5F4; }
-
-        .category-info h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .category-info span {
-            font-size: 13px;
-            color: var(--muted);
-        }
-
-        .live-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-
-        .live-card {
-            background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .live-card:hover {
-            border-color: var(--accent);
-            box-shadow: var(--shadow-md);
-        }
-
-        .live-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 8px;
-            gap: 8px;
-        }
-
-        .source-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .source-badge.api { background: #F5F5F4; color: #57534E; }
-        .source-badge.reddit { background: #F1F5F9; color: #475569; }
-        .source-badge.hn { background: #F8FAFC; color: #334155; }
-
-        .impact-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            background: #F1F5F9;
-            color: #334155;
-        }
-
-        .live-card h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-
-        .live-card p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: 12px;
-        }
-
-        .live-card-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .signals-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .signal-item {
-            background: var(--surface);
-            border: 1px solid var(--panel-border);
-            border-radius: var(--border-radius);
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .signal-item:hover {
-            border-color: var(--accent);
-        }
-
-        .signal-content h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-
-        .signal-content span {
-            font-size: 13px;
-            color: var(--muted);
-        }
-
-        .agree-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: #F3F4F6;
-            border: 1px solid var(--panel-border);
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .agree-btn:hover {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .agree-btn.agreed {
-            background: var(--accent-light);
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .view-all-link {
-            font-size: 14px;
-            color: var(--accent);
+            color: var(--violet-600);
             text-decoration: none;
             font-weight: 500;
         }
 
-        .view-all-link:hover {
+        .see-more:hover {
             text-decoration: underline;
         }
 
+        .opportunity-card {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .opportunity-card:hover {
+            border-color: var(--stone-400);
+            box-shadow: var(--shadow);
+        }
+
+        .opportunity-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .opp-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .opp-status.hot {
+            background: var(--red-50);
+            color: var(--red-500);
+        }
+
+        .opp-status.fresh {
+            background: var(--blue-50);
+            color: var(--blue-600);
+        }
+
+        .opp-status.validated {
+            background: var(--emerald-50);
+            color: var(--emerald-600);
+        }
+
+        .opp-content {
+            flex: 1;
+        }
+
+        .opp-content h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .opp-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .opp-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .opp-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .opp-btn:hover {
+            background: var(--stone-100);
+        }
+
+        .opp-btn.primary {
+            background: var(--stone-900);
+            color: white;
+            border-color: var(--stone-900);
+        }
+
+        .opp-match {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+        }
+
+        .match-score {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .match-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .progress-card {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .progress-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .progress-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .progress-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--emerald-50);
+            color: var(--emerald-600);
+        }
+
+        .progress-bar-container {
+            background: var(--stone-200);
+            border-radius: 4px;
+            height: 6px;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            background: var(--stone-900);
+        }
+
+        .progress-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .progress-stat {
+            text-align: center;
+        }
+
+        .progress-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--emerald-600);
+        }
+
+        .progress-stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .ai-card {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: var(--violet-50);
+            border-color: var(--violet-100);
+        }
+
+        .ai-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--violet-100);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .ai-content p {
+            font-size: 13px;
+            color: var(--stone-700);
+            line-height: 1.5;
+        }
+
+        .ai-action {
+            margin-top: 8px;
+        }
+
+        .ai-action a {
+            font-size: 12px;
+            color: var(--violet-600);
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .ai-action a:hover {
+            text-decoration: underline;
+        }
+
+        .trending-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .trending-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .trending-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--stone-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .trending-content {
+            flex: 1;
+        }
+
+        .trending-content p {
+            font-size: 13px;
+            color: var(--stone-700);
+            line-height: 1.4;
+        }
+
+        .trending-content span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .trending-action {
+            align-self: center;
+        }
+
+        .trending-action a {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--stone-900);
+            color: white;
+            text-decoration: none;
+        }
+
         @media (max-width: 1024px) {
-            .trending-grid,
-            .categories-grid,
-            .live-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .quick-actions-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .welcome-bar {
+                flex-direction: column;
+                text-align: center;
             }
         }
 
         @media (max-width: 640px) {
-            .trending-grid,
-            .categories-grid,
-            .live-grid {
-                grid-template-columns: 1fr;
+            .quick-actions-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
-
+            .header-search {
+                display: none;
+            }
             .header-nav {
                 display: none;
             }
@@ -522,31 +708,47 @@
             <div class="header-left">
                 <a href="index.html" class="logo">
                     <div class="logo-icon">
-                        <div class="logo-grid">
-                                <div class="logo-cell active"></div>
-                                <div class="logo-cell"></div>
-                                <div class="logo-cell active"></div>
-                                <div class="logo-cell"></div>
-                                <div class="logo-cell active"></div>
-                                <div class="logo-cell"></div>
-                                <div class="logo-cell active"></div>
-                                <div class="logo-cell active"></div>
-                                <div class="logo-cell active"></div>
-                        </div>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                        </svg>
                     </div>
-                    <div class="logo-text-group">
-                        <span class="logo-text">OppGrid</span>
-                        <span class="logo-tagline">The Opportunity Intelligence Platform</span>
-                    </div>
+                    OppGrid
                 </a>
-                <nav class="header-nav">
-                    <a href="index.html" class="nav-link">Home</a>
-                    <a href="discover.html" class="nav-link">Browse Ideas</a>
-                    <a href="pricing.html" class="nav-link">Pricing</a>
-                </nav>
+                <div class="header-search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" placeholder="Search opportunities, leads, content...">
+                </div>
             </div>
-            <div class="header-actions">
+            <nav class="header-nav">
                 <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                <a href="discover.html" class="nav-link">Discover</a>
+                <div class="nav-dropdown">
+                    <a href="#" class="nav-link">Builder <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></a>
+                    <div class="nav-dropdown-menu">
+                        <a href="idea-engine.html" class="nav-dropdown-item">Idea Engine</a>
+                        <a href="ai-match.html" class="nav-dropdown-item">AI Expert Match</a>
+                        <a href="ai-roadmap.html" class="nav-dropdown-item">AI Roadmap</a>
+                        <a href="expert-marketplace.html" class="nav-dropdown-item">Expert Marketplace</a>
+                    </div>
+                </div>
+                <a href="leads.html" class="nav-link">Leads</a>
+                <a href="content.html" class="nav-link">Content</a>
+                <a href="network.html" class="nav-link">Network</a>
+                <a href="funding.html" class="nav-link">Funding</a>
+                <a href="tools.html" class="nav-link">Tools</a>
+                <a href="learn.html" class="nav-link">Learn</a>
+            </nav>
+            <div class="header-actions">
+                <button class="notification-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                    </svg>
+                    <span class="notification-badge" id="notification-count">3</span>
+                </button>
                 <div class="user-menu" id="user-menu">
                     <div class="user-avatar" id="user-avatar">U</div>
                     <span id="user-name">User</span>
@@ -555,202 +757,304 @@
         </div>
     </header>
 
-    <main class="layout main-content">
-        <section class="section">
-            <div class="section-header">
-                <h2>Trending Opportunities</h2>
-                <span class="section-meta">
-                    <span class="realtime-dot"></span>
-                    Updated in real-time
-                </span>
+    <main class="main-content">
+        <div class="welcome-bar">
+            <div class="welcome-text">
+                <h1>Welcome back, <span id="welcome-name">User</span>!</h1>
+                <p>Your daily opportunity digest is ready. You have 3 new matches.</p>
             </div>
-            <div class="trending-grid" id="trending-container">
-                <div class="trending-card">
-                    <h3>Universal healthcare scheduling platform</h3>
-                    <span class="growth-badge up">↑ 18% this week</span>
-                    <div class="validations">4,523 validations</div>
+            <div class="welcome-stats">
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value" id="ai-match-score">87</div>
+                    <div class="welcome-stat-label">AI Match Score</div>
                 </div>
-                <div class="trending-card">
-                    <h3>Transparent small business banking</h3>
-                    <span class="growth-badge up">↑ 12% this week</span>
-                    <div class="validations">3,891 validations</div>
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value" id="opportunities-count">12</div>
+                    <div class="welcome-stat-label">New Opportunities</div>
                 </div>
-                <div class="trending-card">
-                    <h3>Finding reliable contractors for home repairs</h3>
-                    <span class="growth-badge up">↑ 8% this week</span>
-                    <div class="validations">6,234 validations</div>
+                <div class="welcome-stat">
+                    <div class="welcome-stat-value" id="projects-active">2</div>
+                    <div class="welcome-stat-label">Active Projects</div>
                 </div>
-                <div class="trending-card">
-                    <h3>Managing multiple streaming subscriptions</h3>
-                    <span class="growth-badge down">↓ 3% this week</span>
-                    <div class="validations">8,923 validations</div>
-                </div>
+            </div>
+        </div>
+
+        <section class="quick-actions">
+            <h2 class="section-title">Quick Actions</h2>
+            <div class="quick-actions-grid">
+                <a href="discover.html" class="quick-action-btn">
+                    <div class="quick-action-icon blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </div>
+                    <span>Find New Opportunity</span>
+                </a>
+                <a href="idea-engine.html" class="quick-action-btn">
+                    <div class="quick-action-icon violet">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                        </svg>
+                    </div>
+                    <span>Validate My Idea</span>
+                </a>
+                <a href="leads.html" class="quick-action-btn">
+                    <div class="quick-action-icon emerald">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                            <path d="M3 3v18h18"></path>
+                            <path d="m19 9-5 5-4-4-3 3"></path>
+                        </svg>
+                    </div>
+                    <span>Generate Leads</span>
+                </a>
+                <a href="content.html" class="quick-action-btn">
+                    <div class="quick-action-icon amber">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                    </div>
+                    <span>Create Business Plan</span>
+                </a>
+                <a href="network.html" class="quick-action-btn">
+                    <div class="quick-action-icon blue">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <span>Find Co-founder</span>
+                </a>
+                <a href="funding.html" class="quick-action-btn">
+                    <div class="quick-action-icon emerald">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                    <span>Check Funding Options</span>
+                </a>
             </div>
         </section>
 
-        <section class="section">
-            <div class="section-header">
-                <h2>Categories</h2>
-                <span class="section-meta">Explore 8 core domains - Click to filter</span>
-            </div>
-            <div class="categories-grid">
-                <div class="category-card" onclick="location.href='category.html?cat=work'">
-                    <div class="category-icon work">💼</div>
-                    <div class="category-info">
-                        <h3>Work & Productivity</h3>
-                        <span>12,483 problems</span>
+        <div class="dashboard-grid">
+            <div class="left-column">
+                <section class="opportunity-feed">
+                    <div class="section-header">
+                        <h2>Personalized Opportunity Feed</h2>
+                        <a href="discover.html" class="see-more">See all opportunities</a>
                     </div>
-                </div>
-                <div class="category-card" onclick="location.href='category.html?cat=finance'">
-                    <div class="category-icon finance">💰</div>
-                    <div class="category-info">
-                        <h3>Money & Finance</h3>
-                        <span>8,921 problems</span>
+                    <div id="opportunities-container">
+                        <div class="opportunity-card" onclick="location.href='opportunity.html?id=1'">
+                            <div>
+                                <span class="opp-status hot">HOT - 2d</span>
+                            </div>
+                            <div class="opp-content">
+                                <h3>Voice-based medical notes for doctors</h3>
+                                <div class="opp-meta">
+                                    <span>Market: $3-8B</span>
+                                    <span>Healthcare</span>
+                                </div>
+                                <div class="opp-actions">
+                                    <button class="opp-btn primary">View Details</button>
+                                    <button class="opp-btn">Save</button>
+                                </div>
+                            </div>
+                            <div class="opp-match">
+                                <div class="match-score">92%</div>
+                                <span class="match-label">Match</span>
+                            </div>
+                        </div>
+                        <div class="opportunity-card" onclick="location.href='opportunity.html?id=2'">
+                            <div>
+                                <span class="opp-status fresh">FRESH - 15d</span>
+                            </div>
+                            <div class="opp-content">
+                                <h3>AI meal planning for busy parents</h3>
+                                <div class="opp-meta">
+                                    <span>Market: $500M-2B</span>
+                                    <span>Consumer</span>
+                                </div>
+                                <div class="opp-actions">
+                                    <button class="opp-btn primary">View Details</button>
+                                    <button class="opp-btn">Save</button>
+                                </div>
+                            </div>
+                            <div class="opp-match">
+                                <div class="match-score">85%</div>
+                                <span class="match-label">Match</span>
+                            </div>
+                        </div>
+                        <div class="opportunity-card" onclick="location.href='opportunity.html?id=3'">
+                            <div>
+                                <span class="opp-status validated">VALIDATED - 45d</span>
+                            </div>
+                            <div class="opp-content">
+                                <h3>Sustainable e-commerce packaging</h3>
+                                <div class="opp-meta">
+                                    <span>Market: $2-5B</span>
+                                    <span>E-commerce</span>
+                                </div>
+                                <div class="opp-actions">
+                                    <button class="opp-btn primary">View Details</button>
+                                    <button class="opp-btn">Save</button>
+                                </div>
+                            </div>
+                            <div class="opp-match">
+                                <div class="match-score">78%</div>
+                                <span class="match-label">Match</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="category-card" onclick="location.href='category.html?cat=health'">
-                    <div class="category-icon health">🏥</div>
-                    <div class="category-info">
-                        <h3>Health & Wellness</h3>
-                        <span>15,672 problems</span>
-                    </div>
-                </div>
-                <div class="category-card" onclick="location.href='category.html?cat=home'">
-                    <div class="category-icon home">🏠</div>
-                    <div class="category-info">
-                        <h3>Home & Living</h3>
-                        <span>9,234 problems</span>
-                    </div>
-                </div>
-                <div class="category-card" onclick="location.href='category.html?cat=tech'">
-                    <div class="category-icon tech">💻</div>
-                    <div class="category-info">
-                        <h3>Technology</h3>
-                        <span>11,456 problems</span>
-                    </div>
-                </div>
-                <div class="category-card" onclick="location.href='category.html?cat=transport'">
-                    <div class="category-icon transport">🚗</div>
-                    <div class="category-info">
-                        <h3>Transportation</h3>
-                        <span>6,789 problems</span>
-                    </div>
-                </div>
-                <div class="category-card" onclick="location.href='category.html?cat=education'">
-                    <div class="category-icon education">📚</div>
-                    <div class="category-info">
-                        <h3>Education</h3>
-                        <span>7,345 problems</span>
-                    </div>
-                </div>
-                <div class="category-card" onclick="location.href='category.html?cat=shopping'">
-                    <div class="category-icon shopping">🛒</div>
-                    <div class="category-info">
-                        <h3>Shopping & Services</h3>
-                        <span>10,123 problems</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+                </section>
 
-        <section class="section">
-            <div class="section-header">
-                <h2>Live Opportunities from Databases</h2>
-                <span class="section-meta">Real-time data from external APIs - Click to explore</span>
+                <section class="progress-section" style="margin-top: 24px;">
+                    <div class="section-header">
+                        <h2>Your Progress Trackers</h2>
+                        <a href="projects.html" class="see-more">View all projects</a>
+                    </div>
+                    <div id="progress-container">
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span class="progress-title">MedTech App</span>
+                                <span class="progress-badge">Week 3/12</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: 65%"></div>
+                            </div>
+                            <div class="progress-meta">
+                                <strong>Next:</strong> Hire developer - Due in 2 days
+                            </div>
+                        </div>
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span class="progress-title">Lead Generation</span>
+                                <span class="progress-badge" style="background: var(--amber-50); color: var(--amber-600);">Active</span>
+                            </div>
+                            <div class="progress-stats">
+                                <div class="progress-stat">
+                                    <div class="progress-stat-value">247</div>
+                                    <div class="progress-stat-label">Leads Created</div>
+                                </div>
+                                <div class="progress-stat">
+                                    <div class="progress-stat-value">$4,795</div>
+                                    <div class="progress-stat-label">Earned</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span class="progress-title">Market Study Template</span>
+                                <span class="progress-badge">Selling</span>
+                            </div>
+                            <div class="progress-stats">
+                                <div class="progress-stat">
+                                    <div class="progress-stat-value">47</div>
+                                    <div class="progress-stat-label">Sales</div>
+                                </div>
+                                <div class="progress-stat">
+                                    <div class="progress-stat-value">$3,760</div>
+                                    <div class="progress-stat-label">Royalties</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <div class="live-grid" id="live-container">
-                <div class="live-card">
-                    <div class="live-card-header">
-                        <span class="source-badge api">API Source</span>
-                        <span class="impact-badge">High Impact</span>
-                    </div>
-                    <h3>Difficulty managing health insurance claims</h3>
-                    <p>Complex paperwork, unclear billing codes, and delayed reimbursements create friction for patients navigating the insurance landscape.</p>
-                    <div class="live-card-meta">
-                        <span>💰 Finance</span>
-                        <span>•</span>
-                        <span>1,247 confirmations</span>
-                        <span>•</span>
-                        <span>2 hrs ago</span>
-                    </div>
-                </div>
-                <div class="live-card">
-                    <div class="live-card-header">
-                        <span class="source-badge api">API Source</span>
-                        <span class="impact-badge">High Impact</span>
-                    </div>
-                    <h3>Finding trustworthy local service providers</h3>
-                    <p>Inconsistent reviews, hidden pricing, and unreliable scheduling make it challenging to find dependable contractors.</p>
-                    <div class="live-card-meta">
-                        <span>🏠 Home & Living</span>
-                        <span>•</span>
-                        <span>3,892 confirmations</span>
-                        <span>•</span>
-                        <span>5 hrs ago</span>
-                    </div>
-                </div>
-                <div class="live-card">
-                    <div class="live-card-header">
-                        <span class="source-badge reddit">Reddit</span>
-                        <span class="impact-badge">Trending</span>
-                    </div>
-                    <h3>EV charging infrastructure in apartment complexes</h3>
-                    <p>Limited charging stations, unfair cost allocation, and lack of landlord incentives prevent EV adoption.</p>
-                    <div class="live-card-meta">
-                        <span>🚗 Transportation</span>
-                        <span>•</span>
-                        <span>891 confirmations</span>
-                        <span>•</span>
-                        <span>1 day ago</span>
-                    </div>
-                </div>
-                <div class="live-card">
-                    <div class="live-card-header">
-                        <span class="source-badge hn">HN</span>
-                        <span class="impact-badge">High Impact</span>
-                    </div>
-                    <h3>SMB subscription management for SaaS</h3>
-                    <p>Small businesses struggle to track multiple software subscriptions, leading to duplicate tools and budget overruns.</p>
-                    <div class="live-card-meta">
-                        <span>💼 Work & Productivity</span>
-                        <span>•</span>
-                        <span>2,134 confirmations</span>
-                        <span>•</span>
-                        <span>6 hrs ago</span>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <section class="section">
-            <div class="section-header">
-                <h2>Recent Signals</h2>
-                <a href="#" class="view-all-link">View all signals</a>
+            <div class="right-column">
+                <section class="ai-recommendations">
+                    <div class="section-header">
+                        <h2>AI Co-pilot Suggests</h2>
+                    </div>
+                    <div id="ai-container">
+                        <div class="ai-card">
+                            <div class="ai-icon">💡</div>
+                            <div class="ai-content">
+                                <p>Based on your skills, consider: <strong>Healthcare compliance consulting</strong></p>
+                                <div class="ai-action">
+                                    <a href="discover.html?category=healthcare">Explore opportunities</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-card">
+                            <div class="ai-icon">📊</div>
+                            <div class="ai-content">
+                                <p>Your leads convert <strong>3.2x better</strong> in the FinTech sector</p>
+                                <div class="ai-action">
+                                    <a href="leads.html?filter=fintech">View FinTech leads</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-card">
+                            <div class="ai-icon">👥</div>
+                            <div class="ai-content">
+                                <p>You need: <strong>Technical co-founder</strong> for your MedTech project</p>
+                                <div class="ai-action">
+                                    <a href="network.html?type=cofounder">Find match</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-card">
+                            <div class="ai-icon">💰</div>
+                            <div class="ai-content">
+                                <p><strong>Funding alert:</strong> Healthcare grants application deadline in 14 days</p>
+                                <div class="ai-action">
+                                    <a href="funding.html?type=grants">Apply now</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="trending-section" style="margin-top: 24px;">
+                    <div class="section-header">
+                        <h2>Trending in Your Network</h2>
+                    </div>
+                    <div id="trending-container">
+                        <div class="trending-item">
+                            <div class="trending-avatar">SJ</div>
+                            <div class="trending-content">
+                                <p><strong>Sarah</strong> launched her SaaS - 45 days to $12k MRR</p>
+                                <span>2 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="trending-item">
+                            <div class="trending-avatar">MK</div>
+                            <div class="trending-content">
+                                <p><strong>Mark</strong> sold 500 leads for $15k revenue</p>
+                                <span>5 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="trending-item">
+                            <div class="trending-avatar">TV</div>
+                            <div class="trending-content">
+                                <p><strong>Tech Ventures</strong> looking for AI startups</p>
+                                <span>1 day ago</span>
+                            </div>
+                            <div class="trending-action">
+                                <a href="funding.html">Pitch</a>
+                            </div>
+                        </div>
+                        <div class="trending-item">
+                            <div class="trending-avatar">📅</div>
+                            <div class="trending-content">
+                                <p><strong>Healthcare webinar</strong> tomorrow at 2 PM</p>
+                                <span>Upcoming</span>
+                            </div>
+                            <div class="trending-action">
+                                <a href="#">Register</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <div class="signals-list" id="signals-container">
-                <div class="signal-item">
-                    <div class="signal-content">
-                        <h3>Better parking solutions near apartments</h3>
-                        <span>🚗 Transportation · 2 hours ago</span>
-                    </div>
-                    <button class="agree-btn">👍 234</button>
-                </div>
-                <div class="signal-item">
-                    <div class="signal-content">
-                        <h3>Unified healthcare portal across providers</h3>
-                        <span>🏥 Health & Wellness · 5 hours ago</span>
-                    </div>
-                    <button class="agree-btn">👍 1,432</button>
-                </div>
-                <div class="signal-item">
-                    <div class="signal-content">
-                        <h3>Affordable quality furniture marketplace</h3>
-                        <span>🏠 Home & Living · 1 day ago</span>
-                    </div>
-                    <button class="agree-btn">👍 647</button>
-                </div>
-            </div>
-        </section>
+        </div>
     </main>
 
     <script src="js/config.js"></script>
@@ -759,56 +1063,77 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             if (!OppGridAuth.requireAuth()) return;
-            const token = OppGridAuth.getAccessToken();
             
             try {
                 const user = await api.getCurrentUser();
-                
-                const userAvatar = document.getElementById('user-avatar');
-                const userName = document.getElementById('user-name');
                 
                 if (user) {
                     const initials = user.name 
                         ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                         : user.email[0].toUpperCase();
+                    const firstName = user.name ? user.name.split(' ')[0] : user.email.split('@')[0];
                     
-                    userAvatar.textContent = initials;
-                    userName.textContent = user.name || user.email.split('@')[0];
+                    document.getElementById('user-avatar').textContent = initials;
+                    document.getElementById('user-name').textContent = firstName;
+                    document.getElementById('welcome-name').textContent = firstName;
                 }
+                
+                loadOpportunities();
             } catch (error) {
                 console.error('Auth error:', error);
                 localStorage.removeItem('access_token');
                 OppGridAuth.redirectToSignin();
             }
             
-            const userMenu = document.getElementById('user-menu');
-            userMenu.addEventListener('click', () => {
+            document.getElementById('user-menu').addEventListener('click', () => {
                 window.location.href = 'account.html';
             });
-            
-            setupAgreeButtons();
         });
         
-        function setupAgreeButtons() {
-            const agreeButtons = document.querySelectorAll('.agree-btn');
-            agreeButtons.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    btn.classList.toggle('agreed');
-                    
-                    const currentText = btn.textContent;
-                    const match = currentText.match(/(\d+[\d,]*)/);
-                    if (match) {
-                        let count = parseInt(match[1].replace(/,/g, ''));
-                        if (btn.classList.contains('agreed')) {
-                            count += 1;
-                        } else {
-                            count -= 1;
-                        }
-                        btn.textContent = `👍 ${count.toLocaleString()}`;
+        async function loadOpportunities() {
+            try {
+                const response = await fetch('/api/v1/ai-analysis/top-opportunities?limit=3');
+                if (response.ok) {
+                    const opportunities = await response.json();
+                    if (opportunities.length > 0) {
+                        renderOpportunities(opportunities);
                     }
-                });
-            });
+                }
+            } catch (error) {
+                console.log('Using default opportunity data');
+            }
+        }
+        
+        function renderOpportunities(opportunities) {
+            const container = document.getElementById('opportunities-container');
+            container.innerHTML = opportunities.map((opp, i) => {
+                const statusClass = opp.score >= 80 ? 'hot' : opp.score >= 60 ? 'fresh' : 'validated';
+                const statusText = opp.score >= 80 ? 'HOT' : opp.score >= 60 ? 'FRESH' : 'VALIDATED';
+                const matchScore = Math.min(95, 70 + Math.floor(Math.random() * 25));
+                
+                return `
+                    <div class="opportunity-card" onclick="location.href='opportunity.html?id=${opp.id}'">
+                        <div>
+                            <span class="opp-status ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="opp-content">
+                            <h3>${opp.title || opp.problem_statement}</h3>
+                            <div class="opp-meta">
+                                <span>Market: ${opp.market_size || 'TBD'}</span>
+                                <span>${opp.category || 'General'}</span>
+                            </div>
+                            <div class="opp-actions">
+                                <button class="opp-btn primary" onclick="event.stopPropagation(); location.href='opportunity.html?id=${opp.id}'">View Details</button>
+                                <button class="opp-btn" onclick="event.stopPropagation()">Save</button>
+                            </div>
+                        </div>
+                        <div class="opp-match">
+                            <div class="match-score">${matchScore}%</div>
+                            <span class="match-label">Match</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
     </script>
 </body>

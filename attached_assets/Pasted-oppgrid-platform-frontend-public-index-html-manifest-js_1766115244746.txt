@@ -1,0 +1,113 @@
+oppgrid-platform/
+├── frontend/
+│   ├── public/
+│   │   ├── index.html
+│   │   ├── manifest.json
+│   │   └── robots.txt
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── auth/
+│   │   │   │   ├── LoginModal.jsx
+│   │   │   │   ├── SignupModal.jsx
+│   │   │   │   ├── OAuthButtons.jsx
+│   │   │   │   └── GuestCheckout.jsx
+│   │   │   ├── payments/
+│   │   │   │   ├── PaymentModal.jsx
+│   │   │   │   ├── CartDrawer.jsx
+│   │   │   │   ├── SubscriptionModal.jsx
+│   │   │   │   ├── MicroPaymentModal.jsx
+│   │   │   │   └── SuccessFeeAgreement.jsx
+│   │   │   ├── opportunities/
+│   │   │   │   ├── OpportunityCard.jsx
+│   │   │   │   ├── OpportunityDetail.jsx
+│   │   │   │   ├── UnlockModal.jsx
+│   │   │   │   └── OpportunityFeed.jsx
+│   │   │   ├── services/
+│   │   │   │   ├── ServiceCard.jsx
+│   │   │   │   ├── ServiceDetail.jsx
+│   │   │   │   ├── ContentGenerator.jsx
+│   │   │   │   └── ServiceMarketplace.jsx
+│   │   │   ├── network/
+│   │   │   │   ├── UserProfile.jsx
+│   │   │   │   ├── NetworkFeed.jsx
+│   │   │   │   ├── ExpertDirectory.jsx
+│   │   │   │   └── CommunityForum.jsx
+│   │   │   ├── dashboard/
+│   │   │   │   ├── MainDashboard.jsx
+│   │   │   │   ├── ProgressTracker.jsx
+│   │   │   │   ├── AIRecommendations.jsx
+│   │   │   │   └── QuickActions.jsx
+│   │   │   └── layout/
+│   │   │       ├── Navigation.jsx
+│   │   │       ├── Footer.jsx
+│   │   │       └── Layout.jsx
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Discover.jsx
+│   │   │   ├── Services.jsx
+│   │   │   ├── Network.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Builder.jsx
+│   │   │   ├── Pricing.jsx
+│   │   │   └── Account.jsx
+│   │   ├── utils/
+│   │   │   ├── api.js
+│   │   │   ├── auth.js
+│   │   │   ├── payments.js
+│   │   │   └── constants.js
+│   │   ├── hooks/
+│   │   │   ├── useAuth.js
+│   │   │   ├── useCart.js
+│   │   │   └── useSubscription.js
+│   │   ├── store/
+│   │   │   ├── authStore.js
+│   │   │   ├── cartStore.js
+│   │   │   └── userStore.js
+│   │   ├── App.jsx
+│   │   ├── index.jsx
+│   │   └── routes.jsx
+│   └── package.json
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── database.js
+│   │   │   ├── stripe.js
+│   │   │   └── oauth.js
+│   │   ├── models/
+│   │   │   ├── User.js
+│   │   │   ├── Opportunity.js
+│   │   │   ├── Service.js
+│   │   │   ├── Transaction.js
+│   │   │   ├── Subscription.js
+│   │   │   └── Network.js
+│   │   ├── routes/
+│   │   │   ├── auth.js
+│   │   │   ├── opportunities.js
+│   │   │   ├── services.js
+│   │   │   ├── payments.js
+│   │   │   ├── subscriptions.js
+│   │   │   └── network.js
+│   │   ├── middleware/
+│   │   │   ├── auth.js
+│   │   │   ├── rateLimit.js
+│   │   │   └── validation.js
+│   │   ├── services/
+│   │   │   ├── stripeService.js
+│   │   │   ├── emailService.js
+│   │   │   ├── aiService.js
+│   │   │   └── notificationService.js
+│   │   ├── utils/
+│   │   │   ├── validators.js
+│   │   │   └── helpers.js
+│   │   └── index.js
+│   ├── package.json
+│   └── Dockerfile
+├── database/
+│   ├── schema.sql
+│   ├── seed.sql
+│   └── migrations/
+├── docs/
+│   ├── API.md
+│   ├── AUTH.md
+│   └── PAYMENTS.md
+└── docker-compose.yml

@@ -1,0 +1,41 @@
+6. Brain AI-Powered Opportunity Discovery:
+text
+BRAIN-ENHANCED OPPORTUNITY DISCOVERY
+┌─────────────────────────────────────────────────────┐
+│ 🔍 Discovering opportunities tailored to YOU       │
+│    Based on: Your skills, interests, & past projects│
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 🎯 YOUR PERSONALIZED FILTERS (AI-Suggested)       │ │
+│ • Match score: 85%+                               │ │
+│ • Industries: Healthcare, FinTech, SaaS           │ │
+│ • Capital required: $5k-50k                       │ │
+│ • Time commitment: 10-20 hrs/week                │ │
+│ • Your skills: React, Node.js, Marketing          │ │
+│ [Edit Preferences] [Let AI Adjust]                │ │
+│                                                     │
+│ 🧠 AI-ANALYZED OPPORTUNITIES                      │ │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ 🏥 Healthcare SaaS • Match: 94%                │ │
+│ │ "Your React skills are perfect for this..."    │ │
+│ │                                                 │ │
+│ │ 💰 FinTech App • Match: 88%                    │ │
+│ │ "Aligns with your interest in finance..."      │ │
+│ │                                                 │ │
+│ │ 🛍️ E-commerce Tool • Match: 76%               │ │
+│ │ "Your marketing background helps here..."      │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 📊 WHY THESE MATCH (AI Explanation)               │ │
+│ • You've researched healthcare 12 times           │ │
+│ • Your uploaded business plan shows B2B focus     │ │
+│ • Your stated goal: "Build scalable SaaS"         │ │
+│ • Your network includes healthcare founders       │ │
+│                                                     │
+│ 🔄 CONTINUOUS LEARNING                           │ │
+│ The more you interact, the better matches get.   │ │
+│ [👍 Like these matches] [👎 Not relevant]        │ │
+│ [💬 Tell AI what you're looking for]             │ │
+│                                                     │
+│ [View All Matches] [Save Search] [Share Profile]   │
+└─────────────────────────────────────────────────────┘

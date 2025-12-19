@@ -4,7 +4,8 @@ Pydantic schemas for admin operations
 
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
+from pydantic import Field
 
 
 class AdminUserListItem(BaseModel):
@@ -100,3 +101,103 @@ class AdminActivityLog(BaseModel):
     resource_type: str
     resource_id: int
     timestamp: datetime
+
+
+class AdminStripeWebhookEvent(BaseModel):
+    """Stripe webhook event processing record (idempotency + status)."""
+    stripe_event_id: str
+    event_type: str
+    livemode: bool
+    status: str
+    attempt_count: int
+    stripe_created_at: Optional[datetime] = None
+    received_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminStripeWebhookEventList(BaseModel):
+    items: List[AdminStripeWebhookEvent]
+    total: int
+
+
+class AdminPayPerUnlockAttempt(BaseModel):
+    """Pay-per-unlock attempt record (prevents concurrency limit bypass)."""
+    id: int
+    user_id: int
+    opportunity_id: int
+    attempt_date: date
+    status: str
+    stripe_payment_intent_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminPayPerUnlockAttemptList(BaseModel):
+    items: List[AdminPayPerUnlockAttempt]
+    total: int
+
+
+class AdminIdeaValidation(BaseModel):
+    """Persisted Idea Validation record (admin visibility)."""
+
+    id: int
+    user_id: int
+    title: str
+    category: str
+    status: str
+
+    stripe_payment_intent_id: Optional[str] = None
+    amount_cents: Optional[int] = None
+    currency: Optional[str] = None
+
+    opportunity_score: Optional[int] = None
+    validation_confidence: Optional[int] = None
+    summary: Optional[str] = None
+    # Included only when requested (see /admin/idea-validations?include_result=true)
+    result_json: Optional[str] = None
+    error_message: Optional[str] = None
+
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminIdeaValidationList(BaseModel):
+    items: List[AdminIdeaValidation]
+    total: int
+
+
+class AdminPartnerOutreachBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    category: Optional[str] = None
+    website_url: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_email: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AdminPartnerOutreachCreate(AdminPartnerOutreachBase):
+    name: str
+
+
+class AdminPartnerOutreachUpdate(AdminPartnerOutreachBase):
+    pass
+
+
+class AdminPartnerOutreach(AdminPartnerOutreachBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+

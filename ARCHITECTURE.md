@@ -38,8 +38,7 @@ Backend API (localhost:8000)
                          
 PostgreSQL Database
     │
-    ├── Supabase (cloud) OR
-    └── Local Docker container
+    └── Replit PostgreSQL (managed)
 
 ```
 
@@ -128,9 +127,9 @@ BACKEND_CORS_ORIGINS=["http://localhost:5500"]
 ## ✅ Checklist Before Starting
 
 - [ ] Python 3.8+ installed
-- [ ] Database configured (Supabase or Docker)
+- [ ] Replit PostgreSQL database enabled
 - [ ] backend/.env file created
-- [ ] DATABASE_URL set in .env
+- [ ] DATABASE_URL set in .env (or REPLIT_DB_URL)
 - [ ] SECRET_KEY set in .env
 - [ ] Dependencies installed (`pip install -r backend/requirements.txt`)
 
@@ -147,8 +146,8 @@ BACKEND_CORS_ORIGINS=["http://localhost:5500"]
 - Check CORS origins in backend/.env
 
 ### Database connection fails
-- For Supabase: Verify credentials and project is active
-- For Docker: Run `docker compose --profile local ps`
+- Verify REPLIT_DB_URL is set or DATABASE_URL points to valid PostgreSQL instance
+- For Replit: Ensure PostgreSQL is enabled in Tools → Database
 
 ## 📚 Next Steps
 

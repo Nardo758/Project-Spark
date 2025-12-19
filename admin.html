@@ -400,6 +400,48 @@
             color: var(--amber-600);
         }
 
+        /* Partner outreach statuses */
+        .badge-identified {
+            background: var(--stone-100);
+            color: var(--stone-600);
+        }
+
+        .badge-contacted {
+            background: var(--blue-100);
+            color: var(--blue-600);
+        }
+
+        .badge-in_talks {
+            background: var(--violet-100);
+            color: var(--violet-700);
+        }
+
+        .badge-paused {
+            background: var(--amber-100);
+            color: var(--amber-600);
+        }
+
+        .badge-rejected {
+            background: var(--red-100);
+            color: var(--red-600);
+        }
+
+        /* Job run statuses */
+        .badge-running {
+            background: var(--amber-100);
+            color: var(--amber-600);
+        }
+
+        .badge-succeeded {
+            background: var(--green-100);
+            color: var(--green-600);
+        }
+
+        .badge-failed {
+            background: var(--red-100);
+            color: var(--red-600);
+        }
+
         .action-btns {
             display: flex;
             gap: 8px;
@@ -642,6 +684,23 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#tracking" data-section="tracking">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 14l3-3 4 4 6-6"/>
+                        </svg>
+                        Tracking
+                    </a>
+                </li>
+                <li>
+                    <a href="#ops" data-section="ops">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V3m0 3a3 3 0 1 0 0 6m0-6a3 3 0 1 1 0 6m0 6v3m0-3a3 3 0 1 0 0-6m0 6a3 3 0 1 1 0-6M6 12H3m3 0a3 3 0 1 0 6 0m-6 0a3 3 0 1 1 6 0m12 0h-3m3 0a3 3 0 1 0-6 0m6 0a3 3 0 1 1-6 0"/>
+                        </svg>
+                        Ops
+                    </a>
+                </li>
+                <li>
                     <a href="#users" data-section="users">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         Users
@@ -657,6 +716,17 @@
                     <a href="#subscriptions" data-section="subscriptions">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                         Subscriptions
+                    </a>
+                </li>
+                <li>
+                    <a href="#partners" data-section="partners">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        Partners
                     </a>
                 </li>
                 <li>
@@ -698,6 +768,135 @@
                         <div class="stat-label">Banned Users</div>
                         <div class="stat-value" id="stat-banned">--</div>
                     </div>
+                </div>
+            </section>
+
+            <section id="section-tracking" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Tracking</h1>
+                    <p>Product analytics (best-effort pageview capture + event debugging)</p>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Summary</h2>
+                        <div class="section-actions">
+                            <select class="filter-select" id="tracking-days">
+                                <option value="1">Last 1 day</option>
+                                <option value="7" selected>Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                            </select>
+                            <button class="btn-sm btn-primary" onclick="loadTracking()">Refresh</button>
+                        </div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div class="stats-grid" style="margin-bottom: 0;">
+                            <div class="stat-card">
+                                <div class="stat-label">Total Events</div>
+                                <div class="stat-value" id="tracking-total">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Page Views</div>
+                                <div class="stat-value" id="tracking-pageviews">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Top Event</div>
+                                <div class="stat-value" id="tracking-top-event">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Top Path</div>
+                                <div class="stat-value" id="tracking-top-path">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Events</h2>
+                        <div class="section-actions">
+                            <select class="filter-select" id="tracking-event-filter">
+                                <option value="">All events</option>
+                                <option value="page_view">page_view</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Name</th>
+                                <th>Path</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tracking-events-body">
+                            <tr><td colspan="4" class="loading">Loading events...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="section-ops" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Ops</h1>
+                    <p>Background jobs and audit logs</p>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Job Runs</h2>
+                        <div class="section-actions">
+                            <input type="text" class="search-input" id="jobruns-name" placeholder="job name (e.g. escrow_release)">
+                            <select class="filter-select" id="jobruns-status">
+                                <option value="">All statuses</option>
+                                <option value="running">running</option>
+                                <option value="succeeded">succeeded</option>
+                                <option value="failed">failed</option>
+                            </select>
+                            <button class="btn-sm btn-primary" onclick="loadJobRuns()">Refresh</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Job</th>
+                                <th>Status</th>
+                                <th>Duration</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobruns-body">
+                            <tr><td colspan="5" class="loading">Loading job runs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Audit Logs</h2>
+                        <div class="section-actions">
+                            <input type="text" class="search-input" id="audit-action" placeholder="action (e.g. agreement.trigger_payout)">
+                            <input type="text" class="search-input" id="audit-resource-type" placeholder="resource_type (e.g. agreement)">
+                            <input type="text" class="search-input" id="audit-resource-id" placeholder="resource_id (e.g. 123)">
+                            <button class="btn-sm btn-primary" onclick="loadAuditLogs()">Refresh</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Actor</th>
+                                <th>Action</th>
+                                <th>Resource</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-body">
+                            <tr><td colspan="5" class="loading">Loading audit logs...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -799,6 +998,47 @@
                         </thead>
                         <tbody id="subscriptions-table-body">
                             <tr><td colspan="5" class="loading">Loading subscriptions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="section-partners" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Partner Outreach</h1>
+                    <p>Track integration/tool partners and outreach progress</p>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Partners</h2>
+                        <div class="section-actions">
+                            <input type="text" class="search-input" id="partner-search" placeholder="Search partners...">
+                            <select class="filter-select" id="partner-status-filter">
+                                <option value="">All statuses</option>
+                                <option value="identified">Identified</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="in_talks">In talks</option>
+                                <option value="active">Active</option>
+                                <option value="paused">Paused</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                            <button class="btn-sm btn-primary" onclick="showPartnerModal()">Add Partner</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Contact</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="partners-table-body">
+                            <tr><td colspan="6" class="loading">Loading partners...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -967,14 +1207,27 @@
             document.getElementById('opp-search').addEventListener('input', debounce(() => loadOpportunities(), 300));
             document.getElementById('sub-tier-filter').addEventListener('change', () => loadSubscriptions());
             document.getElementById('report-status-filter').addEventListener('change', () => loadReports());
+            document.getElementById('partner-search')?.addEventListener('input', debounce(() => loadPartners(), 300));
+            document.getElementById('partner-status-filter')?.addEventListener('change', () => loadPartners());
+            document.getElementById('tracking-event-filter')?.addEventListener('change', () => loadTrackingEvents());
+            document.getElementById('tracking-days')?.addEventListener('change', () => loadTracking());
+
+            document.getElementById('jobruns-name')?.addEventListener('input', debounce(() => loadJobRuns(), 300));
+            document.getElementById('jobruns-status')?.addEventListener('change', () => loadJobRuns());
+            document.getElementById('audit-action')?.addEventListener('input', debounce(() => loadAuditLogs(), 300));
+            document.getElementById('audit-resource-type')?.addEventListener('input', debounce(() => loadAuditLogs(), 300));
+            document.getElementById('audit-resource-id')?.addEventListener('input', debounce(() => loadAuditLogs(), 300));
         }
 
         function loadSection(section) {
             switch(section) {
                 case 'dashboard': loadDashboard(); break;
+                case 'tracking': loadTracking(); break;
+                case 'ops': loadOps(); break;
                 case 'users': loadUsers(); break;
                 case 'opportunities': loadOpportunities(); break;
                 case 'subscriptions': loadSubscriptions(); break;
+                case 'partners': loadPartners(); break;
                 case 'reports': loadReports(); break;
                 case 'scraper': break;
             }
@@ -991,6 +1244,157 @@
                 document.getElementById('stat-banned').textContent = stats.banned_users;
             } catch (error) {
                 console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        async function loadTracking() {
+            await Promise.all([loadTrackingSummary(), loadTrackingEvents()]);
+        }
+
+        async function loadOps() {
+            await Promise.all([loadJobRuns(), loadAuditLogs()]);
+        }
+
+        function _formatDurationMs(start, end) {
+            if (!start || !end) return '—';
+            const ms = new Date(end).getTime() - new Date(start).getTime();
+            if (!Number.isFinite(ms) || ms < 0) return '—';
+            if (ms < 1000) return `${ms}ms`;
+            const s = Math.round(ms / 1000);
+            if (s < 60) return `${s}s`;
+            const m = Math.floor(s / 60);
+            const r = s % 60;
+            return `${m}m ${r}s`;
+        }
+
+        async function loadJobRuns() {
+            const tbody = document.getElementById('jobruns-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading job runs...</td></tr>';
+
+            try {
+                let url = '/api/v1/admin/job-runs?limit=50';
+                const jobName = document.getElementById('jobruns-name')?.value?.trim();
+                const statusFilter = document.getElementById('jobruns-status')?.value;
+                if (jobName) url += `&job_name=${encodeURIComponent(jobName)}`;
+                if (statusFilter) url += `&status_filter=${encodeURIComponent(statusFilter)}`;
+
+                const response = await fetchWithAuth(url);
+                const data = await response.json();
+                const items = data.items || [];
+
+                tbody.innerHTML = '';
+                if (!items.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="loading">No job runs yet.</td></tr>';
+                    return;
+                }
+
+                items.forEach(r => {
+                    const status = (r.status || 'unknown').toLowerCase();
+                    const badgeClass = ['running', 'succeeded', 'failed'].includes(status) ? status : 'pending';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDateTime(r.started_at)}</td>
+                        <td><code>${escapeHtml(r.job_name || '')}</code></td>
+                        <td><span class="badge badge-${escapeHtml(badgeClass)}">${escapeHtml(status)}</span></td>
+                        <td>${escapeHtml(_formatDurationMs(r.started_at, r.finished_at))}</td>
+                        <td style="max-width: 520px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(r.error || '—')}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="loading">Failed to load job runs.</td></tr>';
+            }
+        }
+
+        async function loadAuditLogs() {
+            const tbody = document.getElementById('audit-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading audit logs...</td></tr>';
+
+            try {
+                let url = '/api/v1/admin/audit-logs?limit=50';
+                const action = document.getElementById('audit-action')?.value?.trim();
+                const rt = document.getElementById('audit-resource-type')?.value?.trim();
+                const rid = document.getElementById('audit-resource-id')?.value?.trim();
+                if (action) url += `&action=${encodeURIComponent(action)}`;
+                if (rt) url += `&resource_type=${encodeURIComponent(rt)}`;
+                if (rid) url += `&resource_id=${encodeURIComponent(rid)}`;
+
+                const response = await fetchWithAuth(url);
+                const data = await response.json();
+                const items = data.items || [];
+
+                tbody.innerHTML = '';
+                if (!items.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="loading">No audit logs yet.</td></tr>';
+                    return;
+                }
+
+                items.forEach(a => {
+                    const actor = a.actor_user_id ? `#${a.actor_user_id} (${a.actor_type || 'user'})` : (a.actor_type || 'system');
+                    const resource = a.resource_type ? `${a.resource_type}${a.resource_id ? `#${a.resource_id}` : ''}` : '—';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDateTime(a.created_at)}</td>
+                        <td>${escapeHtml(actor)}</td>
+                        <td><code>${escapeHtml(a.action || '')}</code></td>
+                        <td>${escapeHtml(resource)}</td>
+                        <td>${escapeHtml(a.ip_address || '—')}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="loading">Failed to load audit logs.</td></tr>';
+            }
+        }
+
+        async function loadTrackingSummary() {
+            try {
+                const days = document.getElementById('tracking-days')?.value || '7';
+                const response = await fetchWithAuth(`/api/v1/admin/tracking/summary?days=${encodeURIComponent(days)}`);
+                const data = await response.json();
+
+                document.getElementById('tracking-total').textContent = data.total_events ?? '--';
+                document.getElementById('tracking-pageviews').textContent = data.page_views ?? '--';
+                document.getElementById('tracking-top-event').textContent = (data.top_events && data.top_events[0]) ? data.top_events[0].name : '--';
+                document.getElementById('tracking-top-path').textContent = (data.top_paths && data.top_paths[0]) ? data.top_paths[0].path : '--';
+            } catch (e) {
+                console.error('Failed to load tracking summary', e);
+            }
+        }
+
+        async function loadTrackingEvents() {
+            const tbody = document.getElementById('tracking-events-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="4" class="loading">Loading events...</td></tr>';
+
+            try {
+                const name = document.getElementById('tracking-event-filter')?.value || '';
+                const url = name
+                    ? `/api/v1/admin/tracking/events?limit=50&name=${encodeURIComponent(name)}`
+                    : '/api/v1/admin/tracking/events?limit=50';
+                const response = await fetchWithAuth(url);
+                const data = await response.json();
+                const items = data.items || [];
+
+                tbody.innerHTML = '';
+                if (!items.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="loading">No events yet.</td></tr>';
+                    return;
+                }
+                items.forEach(ev => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDate(ev.created_at)}</td>
+                        <td><code>${escapeHtml(ev.name || '')}</code></td>
+                        <td>${escapeHtml(ev.path || '—')}</td>
+                        <td>${ev.user_id ? `#${ev.user_id}` : '—'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" class="loading">Failed to load events.</td></tr>';
             }
         }
 
@@ -1309,6 +1713,177 @@
             }
         }
 
+        async function loadPartners() {
+            const tbody = document.getElementById('partners-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading partners...</td></tr>';
+
+            try {
+                window._partnersById = window._partnersById || {};
+                let url = '/api/v1/admin/partners?limit=50';
+                const search = document.getElementById('partner-search')?.value?.trim();
+                const statusFilter = document.getElementById('partner-status-filter')?.value;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (statusFilter) url += `&status_filter=${encodeURIComponent(statusFilter)}`;
+
+                const response = await fetchWithAuth(url);
+                const partners = await response.json();
+                tbody.innerHTML = '';
+                window._partnersById = {};
+                (partners || []).forEach(p => { if (p && p.id != null) window._partnersById[p.id] = p; });
+
+                if (!partners || partners.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="loading">No partners yet.</td></tr>';
+                    return;
+                }
+
+                partners.forEach(p => {
+                    const contact = [p.contact_name, p.contact_email].filter(Boolean).join(' • ') || '—';
+                    const website = p.website_url ? `<a href="${escapeHtml(p.website_url)}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:none;">Website</a>` : '';
+                    const nameCell = `${escapeHtml(p.name)} ${website ? `<div style="font-size:12px;color:#78716c;margin-top:4px;">${website}</div>` : ''}`;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${nameCell}</td>
+                        <td>${escapeHtml(p.category || '—')}</td>
+                        <td><span class="badge badge-${escapeHtml(p.status || 'identified')}">${escapeHtml(p.status || 'identified')}</span></td>
+                        <td>${escapeHtml(contact)}</td>
+                        <td>${formatDate(p.created_at)}</td>
+                        <td>
+                            <button class="btn-sm btn-secondary" onclick="showPartnerEditModal(${p.id})">Edit</button>
+                            <button class="btn-sm btn-danger" onclick="deletePartner(${p.id})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">Failed to load partners.</td></tr>';
+            }
+        }
+
+        function showPartnerEditModal(id) {
+            const p = (window._partnersById || {})[id];
+            if (!p) {
+                showToast('Partner not found in list. Refreshing...', 'error');
+                loadPartners();
+                return;
+            }
+            showPartnerModal(
+                p.id,
+                p.name || '',
+                p.category || '',
+                p.website_url || '',
+                p.contact_name || '',
+                p.contact_email || '',
+                p.status || 'identified',
+                p.notes || ''
+            );
+        }
+
+        function showPartnerModal(id = null, name = '', category = '', website_url = '', contact_name = '', contact_email = '', status = 'identified', notes = '') {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>${id ? 'Edit Partner' : 'Add Partner'}</h3>
+                        <button class="modal-close" onclick="closeModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="partner-name">Name</label>
+                            <input id="partner-name" value="${escapeAttr(name)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-category">Category</label>
+                            <input id="partner-category" value="${escapeAttr(category)}" placeholder="e.g. payments, analytics, CRM" />
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-website">Website URL</label>
+                            <input id="partner-website" value="${escapeAttr(website_url)}" placeholder="https://..." />
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-contact-name">Contact name</label>
+                            <input id="partner-contact-name" value="${escapeAttr(contact_name)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-contact-email">Contact email</label>
+                            <input id="partner-contact-email" value="${escapeAttr(contact_email)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-status">Status</label>
+                            <select id="partner-status">
+                                <option value="identified" ${status === 'identified' ? 'selected' : ''}>Identified</option>
+                                <option value="contacted" ${status === 'contacted' ? 'selected' : ''}>Contacted</option>
+                                <option value="in_talks" ${status === 'in_talks' ? 'selected' : ''}>In talks</option>
+                                <option value="active" ${status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="paused" ${status === 'paused' ? 'selected' : ''}>Paused</option>
+                                <option value="rejected" ${status === 'rejected' ? 'selected' : ''}>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="partner-notes">Notes</label>
+                            <textarea id="partner-notes" rows="4" placeholder="Outreach notes, dates, next step...">${escapeHtml(notes)}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-sm btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button class="btn-sm btn-primary" onclick="savePartner(${id || 'null'})">${id ? 'Save changes' : 'Add partner'}</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').appendChild(modal);
+        }
+
+        async function savePartner(id) {
+            const payload = {
+                name: document.getElementById('partner-name').value.trim(),
+                category: document.getElementById('partner-category').value.trim() || null,
+                website_url: document.getElementById('partner-website').value.trim() || null,
+                contact_name: document.getElementById('partner-contact-name').value.trim() || null,
+                contact_email: document.getElementById('partner-contact-email').value.trim() || null,
+                status: document.getElementById('partner-status').value,
+                notes: document.getElementById('partner-notes').value.trim() || null,
+            };
+
+            if (!payload.name) {
+                showToast('Partner name is required', 'error');
+                return;
+            }
+
+            try {
+                if (id) {
+                    await fetchWithAuth(`/api/v1/admin/partners/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('Partner updated', 'success');
+                } else {
+                    await fetchWithAuth('/api/v1/admin/partners', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('Partner added', 'success');
+                }
+                closeModal();
+                loadPartners();
+            } catch (error) {
+                showToast('Failed to save partner', 'error');
+            }
+        }
+
+        async function deletePartner(id) {
+            if (!confirm('Delete this partner entry?')) return;
+            try {
+                await fetchWithAuth(`/api/v1/admin/partners/${id}`, { method: 'DELETE' });
+                showToast('Partner deleted', 'success');
+                loadPartners();
+            } catch (error) {
+                showToast('Failed to delete partner', 'error');
+            }
+        }
+
         async function resolveReport(reportId) {
             try {
                 await fetchWithAuth(`/api/v1/moderation/reports/${reportId}/resolve`, {
@@ -1376,10 +1951,25 @@
             });
         }
 
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         function debounce(func, wait) {
@@ -1389,6 +1979,7 @@
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
         }
+
 
         async function analyzeScraperData() {
             const fileInput = document.getElementById('scraper-file');

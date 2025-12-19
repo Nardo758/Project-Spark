@@ -146,6 +146,8 @@ class AIEngineService:
         if not opp:
             raise ValueError("Opportunity not found")
 
+        profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+
         next_steps = loads_json(opp.ai_next_steps, default=[])
         key_risks = loads_json(opp.ai_key_risks, default=[])
 
@@ -158,27 +160,63 @@ class AIEngineService:
         milestones: List[dict] = []
         if next_steps:
             for i, step in enumerate(next_steps[:8], start=1):
+                # Provide lightweight deliverables + hours so UI can render richer cards.
+                deliverables = []
+                if isinstance(step, str) and ":" in step:
+                    # Split "Do X: deliverable1, deliverable2" style steps.
+                    parts = [p.strip() for p in step.split(":", 1)]
+                    if len(parts) == 2 and parts[1]:
+                        deliverables = [x.strip() for x in parts[1].split(",") if x.strip()][:6]
+
+                hours_per_week = 10
+                if profile and profile.time_commitment_hours_per_week:
+                    hours_per_week = int(profile.time_commitment_hours_per_week)
+                est_hours = max(2, min(60, hours_per_week))
+
                 milestones.append(
                     {
                         "week": max(1, int(round(i * (timeline_weeks / max(1, min(8, len(next_steps))))))),
                         "title": f"Step {i}",
                         "description": str(step),
+                        "deliverables": deliverables,
+                        "estimated_hours": est_hours,
                     }
                 )
         else:
+            hours_per_week = 10
+            if profile and profile.time_commitment_hours_per_week:
+                hours_per_week = int(profile.time_commitment_hours_per_week)
+            est_hours = max(2, min(60, hours_per_week))
+
             milestones = [
-                {"week": 1, "title": "Problem validation", "description": "Interview target users and validate pain intensity."},
-                {"week": 2, "title": "Solution outline", "description": "Define MVP scope, success metrics, and constraints."},
-                {"week": 4, "title": "MVP build", "description": "Build the smallest testable product increment."},
-                {"week": 6, "title": "Pilot launch", "description": "Run a small pilot and measure retention + willingness to pay."},
-                {"week": 8, "title": "Iterate + scale", "description": "Fix top issues, improve onboarding, expand acquisition."},
+                {"week": 1, "title": "Problem validation", "description": "Interview target users and validate pain intensity.", "deliverables": ["10-20 interviews", "pain score notes", "ICP draft"], "estimated_hours": est_hours},
+                {"week": 2, "title": "Solution outline", "description": "Define MVP scope, success metrics, and constraints.", "deliverables": ["MVP scope", "success metrics", "user stories"], "estimated_hours": est_hours},
+                {"week": 4, "title": "MVP build", "description": "Build the smallest testable product increment.", "deliverables": ["prototype", "onboarding", "tracking"], "estimated_hours": est_hours},
+                {"week": 6, "title": "Pilot launch", "description": "Run a small pilot and measure retention + willingness to pay.", "deliverables": ["pilot cohort", "pricing test", "retention metric"], "estimated_hours": est_hours},
+                {"week": 8, "title": "Iterate + scale", "description": "Fix top issues, improve onboarding, expand acquisition.", "deliverables": ["top fixes", "acquisition channel", "next sprint plan"], "estimated_hours": est_hours},
             ]
+
+        # Estimate capital required (very rough, meant for planning not precision).
+        # If the user has declared capital, we still estimate independently (not a constraint).
+        capital_dollars = int(round((timeline_weeks * 1000) + max(0, (severity - 3) * 1500) + max(0, (70 - feasibility) * 75)))
+        capital_dollars = max(1000, min(50000, capital_dollars))
+
+        # Success probability: blend feasibility + validation_count + (optional) ai score.
+        validations = opp.validation_count or 0
+        validation_signal = min(15, int(validations / 5))
+        ai_score = opp.ai_opportunity_score if opp.ai_opportunity_score is not None else feasibility
+        success_probability = _clamp_int((0.55 * ai_score) + (0.25 * feasibility) + (validation_signal * 1.5), 5, 95)
+
+        llm_enhanced = bool(opp.ai_opportunity_score is not None or next_steps or key_risks)
 
         return {
             "opportunity_id": opportunity_id,
             "timeline_weeks": int(timeline_weeks),
             "milestones": milestones,
             "risks": [str(r) for r in key_risks][:8],
+            "llm_enhanced": llm_enhanced,
+            "success_probability": int(success_probability),
+            "capital_estimate_cents": int(capital_dollars * 100),
             "assumptions": {"severity": severity, "feasibility_score": feasibility},
         }
 

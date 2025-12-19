@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Match Analysis - OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5e4; --stone-300: #d6d3d1;
+            --stone-400: #a8a29e; --stone-500: #78716c; --stone-600: #57534e; --stone-700: #44403c;
+            --stone-800: #292524; --stone-900: #1c1917;
+            --green-100: #dcfce7; --green-500: #22c55e; --green-600: #16a34a;
+            --amber-100: #fef3c7; --amber-500: #f59e0b;
+            --red-100: #fee2e2; --red-500: #ef4444;
+            --violet-100: #ede9fe; --violet-600: #7c3aed;
+            --white: #ffffff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); min-height: 100vh; }
+        nav { background: var(--white); border-bottom: 1px solid var(--stone-200); padding: 16px 32px; }
+        .nav-content { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight: 700; font-size: 1.25rem; }
+        .container { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+        h1 { font-family: 'Spectral', serif; font-size: 2rem; margin-bottom: 8px; }
+        .subtitle { color: var(--stone-500); margin-bottom: 32px; }
+        .match-card { background: var(--white); border-radius: 16px; padding: 32px; margin-bottom: 24px; border: 1px solid var(--stone-200); }
+        .match-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .opp-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 4px; }
+        .opp-category { font-size: 0.875rem; color: var(--stone-500); }
+        .score-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-circle.high { background: var(--green-100); color: var(--green-600); }
+        .score-circle.medium { background: var(--amber-100); color: var(--amber-500); }
+        .score-circle.low { background: var(--red-100); color: var(--red-500); }
+        .score-value { font-size: 2rem; font-weight: 700; }
+        .score-label { font-size: 0.75rem; font-weight: 500; }
+        .section-title { font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .section-content { margin-bottom: 24px; }
+        .gap-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .gap-tag { padding: 8px 16px; background: var(--amber-100); border-radius: 20px; font-size: 0.875rem; color: var(--amber-500); }
+        .insight { padding: 16px; background: var(--violet-100); border-radius: 12px; margin-bottom: 12px; }
+        .insight p { color: var(--violet-600); font-size: 0.9rem; }
+        .action-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--stone-100); }
+        .action-item:last-child { border-bottom: none; }
+        .action-number { width: 24px; height: 24px; background: var(--stone-800); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
+        .experts-section { margin-top: 24px; }
+        .expert-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; background: var(--stone-100); border-radius: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+        .expert-left { display: flex; align-items: center; gap: 16px; min-width: 240px; flex: 1; }
+        .expert-avatar { width: 48px; height: 48px; background: var(--stone-300); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--stone-600); }
+        .expert-info h4 { font-weight: 600; margin-bottom: 2px; }
+        .expert-info p { font-size: 0.875rem; color: var(--stone-500); }
+        .expert-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-sm { padding: 10px 14px; border-radius: 10px; font-size: 0.9rem; }
+        .btn-pilot { background: var(--violet-100); color: var(--violet-600); border: 1px solid var(--violet-100); }
+        .btn-pilot:hover { filter: brightness(0.98); }
+        .btn { padding: 12px 24px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; display: inline-block; }
+        .btn-primary { background: var(--stone-800); color: var(--white); }
+        .btn-primary:hover { background: var(--stone-900); }
+        .btn-secondary { background: var(--white); color: var(--stone-700); border: 1px solid var(--stone-300); }
+        .btn-secondary:hover { background: var(--stone-100); }
+        .llm-badge { font-size: 0.75rem; padding: 4px 8px; background: var(--violet-100); color: var(--violet-600); border-radius: 4px; font-weight: 500; }
+        .action-buttons { display: flex; gap: 12px; margin-top: 24px; }
+        .loading { text-align: center; padding: 48px; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--stone-200); border-top-color: var(--stone-800); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .confidence { font-size: 0.875rem; color: var(--stone-500); margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">OppGrid</a>
+            <a href="discover.html" class="btn btn-secondary">Browse Opportunities</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>AI Match Analysis</h1>
+        <p class="subtitle">See how well this opportunity fits your profile</p>
+
+        <div id="missing-context" class="match-card" style="display: none;">
+            <h2 style="margin-bottom: 8px;">Choose an opportunity to analyze</h2>
+            <p class="subtitle" style="margin-bottom: 16px;">
+                AI Match needs an opportunity ID. Paste one below, or browse opportunities to pick one.
+            </p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                <input id="opportunity-id-input" type="number" inputmode="numeric" min="1"
+                       placeholder="Opportunity ID (e.g. 123)"
+                       style="flex: 1; min-width: 220px; padding: 12px 16px; border: 1px solid var(--stone-300); border-radius: 8px; font-size: 1rem;">
+                <button class="btn btn-primary" onclick="goToMatchWithId()">Analyze</button>
+                <a href="discover.html" class="btn btn-secondary">Browse Opportunities</a>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Analyzing opportunity match...</p>
+        </div>
+
+        <div id="match-content" style="display: none;">
+            <div class="match-card">
+                <div class="match-header">
+                    <div>
+                        <h2 class="opp-title" id="opp-title">Loading...</h2>
+                        <p class="opp-category" id="opp-category"></p>
+                    </div>
+                    <div class="score-circle" id="score-circle">
+                        <span class="score-value" id="score-value">--</span>
+                        <span class="score-label">FIT SCORE</span>
+                    </div>
+                </div>
+
+                <p class="confidence" id="confidence-text"></p>
+
+                <div class="section-content">
+                    <h3 class="section-title">
+                        Skill Gaps
+                        <span class="llm-badge" id="llm-badge" style="display: none;">AI Enhanced</span>
+                    </h3>
+                    <div class="gap-list" id="gaps-container">
+                        <p style="color: var(--stone-500);">Analyzing your skills...</p>
+                    </div>
+                </div>
+
+                <div class="section-content" id="insights-section" style="display: none;">
+                    <h3 class="section-title">AI Insights</h3>
+                    <div id="insights-container"></div>
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Recommended Next Steps</h3>
+                    <div id="actions-container"></div>
+                </div>
+
+                <div class="experts-section" id="experts-section">
+                    <h3 class="section-title">Recommended Experts</h3>
+                    <div id="experts-container"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="#" id="roadmap-btn" class="btn btn-primary">Generate Roadmap</a>
+                    <a href="#" id="validate-btn" class="btn btn-secondary">Validate Opportunity</a>
+                    <a href="#" id="browse-experts-btn" class="btn btn-secondary">Browse Experts</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const opportunityId = urlParams.get('id');
+
+        function getAuthToken() {
+            return localStorage.getItem('access_token') || localStorage.getItem('token');
+        }
+
+        function goToMatchWithId() {
+            const raw = (document.getElementById('opportunity-id-input')?.value || '').trim();
+            const id = Number(raw);
+            if (!Number.isFinite(id) || id <= 0) {
+                alert('Please enter a valid opportunity ID.');
+                return;
+            }
+            window.location.href = `ai-match.html?id=${encodeURIComponent(String(id))}`;
+        }
+
+        if (!opportunityId) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('missing-context').style.display = 'block';
+        }
+
+        async function loadMatchAnalysis() {
+            const token = getAuthToken();
+            if (!token) {
+                alert('Please sign in first');
+                window.location.href = 'signin.html';
+                return;
+            }
+
+            try {
+                const [oppResponse, matchResponse] = await Promise.all([
+                    fetch(`${API_BASE_URL}/opportunities/${opportunityId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch(`${API_BASE_URL}/ai-engine/match`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ opportunity_id: parseInt(opportunityId) })
+                    })
+                ]);
+
+                if (!oppResponse.ok || !matchResponse.ok) {
+                    throw new Error('Failed to load data');
+                }
+
+                const opportunity = await oppResponse.json();
+                const matchData = await matchResponse.json();
+
+                renderMatch(opportunity, matchData);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').innerHTML = '<p style="color: var(--red-500);">Failed to load match analysis. Please try again.</p>';
+            }
+        }
+
+        function renderMatch(opportunity, matchData) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('match-content').style.display = 'block';
+
+            document.getElementById('opp-title').textContent = opportunity.title;
+            document.getElementById('opp-category').textContent = opportunity.category || 'General';
+
+            const score = matchData.fit_score || 50;
+            document.getElementById('score-value').textContent = score;
+            
+            const scoreCircle = document.getElementById('score-circle');
+            scoreCircle.classList.remove('high', 'medium', 'low');
+            if (score >= 70) scoreCircle.classList.add('high');
+            else if (score >= 40) scoreCircle.classList.add('medium');
+            else scoreCircle.classList.add('low');
+
+            if (matchData.confidence !== undefined && matchData.confidence !== null) {
+                // Backend may return confidence as 0-100 (int) or 0-1 (float); normalize to percent.
+                let c = Number(matchData.confidence);
+                if (Number.isFinite(c)) {
+                    if (c <= 1) c = c * 100;
+                    c = Math.max(0, Math.min(100, Math.round(c)));
+                    document.getElementById('confidence-text').textContent = `Confidence: ${c}%`;
+                }
+            }
+
+            if (matchData.llm_enhanced) {
+                document.getElementById('llm-badge').style.display = 'inline';
+            }
+
+            const gapsContainer = document.getElementById('gaps-container');
+            const gaps = matchData.gaps || [];
+            if (gaps.length > 0) {
+                gapsContainer.innerHTML = gaps.map(gap => 
+                    `<span class="gap-tag">${gap}</span>`
+                ).join('');
+            } else {
+                gapsContainer.innerHTML = '<p style="color: var(--green-600);">No significant skill gaps detected!</p>';
+            }
+
+            const insights = matchData.insights || [];
+            if (insights.length > 0) {
+                document.getElementById('insights-section').style.display = 'block';
+                document.getElementById('insights-container').innerHTML = insights.map(insight =>
+                    `<div class="insight"><p>${insight}</p></div>`
+                ).join('');
+            }
+
+            const actions = matchData.recommended_actions || matchData.next_steps || [];
+            document.getElementById('actions-container').innerHTML = actions.map((action, i) =>
+                `<div class="action-item">
+                    <span class="action-number">${i + 1}</span>
+                    <p>${action}</p>
+                </div>`
+            ).join('');
+
+            const experts = matchData.recommended_experts || [];
+            if (experts.length > 0) {
+                document.getElementById('experts-container').innerHTML = experts.slice(0, 3).map(expert => {
+                    const expertId = expert.expert_id ?? expert.id;
+                    const display = expert.headline || expert.pricing_model || 'Expert Consultant';
+                    const pilotHref = `success-pilot.html?expert_id=${encodeURIComponent(String(expertId))}&opportunity_id=${encodeURIComponent(String(opportunityId))}&agreement_type=success_fee&trigger_type=first_revenue`;
+                    const checkoutHref = `expert-checkout.html?id=${encodeURIComponent(String(expertId))}`;
+                    return `<div class="expert-card">
+                        <div class="expert-left">
+                            <div class="expert-avatar">${expert.name ? expert.name.charAt(0) : 'E'}</div>
+                            <div class="expert-info">
+                                <h4>${expert.name || 'Expert'}</h4>
+                                <p>${display}</p>
+                            </div>
+                        </div>
+                        <div class="expert-actions">
+                            <a class="btn btn-secondary btn-sm" href="${checkoutHref}">Get Quote</a>
+                            <a class="btn btn-pilot btn-sm" href="${pilotHref}">Start Success-Based</a>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                document.getElementById('experts-section').style.display = 'none';
+            }
+
+            document.getElementById('roadmap-btn').href = `ai-roadmap.html?id=${opportunityId}`;
+            document.getElementById('validate-btn').href = `ai-validate.html?id=${opportunityId}`;
+            document.getElementById('browse-experts-btn').href = `expert-marketplace.html?opportunity_id=${encodeURIComponent(String(opportunityId))}`;
+        }
+
+        if (opportunityId) loadMatchAnalysis();
+    </script>
+</body>
+</html>

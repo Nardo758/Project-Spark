@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn · OppGrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-500: #78716c;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --stone-900: #1c1917;
+      --violet-100: #ede9fe;
+      --violet-600: #7c3aed;
+      --white: #ffffff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); line-height: 1.6; }
+
+    nav { background: var(--white); border-bottom: 1px solid var(--stone-200); }
+    .nav-content { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+    .logo { display:flex; align-items:center; gap:8px; text-decoration:none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight:700; }
+    .nav-links { display:flex; gap: 18px; flex-wrap: wrap; }
+    .nav-link { color: var(--stone-700); text-decoration:none; font-size: 14px; font-weight: 600; }
+    .nav-link:hover { text-decoration: underline; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+    h1 { font-family: 'Spectral', serif; font-size: 2.25rem; margin-bottom: 8px; }
+    .subtitle { color: var(--stone-500); margin-bottom: 24px; }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--stone-200);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 16px;
+    }
+
+    h2 { font-family: 'Spectral', serif; font-size: 1.5rem; margin-bottom: 10px; }
+    h3 { font-size: 1.05rem; margin: 16px 0 8px; }
+    p { color: var(--stone-700); }
+
+    .pill {
+      display:inline-block;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--violet-100);
+      color: var(--violet-600);
+      font-weight: 700;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    ul { margin: 10px 0 0 20px; }
+    li { margin: 6px 0; color: var(--stone-700); }
+
+    .template {
+      margin-top: 12px;
+      background: #0b0b0b;
+      color: #f5f5f4;
+      border-radius: 12px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .row { display:flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .btn {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--stone-300);
+      background: var(--white);
+      color: var(--stone-900);
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration:none;
+      font-size: 14px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn:hover { filter: brightness(0.98); }
+
+    .notice {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--stone-500);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="logo">OppGrid</a>
+      <div class="nav-links">
+        <a class="nav-link" href="discover.html">Browse</a>
+        <a class="nav-link" href="pricing.html">Pricing</a>
+        <a class="nav-link" href="#success-based">Success-Based Pilot</a>
+        <a class="nav-link" href="#equity-models">Equity templates</a>
+        <a class="nav-link" href="#resources">Resources</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Learn</h1>
+    <p class="subtitle">Practical playbooks, templates, and “what happens next” guidance. Phase 1 focuses on success-based alignment + better onboarding.</p>
+
+    <div class="card" id="success-based">
+      <div class="row">
+        <div>
+          <h2 style="margin-bottom: 2px;">Success-Based Pilot <span class="pill">Pilot</span></h2>
+          <p>Instead of paying monthly, you can structure an engagement where payouts happen only after outcomes (revenue, milestones, or agreed triggers).</p>
+        </div>
+        <div class="row">
+          <a class="btn" href="expert-marketplace.html">Find expert help</a>
+          <a class="btn btn-primary" href="success-pilot.html?agreement_type=success_fee&trigger_type=first_revenue">Create agreement</a>
+        </div>
+      </div>
+
+      <h3>How it works</h3>
+      <ul>
+        <li><b>Choose an outcome trigger</b>: first revenue, revenue threshold, milestone completion, or custom terms.</li>
+        <li><b>Agree on a fee model</b>: success fee (one-time), revenue share (ongoing), or milestone-based.</li>
+        <li><b>Track outcomes</b>: record revenue/milestones and trigger payouts once conditions are met.</li>
+      </ul>
+
+      <p class="notice"><b>Important:</b> Templates below are for product scaffolding only and are not legal advice. Use counsel for anything binding.</p>
+
+      <h3>Template: Success Fee (one-time)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">Good for “pay when it works.”</div>
+        <button class="btn" onclick="copyTemplate('tpl-success-fee')">Copy</button>
+      </div>
+      <div class="template" id="tpl-success-fee">SUCCESS FEE AGREEMENT (TEMPLATE)
+
+Parties:
+- Client: {{CLIENT_NAME}}
+- Expert: {{EXPERT_NAME}}
+- Project: {{PROJECT_NAME}}
+
+Term:
+- Start date: {{START_DATE}}
+- Optional expiration: {{EXPIRY_DATE}}
+
+Success Trigger:
+- Trigger type: First Revenue OR Revenue Threshold
+- Threshold (if applicable): {{REVENUE_THRESHOLD_USD}}
+
+Fee:
+- Success fee: {{FEE_PERCENT}}% of tracked revenue (cap: {{FEE_CAP_USD}}) OR fixed success fee {{FIXED_FEE_USD}}
+
+Payout Splits (example):
+- Expert share: 70%
+- Platform fee: 10%
+- Escrow holdback: 20% (released after {{ESCROW_DAYS}} days)
+
+Notes:
+- Define what “revenue” means (gross vs net; refunds; chargebacks).
+- Define reporting cadence and what evidence is required.
+</div>
+
+      <h3>Template: Revenue Share (ongoing)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">Good for ongoing alignment.</div>
+        <button class="btn" onclick="copyTemplate('tpl-rev-share')">Copy</button>
+      </div>
+      <div class="template" id="tpl-rev-share">REVENUE SHARE AGREEMENT (TEMPLATE)
+
+Parties:
+- Client: {{CLIENT_NAME}}
+- Expert: {{EXPERT_NAME}}
+- Product: {{PRODUCT_NAME}}
+
+Revenue Definition:
+- Revenue basis: {{GROSS_OR_NET}}
+- Exclusions: refunds, chargebacks, taxes (as agreed)
+
+Share:
+- Revenue share: {{REV_SHARE_PERCENT}}% of tracked revenue
+- Duration: {{DURATION_MONTHS}} months OR until {{CAP_USD}} cap is reached
+
+Reporting:
+- Cadence: monthly
+- Evidence: Stripe exports / invoices / bank statements (as agreed)
+
+Termination:
+- Conditions: {{TERMINATION_CONDITIONS}}
+</div>
+
+      <h3>Template: Milestone-Based</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">Good for clear deliverables and phased risk.</div>
+        <button class="btn" onclick="copyTemplate('tpl-milestone')">Copy</button>
+      </div>
+      <div class="template" id="tpl-milestone">MILESTONE AGREEMENT (TEMPLATE)
+
+Parties:
+- Client: {{CLIENT_NAME}}
+- Expert: {{EXPERT_NAME}}
+
+Milestones:
+1) {{M1_TITLE}} — Due {{M1_DATE}} — Payment {{M1_USD}}
+2) {{M2_TITLE}} — Due {{M2_DATE}} — Payment {{M2_USD}}
+3) {{M3_TITLE}} — Due {{M3_DATE}} — Payment {{M3_USD}}
+
+Acceptance:
+- Review period: {{REVIEW_DAYS}} days after submission
+- Acceptance criteria: {{ACCEPTANCE_CRITERIA}}
+
+Change control:
+- Any scope changes must be written and agreed.
+</div>
+    </div>
+
+    <div class="card" id="equity-models">
+      <h2>Equity-model templates <span class="pill">Template</span></h2>
+      <p>These are starting points for equity/SAFE/advisory arrangements. Use counsel for anything binding.</p>
+
+      <h3>Template: Advisor equity (time-based)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">Typical for recurring advisory calls.</div>
+        <button class="btn" onclick="copyTemplate('tpl-advisor-equity')">Copy</button>
+      </div>
+      <div class="template" id="tpl-advisor-equity">ADVISOR EQUITY AGREEMENT (TEMPLATE)
+
+Parties:
+- Company: {{COMPANY_NAME}}
+- Advisor: {{ADVISOR_NAME}}
+
+Scope:
+- Advisory services: {{SCOPE}}
+- Cadence: {{CADENCE}} (e.g., 2 calls/month + async review)
+
+Equity:
+- Type: Advisory equity grant OR option
+- Amount: {{EQUITY_PERCENT}}% fully diluted (or {{SHARES}} shares)
+- Vesting: {{VESTING_MONTHS}} months, with {{CLIFF_MONTHS}}-month cliff
+- Termination: unvested portion returns to the company
+
+Confidentiality / IP / conflicts:
+- Advisor agrees to confidentiality obligations
+- Define IP assignment rules for any deliverables
+- Disclose conflicts of interest
+
+Notes:
+- Clarify whether equity is diluted, and what happens on financing.
+</div>
+
+      <h3>Template: Equity for services (project-based)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">Typical when you exchange deliverables for equity.</div>
+        <button class="btn" onclick="copyTemplate('tpl-equity-for-services')">Copy</button>
+      </div>
+      <div class="template" id="tpl-equity-for-services">EQUITY FOR SERVICES AGREEMENT (TEMPLATE)
+
+Parties:
+- Company: {{COMPANY_NAME}}
+- Provider: {{PROVIDER_NAME}}
+
+Services:
+- Deliverables: {{DELIVERABLES}}
+- Acceptance criteria: {{ACCEPTANCE_CRITERIA}}
+- Timeline: {{TIMELINE}}
+
+Consideration:
+- Equity: {{EQUITY_PERCENT}}% fully diluted (or {{SHARES}} shares) in exchange for services
+- Vesting: milestone-based OR time-based vesting
+
+Milestones (if milestone-based):
+1) {{M1}} → {{EQUITY_TRANCHE_1}}%
+2) {{M2}} → {{EQUITY_TRANCHE_2}}%
+3) {{M3}} → {{EQUITY_TRANCHE_3}}%
+
+IP / assignment:
+- Provider assigns IP created under this agreement to the company upon payment/vesting (define the rule clearly)
+
+Termination:
+- If terminated early, define what happens to partial work and unvested equity.
+</div>
+
+      <h3>Template: SAFE side letter (discount/cap concept)</h3>
+      <div class="row">
+        <div style="color: var(--stone-500); font-size: 13px;">A lightweight “deal memo” style template.</div>
+        <button class="btn" onclick="copyTemplate('tpl-safe-side-letter')">Copy</button>
+      </div>
+      <div class="template" id="tpl-safe-side-letter">SAFE SIDE LETTER (TEMPLATE)
+
+Parties:
+- Company: {{COMPANY_NAME}}
+- Investor/Contributor: {{NAME}}
+
+Instrument:
+- SAFE (or similar) referencing {{SAFE_DATE}} template
+- Amount: {{AMOUNT_USD}}
+- Valuation cap: {{CAP_USD}} (optional)
+- Discount: {{DISCOUNT_PERCENT}}% (optional)
+
+Most-favored nation (MFN):
+- {{YES_NO}}
+
+Notes:
+- This is not a full instrument; attach/execute the actual SAFE template.
+</div>
+
+    </div>
+
+    <div class="card" id="resources">
+      <h2>Phase 1 Resources</h2>
+      <p>Quick, opinionated checklists you can use immediately.</p>
+
+      <h3>1) Validation (first 7 days)</h3>
+      <ul>
+        <li>Write your ICP and top 3 pains (one sentence each).</li>
+        <li>Run 10 interviews; measure pain intensity and willingness-to-pay.</li>
+        <li>Draft a landing page + waitlist; test 2 acquisition channels.</li>
+      </ul>
+
+      <h3>2) Planning (next 7–14 days)</h3>
+      <ul>
+        <li>Define MVP scope (what you will NOT build).</li>
+        <li>Choose a pricing hypothesis (one metric, one price point).</li>
+        <li>Pick 3 success metrics: activation, retention, revenue.</li>
+      </ul>
+
+      <h3>3) Build (weeks 3–4)</h3>
+      <ul>
+        <li>Ship onboarding first (time-to-value &lt; 5 minutes).</li>
+        <li>Instrument events: signup, activation, key action, retention.</li>
+        <li>Launch a small pilot (5–20 users) and iterate weekly.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    async function copyTemplate(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const text = el.textContent || '';
+      try {
+        await navigator.clipboard.writeText(text.trim());
+        alert('Copied template to clipboard.');
+      } catch (e) {
+        // Fallback for older browsers
+        const area = document.createElement('textarea');
+        area.value = text.trim();
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+        alert('Copied template to clipboard.');
+      }
+    }
+  </script>
+</body>
+</html>
+

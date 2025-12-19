@@ -1,0 +1,14 @@
+HTTP/2 200 
+content-type: application/json
+content-length: 394660
+date: Fri, 19 Dec 2025 04:23:12 GMT
+server: elb
+x-ds-served-by: chat
+x-ds-trace-id: ddda2d4652ea1a0304c39e392125c06c
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-cache: Miss from cloudfront
+via: 1.1 ded2db8c78a1ad7377261200a0bb44fa.cloudfront.net (CloudFront)
+x-amz-cf-pop: IAD61-P2
+x-amz-cf-id: 4j0oTY3gdqWU6ugfeVQOX850T4oOi1OMRIR7ph82orMWTO-oJMnYSA==
+

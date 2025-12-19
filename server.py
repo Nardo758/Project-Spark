@@ -9,6 +9,21 @@ from urllib.error import URLError, HTTPError
 from urllib.parse import urlparse, unquote
 import threading
 import json
+from functools import partial
+
+
+def get_static_root() -> str:
+    """
+    Static root for the frontend server.
+
+    Prefer the built React app (frontend/dist). Fall back to repo root
+    to preserve legacy static HTML during transition.
+    """
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    react_dist = os.path.join(repo_root, "frontend", "dist")
+    if os.path.isdir(react_dist):
+        return react_dist
+    return repo_root
 
 
 class NoRedirectHandler(HTTPRedirectHandler):
@@ -67,6 +82,19 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         else:
             parsed = urlparse(self.path)
             self.path = unquote(parsed.path)
+
+            # SPA fallback: if the requested path isn't a real file, serve index.html
+            # so React Router can handle client-side routes (e.g., /validations).
+            try:
+                local_path = self.translate_path(self.path)
+                basename = os.path.basename(local_path)
+                has_extension = '.' in basename
+                if (not has_extension) and (not os.path.exists(local_path)):
+                    self.path = '/index.html'
+            except Exception:
+                # If path translation fails, fall back to default behavior.
+                pass
+
             super().do_GET()
     
     def do_POST(self):
@@ -191,32 +219,64 @@ def run_backend():
 
 
 def run_frontend():
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    server = HTTPServer(('0.0.0.0', FRONTEND_PORT), ProxyHandler)
+    static_root = get_static_root()
+    handler = partial(ProxyHandler, directory=static_root)
+    server = HTTPServer(('0.0.0.0', FRONTEND_PORT), handler)
+    print(f"[Frontend] Serving static files from: {static_root}")
     print(f"[Frontend] Serving on http://0.0.0.0:{FRONTEND_PORT}")
     server.serve_forever()
 
 def init_database():
-    """Initialize database tables on startup"""
+    """
+    Apply database migrations on startup.
+
+    Notes:
+    - Deployments should always apply migrations.
+    - Seeding demo data is optional and controlled via SEED_DB=1.
+    """
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.join(repo_root, "backend")
+    env = os.environ.copy()
+
     try:
-        print("Initializing database...")
-        env = os.environ.copy()
+        print("[DB] Applying migrations (alembic upgrade head)...")
+        env["PYTHONPATH"] = backend_dir
         result = subprocess.run(
-            [sys.executable, 'backend/init_db.py'],
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,
             env=env,
-            cwd=os.path.dirname(os.path.abspath(__file__))
+            cwd=backend_dir,
         )
-        print(result.stdout)
+        if result.stdout:
+            print(result.stdout)
         if result.returncode == 0:
-            print("Database initialized successfully")
+            print("[DB] Migrations applied successfully")
         else:
             if result.stderr:
-                print(f"Database init errors: {result.stderr}")
+                print(f"[DB] Migration errors: {result.stderr}")
+            print("[DB] Warning: migrations failed (app may be inconsistent).")
     except Exception as e:
-        print(f"Database initialization error (will retry on first request): {e}")
+        print(f"[DB] Migration error (app may be inconsistent): {e}")
+
+    if os.getenv("SEED_DB") == "1":
+        try:
+            print("[DB] SEED_DB=1 set; running backend/init_db.py (demo seed)...")
+            seed_result = subprocess.run(
+                [sys.executable, "init_db.py"],
+                capture_output=True,
+                text=True,
+                timeout=180,
+                env=env,
+                cwd=backend_dir,
+            )
+            if seed_result.stdout:
+                print(seed_result.stdout)
+            if seed_result.returncode != 0 and seed_result.stderr:
+                print(f"[DB] Seed errors: {seed_result.stderr}")
+        except Exception as e:
+            print(f"[DB] Seed error: {e}")
 
 if __name__ == '__main__':
     init_database()

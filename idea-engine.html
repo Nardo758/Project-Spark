@@ -145,6 +145,18 @@
 
         .nav-link:hover { color: var(--stone-900); }
 
+        .nav-dropdown {
+            position: relative;
+        }
+
+        .nav-dropdown:hover .nav-dropdown-menu {
+            display: block !important;
+        }
+
+        .nav-dropdown-item:hover {
+            background: #f5f5f4;
+        }
+
         .nav-actions {
             display: flex;
             align-items: center;
@@ -755,16 +767,38 @@
                 </div>
             </a>
             <div class="nav-links">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="idea-engine.html" class="nav-link active">Idea Engine</a>
-                <a href="discover.html" class="nav-link">Browse Ideas</a>
-                <a href="pricing.html" class="nav-link">Pricing</a>
+                <!-- Guest Navigation -->
+                <a href="index.html" class="nav-link guest-only">Home</a>
+                <a href="discover.html" class="nav-link guest-only">Browse Ideas</a>
+                <a href="idea-engine.html" class="nav-link guest-only active">Idea Engine</a>
+                <a href="pricing.html" class="nav-link guest-only">Pricing</a>
+                
+                <!-- Logged-In Navigation (9 items) -->
+                <a href="dashboard.html" class="nav-link auth-required" style="display: none;">Dashboard</a>
+                <a href="discover.html" class="nav-link auth-required" style="display: none;">Discover</a>
+                <div class="nav-dropdown auth-required" style="display: none; position: relative;">
+                    <a href="#" class="nav-link nav-dropdown-trigger active">Builder <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></a>
+                    <div class="nav-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 0; min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100;">
+                        <a href="idea-engine.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none; background: #f5f5f4;">Idea Engine</a>
+                        <a href="/validations" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">My Validations</a>
+                        <a href="ai-match.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">AI Expert Match</a>
+                        <a href="ai-roadmap.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">AI Roadmap</a>
+                        <a href="expert-marketplace.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">Expert Marketplace</a>
+                    </div>
+                </div>
+                <a href="leads.html" class="nav-link auth-required" style="display: none;">Leads</a>
+                <a href="content.html" class="nav-link auth-required" style="display: none;">Content</a>
+                <a href="network.html" class="nav-link auth-required" style="display: none;">Network</a>
+                <a href="funding.html" class="nav-link auth-required" style="display: none;">Funding</a>
+                <a href="tools.html" class="nav-link auth-required" style="display: none;">Tools</a>
+                <a href="learn.html" class="nav-link auth-required" style="display: none;">Learn</a>
             </div>
             <div class="nav-actions">
                 <a href="signin.html" class="btn btn-ghost guest-only" style="display: inline-flex;">Sign In</a>
                 <a href="signup.html" class="btn btn-primary guest-only" style="display: inline-flex;">Get Started</a>
-                <a href="account.html" class="btn btn-ghost auth-required" style="display: none;">Account</a>
-                <button class="btn auth-required" id="signOutBtn" style="display: none; background: transparent; color: #44403c; border: 1px solid #d6d3d1;">Sign Out</button>
+                <div class="user-menu auth-required" style="display: none; cursor: pointer;" onclick="window.location.href='account.html'">
+                    <span id="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: #1c1917; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">U</span>
+                </div>
             </div>
         </div>
     </nav>
@@ -931,6 +965,7 @@
                 <div class="result-score"><span id="finalScore">0</span></div>
                 <div class="result-confidence">Validation Confidence: <span id="confidence">0</span>%</div>
                 <p id="resultSummary" class="result-summary"></p>
+                <p id="savedValidationLink" class="result-confidence" style="display:none; margin-top: 12px;"></p>
             </div>
 
             <div class="result-section fade-in-up stagger-1">
@@ -1065,12 +1100,22 @@
         </div>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
         const API_BASE = '/api/v1/idea-engine';
+        const API_VALIDATIONS = '/api/v1/idea-validations';
         let stripe = null;
         let elements = null;
         let cardElement = null;
         let generatedData = null;
+        let currentIdeaValidationId = null;
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('access_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        }
 
         const ideaInput = document.getElementById('ideaInput');
         const charCount = document.getElementById('charCount');
@@ -1166,6 +1211,8 @@
         }
 
         validateBtn.addEventListener('click', async () => {
+            // Persisted validations require authentication
+            if (window.OppGridAuth && !OppGridAuth.requireAuth({ redirect: 'idea-engine.html' })) return;
             if (!stripe) {
                 await initStripe();
             }
@@ -1181,20 +1228,34 @@
                 alert('Payment system not available. Please try again.');
                 return;
             }
+            if (!generatedData) {
+                alert('Please generate an idea first.');
+                return;
+            }
 
             payBtn.disabled = true;
             payBtn.innerHTML = '<div class="spinner"></div> Processing...';
 
             try {
-                const intentResponse = await fetch(`${API_BASE}/create-payment-intent`, {
+                const intentResponse = await fetch(`${API_VALIDATIONS}/create-payment-intent`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: 999 })
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        idea: generatedData.refined_idea,
+                        title: generatedData.title,
+                        category: generatedData.category,
+                        amount_cents: 999
+                    })
                 });
 
+                if (intentResponse.status === 401 || intentResponse.status === 403) {
+                    if (window.OppGridAuth) OppGridAuth.redirectToSignin({ redirect: 'idea-engine.html' });
+                    throw new Error('Not authenticated');
+                }
                 if (!intentResponse.ok) throw new Error('Failed to create payment');
 
-                const { client_secret, payment_intent_id } = await intentResponse.json();
+                const { client_secret, payment_intent_id, idea_validation_id } = await intentResponse.json();
+                currentIdeaValidationId = idea_validation_id;
 
                 const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
                     payment_method: { card: cardElement }
@@ -1207,7 +1268,7 @@
 
                 if (paymentIntent.status === 'succeeded') {
                     paymentModal.classList.remove('show');
-                    await runValidation(paymentIntent.id);
+                    await runValidation(currentIdeaValidationId, paymentIntent.id);
                 }
             } catch (error) {
                 console.error('Payment error:', error);
@@ -1217,26 +1278,29 @@
             }
         });
 
-        async function runValidation(paymentIntentId) {
+        async function runValidation(ideaValidationId, paymentIntentId) {
             validateBtn.disabled = true;
             validateBtn.innerHTML = '<div class="spinner" style="border-color: var(--emerald-600); border-top-color: transparent;"></div> Validating...';
 
             try {
-                const response = await fetch(`${API_BASE}/validate`, {
+                const response = await fetch(`${API_VALIDATIONS}/${ideaValidationId}/run`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({
-                        idea: generatedData.refined_idea,
-                        title: generatedData.title,
-                        category: generatedData.category,
                         payment_intent_id: paymentIntentId
                     })
                 });
 
+                if (response.status === 401 || response.status === 403) {
+                    if (window.OppGridAuth) OppGridAuth.redirectToSignin({ redirect: 'idea-engine.html' });
+                    throw new Error('Not authenticated');
+                }
                 if (!response.ok) throw new Error('Validation failed');
 
-                const result = await response.json();
-                displayValidationResult(result);
+                const record = await response.json(); // IdeaValidationDetail
+                const result = record.result || null;
+                if (!result) throw new Error('Validation result missing');
+                displayValidationResult(result, record);
                 updateSteps(3);
             } catch (error) {
                 alert('Validation failed. Please try again.');
@@ -1253,7 +1317,7 @@
             }
         }
 
-        function displayValidationResult(data) {
+        function displayValidationResult(data, record) {
             document.getElementById('finalScore').textContent = data.opportunity_score;
             document.getElementById('confidence').textContent = data.validation_confidence;
             document.getElementById('resultSummary').textContent = data.summary;
@@ -1273,6 +1337,12 @@
             renderList('risks', data.key_risks);
             renderList('nextSteps', data.next_steps);
             renderList('trends', data.market_trends);
+
+            const saved = document.getElementById('savedValidationLink');
+            if (saved && record && record.id) {
+                saved.style.display = 'block';
+                saved.innerHTML = `Saved as report #${record.id}. <a href="/validations/${record.id}" style="color: var(--blue-600);">Open saved report</a> · <a href="/validations" style="color: var(--blue-600);">View all</a>`;
+            }
 
             generatedSection.classList.remove('show');
             validationSection.classList.add('show');

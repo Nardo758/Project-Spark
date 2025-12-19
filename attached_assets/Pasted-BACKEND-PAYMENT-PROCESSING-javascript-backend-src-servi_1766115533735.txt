@@ -1,0 +1,94 @@
+BACKEND PAYMENT PROCESSING
+javascript
+// backend/src/services/stripeService.js
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+class StripeService {
+  // Create payment intent
+  async createPaymentIntent({ amount, currency, metadata, customerId }) {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency,
+      automatic_payment_methods: { enabled: true },
+      metadata,
+      customer: customerId,
+    });
+    
+    return paymentIntent;
+  }
+  
+  // Create checkout session
+  async createCheckoutSession({ 
+    lineItems, 
+    mode, 
+    successUrl, 
+    cancelUrl, 
+    metadata 
+  }) {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata,
+      allow_promotion_codes: true,
+      billing_address_collection: 'required',
+    });
+    
+    return session;
+  }
+  
+  // Handle webhooks
+  async handleWebhook(event) {
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        await this.handlePaymentSuccess(event.data.object);
+        break;
+      case 'payment_intent.payment_failed':
+        await this.handlePaymentFailure(event.data.object);
+        break;
+      case 'checkout.session.completed':
+        await this.handleCheckoutComplete(event.data.object);
+        break;
+      case 'customer.subscription.updated':
+        await this.handleSubscriptionUpdate(event.data.object);
+        break;
+      case 'customer.subscription.deleted':
+        await this.handleSubscriptionCancel(event.data.object);
+        break;
+    }
+  }
+  
+  // Revenue share distribution
+  async distributeRevenue(paymentIntent, itemType) {
+    const { userId, itemId, creatorId } = paymentIntent.metadata;
+    
+    switch (itemType) {
+      case 'service':
+        // Service marketplace commission
+        const service = await Service.findById(itemId);
+        const commissionRate = service.commissionRate || 0.30; // 30% default
+        
+        await this.transferToCreator(
+          creatorId, 
+          paymentIntent.amount * (1 - commissionRate)
+        );
+        
+        await this.transferToPlatform(
+          paymentIntent.amount * commissionRate
+        );
+        break;
+        
+      case 'opportunity_unlock':
+        // Opportunity unlock revenue
+        await this.creditUserAccount(userId, paymentIntent.amount);
+        break;
+        
+      case 'success_fee':
+        // Hold in escrow, release on milestones
+        await this.createEscrowHold(paymentIntent);
+        break;
+    }
+  }
+}
