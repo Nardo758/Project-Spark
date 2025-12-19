@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Bookmark, CheckCircle2, Clock, Lock, ShieldCheck } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import PayPerUnlockModal from '../components/PayPerUnlockModal'
 
 type AccessInfo = {
   age_days: number
@@ -193,6 +194,12 @@ export default function OpportunityDetail() {
   const access = opp?.access_info
   const saved = watchlistCheckQuery.data?.in_watchlist ?? false
 
+  const [ppuOpen, setPpuOpen] = useState(false)
+  const [ppuClientSecret, setPpuClientSecret] = useState<string | null>(null)
+  const [ppuPublishableKey, setPpuPublishableKey] = useState<string | null>(null)
+  const [ppuAmountLabel, setPpuAmountLabel] = useState<string>('$15')
+  const [ppuError, setPpuError] = useState<string | null>(null)
+
   if (!Number.isFinite(opportunityId)) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -222,6 +229,54 @@ export default function OpportunityDetail() {
   const canPay = Boolean(access?.can_pay_to_unlock)
   const daysUntil = access?.days_until_unlock ?? 0
   const payPrice = fmtCents(access?.unlock_price ?? null)
+
+  const payPerUnlockMutation = useMutation({
+    mutationFn: async () => {
+      if (!token) throw new Error('Not authenticated')
+      // 1) Fetch Stripe publishable key (public endpoint)
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
+
+      // 2) Create PaymentIntent for pay-per-unlock
+      const res = await fetch('/api/v1/subscriptions/pay-per-unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ opportunity_id: opportunityId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start payment')
+
+      return {
+        publishableKey: keyData.publishable_key as string,
+        clientSecret: data.client_secret as string,
+        amountCents: data.amount as number,
+      }
+    },
+    onSuccess: (data) => {
+      setPpuError(null)
+      setPpuPublishableKey(data.publishableKey)
+      setPpuClientSecret(data.clientSecret)
+      setPpuAmountLabel(fmtCents(data.amountCents) || '$15')
+      setPpuOpen(true)
+    },
+    onError: (e) => {
+      setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
+    },
+  })
+
+  async function confirmPayPerUnlock(paymentIntentId: string) {
+    if (!token) throw new Error('Not authenticated')
+    const res = await fetch(`/api/v1/subscriptions/confirm-pay-per-unlock?payment_intent_id=${encodeURIComponent(paymentIntentId)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data?.detail || 'Failed to confirm unlock')
+    // Refresh opportunity gating/access data
+    await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
+    await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId, { authed: Boolean(token) }] })
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -332,6 +387,17 @@ export default function OpportunityDetail() {
                   >
                     {unlockMutation.isPending ? 'Unlocking…' : 'Unlock (subscription)'}
                   </button>
+                  {canPay && (
+                    <button
+                      type="button"
+                      onClick={() => payPerUnlockMutation.mutate()}
+                      disabled={payPerUnlockMutation.isPending}
+                      className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+                      title="Pay to unlock with Stripe"
+                    >
+                      {payPerUnlockMutation.isPending ? 'Starting payment…' : `Pay‑per‑unlock ${payPrice || ''}`}
+                    </button>
+                  )}
                   <Link to="/pricing" className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium">
                     View plans
                   </Link>
@@ -350,6 +416,11 @@ export default function OpportunityDetail() {
             </div>
           ) : (
             <div className="text-sm text-gray-600">No access metadata available.</div>
+          )}
+          {ppuError && (
+            <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {ppuError}
+            </div>
           )}
         </div>
 
@@ -392,6 +463,16 @@ export default function OpportunityDetail() {
           )}
         </div>
       </div>
+
+      {ppuOpen && ppuPublishableKey && ppuClientSecret && (
+        <PayPerUnlockModal
+          publishableKey={ppuPublishableKey}
+          clientSecret={ppuClientSecret}
+          amountLabel={ppuAmountLabel}
+          onClose={() => setPpuOpen(false)}
+          onConfirmed={confirmPayPerUnlock}
+        />
+      )}
     </div>
   )
 }
