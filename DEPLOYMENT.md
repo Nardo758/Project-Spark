@@ -68,7 +68,8 @@ During deployment Replit sets the `PORT` variable dynamically; `server.py` alrea
 ## 6. Database management
 
 - Replit PostgreSQL is available from the shell: `psql $REPLIT_DB_URL`
-- `backend/init_db.py` can be re-run at any time to recreate tables or seed demo data
+- Database schema is managed by **Alembic migrations**. On boot, `server.py` runs `alembic upgrade head` automatically.
+- If you want to seed demo data, set `SEED_DB=1` and restart (or run `python backend/init_db.py` manually).
 - For backups/export, run `pg_dump $REPLIT_DB_URL > backup.sql`
 
 If you later decide to use another Postgres provider, set `POSTGRES_URL` in Secrets; the backend prefers that over `REPLIT_DB_URL`.

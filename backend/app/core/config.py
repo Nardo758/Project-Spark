@@ -11,11 +11,6 @@ class Settings(BaseSettings):
     # Database - Support both DATABASE_URL and REPLIT_DB_URL
     DATABASE_URL: str = ""
 
-    # Supabase (optional - for REST API access)
-    SUPABASE_URL: Optional[str] = None
-    SUPABASE_ANON_KEY: Optional[str] = None
-    SUPABASE_SERVICE_KEY: Optional[str] = None
-
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
