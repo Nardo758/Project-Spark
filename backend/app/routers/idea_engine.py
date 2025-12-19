@@ -219,12 +219,16 @@ Analyze and refine this into a structured business opportunity."""
         )
 
 
-@router.post("/validate", response_model=ValidationResult)
+@router.post("/validate", response_model=ValidationResult, include_in_schema=False)
 async def validate_idea(request: ValidationRequest):
     """
     PAID: Comprehensive idea validation with deep market analysis.
     Requires payment verification (payment_intent_id).
     """
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Deprecated. Use the persisted Idea Validation API: POST /api/v1/idea-validations/{id}/run",
+    )
     if not request.idea or len(request.idea.strip()) < 10:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -342,12 +346,16 @@ class PaymentIntentResponse(BaseModel):
     payment_intent_id: str
 
 
-@router.post("/create-payment-intent", response_model=PaymentIntentResponse)
+@router.post("/create-payment-intent", response_model=PaymentIntentResponse, include_in_schema=False)
 async def create_payment_intent(request: PaymentIntentRequest):
     """
     Create a Stripe payment intent for validation service.
     Amount is in cents (default: $9.99 = 999 cents)
     """
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail="Deprecated. Use the persisted Idea Validation API: POST /api/v1/idea-validations/create-payment-intent",
+    )
     try:
         from app.services.stripe_service import get_stripe_client
         
