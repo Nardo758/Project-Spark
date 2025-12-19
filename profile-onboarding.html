@@ -614,13 +614,12 @@
                     }
 
                     if (next === 'learn' || successFlow === '1') {
-                        window.location.href = 'learn.html#success-based';
+                        window.location.href = `onboarding-next.html?next=learn&success_flow=${encodeURIComponent(successFlow || '1')}`;
                         return;
                     }
 
-                    document.getElementById(`step-${currentStep}`).classList.remove('active');
-                    document.getElementById(`prog-${currentStep}`).classList.add('completed');
-                    document.getElementById('step-success').classList.add('active');
+                    // Default: go to a personalized next steps page.
+                    window.location.href = 'onboarding-next.html';
                 } else {
                     const error = await response.json();
                     alert('Error saving profile: ' + (error.detail || 'Unknown error'));
