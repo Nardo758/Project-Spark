@@ -20,6 +20,7 @@ interface AuthState {
   logout: () => void
   setUser: (user: User) => void
   setToken: (token: string) => void
+  consumeAuthCookies: () => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -88,6 +89,49 @@ export const useAuthStore = create<AuthState>()(
       
       setUser: (user: User) => set({ user, isAuthenticated: true }),
       setToken: (token: string) => set({ token }),
+      
+      consumeAuthCookies: () => {
+        const getCookie = (name: string): string | null => {
+          const value = `; ${document.cookie}`
+          const parts = value.split(`; ${name}=`)
+          if (parts.length === 2) return parts.pop()?.split(';').shift() || null
+          return null
+        }
+        
+        const deleteCookie = (name: string) => {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+        }
+        
+        const authToken = getCookie('auth_token')
+        const authUserB64 = getCookie('auth_user')
+        
+        if (authToken && authUserB64) {
+          try {
+            const userJson = atob(authUserB64)
+            const userData = JSON.parse(userJson)
+            
+            set({
+              token: authToken,
+              user: {
+                id: String(userData.id),
+                email: userData.email,
+                name: userData.full_name,
+                avatar: userData.avatar_url,
+                tier: userData.tier || 'free',
+                brainTier: userData.brain_tier
+              },
+              isAuthenticated: true
+            })
+            
+            deleteCookie('auth_token')
+            deleteCookie('auth_user')
+            return true
+          } catch (error) {
+            console.error('Failed to parse auth cookies:', error)
+          }
+        }
+        return false
+      },
     }),
     {
       name: 'auth-storage',

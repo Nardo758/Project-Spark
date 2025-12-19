@@ -9,6 +9,8 @@ import Pricing from './pages/Pricing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import BrainDashboard from './pages/brain/BrainDashboard'
+import AuthCallback from './pages/auth/AuthCallback'
+import MagicCallback from './pages/auth/MagicCallback'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -24,6 +26,8 @@ function App() {
         <Route path="signup" element={<Signup />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="brain" element={<BrainDashboard />} />
+        <Route path="auth/callback" element={<AuthCallback />} />
+        <Route path="auth/magic" element={<MagicCallback />} />
       </Route>
     </Routes>
   )
