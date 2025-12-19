@@ -548,8 +548,10 @@
                 </div>
             </a>
             <div class="nav-links">
+                <!-- Guest Navigation (signup is guest-only page) -->
                 <a href="index.html" class="nav-link">Home</a>
                 <a href="discover.html" class="nav-link">Browse Ideas</a>
+                <a href="idea-engine.html" class="nav-link">Idea Engine</a>
                 <a href="pricing.html" class="nav-link">Pricing</a>
             </div>
             <div class="nav-actions">
@@ -755,12 +757,15 @@
             // Store pending plan for checkout after auth
             const urlParams = new URLSearchParams(window.location.search);
             const plan = urlParams.get('plan');
+            // Mark as new user for profile onboarding
+            localStorage.setItem('is_new_user', 'true');
             if (plan) {
                 localStorage.setItem('pending_plan', plan);
-                // Redirect to account page which will handle checkout
-                window.location.href = '/auth/login?redirect_url=' + encodeURIComponent('/account.html?checkout_plan=' + plan);
+                // Redirect to profile onboarding first, then checkout
+                window.location.href = '/auth/login?redirect_url=' + encodeURIComponent('/profile-onboarding.html?next=account&checkout_plan=' + plan);
             } else {
-                window.location.href = '/auth/login?redirect_url=' + encodeURIComponent('/discover.html');
+                // New users go to profile onboarding first
+                window.location.href = '/auth/login?redirect_url=' + encodeURIComponent('/profile-onboarding.html');
             }
         });
 

@@ -1,0 +1,47 @@
+SERVICES MARKETPLACE ADMIN
+Service Moderation:
+text
+SERVICES • MODERATION QUEUE
+┌─────────────────────────────────────────────────────┐
+│ Pending Review: 23 • Flagged: 5 • Reported: 12     │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ ⏳ PENDING SUBMISSIONS                             │ │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ 🔍 SaaS Financial Model Template               │ │
+│ │ Creator: NewUser123 • Price: $399              │ │
+│ │ Submitted: 4h ago • Type: Financial Model      │ │
+│ │ AI Generated: Yes • Needs Expert Review: Yes   │ │
+│ │                                                 │ │
+│ │ [Preview] [Approve] [Request Changes] [Reject] │ │
+│ │ [Assign Expert] [Message Creator]              │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 🚩 FLAGGED CONTENT                                 │ │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ ⚠️ "Get Rich Quick" Scheme                     │ │
+│ │ Flagged by: 3 users • Reason: Scam             │ │
+│ │ Creator: SuspiciousSeller • Price: $999        │ │
+│ │                                                 │ │
+│ │ [Review Flags] [Suspend Listing] [Ban Creator] │ │
+│ │ [Contact Flaggers]                             │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 📊 SERVICE ANALYTICS                               │ │
+│ Total Services: 892 • Active: 845 • Draft: 23     │ │
+│ Avg. Rating: 4.3/5 • Total Sales: 8,457           │ │
+│ Platform Commission: 30% • Total: $127,350        │ │
+│                                                     │
+│ 🏆 TOP PERFORMING SERVICES                         │ │
+│ 1. SaaS Financial Model: 82 sales • $2,048 rev    │ │
+│ 2. Healthcare Market Study: 47 sales • $1,644 rev │ │
+│ 3. Pitch Deck Template: 35 sales • $699 rev       │ │
+│                                                     │
+│ 🔍 SEARCH & FILTER                                 │ │
+│ Type: [All] [AI Generated] [Expert Reviewed]      │ │
+│ Category: [All] [Financial] [Legal] [Marketing]   │ │
+│ Status: [All] [Active] [Pending] [Suspended]      │ │
+│ Rating: [All] [4+] [3+] [2+]                      │ │
+│                                                     │
+│ [Bulk Actions] [Quality Report] [Export Listings]  │
+└─────────────────────────────────────────────────────┘

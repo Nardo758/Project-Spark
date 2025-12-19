@@ -1,0 +1,95 @@
+Payment Modal Components:
+jsx
+// frontend/src/components/payments/PaymentModal.jsx
+import React, { useState } from 'react';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+
+const PaymentModal = ({ 
+  type, 
+  amount, 
+  title, 
+  description,
+  onSuccess,
+  onCancel 
+}) => {
+  const [clientSecret, setClientSecret] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    // Fetch payment intent from backend
+    const fetchPaymentIntent = async () => {
+      const response = await fetch('/api/payments/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          amount,
+          currency: 'usd',
+          metadata: { /* item details */ }
+        })
+      });
+      const data = await response.json();
+      setClientSecret(data.clientSecret);
+    };
+    fetchPaymentIntent();
+  }, [type, amount]);
+  
+  return (
+    <div className="payment-modal">
+      <div className="modal-header">
+        <h3>{title}</h3>
+        <button onClick={onCancel}>×</button>
+      </div>
+      
+      <div className="modal-body">
+        <p className="description">{description}</p>
+        
+        <div className="amount-display">
+          <span className="label">Total:</span>
+          <span className="amount">${(amount / 100).toFixed(2)}</span>
+          <span className="currency">USD</span>
+        </div>
+        
+        {clientSecret && (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <PaymentForm 
+              clientSecret={clientSecret}
+              onSuccess={onSuccess}
+            />
+          </Elements>
+        )}
+        
+        <div className="payment-methods">
+          <div className="method-card">
+            <CreditCardIcon />
+            <span>Credit/Debit Card</span>
+          </div>
+          <div className="method-paypal">
+            <PayPalIcon />
+            <span>PayPal</span>
+          </div>
+          <div className="method-apple">
+            <ApplePayIcon />
+            <span>Apple Pay</span>
+          </div>
+        </div>
+        
+        <div className="security-notice">
+          <ShieldIcon />
+          <span>Secure payment powered by Stripe</span>
+        </div>
+      </div>
+      
+      <div className="modal-footer">
+        <button onClick={onCancel}>Cancel</button>
+        <button 
+          className="primary" 
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? 'Processing...' : `Pay $${(amount / 100).toFixed(2)}`}
+        </button>
+      </div>
+    </div>
+  );
+};

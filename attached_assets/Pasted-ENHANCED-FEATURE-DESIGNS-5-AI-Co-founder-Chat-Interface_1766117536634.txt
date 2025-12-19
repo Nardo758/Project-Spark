@@ -1,0 +1,46 @@
+ENHANCED FEATURE DESIGNS
+5. AI Co-founder Chat Interface:
+text
+CHAT WITH YOUR AI CO-FOUNDER
+┌─────────────────────────────────────────────────────┐
+│ 🧠 AI Co-founder • Basic • Context: Startup Project│
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 💬 CHAT HISTORY                                    │ │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ You: What's the best way to validate my        │ │
+│ │      healthcare app idea?                      │ │
+│ │                                                 │ │
+│ │ AI: Based on your background in healthcare and │ │
+│ │     the 3 research docs you uploaded, I        │ │
+│ │     recommend...                               │ │
+│ │     [Cited: healthcare_trends.pdf]             │ │
+│ │                                                 │ │
+│ │ You: Can you create a 30-day roadmap?          │ │
+│ │                                                 │ │
+│ │ AI: Here's a personalized roadmap considering  │ │
+│ │     your $15k budget and part-time schedule... │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ✍️ NEW MESSAGE                                    │ │
+│ [Type your question or request...]                 │ │
+│                                                     │ │
+│ 🛠️ QUICK ACTIONS                                 │ │
+│ [📋 Generate Roadmap] [💰 Financial Plan]         │ │
+│ [🎯 Validate Idea] [👥 Find Team]                │ │
+│ [📊 Market Research] [⚖️ Legal Checklist]        │ │
+│                                                     │ │
+│ 🎭 CONTEXT SWITCHER                              │ │
+│ Current context: [Startup Project] ▼              │ │
+│ • Personal Finance                               │ │
+│ • Job Search                                     │ │
+│ • Learning Goals                                 │ │
+│ • Side Projects                                  │ │
+│ [➕ New Context]                                 │ │
+│                                                     │ │
+│ ⚙️ CHAT SETTINGS                                 │ │
+│ [📎 Attach Files] [🎤 Voice Input]               │ │
+│ [🔍 Search Brain Knowledge] [📥 Save to Brain]   │ │
+│                                                     │
+│ [Send] [Clear Context] [Export Chat]              │
+└─────────────────────────────────────────────────────┘

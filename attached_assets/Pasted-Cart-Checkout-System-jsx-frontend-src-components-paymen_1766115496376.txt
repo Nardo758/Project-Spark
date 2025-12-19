@@ -1,0 +1,89 @@
+Cart & Checkout System:
+jsx
+// frontend/src/components/payments/CartDrawer.jsx
+const CartDrawer = () => {
+  const { cart, removeItem, updateQuantity } = useCart();
+  
+  const calculateTotal = () => {
+    return cart.reduce((total, item) => {
+      if (item.type === 'subscription') {
+        return total; // Subscriptions handled separately
+      }
+      return total + (item.price * item.quantity);
+    }, 0);
+  };
+  
+  const handleCheckout = async () => {
+    // Check user auth status
+    const { user, isGuest } = useAuth();
+    
+    if (!user) {
+      // Show auth modal
+      showAuthModal('checkout');
+      return;
+    }
+    
+    if (isGuest && calculateTotal() > 10000) { // $100 limit for guests
+      showUpgradeModal();
+      return;
+    }
+    
+    // Proceed to checkout
+    const response = await createCheckoutSession(cart);
+    redirectToStripeCheckout(response.sessionId);
+  };
+  
+  return (
+    <div className="cart-drawer">
+      <div className="cart-header">
+        <h3>Your Cart</h3>
+        <span className="item-count">{cart.length} items</span>
+      </div>
+      
+      <div className="cart-items">
+        {cart.map(item => (
+          <CartItem 
+            key={item.id}
+            item={item}
+            onRemove={() => removeItem(item.id)}
+            onUpdate={updateQuantity}
+          />
+        ))}
+      </div>
+      
+      <div className="cart-summary">
+        <div className="summary-row">
+          <span>Subtotal</span>
+          <span>${(calculateTotal() / 100).toFixed(2)}</span>
+        </div>
+        
+        {user?.subscription && (
+          <div className="summary-row discount">
+            <span>Member Discount (10%)</span>
+            <span>-${(calculateTotal() * 0.1 / 100).toFixed(2)}</span>
+          </div>
+        )}
+        
+        <div className="summary-row total">
+          <span>Total</span>
+          <span>${(calculateTotal() * 0.9 / 100).toFixed(2)}</span>
+        </div>
+        
+        <div className="payment-options">
+          <button className="checkout-btn" onClick={handleCheckout}>
+            Proceed to Checkout
+          </button>
+          
+          <button className="subscribe-save" onClick={showSubscriptionModal}>
+            Subscribe & Save 20%
+          </button>
+          
+          <div className="secured-by">
+            <StripeBadge />
+            <span>Payments secured by Stripe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
