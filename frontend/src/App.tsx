@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import Layout from './components/Layout'
+import RequireAuth from './components/RequireAuth'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Discover from './pages/Discover'
@@ -11,6 +12,8 @@ import Signup from './pages/Signup'
 import BrainDashboard from './pages/brain/BrainDashboard'
 import AuthCallback from './pages/AuthCallback'
 import MagicLinkCallback from './pages/MagicLinkCallback'
+import Saved from './pages/Saved'
+import OpportunityDetail from './pages/OpportunityDetail'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -22,10 +25,33 @@ function App() {
         <Route path="discover" element={<Discover />} />
         <Route path="idea-engine" element={<IdeaEngine />} />
         <Route path="pricing" element={<Pricing />} />
+        <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="brain" element={<BrainDashboard />} />
+        <Route
+          path="saved"
+          element={
+            <RequireAuth>
+              <Saved />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="brain"
+          element={
+            <RequireAuth>
+              <BrainDashboard />
+            </RequireAuth>
+          }
+        />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />
