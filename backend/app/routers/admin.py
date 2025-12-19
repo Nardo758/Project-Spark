@@ -148,6 +148,7 @@ def list_idea_validations(
     user_id: Optional[int] = Query(None),
     search_title: Optional[str] = Query(None),
     payment_intent: Optional[str] = Query(None, description="Substring match on pi_* id"),
+    include_result: bool = Query(False, description="When true, include result_json and error_message"),
     admin_user: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db),
 ):
@@ -172,7 +173,31 @@ def list_idea_validations(
         q = q.filter(IdeaValidation.stripe_payment_intent_id.ilike(f"%{payment_intent}%"))
 
     total = q.count()
-    items = q.order_by(desc(IdeaValidation.created_at)).offset(skip).limit(limit).all()
+    rows = q.order_by(desc(IdeaValidation.created_at)).offset(skip).limit(limit).all()
+
+    # Return dicts so we can omit large fields unless explicitly requested.
+    items = []
+    for iv in rows:
+        item = {
+            "id": iv.id,
+            "user_id": iv.user_id,
+            "title": iv.title,
+            "category": iv.category,
+            "status": iv.status.value if hasattr(iv.status, "value") else str(iv.status),
+            "stripe_payment_intent_id": iv.stripe_payment_intent_id,
+            "amount_cents": iv.amount_cents,
+            "currency": iv.currency,
+            "opportunity_score": iv.opportunity_score,
+            "validation_confidence": iv.validation_confidence,
+            "summary": iv.summary,
+            "created_at": iv.created_at,
+            "updated_at": iv.updated_at,
+        }
+        if include_result:
+            item["result_json"] = iv.result_json
+            item["error_message"] = iv.error_message
+        items.append(item)
+
     return {"items": items, "total": total}
 
 

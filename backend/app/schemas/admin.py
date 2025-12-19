@@ -159,6 +159,9 @@ class AdminIdeaValidation(BaseModel):
     opportunity_score: Optional[int] = None
     validation_confidence: Optional[int] = None
     summary: Optional[str] = None
+    # Included only when requested (see /admin/idea-validations?include_result=true)
+    result_json: Optional[str] = None
+    error_message: Optional[str] = None
 
     created_at: datetime
     updated_at: Optional[datetime] = None
