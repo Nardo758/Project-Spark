@@ -21,6 +21,7 @@ from app.models.stripe_event import (
     PayPerUnlockAttempt,
     PayPerUnlockAttemptStatus,
 )
+from app.models.idea_validation import IdeaValidation, IdeaValidationStatus
 from app.services.stripe_service import get_stripe_client
 from app.services.usage_service import usage_service
 from datetime import datetime, timedelta, timezone
@@ -210,6 +211,8 @@ def handle_payment_intent_succeeded(payment_intent: dict, db: Session):
         _fulfill_micro_payment(payment_intent, metadata, db)
     elif payment_type == "project_payment":
         _fulfill_project_payment(payment_intent, metadata, db)
+    elif payment_type == "idea_validation" or metadata.get("service") == "idea_validation":
+        _fulfill_idea_validation(payment_intent, metadata, db)
 
 
 def handle_payment_intent_failed(payment_intent: dict, db: Session):
@@ -244,6 +247,9 @@ def handle_payment_intent_failed(payment_intent: dict, db: Session):
         if attempt:
             attempt.status = PayPerUnlockAttemptStatus.FAILED
             db.commit()
+
+    if metadata.get("type") == "idea_validation" or metadata.get("service") == "idea_validation":
+        _fail_idea_validation(payment_intent, metadata, db)
 
 
 def handle_invoice_paid(invoice: dict, db: Session):
@@ -494,3 +500,41 @@ def _fulfill_micro_payment(payment_intent: dict, metadata: dict, db: Session):
 def _fulfill_project_payment(payment_intent: dict, metadata: dict, db: Session):
     """Fulfill project payment (larger expert engagement)."""
     logger.info(f"Project payment fulfilled: {payment_intent.get('id')}")
+
+
+def _fulfill_idea_validation(payment_intent: dict, metadata: dict, db: Session):
+    """Mark an IdeaValidation record as paid (idempotent)."""
+    validation_id = metadata.get("idea_validation_id")
+    payment_intent_id = payment_intent.get("id")
+    if not validation_id or not payment_intent_id:
+        return
+    row = db.query(IdeaValidation).filter(IdeaValidation.id == int(validation_id)).first()
+    if not row:
+        return
+    if row.stripe_payment_intent_id and row.stripe_payment_intent_id != payment_intent_id:
+        return
+    if row.status in (IdeaValidationStatus.PAID, IdeaValidationStatus.PROCESSING, IdeaValidationStatus.COMPLETED):
+        return
+    row.status = IdeaValidationStatus.PAID
+    row.stripe_payment_intent_id = payment_intent_id
+    row.amount_cents = payment_intent.get("amount") or row.amount_cents
+    row.currency = payment_intent.get("currency") or row.currency
+    db.commit()
+
+
+def _fail_idea_validation(payment_intent: dict, metadata: dict, db: Session):
+    """Mark an IdeaValidation record as failed when payment fails."""
+    validation_id = metadata.get("idea_validation_id")
+    payment_intent_id = payment_intent.get("id")
+    if not validation_id or not payment_intent_id:
+        return
+    row = db.query(IdeaValidation).filter(IdeaValidation.id == int(validation_id)).first()
+    if not row:
+        return
+    if row.stripe_payment_intent_id and row.stripe_payment_intent_id != payment_intent_id:
+        return
+    if row.status in (IdeaValidationStatus.COMPLETED,):
+        return
+    row.status = IdeaValidationStatus.FAILED
+    row.error_message = "payment_failed"
+    db.commit()

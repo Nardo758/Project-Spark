@@ -8,6 +8,7 @@ export function Nav() {
     <div style={{ display: 'flex', gap: 12, padding: 12, borderBottom: '1px solid #eee' }}>
       <Link to="/">Home</Link>
       <Link to="/pricing">Pricing</Link>
+      <Link to="/validations">My Validations</Link>
       <Link to="/admin">Admin</Link>
       <div style={{ marginLeft: 'auto' }}>
         {authed ? (

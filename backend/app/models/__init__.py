@@ -8,6 +8,7 @@ from .user_profile import UserProfile
 from .expert import Expert
 from .transaction import Transaction
 from .stripe_event import StripeWebhookEvent, StripeWebhookEventStatus, PayPerUnlockAttempt, PayPerUnlockAttemptStatus
+from .idea_validation import IdeaValidation, IdeaValidationStatus
 from .success_pattern import SuccessPattern
 from .report import Report
 from .user import User
@@ -32,6 +33,8 @@ __all__ = [
     "StripeWebhookEventStatus",
     "PayPerUnlockAttempt",
     "PayPerUnlockAttemptStatus",
+    "IdeaValidation",
+    "IdeaValidationStatus",
     "SuccessPattern",
     "Report",
     "OAuthToken",
