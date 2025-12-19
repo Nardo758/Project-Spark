@@ -1,0 +1,106 @@
+flowchart TB
+    Start([User Journey]) --> Profile[Build AI Profile]
+    
+    Profile --> AI_Profile[AI Profile Creation]
+    
+    AI_Profile --> CorePath{Core Path Selection}
+    
+    CorePath -->|Build Business| BuildPath
+    CorePath -->|Generate Leads| LeadPath
+    CorePath -->|Create Content| ContentPath
+    
+    %% BUILD PATH (Existing Enhanced)
+    subgraph BuildPath [Startup Builder Path]
+        B1[Opportunity Match] --> B2[AI Roadmap]
+        B2 --> B3[Expert Matching]
+        B3 --> B4[Execution]
+        B4 --> B5[Success Tracking]
+    end
+    
+    %% NEW: LEAD GENERATION PATH
+    subgraph LeadPath [Lead Generation Path]
+        L1[Define Target Market] --> L2[AI Lead Identification]
+        L2 --> L3[Lead Qualification]
+        L3 --> L4[Lead Packaging]
+        L4 --> L5[Lead Marketplace]
+    end
+    
+    %% NEW: AI CONTENT CREATION PATH
+    subgraph ContentPath [AI Content Creation Path]
+        C1[Content Brief] --> C2[AI Research]
+        C2 --> C3[Draft Generation]
+        C3 --> C4[Expert Review Optional]
+        C4 --> C5[Content Delivery]
+    end
+    
+    %% INTERCONNECTIONS
+    BuildPath --> LeadOpportunity{Want to sell leads?}
+    LeadOpportunity -->|Yes| LeadPath
+    LeadOpportunity -->|No| ContinueBuild[Continue Building]
+    
+    BuildPath --> ContentNeeds{Need professional documents?}
+    ContentNeeds -->|Yes| ContentPath
+    ContentNeeds -->|No| ContinueBuild
+    
+    %% LEAD MARKETPLACE FLOW
+    L5 --> LeadQuality[AI Quality Scoring]
+    
+    LeadQuality --> LeadPricing[AI Dynamic Pricing]
+    
+    LeadPricing --> LeadListing[List on Marketplace]
+    
+    LeadListing --> BuyerMatch[Match with Buyers]
+    
+    BuyerMatch --> Sale{Lead Sold?}
+    
+    Sale -->|Yes| LeadDelivery[Deliver Lead + Data]
+    Sale -->|No| Wait[Wait for Buyer]
+    
+    LeadDelivery --> RevenueSplit[Revenue Share]
+    
+    RevenueSplit --> |70%| CreatorPayout[Lead Creator]
+    RevenueSplit --> |25%| PlatformFee[OppGrid Platform]
+    RevenueSplit --> |5%| AIFee[AI Training Data]
+    
+    %% AI CONTENT FLOW
+    C5 --> ContentOptions{Content Use Options}
+    
+    ContentOptions -->|Sell Template| SellTemplate[Marketplace Listing]
+    ContentOptions -->|Use Internally| InternalUse[Use for Business]
+    ContentOptions -->|White-label| WhiteLabel[Sell to Others]
+    
+    SellTemplate --> ContentPricing[AI Pricing Model]
+    
+    ContentPricing --> TemplateSale{Sale?}
+    
+    TemplateSale -->|Yes| ContentRevenue[Revenue Share]
+    TemplateSale -->|No| WaitTemplate[Wait in Marketplace]
+    
+    ContentRevenue --> |60%| ContentCreator[Content Creator]
+    ContentRevenue --> |30%| PlatformContent[OppGrid Platform]
+    ContentRevenue --> |10%| AIUpgrade[AI Model Improvement]
+    
+    %% PAYMENT INTEGRATION
+    CreatorPayout --> PaymentGateway[Enhanced Payment Gateway]
+    ContentRevenue --> PaymentGateway
+    
+    PlatformFee --> PaymentGateway
+    PlatformContent --> PaymentGateway
+    
+    AIFee --> AI_Training_Fund[AI Training Fund]
+    AIUpgrade --> AI_Training_Fund
+    
+    %% DATA ENRICHMENT LOOP
+    LeadDelivery --> LDB[(Lead DB)]
+    ContentDelivery --> CDB[(Content DB)]
+    
+    LDB --> AI_Enhancement[AI Model Enhancement]
+    CDB --> AI_Enhancement
+    
+    AI_Enhancement --> BetterAI[Better Future AI]
+    
+    BetterAI --> AllPaths[All User Paths Improved]
+    
+    style LeadPath fill:#fef3c7,stroke:#f59e0b
+    style ContentPath fill:#f5f3ff,stroke:#8b5cf6
+    style BuildPath fill:#dbeafe,stroke:#3b82f6
