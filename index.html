@@ -1321,20 +1321,30 @@
                 </div>
             </a>
             <div class="nav-links">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="discover.html" class="nav-link">Browse Ideas</a>
-                <a href="expert-marketplace.html" class="nav-link auth-required" style="display: none;">Experts</a>
+                <!-- Guest Navigation -->
+                <a href="index.html" class="nav-link guest-only">Home</a>
+                <a href="discover.html" class="nav-link guest-only">Browse Ideas</a>
+                <a href="idea-engine.html" class="nav-link guest-only">Idea Engine</a>
+                <a href="pricing.html" class="nav-link guest-only">Pricing</a>
+                
+                <!-- Logged-In Navigation (9 items) -->
+                <a href="dashboard.html" class="nav-link auth-required" style="display: none;">Dashboard</a>
+                <a href="discover.html" class="nav-link auth-required" style="display: none;">Discover</a>
                 <div class="nav-dropdown auth-required" style="display: none; position: relative;">
-                    <a href="#" class="nav-link nav-dropdown-trigger">AI Tools <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></a>
-                    <div class="nav-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 0; min-width: 180px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100;">
+                    <a href="#" class="nav-link nav-dropdown-trigger">Builder <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></a>
+                    <div class="nav-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 0; min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100;">
                         <a href="idea-engine.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">Idea Engine</a>
                         <a href="ai-match.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">AI Expert Match</a>
                         <a href="ai-roadmap.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">AI Roadmap</a>
+                        <a href="expert-marketplace.html" class="nav-dropdown-item" style="display: block; padding: 8px 16px; color: #44403c; text-decoration: none;">Expert Marketplace</a>
                     </div>
                 </div>
-                <a href="idea-engine.html" class="nav-link guest-only">Idea Engine</a>
-                <a href="pricing.html" class="nav-link">Pricing</a>
-                <a href="dashboard.html" class="nav-link auth-required" style="display: none;">Dashboard</a>
+                <a href="leads.html" class="nav-link auth-required" style="display: none;">Leads</a>
+                <a href="content.html" class="nav-link auth-required" style="display: none;">Content</a>
+                <a href="network.html" class="nav-link auth-required" style="display: none;">Network</a>
+                <a href="funding.html" class="nav-link auth-required" style="display: none;">Funding</a>
+                <a href="tools.html" class="nav-link auth-required" style="display: none;">Tools</a>
+                <a href="learn.html" class="nav-link auth-required" style="display: none;">Learn</a>
             </div>
             <div class="nav-actions" id="header-actions">
                 <a href="signin.html" class="btn guest-only" style="display: inline-flex;">Sign In</a>

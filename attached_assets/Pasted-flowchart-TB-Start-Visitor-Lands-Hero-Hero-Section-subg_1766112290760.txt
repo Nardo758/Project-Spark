@@ -1,0 +1,63 @@
+flowchart TB
+    Start([Visitor Lands]) --> Hero[Hero Section]
+    
+    subgraph Hero [Above the Fold]
+        H1[#1 Headline: Transform Market Signals<br>into Business Opportunities]
+        H2[Subheadline: Discover validated opportunities<br>backed by real consumer insights]
+        CTA1[Primary CTA: Get Started Free]
+        CTA2[Secondary CTA: Watch Demo Video]
+        Stats[Social Proof: 176+ Opportunities • $47B+ Market • 6 Global Markets]
+    end
+    
+    Hero --> ValueProp[Value Proposition Section]
+    
+    subgraph ValueProp [How OppGrid Works]
+        Step1[1. Discover Opportunities<br>Browse 176+ validated business ideas]
+        Step2[2. Validate Your Idea<br>AI-powered validation vs. existing data]
+        Step3[3. Execute with AI<br>Get roadmap, team, funding, launch support]
+        Step4[4. Generate Revenue<br>Sell leads, create content, scale business]
+    end
+    
+    ValueProp --> SocialProof[Social Proof Section]
+    
+    subgraph SocialProof [Trust Indicators]
+        Logos[Partner Logos: Upwork, LegalZoom, Stripe, etc.]
+        Testimonials[Founder Testimonials with results]
+        Press[Featured In: TechCrunch, Forbes, etc.]
+        Awards[Awards & Certifications]
+    end
+    
+    SocialProof --> PricingPreview[Pricing Preview]
+    
+    subgraph PricingPreview [Pricing Teaser]
+        FreePlan[Free: Browse archive, 1 idea validation/month]
+        ProPlan[Pro: $99/mo - Fresh opportunities + tools]
+        BusinessPlan[Business: $499/mo - Hot opportunities + AI content]
+        EnterprisePlan[Enterprise: Custom - Complete startup OS]
+    end
+    
+    PricingPreview --> TrendingOpp[Trending Opportunity Preview]
+    
+    subgraph TrendingOpp [Opportunity Preview - Limited View]
+        Title[Managing passwords across devices is a security risk]
+        Market[Market: $3B-$8B • Growth: +34%]
+        CTA[Sign up to see full details and 175+ more opportunities]
+        Locked[🔒 Most details blurred/locked]
+    end
+    
+    TrendingOpp --> FinalCTA[Final Call-to-Action]
+    
+    subgraph FinalCTA [Bottom of Page]
+        Headline[Start Your First Business in 90 Days]
+        Subheadline[Or find your next $1M+ opportunity]
+        EmailCapture[Email input for free opportunity digest]
+        SignUpButton[Create Free Account]
+        LoginLink[Already have an account? Sign in →]
+    end
+    
+    FinalCTA --> Footer[Footer Navigation]
+    
+    LoginLink --> LoginModal[Login Modal]
+    
+    CTA1 --> SignupFlow[Signup Flow]
+    SignUpButton --> SignupFlow

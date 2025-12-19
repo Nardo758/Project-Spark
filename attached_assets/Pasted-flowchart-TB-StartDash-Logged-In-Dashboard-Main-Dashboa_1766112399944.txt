@@ -1,0 +1,79 @@
+flowchart TB
+    StartDash([Logged In]) --> Dashboard[Main Dashboard]
+    
+    subgraph Dashboard [Personalized Dashboard]
+        NavBar[OppGrid Logo • Search • Notifications • User Menu]
+        
+        WelcomeBar[Welcome back, Alex! • AI Match Score: 87 • Daily opportunity digest ready]
+        
+        QuickActions[Quick Actions]
+        
+        subgraph QuickActions [One-Click Actions]
+            QA1[🚀 Find New Opportunity]
+            QA2[🔍 Validate My Idea]
+            QA3[📈 Generate Leads]
+            QA4[📋 Create Business Plan]
+            QA5[👥 Find Co-founder]
+            QA6[💰 Check Funding Options]
+        end
+        
+        OpportunityFeed[Personalized Opportunity Feed]
+        
+        subgraph OpportunityFeed [AI-Curated Opportunities]
+            Opp1[🔥 HOT - 2d<br>Voice-based medical notes for doctors<br>Market: $3-8B • Match: 92%<br>[View Details] [Save]]
+            
+            Opp2[🆕 FRESH - 15d<br>AI meal planning for busy parents<br>Market: $500M-2B • Match: 85%<br>[View Details] [Save]]
+            
+            Opp3[✅ VALIDATED - 45d<br>Sustainable e-commerce packaging<br>Market: $2-5B • Match: 78%<br>[View Details] [Save]]
+            
+            SeeMore[See 12 more opportunities →]
+        end
+        
+        ProgressTrackers[Your Progress Trackers]
+        
+        subgraph ProgressTrackers [Active Projects]
+            PT1[MedTech App • Week 3/12 • 65% complete<br>Next: Hire developer • Due: 2 days]
+            
+            PT2[Lead Generation • 247 leads created • $4,795 earned<br>[Manage Leads] [Withdraw]]
+            
+            PT3[Market Study Template • 47 sales • $3,760 royalties<br>[Analytics] [Create New]]
+        end
+        
+        AIRecommendations[AI Recommendations]
+        
+        subgraph AIRecommendations [Your AI Co-pilot Suggests]
+            AR1[💡 Based on your skills, consider:<br>Healthcare compliance consulting]
+            AR2[📊 Your leads convert 3.2x better in:<br>FinTech sector]
+            AR3[👥 You need: Technical co-founder<br>[Find Match]]
+            AR4[💰 Funding alert: Healthcare grants due<br>in 14 days [Apply]]
+        end
+        
+        Trending[Trending in Your Network]
+        
+        subgraph Trending [Community Activity]
+            T1[Sarah launched her SaaS • 45 days • $12k MRR]
+            T2[Mark sold 500 leads • $15k revenue]
+            T3[Tech Ventures looking for AI startups [Pitch]]
+            T4[Healthcare webinar tomorrow [Register]]
+        end
+    end
+    
+    QuickActions --> CorrespondingPages[Action Pages]
+    OpportunityFeed --> OppDetails[Opportunity Details]
+    ProgressTrackers --> ProjectDashboards[Project Dashboards]
+    AIRecommendations --> RecommendationDetails[Detailed Recommendations]
+    Trending --> CommunityPages[Community Pages]
+    
+    NavBar --> MainNavigation[Main Navigation]
+    
+    subgraph MainNavigation [Logged-In Navigation Structure]
+        Nav1[🏠 Dashboard]
+        Nav2[🔍 Discover]
+        Nav3[🚀 Builder]
+        Nav4[📈 Leads]
+        Nav5[📋 Content]
+        Nav6[👥 Network]
+        Nav7[💰 Funding]
+        Nav8[🛠️ Tools]
+        Nav9[📚 Learn]
+    end
