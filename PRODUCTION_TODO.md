@@ -45,7 +45,7 @@
 
 - [ ] Homepage (index.html) - Hero, navigation, opportunity cards
 - [ ] Discover (discover.html) - Browse opportunities with filters
-- [ ] Idea Engine (idea-engine.html) - AI idea generation & validation
+- [ ] Idea Engine (`/idea-engine`) - AI idea generation & validation
 - [ ] Expert Marketplace (expert-marketplace.html) - Browse & filter experts
 - [ ] Expert Checkout (expert-checkout.html) - Book expert services
 - [ ] AI Match (ai-match.html) - AI-powered expert matching
