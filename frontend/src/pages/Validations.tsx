@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchJson } from '../lib/http';
+import { Link } from 'react-router-dom';
 
 type IdeaValidationItem = {
   id: number;
@@ -60,7 +61,9 @@ export function Validations() {
                 {data.items.map((v) => (
                   <tr key={v.id}>
                     <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.id}</td>
-                    <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.title}</td>
+                    <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>
+                      <Link to={`/validations/${v.id}`}>{v.title}</Link>
+                    </td>
                     <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.category}</td>
                     <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.status}</td>
                     <td style={{ borderBottom: '1px solid #f0f0f0', padding: 8 }}>{v.opportunity_score ?? '—'}</td>
@@ -82,7 +85,7 @@ export function Validations() {
       )}
 
       <p style={{ marginTop: 12 }}>
-        Next: migrate <code>idea-engine.html</code> into React and have it create validations here.
+        Create new ones from <Link to="/idea-engine">Idea Engine</Link>.
       </p>
     </div>
   );
