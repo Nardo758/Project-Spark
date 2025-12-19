@@ -539,6 +539,6 @@ uvicorn app.main:app --reload
 Questions about these features? Check:
 - **API Docs**: http://localhost:8000/docs
 - **Main Guide**: README_SETUP.md
-- **Supabase Guide**: SUPABASE_SETUP.md
+- **Deployment Guide**: DEPLOYMENT.md
 
 Enjoy building with Friction! 🚀
