@@ -41,12 +41,14 @@
         .pricing-badge.hourly { background: var(--violet-100); color: var(--violet-600); }
         .pricing-badge.fixed { background: var(--green-100); color: var(--green-600); }
         .pricing-badge.success { background: var(--amber-100); color: var(--amber-500); }
-        .card-actions { display: flex; gap: 12px; }
-        .btn { flex: 1; padding: 10px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; text-align: center; }
+        .card-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn { flex: 1; min-width: 140px; padding: 10px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; text-align: center; }
         .btn-primary { background: var(--stone-800); color: var(--white); }
         .btn-primary:hover { background: var(--stone-900); }
         .btn-secondary { background: var(--white); color: var(--stone-700); border: 1px solid var(--stone-300); }
         .btn-secondary:hover { background: var(--stone-100); }
+        .btn-pilot { background: var(--violet-100); color: var(--violet-600); border: 1px solid var(--violet-100); }
+        .btn-pilot:hover { filter: brightness(0.98); }
         .loading { text-align: center; padding: 48px; }
         .spinner { width: 40px; height: 40px; border: 3px solid var(--stone-200); border-top-color: var(--stone-800); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -170,6 +172,8 @@
             grid.innerHTML = experts.map(expert => {
                 const skills = expert.skills || [];
                 const pricingBadges = [];
+                const oppParam = opportunityId ? `&opportunity_id=${encodeURIComponent(String(opportunityId))}` : '';
+                const pilotHref = `success-pilot.html?expert_id=${encodeURIComponent(String(expert.id))}${oppParam}&agreement_type=success_fee&trigger_type=first_revenue`;
                 
                 if (expert.hourly_rate_cents) {
                     pricingBadges.push(`<span class="pricing-badge hourly">$${(expert.hourly_rate_cents / 100).toFixed(0)}/hr</span>`);
@@ -202,6 +206,7 @@
                     <div class="card-actions">
                         <a href="expert-checkout.html?id=${expert.id}" class="btn btn-secondary">Get Quote</a>
                         <a href="expert-checkout.html?id=${expert.id}&book=true" class="btn btn-primary">Book Now</a>
+                        <a href="${pilotHref}" class="btn btn-pilot">Success-Based</a>
                     </div>
                 </div>`;
             }).join('');
