@@ -4,6 +4,8 @@ from app.core.config import settings
 from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations
 import logging
 import os
+from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
