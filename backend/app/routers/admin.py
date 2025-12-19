@@ -16,6 +16,8 @@ from app.models.opportunity import Opportunity
 from app.models.validation import Validation
 from app.models.comment import Comment
 from app.models.notification import Notification
+from app.models.partner import PartnerOutreach, PartnerOutreachStatus
+from app.models.tracking import TrackingEvent
 from app.schemas.admin import (
     AdminUserListItem,
     AdminUserDetail,
@@ -25,6 +27,9 @@ from app.schemas.admin import (
     AdminOpportunityListItem,
     AdminStripeWebhookEventList,
     AdminPayPerUnlockAttemptList,
+    AdminPartnerOutreach,
+    AdminPartnerOutreachCreate,
+    AdminPartnerOutreachUpdate,
 )
 from app.core.dependencies import get_current_admin_user
 
@@ -127,6 +132,190 @@ def list_pay_per_unlock_attempts(
     total = q.count()
     items = q.order_by(desc(PayPerUnlockAttempt.created_at)).offset(skip).limit(limit).all()
     return {"items": items, "total": total}
+
+
+@router.get("/partners", response_model=List[AdminPartnerOutreach])
+def list_partners(
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    status_filter: Optional[str] = Query(None, description="identified|contacted|in_talks|active|paused|rejected"),
+    search: Optional[str] = Query(None, description="Substring match on name/category"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    q = db.query(PartnerOutreach)
+
+    if status_filter:
+        try:
+            q = q.filter(PartnerOutreach.status == PartnerOutreachStatus(status_filter))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status_filter")
+
+    if search:
+        s = f"%{search}%"
+        q = q.filter(
+            (PartnerOutreach.name.ilike(s)) |
+            (PartnerOutreach.category.ilike(s))
+        )
+
+    items = q.order_by(desc(PartnerOutreach.created_at)).offset(skip).limit(limit).all()
+    return items
+
+
+@router.post("/partners", response_model=AdminPartnerOutreach, status_code=status.HTTP_201_CREATED)
+def create_partner(
+    payload: AdminPartnerOutreachCreate,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    status_value = payload.status or PartnerOutreachStatus.IDENTIFIED.value
+    try:
+        status_enum = PartnerOutreachStatus(status_value)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    partner = PartnerOutreach(
+        name=payload.name,
+        category=payload.category,
+        website_url=payload.website_url,
+        contact_name=payload.contact_name,
+        contact_email=payload.contact_email,
+        status=status_enum,
+        notes=payload.notes,
+    )
+    db.add(partner)
+    db.commit()
+    db.refresh(partner)
+    return partner
+
+
+@router.patch("/partners/{partner_id}", response_model=AdminPartnerOutreach)
+def update_partner(
+    partner_id: int,
+    payload: AdminPartnerOutreachUpdate,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    partner = db.query(PartnerOutreach).filter(PartnerOutreach.id == partner_id).first()
+    if not partner:
+        raise HTTPException(status_code=404, detail="Partner not found")
+
+    data = payload.dict(exclude_unset=True)
+    if "status" in data and data["status"] is not None:
+        try:
+            partner.status = PartnerOutreachStatus(data["status"])
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        data.pop("status", None)
+
+    for k, v in data.items():
+        setattr(partner, k, v)
+
+    db.commit()
+    db.refresh(partner)
+    return partner
+
+
+@router.delete("/partners/{partner_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_partner(
+    partner_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    partner = db.query(PartnerOutreach).filter(PartnerOutreach.id == partner_id).first()
+    if not partner:
+        raise HTTPException(status_code=404, detail="Partner not found")
+    db.delete(partner)
+    db.commit()
+    return None
+
+
+@router.get("/tracking/summary")
+def tracking_summary(
+    days: int = Query(7, ge=1, le=90),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    from datetime import datetime, timedelta
+    since = datetime.utcnow() - timedelta(days=days)
+
+    total = db.query(TrackingEvent).filter(TrackingEvent.created_at >= since).count()
+    page_views = db.query(TrackingEvent).filter(
+        TrackingEvent.created_at >= since,
+        TrackingEvent.name == "page_view",
+    ).count()
+
+    top_events = db.query(
+        TrackingEvent.name,
+        func.count(TrackingEvent.id).label("count"),
+    ).filter(
+        TrackingEvent.created_at >= since
+    ).group_by(
+        TrackingEvent.name
+    ).order_by(
+        desc("count")
+    ).limit(10).all()
+
+    top_paths = db.query(
+        TrackingEvent.path,
+        func.count(TrackingEvent.id).label("count"),
+    ).filter(
+        TrackingEvent.created_at >= since,
+        TrackingEvent.path.isnot(None),
+    ).group_by(
+        TrackingEvent.path
+    ).order_by(
+        desc("count")
+    ).limit(10).all()
+
+    return {
+        "days": days,
+        "total_events": total,
+        "page_views": page_views,
+        "top_events": [{"name": name, "count": count} for name, count in top_events],
+        "top_paths": [{"path": path, "count": count} for path, count in top_paths],
+    }
+
+
+@router.get("/tracking/events")
+def list_tracking_events(
+    limit: int = Query(50, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    name: Optional[str] = Query(None),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    q = db.query(TrackingEvent)
+    if name:
+        q = q.filter(TrackingEvent.name == name)
+    total = q.count()
+    items = q.order_by(desc(TrackingEvent.created_at)).offset(skip).limit(limit).all()
+
+    def _parse_props(s):
+        if not s:
+            return None
+        try:
+            import json
+            return json.loads(s)
+        except Exception:
+            return None
+
+    return {
+        "total": total,
+        "items": [
+            {
+                "id": e.id,
+                "name": e.name,
+                "path": e.path,
+                "referrer": e.referrer,
+                "user_id": e.user_id,
+                "anonymous_id": e.anonymous_id,
+                "properties": _parse_props(e.properties),
+                "created_at": e.created_at,
+            }
+            for e in items
+        ],
+    }
 
 
 @router.get("/users", response_model=List[AdminUserListItem])

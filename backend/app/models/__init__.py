@@ -16,6 +16,8 @@ from .oauth import OAuthToken
 from .agreement import SuccessFeeAgreement, AgreementType, AgreementStatus, TriggerType
 from .milestone import Milestone, MilestoneStatus
 from .booking import ExpertBooking, BookingType, BookingStatus, PaymentModel
+from .partner import PartnerOutreach, PartnerOutreachStatus
+from .tracking import TrackingEvent
 
 __all__ = [
     "User",
@@ -48,4 +50,7 @@ __all__ = [
     "BookingType",
     "BookingStatus",
     "PaymentModel",
+    "PartnerOutreach",
+    "PartnerOutreachStatus",
+    "TrackingEvent",
 ]

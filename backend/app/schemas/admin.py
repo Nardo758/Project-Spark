@@ -5,6 +5,7 @@ Pydantic schemas for admin operations
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, date
+from pydantic import Field
 
 
 class AdminUserListItem(BaseModel):
@@ -140,3 +141,31 @@ class AdminPayPerUnlockAttempt(BaseModel):
 class AdminPayPerUnlockAttemptList(BaseModel):
     items: List[AdminPayPerUnlockAttempt]
     total: int
+
+
+class AdminPartnerOutreachBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    category: Optional[str] = None
+    website_url: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_email: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AdminPartnerOutreachCreate(AdminPartnerOutreachBase):
+    name: str
+
+
+class AdminPartnerOutreachUpdate(AdminPartnerOutreachBase):
+    pass
+
+
+class AdminPartnerOutreach(AdminPartnerOutreachBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
