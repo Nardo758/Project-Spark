@@ -964,6 +964,7 @@
                 <div class="result-score"><span id="finalScore">0</span></div>
                 <div class="result-confidence">Validation Confidence: <span id="confidence">0</span>%</div>
                 <p id="resultSummary" class="result-summary"></p>
+                <p id="savedValidationLink" class="result-confidence" style="display:none; margin-top: 12px;"></p>
             </div>
 
             <div class="result-section fade-in-up stagger-1">
@@ -1098,12 +1099,22 @@
         </div>
     </div>
 
+    <script src="js/auth.js"></script>
     <script>
         const API_BASE = '/api/v1/idea-engine';
+        const API_VALIDATIONS = '/api/v1/idea-validations';
         let stripe = null;
         let elements = null;
         let cardElement = null;
         let generatedData = null;
+        let currentIdeaValidationId = null;
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('access_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        }
 
         const ideaInput = document.getElementById('ideaInput');
         const charCount = document.getElementById('charCount');
@@ -1199,6 +1210,8 @@
         }
 
         validateBtn.addEventListener('click', async () => {
+            // Persisted validations require authentication
+            if (window.OppGridAuth && !OppGridAuth.requireAuth({ redirect: 'idea-engine.html' })) return;
             if (!stripe) {
                 await initStripe();
             }
@@ -1214,20 +1227,34 @@
                 alert('Payment system not available. Please try again.');
                 return;
             }
+            if (!generatedData) {
+                alert('Please generate an idea first.');
+                return;
+            }
 
             payBtn.disabled = true;
             payBtn.innerHTML = '<div class="spinner"></div> Processing...';
 
             try {
-                const intentResponse = await fetch(`${API_BASE}/create-payment-intent`, {
+                const intentResponse = await fetch(`${API_VALIDATIONS}/create-payment-intent`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: 999 })
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        idea: generatedData.refined_idea,
+                        title: generatedData.title,
+                        category: generatedData.category,
+                        amount_cents: 999
+                    })
                 });
 
+                if (intentResponse.status === 401 || intentResponse.status === 403) {
+                    if (window.OppGridAuth) OppGridAuth.redirectToSignin({ redirect: 'idea-engine.html' });
+                    throw new Error('Not authenticated');
+                }
                 if (!intentResponse.ok) throw new Error('Failed to create payment');
 
-                const { client_secret, payment_intent_id } = await intentResponse.json();
+                const { client_secret, payment_intent_id, idea_validation_id } = await intentResponse.json();
+                currentIdeaValidationId = idea_validation_id;
 
                 const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
                     payment_method: { card: cardElement }
@@ -1240,7 +1267,7 @@
 
                 if (paymentIntent.status === 'succeeded') {
                     paymentModal.classList.remove('show');
-                    await runValidation(paymentIntent.id);
+                    await runValidation(currentIdeaValidationId, paymentIntent.id);
                 }
             } catch (error) {
                 console.error('Payment error:', error);
@@ -1250,26 +1277,29 @@
             }
         });
 
-        async function runValidation(paymentIntentId) {
+        async function runValidation(ideaValidationId, paymentIntentId) {
             validateBtn.disabled = true;
             validateBtn.innerHTML = '<div class="spinner" style="border-color: var(--emerald-600); border-top-color: transparent;"></div> Validating...';
 
             try {
-                const response = await fetch(`${API_BASE}/validate`, {
+                const response = await fetch(`${API_VALIDATIONS}/${ideaValidationId}/run`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({
-                        idea: generatedData.refined_idea,
-                        title: generatedData.title,
-                        category: generatedData.category,
                         payment_intent_id: paymentIntentId
                     })
                 });
 
+                if (response.status === 401 || response.status === 403) {
+                    if (window.OppGridAuth) OppGridAuth.redirectToSignin({ redirect: 'idea-engine.html' });
+                    throw new Error('Not authenticated');
+                }
                 if (!response.ok) throw new Error('Validation failed');
 
-                const result = await response.json();
-                displayValidationResult(result);
+                const record = await response.json(); // IdeaValidationDetail
+                const result = record.result || null;
+                if (!result) throw new Error('Validation result missing');
+                displayValidationResult(result, record);
                 updateSteps(3);
             } catch (error) {
                 alert('Validation failed. Please try again.');
@@ -1286,7 +1316,7 @@
             }
         }
 
-        function displayValidationResult(data) {
+        function displayValidationResult(data, record) {
             document.getElementById('finalScore').textContent = data.opportunity_score;
             document.getElementById('confidence').textContent = data.validation_confidence;
             document.getElementById('resultSummary').textContent = data.summary;
@@ -1306,6 +1336,12 @@
             renderList('risks', data.key_risks);
             renderList('nextSteps', data.next_steps);
             renderList('trends', data.market_trends);
+
+            const saved = document.getElementById('savedValidationLink');
+            if (saved && record && record.id) {
+                saved.style.display = 'block';
+                saved.innerHTML = `Saved as report #${record.id}. <a href="/validations" style="color: var(--blue-600);">View in My Validations</a>`;
+            }
 
             generatedSection.classList.remove('show');
             validationSection.classList.add('show');
