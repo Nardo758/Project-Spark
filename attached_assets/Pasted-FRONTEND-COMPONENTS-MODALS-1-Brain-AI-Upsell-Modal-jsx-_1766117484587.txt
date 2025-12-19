@@ -1,0 +1,104 @@
+FRONTEND COMPONENTS & MODALS
+1. Brain AI Upsell Modal:
+jsx
+// frontend/src/components/brain/UpsellModal.jsx
+const BrainUpsellModal = ({ userTier, onClose, onUpgrade }) => {
+  const features = {
+    basic: [
+      'Personal AI that remembers your goals',
+      'Save 5+ hours/week on repetitive tasks',
+      'Get hyper-personalized opportunity matches',
+      'Train AI with your documents & research'
+    ],
+    business: [
+      'Everything in Basic, plus:',
+      '3 separate Brain profiles',
+      'Team collaboration features',
+      'Expert style learning for services',
+      'Advanced analytics dashboard'
+    ]
+  };
+  
+  return (
+    <div className="brain-upsell-modal">
+      <div className="modal-header">
+        <div className="icon">🧠</div>
+        <h2>Meet Your AI Co-founder</h2>
+        <p>Stop repeating yourself. Train an AI that knows you.</p>
+        <button className="close" onClick={onClose}>×</button>
+      </div>
+      
+      <div className="modal-body">
+        <div className="stats">
+          <div className="stat">
+            <strong>93%</strong>
+            <span>Increase in response accuracy</span>
+          </div>
+          <div className="stat">
+            <strong>5.2 hours</strong>
+            <span>Saved per week on average</span>
+          </div>
+          <div className="stat">
+            <strong>20+</strong>
+            <span>File formats supported</span>
+          </div>
+        </div>
+        
+        <div className="demo-video">
+          <video src="/brain-ai-demo.mp4" controls poster="/brain-demo-poster.jpg">
+            Your browser doesn't support video.
+          </video>
+          <p className="caption">See how Sarah trained her AI in 2 minutes</p>
+        </div>
+        
+        <div className="pricing-options">
+          <div className={`option ${userTier === 'pro' ? 'recommended' : ''}`}>
+            <h3>Brain AI Basic</h3>
+            <div className="price">Included with Pro</div>
+            <ul>
+              {features.basic.map((feature, i) => (
+                <li key={i}>✓ {feature}</li>
+              ))}
+            </ul>
+            <button 
+              className="select-btn"
+              onClick={() => onUpgrade('basic')}
+            >
+              {userTier === 'pro' ? 'Activate Now' : 'Upgrade to Pro + Brain AI'}
+            </button>
+          </div>
+          
+          <div className="option business">
+            <div className="badge">Most Popular</div>
+            <h3>Brain AI Business</h3>
+            <div className="price">+$199<span>/month</span></div>
+            <ul>
+              {features.business.map((feature, i) => (
+                <li key={i}>✓ {feature}</li>
+              ))}
+            </ul>
+            <button 
+              className="select-btn primary"
+              onClick={() => onUpgrade('business')}
+            >
+              Upgrade to Business Brain
+            </button>
+          </div>
+        </div>
+        
+        <div className="testimonials">
+          <div className="testimonial">
+            <p>"My Brain AI saved me 8 hours last week on research. It's like having a co-founder who never sleeps."</p>
+            <div className="author">— Alex, SaaS Founder</div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="modal-footer">
+        <p className="guarantee">
+          ⚡ Setup in 2 minutes • 💰 14-day money-back guarantee • 🔒 Your data stays private
+        </p>
+      </div>
+    </div>
+  );
+};
