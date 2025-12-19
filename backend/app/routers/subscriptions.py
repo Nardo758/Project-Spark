@@ -631,91 +631,18 @@ def export_json(opportunities):
     )
 
 
-@router.post("/webhook")
+@router.post("/webhook", include_in_schema=False)
 async def stripe_webhook(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Handle Stripe webhooks"""
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-    
-    if not sig_header:
-        raise HTTPException(status_code=400, detail="Missing Stripe signature header")
+    """
+    DEPRECATED: Stripe webhook endpoint.
 
-    try:
-        event = stripe_service.construct_webhook_event(payload, sig_header)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid payload")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    Canonical endpoint is: POST /api/v1/webhook/stripe (handled by `routers/stripe_webhook.py`).
+    We keep this route as a thin forwarder to avoid breaking existing Stripe configs.
+    """
+    # Import locally to avoid circular imports at module load time.
+    from app.routers.stripe_webhook import stripe_webhook as canonical_webhook
 
-    # Handle the event
-    if event.type == "checkout.session.completed":
-        handle_checkout_completed(event.data.object, db)
-    elif event.type == "customer.subscription.updated":
-        handle_subscription_updated(event.data.object, db)
-    elif event.type == "customer.subscription.deleted":
-        handle_subscription_deleted(event.data.object, db)
-
-    return {"status": "success"}
-
-
-def handle_checkout_completed(session, db: Session):
-    """Handle successful checkout"""
-    user_id = session.metadata.get("user_id")
-    if not user_id:
-        return
-
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if not user:
-        return
-
-    subscription = usage_service.get_or_create_subscription(user, db)
-    subscription.stripe_subscription_id = session.subscription
-    db.commit()
-
-
-def handle_subscription_updated(stripe_subscription, db: Session):
-    """Handle subscription update"""
-    from app.models.subscription import Subscription
-    from datetime import datetime
-
-    subscription = db.query(Subscription).filter(
-        Subscription.stripe_subscription_id == stripe_subscription.id
-    ).first()
-
-    if not subscription:
-        return
-
-    # Update subscription details
-    subscription.status = SubscriptionStatus(stripe_subscription.status)
-    subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start)
-    subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end)
-    subscription.cancel_at_period_end = stripe_subscription.cancel_at_period_end
-
-    # Update tier based on price ID
-    price_id = stripe_subscription.items.data[0].price.id
-    for tier, pid in stripe_service.STRIPE_PRICES.items():
-        if pid == price_id:
-            subscription.tier = tier
-            break
-
-    db.commit()
-
-
-def handle_subscription_deleted(stripe_subscription, db: Session):
-    """Handle subscription cancellation"""
-    from app.models.subscription import Subscription
-
-    subscription = db.query(Subscription).filter(
-        Subscription.stripe_subscription_id == stripe_subscription.id
-    ).first()
-
-    if not subscription:
-        return
-
-    subscription.tier = SubscriptionTier.FREE
-    subscription.status = SubscriptionStatus.CANCELED
-    subscription.stripe_subscription_id = None
-    db.commit()
+    return await canonical_webhook(request=request, db=db)
