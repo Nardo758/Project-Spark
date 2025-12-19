@@ -1,33 +1,36 @@
-import './App.css'
-import { Navigate, Route, Routes } from 'react-router-dom'
-import { Nav } from './components/Nav'
-import { Home } from './pages/Home'
-import { Pricing } from './pages/Pricing'
-import { Admin } from './pages/Admin'
-import { AuthCallback } from './pages/AuthCallback'
-import { Validations } from './pages/Validations'
-import { IdeaEngine } from './pages/IdeaEngine'
-import { ValidationDetail } from './pages/ValidationDetail'
-import { Login } from './pages/Login'
-import { MagicLinkCallback } from './pages/MagicLinkCallback'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuthStore } from './stores/authStore'
+import Layout from './components/Layout'
+import Home from './pages/Home'
+import Dashboard from './pages/Dashboard'
+import Discover from './pages/Discover'
+import IdeaEngine from './pages/IdeaEngine'
+import Pricing from './pages/Pricing'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import BrainDashboard from './pages/brain/BrainDashboard'
+import AuthCallback from './pages/AuthCallback'
+import MagicLinkCallback from './pages/MagicLinkCallback'
 
 function App() {
+  const { isAuthenticated } = useAuthStore()
+
   return (
-    <>
-      <Nav />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/idea-engine" element={<IdeaEngine />} />
-        <Route path="/validations" element={<Validations />} />
-        <Route path="/validations/:id" element={<ValidationDetail />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/auth/magic" element={<MagicLinkCallback />} />
-        <Route path="/login" element={<Login />} />
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={isAuthenticated ? <Dashboard /> : <Home />} />
+        <Route path="discover" element={<Discover />} />
+        <Route path="idea-engine" element={<IdeaEngine />} />
+        <Route path="pricing" element={<Pricing />} />
+        <Route path="login" element={<Login />} />
+        <Route path="signup" element={<Signup />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="brain" element={<BrainDashboard />} />
+        <Route path="auth/callback" element={<AuthCallback />} />
+        <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </>
+      </Route>
+    </Routes>
   )
 }
 

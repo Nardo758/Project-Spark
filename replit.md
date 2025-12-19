@@ -7,7 +7,14 @@ OppGrid is an AI-powered opportunity intelligence platform designed to help user
 I want iterative development, with a focus on delivering core features quickly and refining them based on feedback. Prioritize modular and reusable code. I prefer clear, concise explanations and direct answers. Ask before making major architectural changes or introducing new external dependencies. Do not make changes to the `replit.nix` file.
 
 ## System Architecture
-OppGrid utilizes a hybrid architecture with a FastAPI backend (Python) handling business logic, API endpoints, and AI integrations, and a static HTML/CSS/JavaScript frontend for user interaction. The frontend is served on Port 5000 and the backend on Port 8000, with the frontend proxying `/api/*` requests to the backend. Replit's PostgreSQL serves as the primary database.
+OppGrid utilizes a modern hybrid architecture:
+- **Frontend:** React 18 + Vite + TailwindCSS (Port 5000)
+- **Backend:** Python FastAPI with SQLAlchemy ORM (Port 8000)
+- **Database:** Replit PostgreSQL
+- **State Management:** Zustand for client-side state
+- **Routing:** React Router v6
+
+The frontend proxies `/api/*` requests to the backend via Vite's dev server configuration.
 
 **Key Architectural Decisions & Features:**
 *   **Monetization & Access Control:** Implements a tiered subscription model (Pro, Business, Enterprise) with time-decay access control for opportunities (Hot, Fresh, Validated, Archive). A pay-per-unlock mechanism for archived opportunities is also integrated.

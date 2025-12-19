@@ -1,88 +1,182 @@
 import { useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { fetchJson } from '../lib/http'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import { useAuthStore } from '../stores/authStore'
 
-type MagicLinkSendResponse = {
-  message: string
-  email: string
-}
-
-export function Login() {
+export default function Login() {
   const location = useLocation()
   const navigate = useNavigate()
-
   const next = useMemo(() => {
     const params = new URLSearchParams(location.search)
-    return params.get('next') || '/'
+    return params.get('next') || '/dashboard'
   }, [location.search])
 
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [sending, setSending] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [magicStatus, setMagicStatus] = useState('')
+  const [magicSending, setMagicSending] = useState(false)
 
-  function startReplitAuth() {
-    const redirectUrl = `/auth/callback?next=${encodeURIComponent(next)}`
-    window.location.href = `/auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`
-  }
+  const { login, isLoading, startReplitAuth, sendMagicLink } = useAuthStore()
 
-  async function sendMagicLink() {
-    setError(null)
-    setStatus(null)
-    const trimmed = email.trim()
-    if (!trimmed) {
-      setError('Enter your email.')
-      return
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setMagicStatus('')
 
     try {
-      setSending(true)
-      const res = await fetchJson<MagicLinkSendResponse>('/magic-link/send', {
-        method: 'POST',
-        body: JSON.stringify({ email: trimmed }),
-        auth: false,
-      })
-      setStatus(res.message || 'Magic link sent. Check your email.')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to send magic link.')
+      await login(email, password)
+      navigate(next)
+    } catch {
+      setError('Invalid email or password')
+    }
+  }
+
+  const handleReplit = () => {
+    startReplitAuth(next)
+  }
+
+  const handleMagicLink = async () => {
+    setError('')
+    setMagicStatus('')
+    const trimmed = email.trim()
+    if (!trimmed) {
+      setError('Enter your email to receive a magic link.')
+      return
+    }
+    try {
+      setMagicSending(true)
+      const message = await sendMagicLink(trimmed)
+      setMagicStatus(message || 'Magic link sent. Check your email.')
+    } catch {
+      setError('Failed to send magic link. Please try again.')
     } finally {
-      setSending(false)
+      setMagicSending(false)
     }
   }
 
   return (
-    <div style={{ maxWidth: 520, margin: '32px auto', padding: 16 }}>
-      <h1 style={{ marginBottom: 8 }}>Sign in</h1>
-      <p style={{ marginTop: 0, opacity: 0.8 }}>Use Replit Auth or get a magic link.</p>
-
-      <div style={{ display: 'grid', gap: 12, marginTop: 20 }}>
-        <button onClick={startReplitAuth} style={{ padding: '12px 14px', fontWeight: 600 }}>
-          Continue with Replit
-        </button>
-
-        <div style={{ border: '1px solid #e7e5e4', borderRadius: 12, padding: 12 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8 }}>Magic link (email)</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              type="email"
-              style={{ flex: 1, padding: '10px 12px' }}
-            />
-            <button onClick={sendMagicLink} disabled={sending} style={{ padding: '10px 12px' }}>
-              {sending ? 'Sending…' : 'Send'}
-            </button>
-          </div>
-          {status && <div style={{ marginTop: 10, color: '#047857' }}>{status}</div>}
-          {error && <div style={{ marginTop: 10, color: '#dc2626' }}>{error}</div>}
+    <div className="min-h-[80vh] flex items-center justify-center px-4">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
+          <p className="text-gray-600">Sign in to your account to continue</p>
         </div>
 
-        <button onClick={() => navigate('/')} style={{ padding: '10px 12px', opacity: 0.8 }}>
-          Back to home
-        </button>
+        <div className="bg-white rounded-2xl border border-gray-200 p-8">
+          <button
+            type="button"
+            onClick={handleReplit}
+            className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+          >
+            Continue with Replit
+          </button>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500">Or use email</span>
+              </div>
+            </div>
+          </div>
+
+          {magicStatus && (
+            <div className="mt-4 bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm">
+              {magicStatus}
+            </div>
+          )}
+          {error && (
+            <div className="mt-4 bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="mt-5 space-y-3">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleMagicLink}
+              disabled={magicSending}
+              className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {magicSending ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Sending link...
+                </>
+              ) : (
+                'Send magic link'
+              )}
+            </button>
+          </div>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500">Or sign in with password</span>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don&apos;t have an account?{' '}
+          <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   )
 }
-
