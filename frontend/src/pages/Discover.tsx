@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Search, Target, Clock, TrendingUp, Bookmark } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 
 const categories = ['All', 'Healthcare', 'FinTech', 'E-commerce', 'Education', 'Real Estate', 'SaaS']
@@ -46,6 +47,7 @@ export default function Discover() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
+  const navigate = useNavigate()
 
   const { token, isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
@@ -235,7 +237,7 @@ export default function Discover() {
                   <button
                     className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
                     type="button"
-                    onClick={() => alert('Opportunity details page is next to implement')}
+                    onClick={() => navigate(`/opportunity/${opp.id}`)}
                   >
                     View Details
                   </button>

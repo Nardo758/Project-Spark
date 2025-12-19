@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bookmark, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 
 type Opportunity = {
@@ -100,6 +101,13 @@ export default function Saved() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Link
+                    to={`/opportunity/${item.opportunity_id}`}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-gray-800 hover:bg-gray-50 font-medium"
+                    title="View details"
+                  >
+                    View
+                  </Link>
                   <button
                     type="button"
                     onClick={() => remove.mutate(item.opportunity_id)}

@@ -13,6 +13,7 @@ import BrainDashboard from './pages/brain/BrainDashboard'
 import AuthCallback from './pages/AuthCallback'
 import MagicLinkCallback from './pages/MagicLinkCallback'
 import Saved from './pages/Saved'
+import OpportunityDetail from './pages/OpportunityDetail'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -24,6 +25,7 @@ function App() {
         <Route path="discover" element={<Discover />} />
         <Route path="idea-engine" element={<IdeaEngine />} />
         <Route path="pricing" element={<Pricing />} />
+        <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
         <Route
