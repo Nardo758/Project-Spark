@@ -22,6 +22,27 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/milestones", tags=["Milestones"])
 
+def _maybe_trigger_agreement_from_milestone(db: Session, milestone: Milestone) -> None:
+    """
+    For agreements with milestone-based triggers, mark the agreement triggered once a milestone is approved/paid.
+    This enables `/agreements/{id}/trigger-payout` to work for TriggerType.MILESTONE_COMPLETION.
+    """
+    if not milestone.agreement_id:
+        return
+
+    agreement = db.query(SuccessFeeAgreement).filter(SuccessFeeAgreement.id == milestone.agreement_id).first()
+    if not agreement:
+        return
+
+    if agreement.status != AgreementStatus.ACTIVE:
+        return
+
+    # Trigger when a milestone is approved/paid, for milestone completion triggers.
+    if agreement.trigger_type.value == "milestone_completion" and not agreement.is_triggered:
+        agreement.is_triggered = True
+        agreement.triggered_at = datetime.utcnow()
+        db.add(agreement)
+
 
 class MilestoneCreate(BaseModel):
     agreement_id: Optional[int] = None
@@ -280,6 +301,8 @@ def approve_milestone(
     milestone.approved_at = datetime.utcnow()
     milestone.approved_by_user_id = current_user.id
     milestone.approval_notes = payload.approval_notes
+
+    _maybe_trigger_agreement_from_milestone(db, milestone)
     db.commit()
     
     return {"message": "Milestone approved", "status": milestone.status.value}
@@ -356,6 +379,8 @@ def pay_milestone(
     
     milestone.status = MilestoneStatus.PAID
     milestone.paid_at = datetime.utcnow()
+
+    _maybe_trigger_agreement_from_milestone(db, milestone)
     db.commit()
     
     return {
