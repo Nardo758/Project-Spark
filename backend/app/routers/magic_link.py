@@ -85,7 +85,8 @@ async def send_magic_link(request: MagicLinkRequest, db: Session = Depends(get_d
     }
     
     frontend_url = get_frontend_url()
-    magic_link = f"{frontend_url}/auth-magic.html?token={token}"
+    # React route (served by server.py SPA fallback) that verifies token via API.
+    magic_link = f"{frontend_url}/auth/magic?token={token}"
     
     user = db.query(User).filter(User.email == email).first()
     user_name = user.name if user else "there"

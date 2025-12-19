@@ -8,6 +8,8 @@ import { AuthCallback } from './pages/AuthCallback'
 import { Validations } from './pages/Validations'
 import { IdeaEngine } from './pages/IdeaEngine'
 import { ValidationDetail } from './pages/ValidationDetail'
+import { Login } from './pages/Login'
+import { MagicLinkCallback } from './pages/MagicLinkCallback'
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
         <Route path="/validations/:id" element={<ValidationDetail />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/magic" element={<MagicLinkCallback />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
