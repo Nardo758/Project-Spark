@@ -14,12 +14,20 @@ OppGrid utilizes a modern hybrid architecture:
 - **State Management:** Zustand for client-side state
 - **Routing:** React Router v6
 
-The frontend proxies `/api/*` requests to the backend via Vite's dev server configuration.
+The frontend proxies requests to the backend via Vite's dev server:
+- `/api/*` → Backend API endpoints
+- `/auth/*` → Replit Auth endpoints
+- `/__repl_auth_callback` → OAuth callback
 
 **Key Architectural Decisions & Features:**
 *   **Monetization & Access Control:** Implements a tiered subscription model (Pro, Business, Enterprise) with time-decay access control for opportunities (Hot, Fresh, Validated, Archive). A pay-per-unlock mechanism for archived opportunities is also integrated.
 *   **AI Engine:** Integrates with LLMs (e.g., Claude-Haiku, Claude-Sonnet) for AI-powered idea generation, comprehensive idea validation, expert matching, and detailed opportunity analysis (scoring, market size, competition, business models).
-*   **Authentication:** Uses Replit's OIDC patterns for secure, database-backed user authentication supporting Google, GitHub, X, Apple, and email logins with PKCE flow.
+*   **Authentication:** Multiple auth methods supported:
+    - **Replit OIDC:** Primary SSO with PKCE flow, database-backed sessions, short-lived cookie token handoff
+    - **Magic Link:** Passwordless email auth via Resend, 15-minute expiry, auto-creates accounts
+    - **Email/Password:** Traditional login with bcrypt hashing
+    - **Social OAuth:** Google, GitHub, LinkedIn (placeholders ready for implementation)
+    - React routes: `/auth/callback` (Replit), `/auth/magic` (email link verification)
 *   **User Interface:** Features a professional design with a black/dark stone primary accent and complementary semantic colors for badges (e.g., Red for HOT, Green for VALIDATED). The UI includes a deep dive console with dark mode, keyboard shortcuts, message actions, and export capabilities.
 *   **Admin Panel:** A comprehensive `admin.html` provides tools for user management, subscription control, opportunity moderation, and platform statistics.
 *   **Automated Data Pipeline:** A daily scheduler (`backend/scheduler.py`) automates data scraping (via Apify), import, and AI analysis to keep opportunity data fresh.
