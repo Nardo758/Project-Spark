@@ -4,6 +4,10 @@ from .comment import Comment
 from .watchlist import WatchlistItem
 from .notification import Notification
 from .subscription import Subscription, UsageRecord
+from .user_profile import UserProfile
+from .expert import Expert
+from .transaction import Transaction
+from .success_pattern import SuccessPattern
 from .report import Report
 from .user import User
 from .oauth import OAuthToken
@@ -17,6 +21,10 @@ __all__ = [
     "Notification",
     "Subscription",
     "UsageRecord",
+    "UserProfile",
+    "Expert",
+    "Transaction",
+    "SuccessPattern",
     "Report",
     "OAuthToken",
 ]
