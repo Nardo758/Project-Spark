@@ -1,0 +1,55 @@
+User Detail View:
+text
+USER DETAILS • USR-89432
+┌─────────────────────────────────────────────────────┐
+│ 👤 SARAH CHEN • Pro Tier • Member since Jan 12, 2024│
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ 📊 USER OVERVIEW                                    │
+│ Email: sarah@example.com • Verified: ✅            │ │
+│ Location: San Francisco, CA • Timezone: PST        │ │
+│ Provider: Google OAuth • Last IP: 192.168.1.1      │ │
+│                                                     │
+│ 💰 FINANCIAL SUMMARY                               │ │
+│ Total Spent: $1,245 • LTV: $2,480 (projected)      │ │
+│ Current Balance: $0 • Credits: $50                 │ │
+│ Payment Methods: Visa ****4242 (default)           │ │
+│                                                     │
+│ 📈 ACTIVITY TIMELINE                               │ │
+│ Feb 15: Upgraded to Pro                            │ │
+│ Feb 10: Purchased Financial Model ($399)           │ │
+│ Feb 8: Unlocked 3 opportunities ($87)              │ │
+│ Feb 5: Created 2 service listings                  │ │
+│ Feb 1: Joined network, connected with 12 users     │ │
+│                                                     │
+│ 🛒 PURCHASE HISTORY                                │ │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Date       Item                 Amount Status   │ │
+│ │ Feb 10     SaaS Fin Model       $399  Completed │ │
+│ │ Feb 8      Opportunity Unlock   $29   Completed │ │
+│ │ Feb 8      Opportunity Unlock   $29   Completed │ │
+│ │ Feb 8      Opportunity Unlock   $29   Completed │ │
+│ │ Jan 20     Pro Subscription     $399  Active    │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ 🔧 ADMIN ACTIONS                                   │ │
+│ [Impersonate User*] [Reset Password]               │ │
+│ [Change Subscription Tier] [Add Credits]           │ │
+│ [Issue Refund] [Send Direct Message]               │ │
+│ [View Audit Log] [Add Internal Note]               │ │
+│                                                     │
+│ 📝 INTERNAL NOTES                                  │ │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ Feb 12 (Alex): High-value user, potential enter-│ │
+│ │ prise customer. Offered demo call.             │ │
+│ │                                                 │ │
+│ │ Feb 8 (System): Automated fraud check passed    │ │
+│ │                                                 │ │
+│ │ [Add New Note]                                  │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ⚠️ FLAGS & REPORTS (0)                             │ │
+│ No active reports                                  │ │
+│                                                     │
+│ [Back to Users List] [Export User Data] [Close]    │
+└─────────────────────────────────────────────────────┘
