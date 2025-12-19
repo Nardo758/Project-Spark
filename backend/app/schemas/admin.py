@@ -143,6 +143,35 @@ class AdminPayPerUnlockAttemptList(BaseModel):
     total: int
 
 
+class AdminIdeaValidation(BaseModel):
+    """Persisted Idea Validation record (admin visibility)."""
+
+    id: int
+    user_id: int
+    title: str
+    category: str
+    status: str
+
+    stripe_payment_intent_id: Optional[str] = None
+    amount_cents: Optional[int] = None
+    currency: Optional[str] = None
+
+    opportunity_score: Optional[int] = None
+    validation_confidence: Optional[int] = None
+    summary: Optional[str] = None
+
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminIdeaValidationList(BaseModel):
+    items: List[AdminIdeaValidation]
+    total: int
+
+
 class AdminPartnerOutreachBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     category: Optional[str] = None
