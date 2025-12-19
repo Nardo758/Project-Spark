@@ -7,6 +7,7 @@ export function Nav() {
   return (
     <div style={{ display: 'flex', gap: 12, padding: 12, borderBottom: '1px solid #eee' }}>
       <Link to="/">Home</Link>
+      <Link to="/idea-engine">Idea Engine</Link>
       <Link to="/pricing">Pricing</Link>
       <Link to="/validations">My Validations</Link>
       <Link to="/admin">Admin</Link>
