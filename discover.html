@@ -1309,8 +1309,13 @@
                 cardCta = `Preview opportunity`;
             }
 
+            const opportunityHref = `opportunity.html?id=${opp.id}`;
+            const successPilotHref = `success-pilot.html?opportunity_id=${encodeURIComponent(String(opp.id))}&agreement_type=success_fee&trigger_type=first_revenue`;
             return `
-                <a href="opportunity.html?id=${opp.id}" class="opportunity-card fade-in" style="animation-delay: ${index * 0.1}s">
+                <div class="opportunity-card fade-in" role="link" tabindex="0"
+                     onclick="window.location.href='${opportunityHref}'"
+                     onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); window.location.href='${opportunityHref}'; }"
+                     style="animation-delay: ${index * 0.1}s">
                     <div class="card-header">
                         <div>
                             <div class="card-meta">
@@ -1373,12 +1378,15 @@
                     </div>
                     <div class="card-cta">
                         ${cardCta}
+                        <a href="${successPilotHref}" onclick="event.stopPropagation();" style="margin-left: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: #ede9fe; color: #7c3aed; font-weight: 700; font-size: 12px; text-decoration: none;">
+                            🤝 Success-Based
+                        </a>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M7 17 17 7"/>
                             <path d="M7 7h10v10"/>
                         </svg>
                     </div>
-                </a>
+                </div>
             `;
         }
 

@@ -4443,7 +4443,11 @@
                 // Set access message
                 if (info.is_accessible || info.is_unlocked) {
                     message.innerHTML = `<span style="color: #22c55e;">✓</span> Full access available · <strong>${info.age_days} days old</strong>`;
-                    cta.innerHTML = '';
+                    cta.innerHTML = `
+                        <a href="success-pilot.html?opportunity_id=${encodeURIComponent(String(currentOpportunityId))}&agreement_type=success_fee&trigger_type=first_revenue" class="btn" style="background: #ede9fe; color: #7c3aed; border: 1px solid #ede9fe; padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; text-decoration: none;">
+                            🤝 Start Success-Based
+                        </a>
+                    `;
                 } else if (info.can_pay_to_unlock) {
                     message.innerHTML = `Archive opportunity · <strong>${info.age_days} days old</strong>`;
                     cta.innerHTML = `
@@ -4453,12 +4457,18 @@
                         <a href="pricing.html" class="btn" style="background: var(--violet-600); color: white; border: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none;">
                             Upgrade to Pro
                         </a>
+                        <a href="success-pilot.html?opportunity_id=${encodeURIComponent(String(currentOpportunityId))}&agreement_type=success_fee&trigger_type=first_revenue" class="btn" style="background: #ede9fe; color: #7c3aed; border: 1px solid #ede9fe; padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; text-decoration: none;">
+                            🤝 Start Success-Based
+                        </a>
                     `;
                 } else if (info.days_until_unlock > 0) {
                     message.innerHTML = `Unlocks for ${info.user_tier || 'your tier'} in <strong style="color: var(--violet-600);">${info.days_until_unlock} days</strong>`;
                     cta.innerHTML = `
                         <a href="pricing.html" class="btn" style="background: var(--violet-600); color: white; border: none; padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none;">
                             Get Earlier Access
+                        </a>
+                        <a href="success-pilot.html?opportunity_id=${encodeURIComponent(String(currentOpportunityId))}&agreement_type=success_fee&trigger_type=first_revenue" class="btn" style="background: #ede9fe; color: #7c3aed; border: 1px solid #ede9fe; padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; text-decoration: none;">
+                            🤝 Start Success-Based
                         </a>
                     `;
                 }
@@ -4481,6 +4491,11 @@
                 badge.style.border = `1px solid ${fb.color}30`;
                 
                 message.innerHTML = `<strong>${ageDays} days old</strong>`;
+                cta.innerHTML = `
+                    <a href="success-pilot.html?opportunity_id=${encodeURIComponent(String(currentOpportunityId))}&agreement_type=success_fee&trigger_type=first_revenue" class="btn" style="background: #ede9fe; color: #7c3aed; border: 1px solid #ede9fe; padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; text-decoration: none;">
+                        🤝 Start Success-Based
+                    </a>
+                `;
                 
                 banner.style.display = 'block';
             }
