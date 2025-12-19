@@ -44,10 +44,15 @@
         .action-item:last-child { border-bottom: none; }
         .action-number { width: 24px; height: 24px; background: var(--stone-800); color: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
         .experts-section { margin-top: 24px; }
-        .expert-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--stone-100); border-radius: 12px; margin-bottom: 12px; }
+        .expert-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; background: var(--stone-100); border-radius: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+        .expert-left { display: flex; align-items: center; gap: 16px; min-width: 240px; flex: 1; }
         .expert-avatar { width: 48px; height: 48px; background: var(--stone-300); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--stone-600); }
         .expert-info h4 { font-weight: 600; margin-bottom: 2px; }
         .expert-info p { font-size: 0.875rem; color: var(--stone-500); }
+        .expert-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-sm { padding: 10px 14px; border-radius: 10px; font-size: 0.9rem; }
+        .btn-pilot { background: var(--violet-100); color: var(--violet-600); border: 1px solid var(--violet-100); }
+        .btn-pilot:hover { filter: brightness(0.98); }
         .btn { padding: 12px 24px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; text-decoration: none; display: inline-block; }
         .btn-primary { background: var(--stone-800); color: var(--white); }
         .btn-primary:hover { background: var(--stone-900); }
@@ -135,7 +140,7 @@
                 <div class="action-buttons">
                     <a href="#" id="roadmap-btn" class="btn btn-primary">Generate Roadmap</a>
                     <a href="#" id="validate-btn" class="btn btn-secondary">Validate Opportunity</a>
-                    <a href="expert-marketplace.html" class="btn btn-secondary">Browse Experts</a>
+                    <a href="#" id="browse-experts-btn" class="btn btn-secondary">Browse Experts</a>
                 </div>
             </div>
         </div>
@@ -255,21 +260,32 @@
 
             const experts = matchData.recommended_experts || [];
             if (experts.length > 0) {
-                document.getElementById('experts-container').innerHTML = experts.slice(0, 3).map(expert =>
-                    `<div class="expert-card">
-                        <div class="expert-avatar">${expert.name ? expert.name.charAt(0) : 'E'}</div>
-                        <div class="expert-info">
-                            <h4>${expert.name || 'Expert'}</h4>
-                            <p>${expert.specialization || 'Consultant'}</p>
+                document.getElementById('experts-container').innerHTML = experts.slice(0, 3).map(expert => {
+                    const expertId = expert.expert_id ?? expert.id;
+                    const display = expert.headline || expert.pricing_model || 'Expert Consultant';
+                    const pilotHref = `success-pilot.html?expert_id=${encodeURIComponent(String(expertId))}&opportunity_id=${encodeURIComponent(String(opportunityId))}&agreement_type=success_fee&trigger_type=first_revenue`;
+                    const checkoutHref = `expert-checkout.html?id=${encodeURIComponent(String(expertId))}`;
+                    return `<div class="expert-card">
+                        <div class="expert-left">
+                            <div class="expert-avatar">${expert.name ? expert.name.charAt(0) : 'E'}</div>
+                            <div class="expert-info">
+                                <h4>${expert.name || 'Expert'}</h4>
+                                <p>${display}</p>
+                            </div>
                         </div>
-                    </div>`
-                ).join('');
+                        <div class="expert-actions">
+                            <a class="btn btn-secondary btn-sm" href="${checkoutHref}">Get Quote</a>
+                            <a class="btn btn-pilot btn-sm" href="${pilotHref}">Start Success-Based</a>
+                        </div>
+                    </div>`;
+                }).join('');
             } else {
                 document.getElementById('experts-section').style.display = 'none';
             }
 
             document.getElementById('roadmap-btn').href = `ai-roadmap.html?id=${opportunityId}`;
             document.getElementById('validate-btn').href = `ai-validate.html?id=${opportunityId}`;
+            document.getElementById('browse-experts-btn').href = `expert-marketplace.html?opportunity_id=${encodeURIComponent(String(opportunityId))}`;
         }
 
         if (opportunityId) loadMatchAnalysis();
