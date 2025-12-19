@@ -35,6 +35,7 @@ from app.core.dependencies import get_current_active_user
 from app.services.stripe_service import stripe_service
 from app.services.usage_service import usage_service
 from app.core.config import settings
+from app.services.entitlements import get_opportunity_entitlements
 
 router = APIRouter()
 
@@ -303,59 +304,21 @@ def get_opportunity_access_info(
     Returns tier-based access status, freshness badge, countdown timer info,
     and whether pay-per-unlock is available.
     """
-    from app.models.subscription import UnlockedOpportunity
-    
     opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
-    
-    subscription = usage_service.get_or_create_subscription(current_user, db)
-    
-    # Calculate opportunity age
-    now = datetime.utcnow()
-    created_at = opportunity.created_at or now
-    age_days = (now - created_at).days
-    
-    # Get freshness badge
-    freshness_badge = stripe_service.get_opportunity_freshness_badge(age_days)
-    
-    # Check if accessible by tier
-    is_accessible = stripe_service.can_access_opportunity_by_age(subscription.tier, age_days)
-    
-    # Check if already unlocked
-    unlock_record = db.query(UnlockedOpportunity).filter(
-        UnlockedOpportunity.user_id == current_user.id,
-        UnlockedOpportunity.opportunity_id == opportunity_id
-    ).first()
-    
-    is_unlocked = unlock_record is not None
-    unlock_method = unlock_record.unlock_method.value if unlock_record else None
-    
-    # Check expiration for pay-per-unlock
-    if is_unlocked and unlock_record.expires_at:
-        if now > unlock_record.expires_at:
-            is_unlocked = False  # Expired
-    
-    # Calculate days until unlock for user's tier
-    days_until_unlock = stripe_service.get_days_until_unlock(subscription.tier, age_days)
-    
-    # Check if pay-per-unlock is available (only for archive opportunities and free tier)
-    can_pay_to_unlock = (
-        age_days >= 91 and 
-        subscription.tier == SubscriptionTier.FREE and
-        not is_unlocked
-    )
-    
+
+    ent = get_opportunity_entitlements(db, opportunity, current_user)
     return {
         "opportunity_id": opportunity_id,
-        "age_days": age_days,
-        "freshness_badge": freshness_badge,
-        "is_accessible": is_accessible or is_unlocked,
-        "is_unlocked": is_unlocked,
-        "unlock_method": unlock_method,
-        "days_until_unlock": days_until_unlock,
-        "can_pay_to_unlock": can_pay_to_unlock,
-        "unlock_price": stripe_service.PAY_PER_UNLOCK_PRICE if can_pay_to_unlock else None
+        "age_days": ent.age_days,
+        "freshness_badge": ent.freshness_badge,
+        "is_accessible": ent.is_accessible,
+        "is_unlocked": ent.is_unlocked,
+        "unlock_method": ent.unlock_method,
+        "days_until_unlock": ent.days_until_unlock,
+        "can_pay_to_unlock": ent.can_pay_to_unlock,
+        "unlock_price": ent.unlock_price,
     }
 
 
@@ -373,7 +336,10 @@ def create_pay_per_unlock(
     - Archive opportunities (91+ days old)
     - Max 5 unlocks per day
     """
+    from datetime import timezone
+    from sqlalchemy import text
     from app.models.subscription import UnlockedOpportunity
+    from app.models.stripe_event import PayPerUnlockAttempt, PayPerUnlockAttemptStatus
     
     opportunity = db.query(Opportunity).filter(Opportunity.id == unlock_data.opportunity_id).first()
     if not opportunity:
@@ -382,8 +348,10 @@ def create_pay_per_unlock(
     subscription = usage_service.get_or_create_subscription(current_user, db)
     
     # Calculate opportunity age
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     created_at = opportunity.created_at or now
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
     age_days = (now - created_at).days
     
     # Check if already unlocked
@@ -410,20 +378,33 @@ def create_pay_per_unlock(
             status_code=400,
             detail=f"Pay-per-unlock only available for opportunities 91+ days old. This opportunity is {age_days} days old."
         )
-    
-    # Check daily limit (5 per day for free tier)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    today_unlocks = db.query(UnlockedOpportunity).filter(
-        UnlockedOpportunity.user_id == current_user.id,
-        UnlockedOpportunity.unlocked_at >= today_start,
-        UnlockedOpportunity.amount_paid > 0
-    ).count()
-    
-    if today_unlocks >= 5:
-        raise HTTPException(
-            status_code=429,
-            detail="Daily pay-per-unlock limit reached (5 per day). Try again tomorrow."
+
+    # Concurrency-safe daily limit (5/day): use a per-user/day advisory lock on Postgres,
+    # and count attempts (not just succeeded unlocks) so users can't spam PaymentIntents.
+    today = now.date()
+    if db.bind is not None and db.bind.dialect.name == "postgresql":
+        # Lock scope: (user_id, YYYYMMDD)
+        db.execute(
+            text("SELECT pg_advisory_xact_lock(:k1, :k2)"),
+            {"k1": int(current_user.id), "k2": int(today.strftime("%Y%m%d"))},
         )
+
+    # Re-check already unlocked inside the lock window
+    existing2 = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.user_id == current_user.id,
+        UnlockedOpportunity.opportunity_id == unlock_data.opportunity_id
+    ).first()
+    if existing2 and (not existing2.expires_at or now <= existing2.expires_at):
+        raise HTTPException(status_code=400, detail="Opportunity already unlocked")
+
+    attempts_today = db.query(PayPerUnlockAttempt).filter(
+        PayPerUnlockAttempt.user_id == current_user.id,
+        PayPerUnlockAttempt.attempt_date == today,
+        PayPerUnlockAttempt.status.in_([PayPerUnlockAttemptStatus.CREATED, PayPerUnlockAttemptStatus.SUCCEEDED]),
+    ).count()
+
+    if attempts_today >= 5:
+        raise HTTPException(status_code=429, detail="Daily pay-per-unlock limit reached (5 per day). Try again tomorrow.")
     
     # Get or create Stripe customer
     if not subscription.stripe_customer_id:
@@ -434,13 +415,31 @@ def create_pay_per_unlock(
         )
         subscription.stripe_customer_id = customer.id
         db.commit()
+
+    # Record attempt before creating PaymentIntent (prevents spamming under concurrency)
+    attempt = PayPerUnlockAttempt(
+        user_id=current_user.id,
+        opportunity_id=unlock_data.opportunity_id,
+        attempt_date=today,
+        status=PayPerUnlockAttemptStatus.CREATED,
+    )
+    db.add(attempt)
+    db.flush()
     
     # Create payment intent
-    payment_intent = stripe_service.create_payment_intent_for_unlock(
-        customer_id=subscription.stripe_customer_id,
-        opportunity_id=unlock_data.opportunity_id,
-        user_id=current_user.id
-    )
+    try:
+        payment_intent = stripe_service.create_payment_intent_for_unlock(
+            customer_id=subscription.stripe_customer_id,
+            opportunity_id=unlock_data.opportunity_id,
+            user_id=current_user.id
+        )
+    except Exception:
+        attempt.status = PayPerUnlockAttemptStatus.CANCELED
+        db.commit()
+        raise
+
+    attempt.stripe_payment_intent_id = payment_intent.id
+    db.commit()
     
     return {
         "client_secret": payment_intent.client_secret,
@@ -461,7 +460,9 @@ def confirm_pay_per_unlock(
     
     Call this after payment is confirmed on the frontend.
     """
+    from datetime import timezone
     from app.models.subscription import UnlockedOpportunity, UnlockMethod
+    from app.models.stripe_event import PayPerUnlockAttempt, PayPerUnlockAttemptStatus
     import stripe
     
     # Verify payment intent
@@ -506,7 +507,7 @@ def confirm_pay_per_unlock(
         }
     
     # Create unlock record with 30-day expiration
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=30)
     
     unlock = UnlockedOpportunity(
@@ -519,6 +520,13 @@ def confirm_pay_per_unlock(
     )
     db.add(unlock)
     db.commit()
+
+    attempt = db.query(PayPerUnlockAttempt).filter(
+        PayPerUnlockAttempt.stripe_payment_intent_id == payment_intent_id
+    ).first()
+    if attempt:
+        attempt.status = PayPerUnlockAttemptStatus.SUCCEEDED
+        db.commit()
     
     return {
         "success": True,
@@ -623,91 +631,18 @@ def export_json(opportunities):
     )
 
 
-@router.post("/webhook")
+@router.post("/webhook", include_in_schema=False)
 async def stripe_webhook(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Handle Stripe webhooks"""
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-    
-    if not sig_header:
-        raise HTTPException(status_code=400, detail="Missing Stripe signature header")
+    """
+    DEPRECATED: Stripe webhook endpoint.
 
-    try:
-        event = stripe_service.construct_webhook_event(payload, sig_header)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid payload")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    Canonical endpoint is: POST /api/v1/webhook/stripe (handled by `routers/stripe_webhook.py`).
+    We keep this route as a thin forwarder to avoid breaking existing Stripe configs.
+    """
+    # Import locally to avoid circular imports at module load time.
+    from app.routers.stripe_webhook import stripe_webhook as canonical_webhook
 
-    # Handle the event
-    if event.type == "checkout.session.completed":
-        handle_checkout_completed(event.data.object, db)
-    elif event.type == "customer.subscription.updated":
-        handle_subscription_updated(event.data.object, db)
-    elif event.type == "customer.subscription.deleted":
-        handle_subscription_deleted(event.data.object, db)
-
-    return {"status": "success"}
-
-
-def handle_checkout_completed(session, db: Session):
-    """Handle successful checkout"""
-    user_id = session.metadata.get("user_id")
-    if not user_id:
-        return
-
-    user = db.query(User).filter(User.id == int(user_id)).first()
-    if not user:
-        return
-
-    subscription = usage_service.get_or_create_subscription(user, db)
-    subscription.stripe_subscription_id = session.subscription
-    db.commit()
-
-
-def handle_subscription_updated(stripe_subscription, db: Session):
-    """Handle subscription update"""
-    from app.models.subscription import Subscription
-    from datetime import datetime
-
-    subscription = db.query(Subscription).filter(
-        Subscription.stripe_subscription_id == stripe_subscription.id
-    ).first()
-
-    if not subscription:
-        return
-
-    # Update subscription details
-    subscription.status = SubscriptionStatus(stripe_subscription.status)
-    subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.current_period_start)
-    subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.current_period_end)
-    subscription.cancel_at_period_end = stripe_subscription.cancel_at_period_end
-
-    # Update tier based on price ID
-    price_id = stripe_subscription.items.data[0].price.id
-    for tier, pid in stripe_service.STRIPE_PRICES.items():
-        if pid == price_id:
-            subscription.tier = tier
-            break
-
-    db.commit()
-
-
-def handle_subscription_deleted(stripe_subscription, db: Session):
-    """Handle subscription cancellation"""
-    from app.models.subscription import Subscription
-
-    subscription = db.query(Subscription).filter(
-        Subscription.stripe_subscription_id == stripe_subscription.id
-    ).first()
-
-    if not subscription:
-        return
-
-    subscription.tier = SubscriptionTier.FREE
-    subscription.status = SubscriptionStatus.CANCELED
-    subscription.stripe_subscription_id = None
-    db.commit()
+    return await canonical_webhook(request=request, db=db)

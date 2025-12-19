@@ -7,6 +7,7 @@ from .subscription import Subscription, UsageRecord
 from .user_profile import UserProfile
 from .expert import Expert
 from .transaction import Transaction
+from .stripe_event import StripeWebhookEvent, StripeWebhookEventStatus, PayPerUnlockAttempt, PayPerUnlockAttemptStatus
 from .success_pattern import SuccessPattern
 from .report import Report
 from .user import User
@@ -27,6 +28,10 @@ __all__ = [
     "UserProfile",
     "Expert",
     "Transaction",
+    "StripeWebhookEvent",
+    "StripeWebhookEventStatus",
+    "PayPerUnlockAttempt",
+    "PayPerUnlockAttemptStatus",
     "SuccessPattern",
     "Report",
     "OAuthToken",

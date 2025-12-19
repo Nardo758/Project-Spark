@@ -373,7 +373,7 @@ sequenceDiagram
     Stripe->>Stripe: Process Payment
     Stripe->>User: Redirect to success_url
 
-    Stripe->>Webhook: POST /api/v1/subscriptions/webhook<br/>Event: checkout.session.completed
+    Stripe->>Webhook: POST /api/v1/webhook/stripe<br/>Event: checkout.session.completed
 
     Webhook->>Webhook: Verify Signature<br/>stripe.Webhook.construct_event()
 
@@ -459,7 +459,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    StripeEvent([Stripe Event Triggered]) --> WebhookEndpoint[POST /api/v1/subscriptions/webhook]
+    StripeEvent([Stripe Event Triggered]) --> WebhookEndpoint[POST /api/v1/webhook/stripe]
 
     WebhookEndpoint --> VerifySignature{Verify Webhook<br/>Signature}
 
@@ -1236,7 +1236,7 @@ LOG_LEVEL=INFO
 - `POST /api/v1/subscriptions/pay-per-unlock` - Create payment intent
 - `POST /api/v1/subscriptions/confirm-pay-per-unlock` - Confirm unlock payment
 - `POST /api/v1/subscriptions/unlock` - Unlock with subscription
-- `POST /api/v1/subscriptions/webhook` - Stripe webhook handler
+- `POST /api/v1/webhook/stripe` - Stripe webhook handler (canonical)
 
 ### Analytics Endpoints
 - `GET /api/v1/analytics/opportunities` - Opportunity statistics

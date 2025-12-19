@@ -6,6 +6,7 @@ This router consolidates payment_intent, invoice, and subscription events.
 """
 
 from fastapi import APIRouter, HTTPException, Request, Depends
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 import logging
 import json
@@ -14,9 +15,15 @@ from app.db.database import get_db
 from app.models.user import User
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus, UnlockedOpportunity, UnlockMethod
+from app.models.stripe_event import (
+    StripeWebhookEvent,
+    StripeWebhookEventStatus,
+    PayPerUnlockAttempt,
+    PayPerUnlockAttemptStatus,
+)
 from app.services.stripe_service import get_stripe_client
 from app.services.usage_service import usage_service
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 
 logger = logging.getLogger(__name__)
@@ -52,27 +59,70 @@ async def stripe_webhook(
         raise HTTPException(status_code=400, detail="Missing Stripe signature header")
     
     webhook_secret = get_webhook_secret()
+    event_id = None
+    event_created = None
+    livemode = False
     if not webhook_secret:
         logger.warning("STRIPE_WEBHOOK_SECRET not configured - skipping signature verification")
         try:
             import json
             event_data = json.loads(payload)
+            event_id = event_data.get("id")
             event_type = event_data.get("type")
             event_object = event_data.get("data", {}).get("object", {})
+            livemode = bool(event_data.get("livemode", False))
+            created_raw = event_data.get("created")
+            if isinstance(created_raw, (int, float)):
+                event_created = datetime.fromtimestamp(created_raw, tz=timezone.utc)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid payload: {str(e)}")
     else:
         try:
             stripe = get_stripe_client()
             event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
+            event_id = getattr(event, "id", None)
             event_type = event.type
             event_object = event.data.object
+            livemode = bool(getattr(event, "livemode", False))
+            created_raw = getattr(event, "created", None)
+            if isinstance(created_raw, (int, float)):
+                event_created = datetime.fromtimestamp(created_raw, tz=timezone.utc)
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid payload")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Webhook signature verification failed: {str(e)}")
     
     logger.info(f"Processing Stripe webhook: {event_type}")
+
+    # Idempotency: ensure we only process each Stripe event once.
+    if event_id:
+        existing = db.query(StripeWebhookEvent).filter(StripeWebhookEvent.stripe_event_id == event_id).first()
+        if existing and existing.status == StripeWebhookEventStatus.PROCESSED:
+            return {"status": "success", "event_type": event_type, "idempotent": True}
+
+        if not existing:
+            db.add(
+                StripeWebhookEvent(
+                    stripe_event_id=event_id,
+                    event_type=event_type or "",
+                    livemode=livemode,
+                    status=StripeWebhookEventStatus.PROCESSING,
+                    attempt_count=1,
+                    stripe_created_at=event_created,
+                )
+            )
+        else:
+            existing.status = StripeWebhookEventStatus.PROCESSING
+            existing.attempt_count = (existing.attempt_count or 0) + 1
+            existing.event_type = event_type or existing.event_type
+            existing.livemode = livemode
+            if event_created:
+                existing.stripe_created_at = event_created
+
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
     
     try:
         if event_type == "payment_intent.succeeded":
@@ -93,8 +143,19 @@ async def stripe_webhook(
             logger.info(f"Unhandled webhook event type: {event_type}")
     except Exception as e:
         logger.error(f"Error processing webhook {event_type}: {str(e)}")
+        if event_id:
+            row = db.query(StripeWebhookEvent).filter(StripeWebhookEvent.stripe_event_id == event_id).first()
+            if row:
+                row.status = StripeWebhookEventStatus.FAILED
+                db.commit()
         raise HTTPException(status_code=500, detail=f"Webhook processing error: {str(e)}")
-    
+
+    if event_id:
+        row = db.query(StripeWebhookEvent).filter(StripeWebhookEvent.stripe_event_id == event_id).first()
+        if row:
+            row.status = StripeWebhookEventStatus.PROCESSED
+            db.commit()
+
     return {"status": "success", "event_type": event_type}
 
 
@@ -174,6 +235,15 @@ def handle_payment_intent_failed(payment_intent: dict, db: Session):
             tx.metadata_json = json.dumps(existing_meta)
         db.commit()
         logger.info(f"Updated transaction {tx.id} to FAILED")
+
+    metadata = payment_intent.get("metadata", {}) or {}
+    if metadata.get("type") == "pay_per_unlock":
+        attempt = db.query(PayPerUnlockAttempt).filter(
+            PayPerUnlockAttempt.stripe_payment_intent_id == payment_intent_id
+        ).first()
+        if attempt:
+            attempt.status = PayPerUnlockAttemptStatus.FAILED
+            db.commit()
 
 
 def handle_invoice_paid(invoice: dict, db: Session):
@@ -407,6 +477,13 @@ def _fulfill_pay_per_unlock(payment_intent: dict, metadata: dict, db: Session):
     db.add(unlock)
     db.commit()
     logger.info(f"Fulfilled pay-per-unlock for user {user_id}, opportunity {opportunity_id}")
+
+    attempt = db.query(PayPerUnlockAttempt).filter(
+        PayPerUnlockAttempt.stripe_payment_intent_id == payment_intent_id
+    ).first()
+    if attempt:
+        attempt.status = PayPerUnlockAttemptStatus.SUCCEEDED
+        db.commit()
 
 
 def _fulfill_micro_payment(payment_intent: dict, metadata: dict, db: Session):

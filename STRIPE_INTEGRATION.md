@@ -110,7 +110,7 @@ PAY_PER_UNLOCK_PRICE = 1500  # $15.00 in cents
 | `/api/v1/subscriptions/pay-per-unlock` | POST | Create payment intent | `stripe.PaymentIntent.create()` |
 | `/api/v1/subscriptions/confirm-pay-per-unlock` | POST | Confirm payment | `stripe.PaymentIntent.retrieve()` |
 | `/api/v1/subscriptions/export` | POST | Export opportunities | None |
-| `/api/v1/subscriptions/webhook` | POST | Handle Stripe webhooks | `stripe.Webhook.construct_event()` |
+| `/api/v1/webhook/stripe` | POST | Handle Stripe webhooks (canonical) | `stripe.Webhook.construct_event()` |
 
 ---
 
@@ -127,7 +127,7 @@ PAY_PER_UNLOCK_PRICE = 1500  # $15.00 in cents
 
 ## Webhook Events
 
-**Endpoint:** `POST /api/v1/subscriptions/webhook`
+**Endpoint (canonical):** `POST /api/v1/webhook/stripe`
 
 ### Handled Events
 
@@ -257,7 +257,7 @@ Create the following in Stripe Dashboard:
 
 ### Webhook Configuration
 
-1. Add webhook endpoint: `https://your-domain.com/api/v1/subscriptions/webhook`
+1. Add webhook endpoint: `https://your-domain.com/api/v1/webhook/stripe`
 2. Select events to listen for:
    - `checkout.session.completed`
    - `customer.subscription.updated`
@@ -318,7 +318,7 @@ Use Stripe test keys (`sk_test_...`, `pk_test_...`) for development.
 
 Use Stripe CLI for local testing:
 ```bash
-stripe listen --forward-to localhost:5000/api/v1/subscriptions/webhook
+stripe listen --forward-to localhost:5000/api/v1/webhook/stripe
 ```
 
 ---
