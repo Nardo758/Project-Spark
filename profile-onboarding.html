@@ -271,15 +271,56 @@
         <p class="subtitle">Help us personalize your opportunity matches</p>
 
         <div class="progress-bar">
-            <div class="progress-step active" id="prog-1"></div>
+            <div class="progress-step active" id="prog-0"></div>
+            <div class="progress-step" id="prog-1"></div>
             <div class="progress-step" id="prog-2"></div>
             <div class="progress-step" id="prog-3"></div>
             <div class="progress-step" id="prog-4"></div>
         </div>
 
-        <div class="step-content active" id="step-1">
+        <div class="step-content active" id="step-0">
+            <h3 class="step-title">What best describes you?</h3>
+            <p class="step-description">We’ll tailor onboarding and recommendations based on your goal.</p>
+
+            <div class="experience-options" id="persona-options">
+                <div class="experience-option" data-persona="builder" onclick="selectPersona(this)">
+                    <h4>Builder / Founder</h4>
+                    <p>I want to validate ideas and launch a product</p>
+                </div>
+                <div class="experience-option" data-persona="investor" onclick="selectPersona(this)">
+                    <h4>Investor</h4>
+                    <p>I’m sourcing opportunities and tracking conviction</p>
+                </div>
+                <div class="experience-option" data-persona="researcher" onclick="selectPersona(this)">
+                    <h4>Researcher</h4>
+                    <p>I want structured research, insights, and trends</p>
+                </div>
+                <div class="experience-option" data-persona="expert" onclick="selectPersona(this)">
+                    <h4>Expert / Operator</h4>
+                    <p>I want to help builders and get matched to work</p>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="primary-goal">Primary goal</label>
+                <select id="primary-goal">
+                    <option value="">Select a goal</option>
+                    <option value="validate">Validate an opportunity</option>
+                    <option value="launch">Launch an MVP</option>
+                    <option value="acquire">Acquire customers</option>
+                    <option value="invest">Find investable deals</option>
+                    <option value="learn">Learn the playbook</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="nextStep()">Continue</button>
+            </div>
+        </div>
+
+        <div class="step-content" id="step-1">
             <h3 class="step-title">What are your skills?</h3>
-            <p class="step-description">Select all that apply to help us find the best opportunities for you.</p>
+            <p class="step-description" id="skills-description">Select all that apply to help us personalize recommendations.</p>
             
             <div class="skill-tags" id="skills-container">
                 <span class="skill-tag" data-skill="product">Product</span>
@@ -302,6 +343,7 @@
             </div>
 
             <div class="button-group">
+                <button class="btn btn-secondary" onclick="prevStep()">Back</button>
                 <button class="btn btn-primary" onclick="nextStep()">Continue</button>
             </div>
         </div>
@@ -319,13 +361,9 @@
                     <h4>Some Experience</h4>
                     <p>I've built side projects or worked at startups</p>
                 </div>
-                <div class="experience-option" data-level="experienced" onclick="selectExperience(this)">
+                <div class="experience-option" data-level="advanced" onclick="selectExperience(this)">
                     <h4>Experienced</h4>
                     <p>I've launched products or co-founded companies</p>
-                </div>
-                <div class="experience-option" data-level="expert" onclick="selectExperience(this)">
-                    <h4>Serial Entrepreneur</h4>
-                    <p>I've built and exited multiple ventures</p>
                 </div>
             </div>
 
@@ -380,7 +418,7 @@
             </div>
 
             <div class="form-group">
-                <label for="interests">Industries of interest (optional)</label>
+                <label for="interests" id="interests-label">Industries / focus areas (optional)</label>
                 <textarea id="interests" rows="3" placeholder="e.g., SaaS, healthcare, fintech, e-commerce..."></textarea>
             </div>
 
@@ -410,10 +448,36 @@
             return localStorage.getItem('access_token') || localStorage.getItem('token');
         }
 
-        let currentStep = 1;
-        const totalSteps = 4;
+        let currentStep = 0;
+        const totalSteps = 5;
         let selectedSkills = [];
         let experienceLevel = null;
+        let selectedPersona = null;
+
+        function selectPersona(element) {
+            document.querySelectorAll('#persona-options .experience-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedPersona = element.dataset.persona;
+
+            // Light tailoring of copy without changing data model.
+            const skillsDesc = document.getElementById('skills-description');
+            const interestsLabel = document.getElementById('interests-label');
+            if (selectedPersona === 'investor') {
+                if (skillsDesc) skillsDesc.textContent = 'Optional: select skills that shape how you evaluate opportunities.';
+                if (interestsLabel) interestsLabel.textContent = 'Sectors / thesis (optional)';
+            } else if (selectedPersona === 'expert') {
+                if (skillsDesc) skillsDesc.textContent = 'Select skills so we can match you to builders who need help.';
+                if (interestsLabel) interestsLabel.textContent = 'Industries you like working in (optional)';
+            } else if (selectedPersona === 'researcher') {
+                if (skillsDesc) skillsDesc.textContent = 'Optional: select skills to tailor research depth and angles.';
+                if (interestsLabel) interestsLabel.textContent = 'Topics / markets you follow (optional)';
+            } else {
+                if (skillsDesc) skillsDesc.textContent = 'Select all that apply to help us personalize recommendations.';
+                if (interestsLabel) interestsLabel.textContent = 'Industries / focus areas (optional)';
+            }
+        }
 
         document.querySelectorAll('.skill-tag').forEach(tag => {
             tag.addEventListener('click', () => {
@@ -452,6 +516,19 @@
         }
 
         function nextStep() {
+            // Simple validation by step
+            if (currentStep === 0) {
+                if (!selectedPersona) {
+                    alert('Please choose a persona to continue.');
+                    return;
+                }
+            }
+            if (currentStep === 2) {
+                if (!experienceLevel) {
+                    alert('Please select your experience level to continue.');
+                    return;
+                }
+            }
             if (currentStep < totalSteps) {
                 document.getElementById(`step-${currentStep}`).classList.remove('active');
                 document.getElementById(`prog-${currentStep}`).classList.remove('active');
@@ -463,7 +540,7 @@
         }
 
         function prevStep() {
-            if (currentStep > 1) {
+            if (currentStep > 0) {
                 document.getElementById(`step-${currentStep}`).classList.remove('active');
                 document.getElementById(`prog-${currentStep}`).classList.remove('active');
                 currentStep--;
@@ -480,14 +557,31 @@
                 .filter(s => s);
             
             const allSkills = [...selectedSkills, ...otherSkills];
+
+            // Backend expects 0-100 risk tolerance; UI is 1-5.
+            const riskUi = parseInt(document.getElementById('risk-range').value, 10);
+            const riskPctMap = [10, 30, 50, 70, 90];
+            const riskTolerancePct = riskPctMap[Math.max(0, Math.min(4, riskUi - 1))];
+
+            const primaryGoal = (document.getElementById('primary-goal')?.value || '').trim() || null;
+            const personaMeta = {
+                persona: selectedPersona,
+                primary_goal: primaryGoal,
+                captured_at: new Date().toISOString(),
+            };
             
             const profileData = {
                 skills: allSkills,
                 experience_level: experienceLevel,
                 available_capital: parseFloat(document.getElementById('capital-range').value),
                 time_commitment_hours_per_week: parseInt(document.getElementById('time-range').value),
-                risk_tolerance: parseInt(document.getElementById('risk-range').value),
-                interests: document.getElementById('interests').value
+                risk_tolerance: riskTolerancePct,
+                // Store onboarding metadata in a JSON field supported by backend.
+                past_successes: personaMeta,
+                // Keep freeform text in failure_patterns so we don't need schema changes.
+                failure_patterns: {
+                    interests: document.getElementById('interests').value
+                }
             };
 
             try {
@@ -508,6 +602,22 @@
                 });
 
                 if (response.ok) {
+                    // If the user came from signup with a plan, send them into the next flow.
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const next = urlParams.get('next');
+                    const checkoutPlan = urlParams.get('checkout_plan');
+                    const successFlow = urlParams.get('success_flow');
+
+                    if (next === 'account' && checkoutPlan && (checkoutPlan === 'pro' || checkoutPlan === 'business')) {
+                        window.location.href = `account.html?checkout_plan=${encodeURIComponent(checkoutPlan)}#subscription`;
+                        return;
+                    }
+
+                    if (next === 'learn' || successFlow === '1') {
+                        window.location.href = 'learn.html#success-based';
+                        return;
+                    }
+
                     document.getElementById(`step-${currentStep}`).classList.remove('active');
                     document.getElementById(`prog-${currentStep}`).classList.add('completed');
                     document.getElementById('step-success').classList.add('active');
