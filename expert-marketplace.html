@@ -109,6 +109,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         const opportunityId = urlParams.get('opportunity_id');
 
+        function getAuthToken() {
+            return localStorage.getItem('access_token') || localStorage.getItem('token');
+        }
+
         if (opportunityId) {
             document.getElementById('ai-match-section').style.display = 'block';
         }
@@ -204,7 +208,7 @@
         }
 
         async function runAIMatch() {
-            const token = localStorage.getItem('token');
+            const token = getAuthToken();
             if (!token) {
                 alert('Please sign in first');
                 window.location.href = 'signin.html';
