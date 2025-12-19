@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Success-Based Pilot · OppGrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-500: #78716c;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --stone-900: #1c1917;
+      --violet-100: #ede9fe;
+      --violet-600: #7c3aed;
+      --white: #ffffff;
+      --green-600: #16a34a;
+      --red-600: #dc2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); line-height: 1.6; }
+    nav { background: var(--white); border-bottom: 1px solid var(--stone-200); }
+    .nav-content { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+    .logo { display:flex; align-items:center; gap:8px; text-decoration:none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight:700; }
+    .nav-links { display:flex; gap: 18px; flex-wrap: wrap; }
+    .nav-link { color: var(--stone-700); text-decoration:none; font-size: 14px; font-weight: 600; }
+    .nav-link:hover { text-decoration: underline; }
+
+    .container { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-family: 'Spectral', serif; font-size: 2.2rem; margin-bottom: 8px; }
+    .subtitle { color: var(--stone-500); margin-bottom: 22px; }
+
+    .card { background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 22px; margin-top: 14px; }
+    .row { display:flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+    label { display:block; font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--stone-800); }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--stone-300);
+      border-radius: 12px;
+      font-size: 14px;
+      background: white;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+
+    .btn {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--stone-300);
+      background: var(--white);
+      color: var(--stone-900);
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration:none;
+      font-size: 14px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .expert-list { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    @media (max-width: 860px) { .expert-list { grid-template-columns: 1fr; } }
+    .expert {
+      border: 1px solid var(--stone-200);
+      border-radius: 14px;
+      padding: 14px;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .expert:hover { border-color: var(--stone-300); box-shadow: 0 10px 24px rgba(0,0,0,0.06); }
+    .expert.selected { border-color: var(--violet-600); box-shadow: 0 10px 24px rgba(124,58,237,0.12); }
+    .expert h4 { font-size: 15px; margin-bottom: 4px; }
+    .expert p { color: var(--stone-500); font-size: 13px; margin-bottom: 8px; }
+    .chips { display:flex; gap: 6px; flex-wrap: wrap; }
+    .chip { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--stone-200); background: var(--stone-100); color: var(--stone-700); }
+    .chip.pilot { background: var(--violet-100); border-color: var(--violet-100); color: var(--violet-600); font-weight: 800; }
+
+    .notice { font-size: 12px; color: var(--stone-500); margin-top: 10px; }
+    .error { color: var(--red-600); font-weight: 700; margin-top: 10px; }
+    .ok { color: var(--green-600); font-weight: 800; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="logo">OppGrid</a>
+      <div class="nav-links">
+        <a class="nav-link" href="learn.html#success-based">Learn</a>
+        <a class="nav-link" href="expert-marketplace.html">Experts</a>
+        <a class="nav-link" href="agreements.html">Agreements</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Success-Based Pilot</h1>
+    <p class="subtitle">Create a draft agreement, review terms, then submit/activate. This uses the live `/api/v1/agreements` endpoints.</p>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="chips">
+            <span class="chip pilot">Pilot</span>
+            <span class="chip">Draft → Submit → Activate</span>
+            <span class="chip">Revenue / milestone triggers</span>
+          </div>
+        </div>
+        <a class="btn" href="learn.html#success-based">Templates & how it works</a>
+      </div>
+      <p class="notice">You’ll need to be signed in to create an agreement. Browsing experts is public.</p>
+    </div>
+
+    <div class="card">
+      <h2 style="font-family: 'Spectral', serif; font-size: 1.4rem; margin-bottom: 10px;">1) Choose an expert</h2>
+      <div id="expertsStatus" class="notice">Loading experts…</div>
+      <div id="experts" class="expert-list" style="display:none;"></div>
+      <div id="expertsError" class="error" style="display:none;"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-family: 'Spectral', serif; font-size: 1.4rem; margin-bottom: 10px;">2) Agreement terms</h2>
+
+      <div class="grid">
+        <div>
+          <label for="opportunityId">Opportunity ID (optional)</label>
+          <input id="opportunityId" type="number" min="1" inputmode="numeric" placeholder="e.g. 123" />
+        </div>
+        <div>
+          <label for="agreementType">Agreement type</label>
+          <select id="agreementType">
+            <option value="success_fee">Success fee (one-time)</option>
+            <option value="revenue_share">Revenue share (ongoing)</option>
+            <option value="milestone_based">Milestone-based</option>
+          </select>
+        </div>
+        <div>
+          <label for="triggerType">Trigger type</label>
+          <select id="triggerType">
+            <option value="first_revenue">First revenue</option>
+            <option value="revenue_threshold">Revenue threshold</option>
+            <option value="milestone_completion">Milestone completion</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div>
+          <label for="triggerThreshold">Trigger threshold (USD, optional)</label>
+          <input id="triggerThreshold" type="number" min="0" step="1" inputmode="decimal" placeholder="e.g. 5000" />
+          <div class="notice">Used only for “Revenue threshold”.</div>
+        </div>
+        <div>
+          <label for="feePercent">Fee percent (%, optional)</label>
+          <input id="feePercent" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="e.g. 15" />
+          <div class="notice">If blank, we’ll use the expert default.</div>
+        </div>
+        <div>
+          <label for="feeCap">Fee cap (USD, optional)</label>
+          <input id="feeCap" type="number" min="0" step="1" inputmode="decimal" placeholder="e.g. 20000" />
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <label for="title">Title (optional)</label>
+        <input id="title" type="text" placeholder="e.g. Growth sprint success-fee agreement" />
+      </div>
+      <div style="margin-top: 12px;">
+        <label for="description">Description (optional)</label>
+        <textarea id="description" placeholder="Scope, deliverables, reporting cadence, exclusions, etc."></textarea>
+      </div>
+
+      <div class="row" style="margin-top: 16px;">
+        <a class="btn" href="agreements.html">View existing agreements</a>
+        <button class="btn btn-primary" id="createBtn">Create draft agreement</button>
+      </div>
+      <div id="createOk" class="ok" style="display:none;"></div>
+      <div id="createErr" class="error" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const qs = new URLSearchParams(window.location.search);
+    const preOpportunityId = qs.get('opportunity_id');
+    const preExpertId = qs.get('expert_id');
+    const preAgreementType = qs.get('agreement_type');
+    const preTriggerType = qs.get('trigger_type');
+
+    const expertsEl = document.getElementById('experts');
+    const expertsStatus = document.getElementById('expertsStatus');
+    const expertsError = document.getElementById('expertsError');
+    const createBtn = document.getElementById('createBtn');
+    const createOk = document.getElementById('createOk');
+    const createErr = document.getElementById('createErr');
+
+    const selected = { expertId: null, expertName: null };
+
+    function dollarsToCents(v) {
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return null;
+      return Math.round(n * 100);
+    }
+
+    function percentToBps(v) {
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return null;
+      return Math.round(n * 100);
+    }
+
+    function setSelectedExpert(expert) {
+      selected.expertId = expert.id;
+      selected.expertName = expert.name;
+      document.querySelectorAll('.expert').forEach(el => el.classList.remove('selected'));
+      const el = document.getElementById(`expert-${expert.id}`);
+      if (el) el.classList.add('selected');
+    }
+
+    async function loadExperts() {
+      expertsStatus.style.display = 'block';
+      expertsError.style.display = 'none';
+      expertsEl.style.display = 'none';
+      expertsEl.innerHTML = '';
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/experts/?limit=50&active_only=true`);
+        if (!res.ok) throw new Error('Failed to load experts');
+        const experts = await res.json();
+
+        if (!Array.isArray(experts) || experts.length === 0) {
+          expertsStatus.textContent = 'No experts available right now.';
+          return;
+        }
+
+        expertsStatus.style.display = 'none';
+        expertsEl.style.display = 'grid';
+
+        experts.forEach(ex => {
+          const chipSkills = Array.isArray(ex.specialization) ? ex.specialization.slice(0, 3) : [];
+          const fee = ex.success_fee_bps ? `${(ex.success_fee_bps / 100).toFixed(1)}%` : 'Default fee';
+          const node = document.createElement('div');
+          node.className = 'expert';
+          node.id = `expert-${ex.id}`;
+          node.onclick = () => setSelectedExpert(ex);
+          node.innerHTML = `
+            <h4>${ex.name}</h4>
+            <p>${ex.headline ? ex.headline : 'Expert'} • ${fee}</p>
+            <div class="chips">
+              ${(chipSkills || []).map(s => `<span class="chip">${String(s)}</span>`).join('')}
+            </div>
+          `;
+          expertsEl.appendChild(node);
+        });
+
+        if (preOpportunityId) document.getElementById('opportunityId').value = preOpportunityId;
+        if (preAgreementType) document.getElementById('agreementType').value = preAgreementType;
+        if (preTriggerType) document.getElementById('triggerType').value = preTriggerType;
+
+        // Preselect expert from query param if present.
+        if (preExpertId) {
+          const id = Number(preExpertId);
+          if (Number.isFinite(id)) {
+            const match = experts.find(e => e.id === id);
+            if (match) setSelectedExpert(match);
+          }
+        }
+      } catch (e) {
+        expertsStatus.style.display = 'none';
+        expertsError.style.display = 'block';
+        expertsError.textContent = e?.message || 'Failed to load experts.';
+      }
+    }
+
+    async function createAgreement() {
+      createOk.style.display = 'none';
+      createErr.style.display = 'none';
+
+      if (!selected.expertId) {
+        createErr.style.display = 'block';
+        createErr.textContent = 'Please choose an expert first.';
+        return;
+      }
+
+      if (!window.OppGridAuth?.requireAuth) {
+        // Fallback: if auth helper not loaded, just do a naive redirect.
+        window.location.href = 'signin.html';
+        return;
+      }
+
+      if (!window.OppGridAuth.requireAuth()) return;
+
+      const payload = {
+        expert_id: selected.expertId,
+        opportunity_id: (document.getElementById('opportunityId').value || '').trim() ? Number(document.getElementById('opportunityId').value) : null,
+        agreement_type: document.getElementById('agreementType').value,
+        trigger_type: document.getElementById('triggerType').value,
+        title: (document.getElementById('title').value || '').trim() || null,
+        description: (document.getElementById('description').value || '').trim() || null,
+        fee_percentage_bps: percentToBps((document.getElementById('feePercent').value || '').trim()),
+        fee_cap_cents: dollarsToCents((document.getElementById('feeCap').value || '').trim()),
+        trigger_threshold_cents: dollarsToCents((document.getElementById('triggerThreshold').value || '').trim()),
+      };
+
+      // Clean nulls to keep payload small.
+      Object.keys(payload).forEach(k => (payload[k] === null || payload[k] === undefined || Number.isNaN(payload[k])) && delete payload[k]);
+
+      createBtn.disabled = true;
+      createBtn.textContent = 'Creating…';
+      try {
+        const token = localStorage.getItem('access_token');
+        const res = await fetch(`${API_BASE_URL}/agreements/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data?.detail || 'Failed to create agreement');
+        }
+        createOk.style.display = 'block';
+        createOk.textContent = 'Draft agreement created. Redirecting…';
+        window.location.href = `agreement.html?id=${encodeURIComponent(String(data.id))}&created=1`;
+      } catch (e) {
+        createErr.style.display = 'block';
+        createErr.textContent = e?.message || 'Failed to create agreement.';
+      } finally {
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create draft agreement';
+      }
+    }
+
+    createBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      createAgreement();
+    });
+
+    loadExperts();
+  </script>
+</body>
+</html>
+

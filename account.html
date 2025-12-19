@@ -764,6 +764,15 @@
                     </svg>
                     Subscription
                 </a>
+                <a href="#agreements" class="sidebar-link" data-section="agreements">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 12h6"/>
+                        <path d="M9 16h6"/>
+                        <path d="M9 8h6"/>
+                        <path d="M6 4h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/>
+                    </svg>
+                    Agreements
+                </a>
                 <a href="#notifications" class="sidebar-link" data-section="notifications">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -879,6 +888,30 @@
                                 <div style="font-size: 13px; color: #065f46;">Your plan has been successfully updated. Enjoy your new features!</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Agreements Section -->
+            <section id="agreements" class="section-card fade-in-up">
+                <div class="section-header">
+                    <h2>Agreements</h2>
+                    <p>Manage success-fee and revenue-share agreements</p>
+                </div>
+                <div class="section-body">
+                    <div style="display:flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+                        <div style="color: var(--stone-600); font-size: 14px;">
+                            Create a draft, review terms, then submit/activate. Active agreements can record revenue and trigger payouts.
+                        </div>
+                        <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                            <a href="success-pilot.html" class="btn-upgrade">New agreement</a>
+                            <a href="agreements.html" class="btn-outline">View all</a>
+                        </div>
+                    </div>
+
+                    <div id="agreementsSummary" style="margin-top: 14px; display: grid; gap: 10px;"></div>
+                    <div id="agreementsSummaryEmpty" style="margin-top: 14px; color: var(--stone-500); font-size: 13px; display:none;">
+                        No agreements yet. Start with <a href="success-pilot.html">Success-Based Pilot</a>.
                     </div>
                 </div>
             </section>
@@ -1051,6 +1084,50 @@
             }
         }
 
+        async function loadAgreementsSummary() {
+            const container = document.getElementById('agreementsSummary');
+            const empty = document.getElementById('agreementsSummaryEmpty');
+            if (!container) return;
+            container.innerHTML = '';
+            if (empty) empty.style.display = 'none';
+
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
+                const res = await fetch(`${API_BASE_URL}/agreements/?limit=5`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json().catch(() => ([]));
+                if (!res.ok) throw new Error(data?.detail || 'Failed to load agreements');
+                const agreements = Array.isArray(data) ? data : [];
+                if (agreements.length === 0) {
+                    if (empty) empty.style.display = 'block';
+                    return;
+                }
+
+                agreements.forEach(a => {
+                    const title = a.title || `Agreement #${a.id}`;
+                    const row = document.createElement('div');
+                    row.style.cssText = 'border:1px solid #e7e5e4;border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:white;';
+                    row.innerHTML = `
+                        <div>
+                            <div style="font-weight: 700; color:#1c1917; margin-bottom: 2px;">${title}</div>
+                            <div style="font-size: 12px; color:#78716c; display:flex; gap:10px; flex-wrap:wrap;">
+                                <span>Status: ${a.status}</span>
+                                <span>Type: ${a.agreement_type}</span>
+                                <span>Trigger: ${a.trigger_type}</span>
+                            </div>
+                        </div>
+                        <a class="btn-outline" href="agreement.html?id=${encodeURIComponent(String(a.id))}">Open</a>
+                    `;
+                    container.appendChild(row);
+                });
+            } catch (e) {
+                // Non-fatal; keep section usable.
+                console.warn('Failed to load agreements summary:', e);
+            }
+        }
+
         async function openBillingPortal() {
             const manageBillingBtn = document.getElementById('manageBillingBtn');
             manageBillingBtn.disabled = true;
@@ -1082,6 +1159,7 @@
 
         // Load subscription data
         loadSubscriptionData();
+        loadAgreementsSummary();
 
         // Check for checkout success
         const urlParams = new URLSearchParams(window.location.search);

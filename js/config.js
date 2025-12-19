@@ -22,6 +22,12 @@ const CONFIG = {
     ENABLE_VALIDATIONS: true,
 };
 
+// Backwards-compatible global (many pages reference API_BASE_URL directly).
+// Keep this in sync with CONFIG.API_BASE_URL.
+if (typeof window !== 'undefined') {
+    window.API_BASE_URL = CONFIG.API_BASE_URL;
+}
+
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = CONFIG;
