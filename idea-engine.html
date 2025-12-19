@@ -1307,7 +1307,7 @@
             const saved = document.getElementById('savedValidationLink');
             if (saved && record && record.id) {
                 saved.style.display = 'block';
-                saved.innerHTML = `Saved as report #${record.id}. <a href="/validations" style="color: var(--blue-600);">View in My Validations</a>`;
+                saved.innerHTML = `Saved as report #${record.id}. <a href="/validations/${record.id}" style="color: var(--blue-600);">Open saved report</a> · <a href="/validations" style="color: var(--blue-600);">View all</a>`;
             }
 
             generatedSection.classList.remove('show');

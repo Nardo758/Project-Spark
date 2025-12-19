@@ -28,6 +28,9 @@ type ValidationDetail = {
   id: number;
   status: string;
   result?: Record<string, unknown> | null;
+  opportunity_score?: number | null;
+  summary?: string | null;
+  validation_confidence?: number | null;
 };
 
 type StripeKeyResponse = { publishable_key: string };
@@ -259,8 +262,21 @@ export function IdeaEngine() {
               <div>
                 Saved validation #{validation.id} ({validation.status}).
               </div>
+              {validation.opportunity_score != null ? (
+                <div style={{ marginTop: 6 }}>
+                  <b>Score:</b> {validation.opportunity_score}
+                  {validation.validation_confidence != null ? ` (confidence ${validation.validation_confidence}%)` : null}
+                </div>
+              ) : null}
+              {validation.summary ? (
+                <div style={{ marginTop: 6 }}>
+                  <b>Summary:</b> {validation.summary}
+                </div>
+              ) : null}
               <div style={{ marginTop: 8 }}>
-                <Link to="/validations">View in My Validations</Link>
+                <Link to={`/validations/${validation.id}`}>Open saved report</Link>
+                {' · '}
+                <Link to="/validations">View all</Link>
               </div>
             </div>
           ) : null}
