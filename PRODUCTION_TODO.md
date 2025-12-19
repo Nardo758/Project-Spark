@@ -73,6 +73,23 @@
 - [ ] Implement scheduled opportunity import from Apify
 - [ ] Add analytics tracking
 
+## Architecture Notes (Circle back)
+
+**In place (core):**
+- Runtime/deploy shape (single runtime + `server.py` proxy + FastAPI)
+- Modular backend router structure (`backend/app/routers/*`), `/api/v1` API prefix
+- Alembic migrations (`backend/alembic/`)
+- Auth foundations (JWT + Replit auth + OAuth/magic link/2FA routes)
+- Stripe foundations (subscriptions + webhook handling + billing portal)
+- Agreements/milestones foundations (models + routers; basic UI flows wired)
+
+**Still thin / needs an architecture pass before “production-grade”:**
+- Observability: logging/metrics/tracing, audit logs for money-moving actions
+- Background jobs: retries/idempotency/DLQ strategy (webhooks, escrow releases, scheduled tasks)
+- Security hardening: CORS tightening, rate limiting/abuse protection, secrets rotation, access auditing
+- Data lifecycle & privacy: retention, export/delete flows, PII handling strategy
+- Frontend strategy: two UIs (static HTML + React/Vite) needs a single long-term plan
+
 ## Pre-Launch Testing
 
 - [ ] Complete end-to-end user flow: signup -> browse -> validate idea -> book expert
