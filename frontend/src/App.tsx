@@ -12,6 +12,7 @@ import Signup from './pages/Signup'
 import BrainDashboard from './pages/brain/BrainDashboard'
 import AuthCallback from './pages/AuthCallback'
 import MagicLinkCallback from './pages/MagicLinkCallback'
+import Saved from './pages/Saved'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -25,6 +26,14 @@ function App() {
         <Route path="pricing" element={<Pricing />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
+        <Route
+          path="saved"
+          element={
+            <RequireAuth>
+              <Saved />
+            </RequireAuth>
+          }
+        />
         <Route
           path="dashboard"
           element={

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { Menu, X, ChevronDown, Brain, Compass, Lightbulb, Users, DollarSign, Wrench, BookOpen } from 'lucide-react'
+import { Menu, X, ChevronDown, Brain, Compass, Lightbulb, Users, DollarSign, Wrench, BookOpen, Bookmark } from 'lucide-react'
 
 const guestNavItems = [
   { name: 'Home', path: '/' },
@@ -13,6 +13,7 @@ const guestNavItems = [
 const authNavItems = [
   { name: 'Dashboard', path: '/dashboard', icon: Compass },
   { name: 'Discover', path: '/discover', icon: Compass },
+  { name: 'Saved', path: '/saved', icon: Bookmark },
   { 
     name: 'Builder', 
     icon: Lightbulb,
