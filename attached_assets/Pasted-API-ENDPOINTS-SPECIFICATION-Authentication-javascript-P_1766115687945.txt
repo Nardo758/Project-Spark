@@ -1,0 +1,48 @@
+API ENDPOINTS SPECIFICATION
+Authentication:
+javascript
+POST   /api/auth/signup          # Register new user
+POST   /api/auth/login           # Login with email/password
+POST   /api/auth/guest           # Create guest account
+GET    /api/auth/:provider       # OAuth redirect
+GET    /api/auth/:provider/callback
+POST   /api/auth/logout
+GET    /api/auth/me              # Get current user
+Opportunities:
+javascript
+GET    /api/opportunities        # List opportunities (public)
+GET    /api/opportunities/:id    # Get opportunity details
+POST   /api/opportunities/:id/unlock  # Purchase unlock
+GET    /api/opportunities/search
+GET    /api/users/:userId/opportunities  # User's saved opps
+Services:
+javascript
+GET    /api/services             # List services (public)
+GET    /api/services/:id         # Get service details
+POST   /api/services             # Create new service (creator)
+POST   /api/services/:id/purchase # Purchase service
+POST   /api/services/generate    # Generate AI content
+GET    /api/users/:userId/services # User's services
+Payments:
+javascript
+POST   /api/payments/create-intent     # Create payment intent
+POST   /api/payments/create-checkout   # Create checkout session
+POST   /api/payments/webhook           # Stripe webhook
+GET    /api/payments/history           # User's payment history
+POST   /api/payments/refund/:id        # Request refund
+Subscriptions:
+javascript
+GET    /api/subscriptions/plans        # List available plans
+POST   /api/subscriptions/create       # Create subscription
+POST   /api/subscriptions/cancel       # Cancel subscription
+GET    /api/subscriptions/current      # Current subscription
+POST   /api/subscriptions/upgrade      # Upgrade/downgrade
+Network:
+javascript
+GET    /api/network/users              # Search users
+POST   /api/network/connections        # Request connection
+GET    /api/network/connections        # List connections
+GET    /api/network/forums             # List forums
+POST   /api/network/forums/:id/posts   # Create post
+GET    /api/network/events             # List events
+POST   /api/network/events/:id/rsvp    # RSVP to event
