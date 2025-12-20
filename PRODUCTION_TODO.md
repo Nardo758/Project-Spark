@@ -24,6 +24,9 @@
   - `STRIPE_PRICE_PRO` - Stripe price ID for Pro tier
   - `STRIPE_PRICE_BUSINESS` - Stripe price ID for Business tier
 - [ ] Configure pay-per-unlock price ($15)
+- [ ] Configure one-time add-ons (if enabled):
+  - Deep Dive add-on ($49)
+  - Fast Pass ($99)
 - [ ] Test webhook delivery in Stripe Dashboard
 
 ## Authentication
@@ -96,6 +99,12 @@
 - [ ] Complete end-to-end user flow: signup -> browse -> validate idea -> book expert
 - [ ] Test subscription upgrade/downgrade flows
 - [ ] Test pay-per-unlock flow
+- [ ] Validate time-decay gating end-to-end (server-side enforcement):
+  - [ ] Free: cannot access locked opportunities without pay-per-unlock
+  - [ ] Pay-per-unlock grants access for 30 days; “already unlocked until …” shown
+  - [ ] Daily pay-per-unlock limit enforced server-side (5/day)
+  - [ ] Business Fast Pass eligibility only for HOT opportunities (0-7 days)
+  - [ ] Deep Dive add-on eligibility and “already unlocked” behavior
 - [ ] Verify mobile responsiveness
 - [ ] Cross-browser testing (Chrome, Firefox, Safari, Edge)
 

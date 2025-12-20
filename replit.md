@@ -17,7 +17,16 @@ OppGrid utilizes a modern hybrid architecture:
 The frontend proxies `/api/*` requests to the backend via Vite's dev server configuration.
 
 **Key Architectural Decisions & Features:**
-*   **Monetization & Access Control:** Implements a tiered subscription model (Pro, Business, Enterprise) with time-decay access control for opportunities (Hot, Fresh, Validated, Archive). A pay-per-unlock mechanism for archived opportunities is also integrated.
+*   **Monetization & Access Control:** Implements a tiered subscription model (Pro, Business, Enterprise) with **time-decay access control** for opportunities:
+    - **HOT**: 0–7 days
+    - **FRESH**: 8–30 days
+    - **VALIDATED**: 31–90 days
+    - **ARCHIVE**: 91+ days
+
+    Content gating is enforced server-side via entitlements, and one-time purchases can grant access with expiry:
+    - **Pay-per-unlock**: $15 (ARCHIVE), **30-day access**, daily limit 5
+    - **Deep Dive add-on**: $49 (eligibility by tier / entitlement)
+    - **Fast Pass**: $99 (Business tier, HOT single-opportunity access, **30-day access**)
 *   **AI Engine:** Integrates with LLMs (e.g., Claude-Haiku, Claude-Sonnet) for AI-powered idea generation, comprehensive idea validation, expert matching, and detailed opportunity analysis (scoring, market size, competition, business models).
 *   **Authentication:** Uses Replit's OIDC patterns for secure, database-backed user authentication supporting Google, GitHub, X, Apple, and email logins with PKCE flow.
 *   **User Interface:** Features a professional design with a black/dark stone primary accent and complementary semantic colors for badges (e.g., Red for HOT, Green for VALIDATED). The UI includes a deep dive console with dark mode, keyboard shortcuts, message actions, and export capabilities.
