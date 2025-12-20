@@ -30,7 +30,10 @@ export default function Home() {
                   <Zap className="w-5 h-5" />
                   Validate Your Idea
                 </Link>
-                <button className="inline-flex items-center justify-center px-6 py-3.5 text-base font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg gap-2">
+                <button 
+                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="inline-flex items-center justify-center px-6 py-3.5 text-base font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg gap-2"
+                >
                   <Play className="w-5 h-5" />
                   Watch Demo
                 </button>
@@ -192,7 +195,7 @@ export default function Home() {
       </section>
 
       {/* From Signal to Launch */}
-      <section className="py-20 bg-gray-50">
+      <section id="how-it-works" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900">From Signal to Launch in Three Steps</h2>
