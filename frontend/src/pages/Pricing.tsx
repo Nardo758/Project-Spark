@@ -75,6 +75,19 @@ export default function Pricing() {
   const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
   const [subPendingTier, setSubPendingTier] = useState<'pro' | 'business' | null>(null)
 
+  const [unlockHistory, setUnlockHistory] = useState<null | Array<{
+    opportunity_id: number
+    opportunity_title: string
+    opportunity_category: string
+    unlock_method: string | null
+    amount_paid: number
+    unlocked_at: string | null
+    expires_at: string | null
+    is_active: boolean
+    has_deep_dive: boolean
+    deep_dive_unlocked_at: string | null
+  }>>(null)
+
   async function startSubscription(tier: 'pro' | 'business') {
     if (!token) {
       navigate(`/login?next=${encodeURIComponent('/pricing')}`)
@@ -131,6 +144,15 @@ export default function Pricing() {
     return data as any
   }
 
+  async function fetchUnlockHistory() {
+    if (!token) throw new Error('Not authenticated')
+    const res = await fetch('/api/v1/subscriptions/unlocks', { headers: { Authorization: `Bearer ${token}` } })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data?.detail || 'Failed to load unlock history')
+    setUnlockHistory(Array.isArray(data?.items) ? data.items : [])
+    return data as any
+  }
+
   async function confirmSubscriptionPayment(_paymentIntentId: string) {
     // Start polling for webhook reconciliation
     setBillingSuccess('Payment confirmed. Syncing your plan…')
@@ -168,6 +190,9 @@ export default function Pricing() {
     if (!isAuthenticated || !token) return
     fetchMySubscription().catch(() => {
       // ignore initial load errors; user might not have billing set up yet
+    })
+    fetchUnlockHistory().catch(() => {
+      // ignore initial load errors
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, token])
@@ -251,7 +276,10 @@ export default function Pricing() {
             {isAuthenticated && (
               <button
                 type="button"
-                onClick={() => fetchMySubscription().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh'))}
+                onClick={() => {
+                  fetchMySubscription().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh'))
+                  fetchUnlockHistory().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh unlock history'))
+                }}
                 className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
                 disabled={billingSyncing}
               >
@@ -259,6 +287,76 @@ export default function Pricing() {
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {isAuthenticated && unlockHistory && (
+        <div className="mb-12 max-w-5xl mx-auto bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-gray-900">Your unlock history</h2>
+            <button
+              type="button"
+              onClick={() => fetchUnlockHistory().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh unlock history'))}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium text-sm"
+              disabled={billingSyncing}
+            >
+              Refresh
+            </button>
+          </div>
+
+          {unlockHistory.length === 0 ? (
+            <div className="mt-3 text-sm text-gray-600">No one-time unlocks yet.</div>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b">
+                    <th className="py-2 pr-4 font-medium">Opportunity</th>
+                    <th className="py-2 pr-4 font-medium">Method</th>
+                    <th className="py-2 pr-4 font-medium">Paid</th>
+                    <th className="py-2 pr-4 font-medium">Unlocked</th>
+                    <th className="py-2 pr-4 font-medium">Expires</th>
+                    <th className="py-2 pr-0 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {unlockHistory.slice(0, 20).map((item) => (
+                    <tr key={`${item.opportunity_id}-${item.unlocked_at || ''}`} className="border-b last:border-b-0">
+                      <td className="py-3 pr-4">
+                        <div className="font-medium text-gray-900">
+                          <Link className="text-blue-600 hover:text-blue-700" to={`/opportunity/${item.opportunity_id}`}>
+                            {item.opportunity_title}
+                          </Link>
+                        </div>
+                        <div className="text-xs text-gray-500">{item.opportunity_category}</div>
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">
+                        {item.unlock_method || '—'}
+                        {item.has_deep_dive ? <div className="text-xs text-gray-500">+ deep_dive</div> : null}
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">
+                        {item.amount_paid ? `$${(item.amount_paid / 100).toFixed(0)}` : '—'}
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">
+                        {item.unlocked_at ? new Date(item.unlocked_at).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">
+                        {item.expires_at ? new Date(item.expires_at).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-3 pr-0">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                          {item.is_active ? 'Active' : 'Expired'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {unlockHistory.length > 20 ? (
+                <div className="mt-2 text-xs text-gray-500">Showing 20 of {unlockHistory.length}.</div>
+              ) : null}
+            </div>
+          )}
         </div>
       )}
 

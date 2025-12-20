@@ -433,6 +433,63 @@ def check_opportunity_unlocked(
     }
 
 
+@router.get("/unlocks")
+def list_unlock_history(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    List a user's one-time unlock history (pay-per-unlock / fast pass / deep dive).
+
+    This intentionally excludes purely subscription-based access records.
+    """
+    from datetime import timezone
+    from sqlalchemy import desc, or_
+    from app.models.subscription import UnlockedOpportunity, UnlockMethod
+    from app.models.opportunity import Opportunity
+
+    now = datetime.now(timezone.utc)
+
+    q = (
+        db.query(UnlockedOpportunity, Opportunity)
+        .join(Opportunity, Opportunity.id == UnlockedOpportunity.opportunity_id)
+        .filter(UnlockedOpportunity.user_id == current_user.id)
+        .filter(
+            or_(
+                UnlockedOpportunity.unlock_method != UnlockMethod.SUBSCRIPTION,
+                UnlockedOpportunity.amount_paid > 0,
+                UnlockedOpportunity.expires_at.isnot(None),
+                UnlockedOpportunity.has_deep_dive == True,  # noqa: E712
+            )
+        )
+        .order_by(desc(UnlockedOpportunity.unlocked_at))
+    )
+
+    items = []
+    for unlock, opp in q.all():
+        exp = unlock.expires_at
+        if exp and exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        is_active = (exp is None) or (now <= exp)
+
+        items.append(
+            {
+                "opportunity_id": opp.id,
+                "opportunity_title": opp.title,
+                "opportunity_category": opp.category,
+                "unlock_method": unlock.unlock_method.value if unlock.unlock_method else None,
+                "amount_paid": unlock.amount_paid,
+                "unlocked_at": unlock.unlocked_at.isoformat() if unlock.unlocked_at else None,
+                "expires_at": exp.isoformat() if exp else None,
+                "is_active": is_active,
+                "has_deep_dive": bool(unlock.has_deep_dive),
+                "deep_dive_unlocked_at": unlock.deep_dive_unlocked_at.isoformat() if unlock.deep_dive_unlocked_at else None,
+            }
+        )
+
+    return {"items": items}
+
+
 @router.get("/access/{opportunity_id}", response_model=OpportunityAccessInfo)
 def get_opportunity_access_info(
     opportunity_id: int,
@@ -460,6 +517,7 @@ def get_opportunity_access_info(
         "days_until_unlock": ent.days_until_unlock,
         "can_pay_to_unlock": ent.can_pay_to_unlock,
         "unlock_price": ent.unlock_price,
+        "unlock_expires_at": ent.unlock_expires_at,
     }
 
 
@@ -690,14 +748,18 @@ def confirm_pay_per_unlock(
     # Create unlock record with 30-day expiration
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=30)
-    
+
+    unlock_method = UnlockMethod.PAY_PER_UNLOCK if payment_type == "pay_per_unlock" else UnlockMethod.FAST_PASS
+
     unlock = UnlockedOpportunity(
         user_id=current_user.id,
         opportunity_id=opportunity_id,
-        unlock_method=UnlockMethod.PAY_PER_UNLOCK,
+        unlock_method=unlock_method,
         amount_paid=payment_intent.amount,
         stripe_payment_intent_id=payment_intent_id,
-        expires_at=expires_at
+        expires_at=expires_at,
+        # Fast Pass should include Deep Dive in the HOT window.
+        has_deep_dive=True if payment_type == "fast_pass" else False,
     )
     db.add(unlock)
     db.commit()

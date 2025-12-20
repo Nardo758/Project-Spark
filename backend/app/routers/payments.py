@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 import json
+from datetime import datetime, timezone
 
 from app.core.dependencies import get_current_active_user
 from app.db.database import get_db
@@ -17,7 +18,7 @@ from app.schemas.payment import (
 )
 from app.services.stripe_service import get_stripe_client, StripeService
 from app.models.opportunity import Opportunity
-from app.models.subscription import UnlockedOpportunity, SubscriptionTier
+from app.models.subscription import UnlockedOpportunity, SubscriptionTier, UnlockMethod
 from app.services.usage_service import usage_service
 from app.services.audit import log_event
 
@@ -169,6 +170,41 @@ def confirm_payment(
         tx.status = mapped
         db.commit()
 
+    # Best-effort fulfillment for Deep Dive when confirming from the app.
+    # (Webhooks should also fulfill; this path makes UX feel instant.)
+    if intent.status == "succeeded" and intent.metadata.get("type") == "deep_dive":
+        opportunity_id = int(intent.metadata.get("opportunity_id") or 0)
+        user_id = int(intent.metadata.get("user_id") or 0)
+        if user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Payment belongs to another user")
+        if opportunity_id > 0:
+            unlock = db.query(UnlockedOpportunity).filter(
+                UnlockedOpportunity.user_id == current_user.id,
+                UnlockedOpportunity.opportunity_id == opportunity_id,
+            ).first()
+
+            if unlock and unlock.has_deep_dive:
+                pass
+            else:
+                now = datetime.now(timezone.utc)
+                if unlock:
+                    unlock.has_deep_dive = True
+                    unlock.deep_dive_payment_intent_id = intent.id
+                    unlock.deep_dive_unlocked_at = now
+                else:
+                    unlock = UnlockedOpportunity(
+                        user_id=current_user.id,
+                        opportunity_id=opportunity_id,
+                        unlock_method=UnlockMethod.DEEP_DIVE,
+                        amount_paid=int(intent.amount or 0),
+                        stripe_payment_intent_id=intent.id,
+                        has_deep_dive=True,
+                        deep_dive_payment_intent_id=intent.id,
+                        deep_dive_unlocked_at=now,
+                    )
+                    db.add(unlock)
+                db.commit()
+
     log_event(
         db,
         action="payments.confirm",
@@ -201,19 +237,17 @@ def create_deep_dive_payment_intent(
     if user_tier not in [SubscriptionTier.PRO]:
         raise HTTPException(status_code=403, detail="Deep Dive is only available for Builder (Pro) tier subscribers")
     
-    # Check opportunity exists and user has base access
+    # Check opportunity exists and user has base access (entitlements)
     opportunity = db.query(Opportunity).filter(Opportunity.id == payload.opportunity_id).first()
     if not opportunity:
         raise HTTPException(status_code=404, detail="Opportunity not found")
-    
-    # Check if already has Deep Dive
-    existing_unlock = db.query(UnlockedOpportunity).filter(
-        UnlockedOpportunity.user_id == current_user.id,
-        UnlockedOpportunity.opportunity_id == payload.opportunity_id
-    ).first()
-    
-    if existing_unlock and existing_unlock.has_deep_dive:
-        raise HTTPException(status_code=400, detail="You already have Deep Dive access for this opportunity")
+
+    from app.services.entitlements import get_opportunity_entitlements
+    ent = get_opportunity_entitlements(db, opportunity, current_user)
+    if not ent.can_buy_deep_dive:
+        if ent.deep_dive_available:
+            raise HTTPException(status_code=400, detail="You already have Deep Dive access for this opportunity")
+        raise HTTPException(status_code=403, detail="Deep Dive is not available for this opportunity on your current plan")
     
     # Create transaction
     tx = Transaction(

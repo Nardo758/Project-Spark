@@ -124,3 +124,4 @@ class OpportunityAccessInfo(BaseModel):
     days_until_unlock: int
     can_pay_to_unlock: bool
     unlock_price: Optional[int]  # In cents, if pay-per-unlock available
+    unlock_expires_at: Optional[datetime] = None
