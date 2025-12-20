@@ -1392,12 +1392,12 @@
                     </div>
                     <div class="hero-stat-divider"></div>
                     <div class="hero-stat">
-                        <div class="hero-stat-value">$47B+</div>
+                        <div class="hero-stat-value" id="stat-market-opportunity">$47B+</div>
                         <div class="hero-stat-label">Market Opportunity</div>
                     </div>
                     <div class="hero-stat-divider"></div>
                     <div class="hero-stat">
-                        <div class="hero-stat-value">6</div>
+                        <div class="hero-stat-value" id="stat-global-markets">6</div>
                         <div class="hero-stat-label">Global Markets</div>
                     </div>
                 </div>
@@ -2007,12 +2007,21 @@
         function updateStats(stats) {
             const validatedEl = document.getElementById('stat-validated-ideas');
             const badgeEl = document.getElementById('hero-badge-count');
+            const marketsEl = document.getElementById('stat-global-markets');
+            const marketOppEl = document.getElementById('stat-market-opportunity');
 
             if (validatedEl && stats.analyzed_opportunities) {
                 validatedEl.textContent = stats.analyzed_opportunities.toLocaleString();
             }
             if (badgeEl && stats.analyzed_opportunities) {
                 badgeEl.textContent = `${stats.analyzed_opportunities.toLocaleString()}+ Validated Opportunities`;
+            }
+            if (marketsEl && typeof stats.global_markets_count === 'number') {
+                marketsEl.textContent = stats.global_markets_count.toLocaleString();
+            }
+            // Optional: allow backend to override the marketing value (keep current value if missing)
+            if (marketOppEl && typeof stats.market_opportunity_label === 'string' && stats.market_opportunity_label.trim()) {
+                marketOppEl.textContent = stats.market_opportunity_label.trim();
             }
         }
 

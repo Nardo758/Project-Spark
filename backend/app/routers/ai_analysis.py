@@ -120,12 +120,24 @@ def _build_analysis_stats(db: Session) -> dict:
         Opportunity.ai_opportunity_score >= 70
     ).scalar()
 
+    # "Global Markets" for landing page: best-effort count of distinct countries represented.
+    # If country data isn't populated yet, this will be 0 and the UI will keep its static fallback.
+    try:
+        global_markets_count = db.query(
+            func.count(func.distinct(Opportunity.country))
+        ).filter(
+            Opportunity.country.isnot(None)
+        ).scalar() or 0
+    except Exception:
+        global_markets_count = 0
+
     return {
         "total_opportunities": total,
         "analyzed_opportunities": analyzed,
         "pending_analysis": total - analyzed,
         "average_score": round(avg_score, 1) if avg_score else 0,
-        "high_potential_count": high_potential
+        "high_potential_count": high_potential,
+        "global_markets_count": int(global_markets_count),
     }
 
 
