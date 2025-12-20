@@ -30,7 +30,7 @@
 
 - [x] Verify Replit Auth is configured *(configured with callback URL)*
 - [x] Test all login flows (Google, GitHub, X, Apple, Email) *(login page shows Replit Auth, magic link, and password options)*
-- [ ] Verify session persistence across page refreshes
+- [x] Verify session persistence across page refreshes *(Zustand + localStorage persistence in authStore.ts)*
 
 ## API Endpoints to Verify
 
