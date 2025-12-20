@@ -77,7 +77,10 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         super().end_headers()
     
     def do_GET(self):
-        if self.path.startswith('/api/') or self.path.startswith('/auth/') or self.path.startswith('/__repl_auth') or self.path == '/docs' or self.path == '/openapi.json' or self.path == '/redoc' or self.path == '/health':
+        # Backend routes to proxy (be specific to avoid intercepting frontend routes like /auth/magic)
+        backend_auth_routes = ['/auth/login', '/auth/callback', '/auth/logout', '/auth/status', '/auth/debug']
+        is_backend_auth = any(self.path.startswith(route) for route in backend_auth_routes)
+        if self.path.startswith('/api/') or is_backend_auth or self.path.startswith('/__repl_auth') or self.path == '/docs' or self.path == '/openapi.json' or self.path == '/redoc' or self.path == '/health':
             self.proxy_request('GET')
         else:
             parsed = urlparse(self.path)
