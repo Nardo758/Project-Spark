@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { Menu, X, ChevronDown, Brain, Compass, Lightbulb, Users, DollarSign, Wrench, BookOpen, Bookmark } from 'lucide-react'
+import { useBrainStore } from '../stores/brainStore'
 
 const guestNavItems = [
   { name: 'Home', path: '/' },
@@ -38,6 +39,10 @@ export default function Navbar() {
   const [builderDropdownOpen, setBuilderDropdownOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuthStore()
   const location = useLocation()
+  const brainName = useBrainStore((s) => s.brainName)
+  const brainScore = useBrainStore((s) => s.matchScore)
+  const brainEnabled = useBrainStore((s) => s.isEnabled)
+  const quickTrain = useBrainStore((s) => s.quickTrain)
 
   const navItems = isAuthenticated ? authNavItems : guestNavItems
 
@@ -103,14 +108,28 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                {user?.brainTier && (
-                  <Link
-                    to="/brain"
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-full"
-                  >
-                    <Brain className="w-4 h-4" />
-                    AI Co-founder
-                  </Link>
+                {brainEnabled && (
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/brain"
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-full"
+                      title="Your Brain AI learns from every interaction"
+                    >
+                      <Brain className="w-4 h-4" />
+                      <span className="max-w-[160px] truncate">{brainName || 'Untrained Brain'}</span>
+                      <span className="text-purple-700">{brainName ? `${brainScore}%` : ''}</span>
+                    </Link>
+                    {brainName && (
+                      <button
+                        type="button"
+                        onClick={quickTrain}
+                        className="px-3 py-1.5 text-sm font-medium text-gray-800 border border-gray-200 rounded-full hover:bg-gray-50"
+                        title="Quick Train"
+                      >
+                        Quick train
+                      </button>
+                    )}
+                  </div>
                 )}
                 <button
                   onClick={logout}

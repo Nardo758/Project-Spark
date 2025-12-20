@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueries, useQueryClient } from '@tanstack/rea
 import { CheckCircle2, Lock, Search, Target, Clock, TrendingUp, Bookmark } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import { useBrainStore } from '../stores/brainStore'
 
 const categories = ['All', 'Healthcare', 'FinTech', 'E-commerce', 'Education', 'Real Estate', 'SaaS']
 const statuses = ['All', 'HOT', 'FRESH', 'VALIDATED', 'ARCHIVE']
@@ -74,6 +75,12 @@ export default function Discover() {
   const navigate = useNavigate()
 
   const { token, isAuthenticated } = useAuthStore()
+  const brainName = useBrainStore((s) => s.brainName)
+  const brainScore = useBrainStore((s) => s.matchScore)
+  const brainFocus = useBrainStore((s) => s.focusTags)
+  const brainEnabled = useBrainStore((s) => s.isEnabled)
+  const saveToBrain = useBrainStore((s) => s.saveOpportunity)
+  const [brainFilterOn, setBrainFilterOn] = useState(true)
   const queryClient = useQueryClient()
 
   const opportunitiesQuery = useQuery({
@@ -154,9 +161,15 @@ export default function Discover() {
       const matchesCategory = selectedCategory === 'All' || opp.category === selectedCategory
       const status = getStatusFromAge(opp.created_at)
       const matchesStatus = selectedStatus === 'All' || status === selectedStatus
-      return matchesSearch && matchesCategory && matchesStatus
+      const matchesBrain =
+        !brainEnabled ||
+        !brainName ||
+        !brainFilterOn ||
+        brainFocus.length === 0 ||
+        brainFocus.some((t) => opp.title.toLowerCase().includes(t.toLowerCase()) || opp.category.toLowerCase().includes(t.toLowerCase()))
+      return matchesSearch && matchesCategory && matchesStatus && matchesBrain
     })
-  }, [opportunitiesQuery.data, searchQuery, selectedCategory, selectedStatus])
+  }, [opportunitiesQuery.data, searchQuery, selectedCategory, selectedStatus, brainEnabled, brainName, brainFilterOn, brainFocus])
 
   const accessQueries = useQueries({
     queries: filteredOpportunities.map((opp) => ({
@@ -239,6 +252,18 @@ export default function Discover() {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+          {brainEnabled && brainName && (
+            <button
+              type="button"
+              onClick={() => setBrainFilterOn((v) => !v)}
+              className={`px-4 py-2 rounded-lg border font-medium ${
+                brainFilterOn ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50'
+              }`}
+              title="Toggle Brain AI filtering"
+            >
+              🧠 Filter: {brainFilterOn ? 'ON' : 'OFF'}
+            </button>
+          )}
           <div className="flex gap-3">
             <select
               value={selectedCategory}
@@ -282,6 +307,9 @@ export default function Discover() {
             const isAccessible = Boolean(access?.is_accessible)
             const canPay = Boolean(access?.can_pay_to_unlock)
             const unlockPrice = fmtCents(access?.unlock_price ?? null)
+            const brainMatch = brainEnabled && brainName
+              ? Math.max(0, Math.min(100, Math.round((brainScore * 0.5) + ((opp.feasibility_score ?? 0) * 0.5))))
+              : null
 
             return (
           <div key={opp.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:border-gray-300 hover:shadow-md transition-all">
@@ -318,6 +346,9 @@ export default function Discover() {
                     <Clock className="w-4 h-4" />
                     Access: {isAccessible ? 'Unlocked' : 'Locked'}
                   </div>
+                  {brainMatch !== null && (
+                    <div className="text-purple-700 font-semibold">🧠 {brainMatch}%</div>
+                  )}
                 </div>
 
                 <div className="mt-5 grid md:grid-cols-2 gap-4">
@@ -343,6 +374,12 @@ export default function Discover() {
                     <div className="mt-3 text-xs text-gray-600">
                       Validations: {typeof opp.validation_count === 'number' ? opp.validation_count : '—'}
                     </div>
+                    {brainEnabled && brainName && (
+                      <div className="mt-3 text-xs text-gray-600">
+                        <span className="font-semibold text-gray-700">Brain insights:</span>{' '}
+                        Fits your focus on {brainFocus.slice(0, 2).join(', ') || 'your goals'}.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -380,6 +417,17 @@ export default function Discover() {
                       title={canPay ? 'Unlock full analysis' : 'View plans to unlock'}
                     >
                       {canPay && unlockPrice ? `Unlock ${unlockPrice}` : 'Unlock'}
+                    </button>
+                  )}
+
+                  {brainEnabled && isAuthenticated && (
+                    <button
+                      type="button"
+                      onClick={() => saveToBrain({ opportunityId: opp.id, category: opp.category, title: opp.title })}
+                      className="px-4 py-2 border border-purple-200 rounded-lg bg-purple-50 hover:bg-purple-100 font-medium text-purple-800"
+                      title="Save to My Brain"
+                    >
+                      Save to Brain
                     </button>
                   )}
                   <button
