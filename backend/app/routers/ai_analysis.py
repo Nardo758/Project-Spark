@@ -7,6 +7,7 @@ from typing import Optional, List
 import os
 import json
 import asyncio
+import re
 from datetime import datetime
 
 from anthropic import Anthropic
@@ -106,6 +107,85 @@ def _build_top_opportunities(db: Session, limit: int) -> list[dict]:
     } for opp in opportunities]
 
 
+_MONEY_TOKEN_RE = re.compile(
+    r"\$?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)\s*([kKmMbBtT])?\+?"
+)
+
+
+def _money_token_to_usd(value_str: str, unit: str | None) -> float | None:
+    try:
+        num = float(value_str.replace(",", ""))
+    except Exception:
+        return None
+
+    mult = 1.0
+    if unit:
+        u = unit.lower()
+        if u == "k":
+            mult = 1e3
+        elif u == "m":
+            mult = 1e6
+        elif u == "b":
+            mult = 1e9
+        elif u == "t":
+            mult = 1e12
+    return num * mult
+
+
+def _parse_money_range_to_usd(text: str | None) -> tuple[float, float] | None:
+    """
+    Parse strings like:
+    - "$50M-$200M"
+    - "$1B-$5B"
+    - "$500M+"
+    - "Market: 100M - 250M"
+    into a (low, high) USD tuple.
+    """
+    if not text:
+        return None
+
+    matches = _MONEY_TOKEN_RE.findall(text)
+    if not matches:
+        return None
+
+    nums: list[float] = []
+    for val, unit in matches[:2]:
+        usd = _money_token_to_usd(val, unit or None)
+        if usd is not None:
+            nums.append(usd)
+
+    if not nums:
+        return None
+
+    if len(nums) == 1:
+        return (nums[0], nums[0])
+
+    low, high = nums[0], nums[1]
+    return (min(low, high), max(low, high))
+
+
+def _format_usd_compact(amount_usd: float) -> str:
+    """
+    Compact formatting for landing-page display, e.g.:
+    - 47000000000 -> "$47B+"
+    - 1250000000 -> "$1.3B+"
+    - 25000000 -> "$25M+"
+    """
+    if amount_usd >= 1e12:
+        return f"${amount_usd / 1e12:.1f}T+"
+    if amount_usd >= 1e9:
+        val = amount_usd / 1e9
+        # Keep whole numbers clean: 47.0B -> 47B
+        return f"${val:.1f}B+".replace(".0B+", "B+")
+    if amount_usd >= 1e6:
+        val = amount_usd / 1e6
+        return f"${val:.0f}M+"
+    if amount_usd >= 1e3:
+        val = amount_usd / 1e3
+        return f"${val:.0f}K+"
+    return f"${amount_usd:.0f}+"
+
+
 def _build_analysis_stats(db: Session) -> dict:
     total = db.query(func.count(Opportunity.id)).scalar()
     analyzed = db.query(func.count(Opportunity.id)).filter(
@@ -120,16 +200,42 @@ def _build_analysis_stats(db: Session) -> dict:
         Opportunity.ai_opportunity_score >= 70
     ).scalar()
 
-    # "Global Markets" for landing page: best-effort count of distinct countries represented.
-    # If country data isn't populated yet, this will be 0 and the UI will keep its static fallback.
+    # "Global Markets" for landing page: count of distinct countries represented (active opportunities).
     try:
         global_markets_count = db.query(
             func.count(func.distinct(Opportunity.country))
         ).filter(
-            Opportunity.country.isnot(None)
+            Opportunity.country.isnot(None),
+            Opportunity.status == "active",
         ).scalar() or 0
     except Exception:
         global_markets_count = 0
+
+    # "Market Opportunity" for landing page: aggregate of per-opportunity market size estimates.
+    # Note: this is a best-effort rollup from stored strings and does NOT attempt to de-duplicate overlapping markets.
+    market_total_usd = 0.0
+    market_samples = 0
+    try:
+        rows = db.query(
+            Opportunity.market_size,
+            Opportunity.ai_market_size_estimate,
+        ).filter(
+            Opportunity.status == "active"
+        ).limit(5000).all()
+
+        for market_size, ai_market_size_estimate in rows:
+            parsed = _parse_money_range_to_usd(market_size) or _parse_money_range_to_usd(ai_market_size_estimate)
+            if not parsed:
+                continue
+            low, high = parsed
+            midpoint = (low + high) / 2.0
+            market_total_usd += midpoint
+            market_samples += 1
+    except Exception:
+        market_total_usd = 0.0
+        market_samples = 0
+
+    market_opportunity_label = _format_usd_compact(market_total_usd) if market_total_usd > 0 else "$0+"
 
     return {
         "total_opportunities": total,
@@ -138,6 +244,9 @@ def _build_analysis_stats(db: Session) -> dict:
         "average_score": round(avg_score, 1) if avg_score else 0,
         "high_potential_count": high_potential,
         "global_markets_count": int(global_markets_count),
+        "market_opportunity_usd": round(market_total_usd, 2),
+        "market_opportunity_label": market_opportunity_label,
+        "market_opportunity_samples": int(market_samples),
     }
 
 
