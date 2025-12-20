@@ -61,9 +61,11 @@ export default function Navbar() {
         { name: 'Discover', path: '/discover' },
         { name: 'Services', path: '/services' },
         { name: 'Network', path: '/network' },
+        { name: 'Leads', path: '/marketplace' },
         { name: 'Builder', path: '/build/reports' },
         { name: 'Funding Tools', path: '/funding' },
         { name: 'Analytics', path: '/analytics' },
+        { name: 'API', path: '/developer' },
       ]
     }
 
@@ -72,6 +74,7 @@ export default function Navbar() {
       { name: 'Discover', path: '/discover' },
       { name: 'Services', path: '/services' },
       { name: 'Network', path: '/network' },
+      { name: 'Leads', path: '/marketplace' },
       { name: 'My Purchases', path: '/purchases' },
       { name: 'Learn', path: '/learn' },
       { name: 'Account', path: '/account' },

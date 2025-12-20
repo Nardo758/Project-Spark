@@ -34,6 +34,11 @@ import MagicLinkCallback from './pages/MagicLinkCallback'
 import Saved from './pages/Saved'
 import OpportunityDetail from './pages/OpportunityDetail'
 import ReportStudio from './pages/build/ReportStudio'
+import Marketplace from './pages/marketplace/Marketplace'
+import LeadDetail from './pages/marketplace/LeadDetail'
+import MarketplaceDashboard from './pages/marketplace/Dashboard'
+import Inbox from './pages/network/Inbox'
+import DeveloperPortal from './pages/developer/DeveloperPortal'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -48,6 +53,8 @@ function App() {
         <Route path="network" element={<Network />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="cart" element={<Cart />} />
+        <Route path="marketplace" element={<Marketplace />} />
+        <Route path="marketplace/lead/:id" element={<LeadDetail />} />
         <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
@@ -130,6 +137,30 @@ function App() {
           element={
             <RequirePaid>
               <Analytics />
+            </RequirePaid>
+          }
+        />
+        <Route
+          path="marketplace/dashboard"
+          element={
+            <RequireAuth>
+              <MarketplaceDashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="network/inbox"
+          element={
+            <RequireAuth>
+              <Inbox />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="developer"
+          element={
+            <RequirePaid>
+              <DeveloperPortal />
             </RequirePaid>
           }
         />

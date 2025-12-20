@@ -21,6 +21,9 @@ from .tracking import TrackingEvent
 from .audit_log import AuditLog
 from .job_run import JobRun
 from .brain import Brain
+from .lead_marketplace import Lead, LeadPurchase, SavedSearch, LeadView
+from .network_hub import ConnectionRequest, MessageThread, Message
+from .api_key import APIKey
 
 __all__ = [
     "User",
@@ -59,4 +62,12 @@ __all__ = [
     "AuditLog",
     "JobRun",
     "Brain",
+    "Lead",
+    "LeadPurchase",
+    "SavedSearch",
+    "LeadView",
+    "ConnectionRequest",
+    "MessageThread",
+    "Message",
+    "APIKey",
 ]
