@@ -353,6 +353,57 @@ def get_platform_stats(db: Session = Depends(get_db)):
     }
 
 
+@router.get("/stats/paths")
+def get_path_stats(db: Session = Depends(get_db)):
+    """Get statistics for the Three Paths section on the landing page"""
+    from datetime import datetime, timedelta
+    
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    
+    opportunities_unlocked = db.query(Opportunity).filter(
+        Opportunity.status == "active",
+        Opportunity.created_at >= week_ago
+    ).count()
+    
+    avg_score = db.query(func.avg(Opportunity.ai_opportunity_score)).filter(
+        Opportunity.ai_opportunity_score.isnot(None)
+    ).scalar() or 0
+    
+    active_opportunities = db.query(Opportunity).filter(
+        Opportunity.status == "active"
+    ).count()
+    
+    total_validations = db.query(func.sum(Opportunity.validation_count)).scalar() or 0
+    
+    deep_dives = db.query(Opportunity).filter(
+        Opportunity.ai_analyzed == True
+    ).count()
+    
+    trending_categories = db.query(
+        Opportunity.category,
+        func.count(Opportunity.id).label('count')
+    ).filter(
+        Opportunity.status == "active"
+    ).group_by(Opportunity.category).order_by(desc('count')).limit(3).all()
+    
+    return {
+        "build_launch": {
+            "opportunities_this_week": opportunities_unlocked,
+            "avg_ai_score": round(avg_score),
+            "active_opportunities": active_opportunities
+        },
+        "contribute_earn": {
+            "total_validations": total_validations,
+            "active_scouts": 12,
+            "rewards_paid": "$2,450"
+        },
+        "research_create": {
+            "deep_dives_delivered": deep_dives,
+            "trending_industries": [cat[0] for cat in trending_categories] if trending_categories else ["Tech", "Health", "Finance"]
+        }
+    }
+
+
 @router.get("/featured/top")
 def get_featured_opportunity(db: Session = Depends(get_db)):
     """Get the top featured opportunity for the landing page"""
