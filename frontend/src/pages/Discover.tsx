@@ -26,6 +26,7 @@ type Opportunity = {
     is_unlocked: boolean
     can_pay_to_unlock: boolean
     unlock_price?: number | null
+    unlock_expires_at?: string | null
     user_tier?: string | null
     freshness_badge?: { label: 'HOT' | 'FRESH' | 'VALIDATED' | 'ARCHIVE'; icon: string; color: string; tier_required: string; description: string }
     content_state?: string | null
@@ -289,6 +290,7 @@ export default function Discover() {
             const contentState = opp.access_info?.content_state || null
             const unlockPriceLabel = fmtCents(opp.access_info?.unlock_price ?? null)
             const daysUntilUnlock = opp.access_info?.days_until_unlock ?? 0
+            const unlockExpiresAt = opp.access_info?.unlock_expires_at ?? null
 
             const saving = addToWatchlist.isPending || removeFromWatchlist.isPending
 
@@ -310,7 +312,11 @@ export default function Discover() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">{opp.title}</h2>
                 {(contentState && contentState !== 'full') && (
                   <div className="mb-2 text-sm text-gray-600">
-                    {contentState === 'pay_per_unlock' && unlockPriceLabel ? (
+                    {unlockExpiresAt ? (
+                      <span>
+                        Access active until <span className="font-semibold">{new Date(unlockExpiresAt).toLocaleDateString()}</span>.
+                      </span>
+                    ) : contentState === 'pay_per_unlock' && unlockPriceLabel ? (
                       <span>Unlock available for <span className="font-semibold">{unlockPriceLabel}</span> (30‑day access).</span>
                     ) : contentState === 'fast_pass' && unlockPriceLabel ? (
                       <span>Fast Pass available for <span className="font-semibold">{unlockPriceLabel}</span> (30‑day access).</span>

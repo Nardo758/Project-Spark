@@ -13,6 +13,7 @@ type AccessInfo = {
   is_unlocked: boolean
   can_pay_to_unlock: boolean
   unlock_price?: number | null
+  unlock_expires_at?: string | null
   user_tier?: string | null
   freshness_badge?: { label: string; icon: string; color: string; tier_required: string; description: string }
   content_state?: string | null
@@ -45,6 +46,12 @@ type Opportunity = {
   ai_competitive_advantages?: unknown[] | null
   ai_key_risks?: unknown[] | null
   ai_next_steps?: unknown[] | null
+
+  // Layer 2 (Deep Dive) access
+  deep_dive_available?: boolean
+  can_buy_deep_dive?: boolean
+  deep_dive_price?: number | null
+  layer_2_content?: Record<string, unknown> | null
 }
 
 type WatchlistCheck = { in_watchlist: boolean; watchlist_item_id: number | null }
@@ -186,6 +193,7 @@ export default function OpportunityDetail() {
   const [ppuPublishableKey, setPpuPublishableKey] = useState<string | null>(null)
   const [ppuAmountLabel, setPpuAmountLabel] = useState<string>('$15')
   const [ppuError, setPpuError] = useState<string | null>(null)
+  const [ppuConfirmMode, setPpuConfirmMode] = useState<'subscription_unlock' | 'payments_confirm'>('subscription_unlock')
 
   if (!Number.isFinite(opportunityId)) {
     return (
@@ -217,6 +225,7 @@ export default function OpportunityDetail() {
   const daysUntil = access?.days_until_unlock ?? 0
   const payPrice = fmtCents(access?.unlock_price ?? null)
   const contentState = access?.content_state || null
+  const unlockExpiresAt = access?.unlock_expires_at ?? null
 
   const payPerUnlockMutation = useMutation({
     mutationFn: async () => {
@@ -246,10 +255,45 @@ export default function OpportunityDetail() {
       setPpuPublishableKey(data.publishableKey)
       setPpuClientSecret(data.clientSecret)
       setPpuAmountLabel(fmtCents(data.amountCents) || '$15')
+      setPpuConfirmMode('subscription_unlock')
       setPpuOpen(true)
     },
     onError: (e) => {
       setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
+    },
+  })
+
+  const deepDiveMutation = useMutation({
+    mutationFn: async () => {
+      if (!token) throw new Error('Not authenticated')
+
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
+
+      const res = await fetch('/api/v1/payments/deep-dive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ opportunity_id: opportunityId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start Deep Dive payment')
+
+      return {
+        publishableKey: keyData.publishable_key as string,
+        clientSecret: data.client_secret as string,
+      }
+    },
+    onSuccess: (data) => {
+      setPpuError(null)
+      setPpuPublishableKey(data.publishableKey)
+      setPpuClientSecret(data.clientSecret)
+      setPpuAmountLabel(fmtCents(opp.deep_dive_price ?? 4900) || '$49')
+      setPpuConfirmMode('payments_confirm')
+      setPpuOpen(true)
+    },
+    onError: (e) => {
+      setPpuError(e instanceof Error ? e.message : 'Unable to start Deep Dive payment')
     },
   })
 
@@ -262,6 +306,19 @@ export default function OpportunityDetail() {
     const data = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(data?.detail || 'Failed to confirm unlock')
     // Refresh opportunity gating/access data
+    await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
+    await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId, { authed: Boolean(token) }] })
+  }
+
+  async function confirmGenericPayment(paymentIntentId: string) {
+    if (!token) throw new Error('Not authenticated')
+    const res = await fetch('/api/v1/payments/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ payment_intent_id: paymentIntentId }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data?.detail || 'Failed to confirm payment')
     await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
     await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId, { authed: Boolean(token) }] })
   }
@@ -364,6 +421,12 @@ export default function OpportunityDetail() {
                   ) : (
                     <div>Upgrade or unlock to access.</div>
                   )}
+                </div>
+              )}
+
+              {isAccessible && unlockExpiresAt && (
+                <div className="mt-3 text-sm text-gray-700">
+                  Access expires on <span className="font-semibold">{new Date(unlockExpiresAt).toLocaleDateString()}</span>.
                 </div>
               )}
 
@@ -535,6 +598,36 @@ export default function OpportunityDetail() {
             </div>
           )}
         </div>
+
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Deep Dive (Layer 2)</h2>
+          {opp.deep_dive_available ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <pre className="text-xs text-gray-700 whitespace-pre-wrap">{JSON.stringify(opp.layer_2_content ?? {}, null, 2)}</pre>
+            </div>
+          ) : opp.can_buy_deep_dive ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-700">
+              <p className="text-sm">Add Deep Dive access for this opportunity.</p>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => deepDiveMutation.mutate()}
+                  disabled={deepDiveMutation.isPending}
+                  className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
+                >
+                  {deepDiveMutation.isPending ? 'Starting…' : `Buy Deep Dive ${fmtCents(opp.deep_dive_price ?? 4900) || '$49'}`}
+                </button>
+              </div>
+              <div className="mt-3 text-xs text-gray-500">
+                Access is granted after payment confirmation (may take a moment to sync).
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-700">
+              Not available for your current plan.
+            </div>
+          )}
+        </div>
       </div>
 
       {ppuOpen && ppuPublishableKey && ppuClientSecret && (
@@ -543,7 +636,11 @@ export default function OpportunityDetail() {
           clientSecret={ppuClientSecret}
           amountLabel={ppuAmountLabel}
           onClose={() => setPpuOpen(false)}
-          onConfirmed={confirmPayPerUnlock}
+          onConfirmed={(paymentIntentId) =>
+            ppuConfirmMode === 'payments_confirm'
+              ? confirmGenericPayment(paymentIntentId)
+              : confirmPayPerUnlock(paymentIntentId)
+          }
         />
       )}
 

@@ -26,6 +26,7 @@ class OpportunityEntitlements:
     days_until_unlock: int
     can_pay_to_unlock: bool
     unlock_price: Optional[int]
+    unlock_expires_at: Optional[datetime]
     content_state: str  # full | preview | placeholder | locked | pay_per_unlock | fast_pass
     deep_dive_available: bool
     can_buy_deep_dive: bool  # Pro tier can buy Layer 2 for $49
@@ -62,6 +63,7 @@ def get_opportunity_entitlements(
     user_tier: SubscriptionTier | None = None
     is_unlocked = False
     unlock_method: str | None = None
+    unlock_expires_at: datetime | None = None
 
     if user:
         subscription = usage_service.get_or_create_subscription(user, db)
@@ -86,6 +88,9 @@ def get_opportunity_entitlements(
                 if now > exp:
                     is_unlocked = False
                     unlock_method = None
+                    unlock_expires_at = None
+                else:
+                    unlock_expires_at = exp
 
     # If unauthenticated, treat as Free for countdown calculations, but not accessible
     effective_tier = user_tier or SubscriptionTier.FREE
@@ -174,6 +179,7 @@ def get_opportunity_entitlements(
         days_until_unlock=days_until_unlock,
         can_pay_to_unlock=can_pay_to_unlock,
         unlock_price=unlock_price,
+        unlock_expires_at=unlock_expires_at,
         content_state=content_state,
         deep_dive_available=deep_dive_available,
         can_buy_deep_dive=can_buy_deep_dive,

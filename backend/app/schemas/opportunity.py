@@ -22,6 +22,7 @@ class OpportunityAccessInfo(BaseModel):
     days_until_unlock: int
     can_pay_to_unlock: bool
     unlock_price: Optional[int] = None
+    unlock_expires_at: Optional[datetime] = None
     user_tier: Optional[str] = None
     # Guidance for frontend rendering; derived from entitlements rules.
     # full | preview | placeholder | locked | pay_per_unlock | fast_pass

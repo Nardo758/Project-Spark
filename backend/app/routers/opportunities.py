@@ -147,6 +147,7 @@ def get_opportunities(
                     "days_until_unlock": ent.days_until_unlock,
                     "can_pay_to_unlock": ent.can_pay_to_unlock,
                     "unlock_price": ent.unlock_price,
+                    "unlock_expires_at": ent.unlock_expires_at,
                     "user_tier": tier_value if ent.is_authenticated else None,
                     "content_state": getattr(ent, "content_state", None),
                 },
@@ -191,6 +192,7 @@ async def get_opportunity(
         "days_until_unlock": ent.days_until_unlock,
         "can_pay_to_unlock": ent.can_pay_to_unlock,
         "unlock_price": ent.unlock_price,
+        "unlock_expires_at": ent.unlock_expires_at,
         "user_tier": tier_value if ent.is_authenticated else None,
         "content_state": getattr(ent, "content_state", None),
     }
@@ -430,6 +432,7 @@ def search_opportunities(
                     "days_until_unlock": ent.days_until_unlock,
                     "can_pay_to_unlock": ent.can_pay_to_unlock,
                     "unlock_price": ent.unlock_price,
+                    "unlock_expires_at": ent.unlock_expires_at,
                     "user_tier": tier_value if ent.is_authenticated else None,
                     "content_state": getattr(ent, "content_state", None),
                 },
