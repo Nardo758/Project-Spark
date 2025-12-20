@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import SimplePage from '../../components/SimplePage'
 import { fetchMarketplaceLead } from '../../services/marketplaceApi'
+import { useAuthStore } from '../../stores/authStore'
 
 function fmtCents(cents: number) {
   return `$${(cents / 100).toFixed(0)}`
@@ -11,6 +12,7 @@ function fmtCents(cents: number) {
 export default function LeadDetail() {
   const params = useParams()
   const leadId = Number(params.id)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   const query = useQuery({
     queryKey: ['marketplace-lead', leadId],
@@ -72,9 +74,16 @@ export default function LeadDetail() {
                 <Link to="/cart" className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 font-medium text-sm text-center">
                   Add to cart
                 </Link>
-                <Link to="/signup" className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-white font-medium text-sm text-center">
-                  Sign in to purchase
-                </Link>
+                {!isAuthenticated ? (
+                  <Link to="/signup" className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-white font-medium text-sm text-center">
+                    Sign in to purchase
+                  </Link>
+                ) : null}
+                {lead.has_purchased ? (
+                  <Link to="/network/inbox" className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-white font-medium text-sm text-center">
+                    Message seller (via Network Hub)
+                  </Link>
+                ) : null}
               </div>
             </div>
           </div>

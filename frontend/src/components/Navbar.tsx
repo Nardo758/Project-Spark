@@ -65,6 +65,7 @@ export default function Navbar() {
         { name: 'Builder', path: '/build/reports' },
         { name: 'Funding Tools', path: '/funding' },
         { name: 'Analytics', path: '/analytics' },
+        { name: 'API', path: '/developer' },
       ]
     }
 

@@ -37,6 +37,8 @@ import ReportStudio from './pages/build/ReportStudio'
 import Marketplace from './pages/marketplace/Marketplace'
 import LeadDetail from './pages/marketplace/LeadDetail'
 import MarketplaceDashboard from './pages/marketplace/Dashboard'
+import Inbox from './pages/network/Inbox'
+import DeveloperPortal from './pages/developer/DeveloperPortal'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -144,6 +146,22 @@ function App() {
             <RequireAuth>
               <MarketplaceDashboard />
             </RequireAuth>
+          }
+        />
+        <Route
+          path="network/inbox"
+          element={
+            <RequireAuth>
+              <Inbox />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="developer"
+          element={
+            <RequirePaid>
+              <DeveloperPortal />
+            </RequirePaid>
           }
         />
         <Route
