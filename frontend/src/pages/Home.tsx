@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Lightbulb, Target, Users, Brain, Zap, TrendingUp, Play, CheckCircle, BarChart3, Globe, Rocket } from 'lucide-react'
+import { ArrowRight, Lightbulb, Target, Users, Zap, TrendingUp, Play, CheckCircle, BarChart3, Globe, Rocket } from 'lucide-react'
 
 export default function Home() {
   return (
