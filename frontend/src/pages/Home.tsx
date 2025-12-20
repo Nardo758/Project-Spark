@@ -1,134 +1,308 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Lightbulb, Target, Users, Brain, Zap, TrendingUp } from 'lucide-react'
+import { ArrowRight, Lightbulb, Target, Users, Brain, Zap, TrendingUp, Play, CheckCircle, BarChart3, Globe, Rocket } from 'lucide-react'
 
 export default function Home() {
   return (
     <div className="bg-white">
-      <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-sm font-medium mb-6">
-              <Brain className="w-4 h-4" />
-              Now with AI Co-founder
+      {/* Hero Section - Side by Side Layout */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-purple-50">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(16,185,129,0.08),transparent_50%)]" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left - Hero Content */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6">
+                176+ Validated Opportunities
+              </div>
+              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight leading-tight">
+                Transform Market Signals into{' '}
+                <span className="text-purple-600">Business Opportunities</span>
+              </h1>
+              <p className="mt-6 text-lg text-gray-600">
+                Discover validated market opportunities backed by real consumer insights. 
+                From AI-powered validation to expert execution playbooks—everything you need to build what people actually want.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <Link
+                  to="/idea-engine"
+                  className="inline-flex items-center justify-center px-6 py-3.5 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-lg gap-2"
+                >
+                  <Zap className="w-5 h-5" />
+                  Validate Your Idea
+                </Link>
+                <button className="inline-flex items-center justify-center px-6 py-3.5 text-base font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg gap-2">
+                  <Play className="w-5 h-5" />
+                  Watch Demo
+                </button>
+              </div>
+              
+              {/* Stats Bar */}
+              <div className="mt-12 flex gap-10">
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">176</div>
+                  <div className="text-sm text-gray-500">Validated Ideas</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">$47B+</div>
+                  <div className="text-sm text-gray-500">Market Opportunity</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-gray-900">6</div>
+                  <div className="text-sm text-gray-500">Global Markets</div>
+                </div>
+              </div>
             </div>
-            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight">
-              Your AI-Powered
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-                Startup Factory
-              </span>
-            </h1>
-            <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover validated opportunities, build with AI guidance, and connect with experts 
-              to turn your ideas into successful businesses.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/signup"
-                className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-lg gap-2"
-              >
-                Start Free Trial
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                to="/discover"
-                className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg"
-              >
-                Browse Opportunities
+
+            {/* Right - Opportunity Card Preview */}
+            <div className="relative">
+              <div className="absolute -top-4 right-0 inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-md text-sm text-gray-600">
+                <Users className="w-4 h-4" />
+                534 users want this
+              </div>
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mt-8">
+                <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Trending Opportunity</div>
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-semibold text-gray-900 pr-4">
+                    Managing passwords across all my devices is a security risk
+                  </h3>
+                  <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <span className="text-emerald-600 font-bold text-lg">87</span>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-gray-500">
+                  Mainstream users need invisible password security that works without thinking about it
+                </p>
+                <div className="mt-5 grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                  <div>
+                    <div className="text-xs text-gray-400">Market Size</div>
+                    <div className="font-semibold text-gray-900">$3B-$8B</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Submissions</div>
+                    <div className="font-semibold text-gray-900">534</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Growth</div>
+                    <div className="font-semibold text-emerald-600">+34%</div>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-2 rounded-full" style={{ width: '75%' }} />
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-sm text-emerald-600">
+                    <TrendingUp className="w-4 h-4" />
+                    +34% monthly growth
+                  </div>
+                </div>
+              </div>
+              <Link to="/discover" className="mt-4 inline-flex items-center text-purple-600 hover:text-purple-700 font-medium text-sm">
+                See More Opportunities <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Three Paths to Success */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900">Three Paths to Success</h2>
-            <p className="mt-4 text-lg text-gray-600">Choose your journey or combine all three</p>
+            <h2 className="text-3xl font-bold text-gray-900">Choose Your Path to Success</h2>
+            <p className="mt-4 text-lg text-gray-600">Whether you're building, advising, or creating content, OppGrid is designed for you.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-card hover:shadow-card-hover transition-shadow">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
-                <Lightbulb className="w-6 h-6 text-blue-600" />
+                <Rocket className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Build Business</h3>
-              <p className="text-gray-600 mb-4">
-                Discover validated opportunities and build your startup with AI-powered guidance and expert support.
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Build & Launch</h3>
+              <p className="text-gray-600 mb-6">
+                Discover validated opportunities and execute with AI-powered guidance, step-by-step playbooks, and access to a vetted expert network.
               </p>
-              <Link to="/discover" className="text-blue-600 font-medium hover:text-blue-700">
-                Explore Opportunities →
+              <Link to="/discover" className="inline-flex items-center text-blue-600 font-medium hover:text-blue-700">
+                Explore Opportunities <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-card hover:shadow-card-hover transition-shadow">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-6">
-                <Target className="w-6 h-6 text-green-600" />
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-6">
+                <Lightbulb className="w-6 h-6 text-amber-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Generate Leads</h3>
-              <p className="text-gray-600 mb-4">
-                Create and sell services to entrepreneurs. Earn 70% revenue share with our marketplace.
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Contribute & Earn</h3>
+              <p className="text-gray-600 mb-6">
+                Spot a trend? Submit market signals. Get paid when your contributions help identify top-tier opportunities and connect with teams.
               </p>
-              <Link to="/expert-marketplace" className="text-green-600 font-medium hover:text-green-700">
-                Become an Expert →
+              <Link to="/signup" className="inline-flex items-center text-amber-600 font-medium hover:text-amber-700">
+                Become a Scout <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-card hover:shadow-card-hover transition-shadow">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Create Content</h3>
-              <p className="text-gray-600 mb-4">
-                Use AI templates to create white-label content. Earn 60% on every sale.
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Research & Create</h3>
+              <p className="text-gray-600 mb-6">
+                Use our AI analyst to generate deep-dive reports, trend analyses, and data-driven content. Instantly cite validated opportunities.
               </p>
-              <Link to="/content" className="text-purple-600 font-medium hover:text-purple-700">
-                Start Creating →
+              <Link to="/content" className="inline-flex items-center text-purple-600 font-medium hover:text-purple-700">
+                Start Creating <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </div>
         </div>
       </section>
 
+      {/* AI Co-founder Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-4">
               <Zap className="w-4 h-4" />
-              New Feature
+              Your AI Co-founder is Ready
             </div>
             <h2 className="text-3xl font-bold text-gray-900">Meet Your AI Co-founder</h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Train a personal AI that understands your goals, skills, and preferences. 
-              Get hyper-personalized guidance at every step.
+              A persistent AI that understands your goals, skills, and progress. Get hyper-personalized guidance at every stage—from discovery to scale.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Brain, title: 'Personal Brain', desc: 'AI that learns your style' },
-              { icon: Target, title: 'Smart Matching', desc: '94% opportunity match rate' },
-              { icon: TrendingUp, title: 'Faster Growth', desc: 'Save 5+ hours weekly' },
-              { icon: Users, title: 'Expert Network', desc: 'Connect with founders' },
-            ].map((item, i) => (
-              <div key={i} className="text-center p-6">
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-600">{item.desc}</p>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="w-8 h-8 text-white" />
               </div>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <Link
-              to="/pricing"
-              className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg gap-2"
-            >
-              Upgrade to Pro + Brain AI
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+              <h3 className="font-semibold text-gray-900 text-lg mb-2">Personal Paths</h3>
+              <p className="text-gray-600">Get a custom roadmap tailored to your selected opportunity, skills, and resources.</p>
+            </div>
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-900 text-lg mb-2">Smart Matching</h3>
+              <p className="text-gray-600">Automatically connect with the most relevant experts, tools, and playbooks in our network.</p>
+            </div>
+            <div className="text-center p-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-900 text-lg mb-2">Expert Network</h3>
+              <p className="text-gray-600">Access one-on-one consultations with industry operators, marketers, and engineers.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="bg-gray-900 text-white py-12">
+      {/* From Signal to Launch */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900">From Signal to Launch in Three Steps</h2>
+            <p className="mt-4 text-lg text-gray-600">A systematic approach to turn noise into your next business.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="relative">
+              <div className="absolute -top-3 -left-3 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">1</div>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 pt-10">
+                <h3 className="font-semibold text-gray-900 text-lg mb-3">Discover & Validate</h3>
+                <p className="text-gray-600">
+                  Browse our vault of scored opportunities. Each brief includes validated consumer pain points, market size analysis (TAM/SAM/SOM), and early signal strength.
+                </p>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute -top-3 -left-3 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">2</div>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 pt-10">
+                <h3 className="font-semibold text-gray-900 text-lg mb-3">Plan & Assemble</h3>
+                <p className="text-gray-600">
+                  Activate your AI Co-founder. Generate a strategic action plan, assess resource needs, and get matched with experts for your core team.
+                </p>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute -top-3 -left-3 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold">3</div>
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 pt-10">
+                <h3 className="font-semibold text-gray-900 text-lg mb-3">Execute with AI</h3>
+                <p className="text-gray-600">
+                  Launch with confidence. Your AI assistant helps track KPIs, automate tasks, and recommend pivots using real-time market data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Validated Intelligence */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">Validated Market Intelligence, Not Just Data</h2>
+              <p className="text-lg text-gray-600 mb-8">
+                We analyze thousands of consumer discussions, reviews, and search trends to deliver structured, actionable briefs.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { title: 'Problem Validation', desc: 'Quantified consumer pain points and demand signals' },
+                  { title: 'Market Analysis', desc: 'TAM, SAM, SOM estimates and competitive landscape' },
+                  { title: 'Execution Insights', desc: 'Geographic fit analysis, channel suggestions, and monetization models' },
+                  { title: 'Source Transparency', desc: 'See the core discussions and data behind each insight' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-6 h-6 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-gray-900">{item.title}</div>
+                      <div className="text-gray-600 text-sm">{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-50 to-purple-50 rounded-2xl p-8">
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Globe className="w-6 h-6 text-purple-600" />
+                  <span className="font-semibold text-gray-900">Sample Opportunity Brief</span>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Opportunity Score</span>
+                    <span className="font-semibold text-emerald-600">87/100</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Market Size (TAM)</span>
+                    <span className="font-semibold">$8.2B</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Competition Level</span>
+                    <span className="font-semibold text-amber-600">Medium</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Growth Rate</span>
+                    <span className="font-semibold text-emerald-600">+34% MoM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 bg-gradient-to-r from-gray-900 to-gray-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">Ready to Build What's Next?</h2>
+          <p className="text-gray-300 text-lg mb-8">Join hundreds of entrepreneurs discovering and validating opportunities every day.</p>
+          <Link
+            to="/signup"
+            className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-gray-900 bg-white hover:bg-gray-100 rounded-lg gap-2"
+          >
+            Start Your First Opportunity — It's Free
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
@@ -137,7 +311,15 @@ export default function Home() {
               </div>
               <span className="font-semibold text-xl">OppGrid</span>
             </div>
-            <p className="text-gray-400 text-sm">
+            <div className="flex gap-6 text-sm text-gray-400 mb-4 md:mb-0">
+              <Link to="/about" className="hover:text-white">About</Link>
+              <Link to="/pricing" className="hover:text-white">Pricing</Link>
+              <Link to="/blog" className="hover:text-white">Blog</Link>
+              <Link to="/contact" className="hover:text-white">Contact</Link>
+              <Link to="/terms" className="hover:text-white">Terms</Link>
+              <Link to="/privacy" className="hover:text-white">Privacy</Link>
+            </div>
+            <p className="text-gray-500 text-sm">
               © 2024 OppGrid. All rights reserved.
             </p>
           </div>
