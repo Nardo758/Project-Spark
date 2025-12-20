@@ -5,64 +5,83 @@ import {
   Menu, 
   X, 
   ChevronDown, 
-  Brain, 
-  Lightbulb, 
-  FileText, 
-  FolderKanban,
-  Search
+  ChevronRight,
+  Search,
+  Hammer,
+  Settings,
+  FolderOpen
 } from 'lucide-react'
 
 const guestNavItems = [
-  { name: 'Home', path: '/' },
-  { name: 'Explore', path: '/discover' },
-  { name: 'Ideate', path: '/idea-engine' },
+  { name: 'Discover', path: '/discover' },
+  { name: 'Build', path: '/idea-engine' },
   { name: 'Pricing', path: '/pricing' },
 ]
 
 const authNavItems = [
   { 
-    name: 'My Projects', 
-    path: '/dashboard',
-    icon: FolderKanban,
-  },
-  { 
-    name: 'Ideate', 
-    icon: Lightbulb,
-    dropdown: [
-      { name: 'Idea Engine', path: '/idea-engine', description: 'Validate & refine your ideas' },
-      { name: 'AI Expert Match', path: '/ai-match', description: 'Find the right expertise' },
-    ]
-  },
-  { 
-    name: 'Explore', 
+    name: 'Discover', 
     icon: Search,
     dropdown: [
-      { name: 'Opportunities', path: '/discover', description: 'Browse AI-curated opportunities' },
-      { name: 'Saved Ideas', path: '/saved', description: 'Your bookmarked opportunities' },
+      { name: 'Opportunity Feed', path: '/discover', description: 'Browse AI-curated opportunities' },
+      { name: 'Validate Idea', path: '/idea-engine', description: 'Idea Engine - refine your concepts' },
+      { name: 'Find Co-founder', path: '/co-founder', description: 'Match with compatible partners' },
     ]
   },
   { 
     name: 'Build', 
-    icon: FileText,
+    icon: Hammer,
     dropdown: [
-      { name: 'Business Plan', path: '/build/business-plan', description: 'Generate comprehensive plans' },
-      { name: 'Report Studio', path: '/build/reports', description: 'SWOT, PESTLE, Feasibility' },
+      { 
+        name: 'Consultant Report Studio', 
+        path: '/build/reports',
+        description: 'Professional analysis reports',
+        submenu: [
+          { name: 'Feasibility Study', path: '/build/reports/feasibility' },
+          { name: 'Market Analysis', path: '/build/reports/market' },
+          { name: 'Strategic Assessment', path: '/build/reports/strategy' },
+          { name: 'Progress Report', path: '/build/reports/progress' },
+        ]
+      },
+      { name: 'Business Plan Generator', path: '/build/business-plan', description: 'Comprehensive business plans' },
       { name: 'Financial Models', path: '/build/financials', description: 'Projections & analysis' },
-      { name: 'Pitch Deck', path: '/build/pitch-deck', description: 'Investor presentations' },
+      { name: 'Pitch Deck Assistant', path: '/build/pitch-deck', description: 'Investor presentations' },
+    ]
+  },
+  { 
+    name: 'Manage', 
+    icon: Settings,
+    dropdown: [
+      { name: 'My Projects', path: '/dashboard', description: 'View all your projects' },
+      { name: 'Saved Ideas', path: '/saved', description: 'Bookmarked opportunities' },
+      { name: 'AI Trainer', path: '/brain/trainer', description: 'Train your AI co-founder' },
     ]
   },
 ]
+
+type SubMenuItem = {
+  name: string
+  path: string
+}
+
+type DropdownItem = {
+  name: string
+  path: string
+  description?: string
+  submenu?: SubMenuItem[]
+}
 
 type NavItem = {
   name: string
   path?: string
   icon?: React.ComponentType<{ className?: string }>
-  dropdown?: { name: string; path: string; description?: string }[]
+  dropdown?: DropdownItem[]
 }
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
   const { isAuthenticated, user, logout } = useAuthStore()
   const location = useLocation()
 
@@ -74,87 +93,111 @@ export default function Navbar() {
 
   const handleDropdownLeave = () => {
     setActiveDropdown(null)
+    setActiveSubmenu(null)
   }
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">OG</span>
               </div>
               <span className="font-semibold text-xl text-gray-900">OppGrid</span>
             </Link>
-          </div>
 
-          <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item: NavItem) => (
-              'dropdown' in item && item.dropdown ? (
-                <div 
-                  key={item.name} 
-                  className="relative"
-                  onMouseEnter={() => handleDropdownEnter(item.name)}
-                  onMouseLeave={handleDropdownLeave}
-                >
-                  <button
-                    className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      activeDropdown === item.name
+            <div className="hidden md:flex items-center gap-1">
+              {navItems.map((item: NavItem) => (
+                'dropdown' in item && item.dropdown ? (
+                  <div 
+                    key={item.name} 
+                    className="relative"
+                    onMouseEnter={() => handleDropdownEnter(item.name)}
+                    onMouseLeave={handleDropdownLeave}
+                  >
+                    <button
+                      className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        activeDropdown === item.name
+                          ? 'text-gray-900 bg-gray-100'
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    >
+                      {item.name}
+                      <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === item.name ? 'rotate-180' : ''}`} />
+                    </button>
+                    {activeDropdown === item.name && (
+                      <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                        {item.dropdown.map((subItem) => (
+                          <div
+                            key={subItem.path}
+                            className="relative"
+                            onMouseEnter={() => subItem.submenu && setActiveSubmenu(subItem.name)}
+                            onMouseLeave={() => setActiveSubmenu(null)}
+                          >
+                            <Link
+                              to={subItem.path}
+                              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                            >
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{subItem.name}</div>
+                                {subItem.description && (
+                                  <div className="text-xs text-gray-500 mt-0.5">{subItem.description}</div>
+                                )}
+                              </div>
+                              {subItem.submenu && (
+                                <ChevronRight className="w-4 h-4 text-gray-400" />
+                              )}
+                            </Link>
+                            {subItem.submenu && activeSubmenu === subItem.name && (
+                              <div className="absolute left-full top-0 ml-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                                {subItem.submenu.map((sub) => (
+                                  <Link
+                                    key={sub.path}
+                                    to={sub.path}
+                                    className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                  >
+                                    {sub.name}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    key={item.path}
+                    to={item.path || '/'}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      location.pathname === item.path
                         ? 'text-gray-900 bg-gray-100'
                         : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    {item.icon && <item.icon className="w-4 h-4" />}
                     {item.name}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === item.name ? 'rotate-180' : ''}`} />
-                  </button>
-                  {activeDropdown === item.name && (
-                    <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
-                      {item.dropdown.map((subItem) => (
-                        <Link
-                          key={subItem.path}
-                          to={subItem.path}
-                          className="block px-4 py-3 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="text-sm font-medium text-gray-900">{subItem.name}</div>
-                          {subItem.description && (
-                            <div className="text-xs text-gray-500 mt-0.5">{subItem.description}</div>
-                          )}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  key={item.path}
-                  to={item.path || '/'}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    location.pathname === item.path
-                      ? 'text-gray-900 bg-gray-100'
-                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  {item.icon && <item.icon className="w-4 h-4" />}
-                  {item.name}
-                </Link>
-              )
-            ))}
+                  </Link>
+                )
+              ))}
+            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                {user?.brainTier && (
-                  <Link
-                    to="/brain"
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+                  <FolderOpen className="w-4 h-4 text-gray-600" />
+                  <select 
+                    className="text-sm font-medium text-gray-700 bg-transparent border-none focus:outline-none cursor-pointer"
+                    defaultValue="default"
                   >
-                    <Brain className="w-4 h-4" />
-                    <span>AI Co-founder</span>
-                  </Link>
-                )}
+                    <option value="default">My First Project</option>
+                    <option value="new">+ New Project</option>
+                  </select>
+                </div>
                 <button
                   onClick={logout}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
@@ -201,23 +244,50 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-200 bg-white">
           <div className="px-4 py-3 space-y-1">
+            {isAuthenticated && (
+              <div className="flex items-center gap-2 px-3 py-2 mb-2 bg-gray-100 rounded-lg">
+                <FolderOpen className="w-4 h-4 text-gray-600" />
+                <select 
+                  className="text-sm font-medium text-gray-700 bg-transparent border-none focus:outline-none flex-1"
+                  defaultValue="default"
+                >
+                  <option value="default">My First Project</option>
+                  <option value="new">+ New Project</option>
+                </select>
+              </div>
+            )}
+            
             {navItems.map((item: NavItem) => (
               'dropdown' in item && item.dropdown ? (
                 <div key={item.name} className="py-2">
                   <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-500">
-                    {item.icon && <item.icon className="w-4 h-4" />}
                     {item.name}
                   </div>
                   <div className="ml-4 space-y-1">
                     {item.dropdown.map((subItem) => (
-                      <Link
-                        key={subItem.path}
-                        to={subItem.path}
-                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {subItem.name}
-                      </Link>
+                      <div key={subItem.path}>
+                        <Link
+                          to={subItem.path}
+                          className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {subItem.name}
+                        </Link>
+                        {subItem.submenu && (
+                          <div className="ml-4 space-y-1">
+                            {subItem.submenu.map((sub) => (
+                              <Link
+                                key={sub.path}
+                                to={sub.path}
+                                className="block px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 rounded-md"
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                {sub.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -228,22 +298,10 @@ export default function Navbar() {
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {item.icon && <item.icon className="w-4 h-4" />}
                   {item.name}
                 </Link>
               )
             ))}
-            
-            {isAuthenticated && user?.brainTier && (
-              <Link
-                to="/brain"
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 rounded-md mt-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Brain className="w-4 h-4" />
-                AI Co-founder
-              </Link>
-            )}
             
             {isAuthenticated ? (
               <button
