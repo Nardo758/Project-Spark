@@ -37,6 +37,14 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 20, 2024)
 
+**DeepSeek Roadmap Implementation (Phases 4-6):**
+- Updated navigation: Discover | Consultant Studio | Leads | Join Network | API | Pricing
+- AI Orchestrator service (`backend/app/services/ai_orchestrator.py`) routes tasks between DeepSeek (platform/validation) and Claude (creative/research)
+- Content Rewriter service (`backend/app/services/content_rewriter.py`) with 5-stage pipeline for transforming raw scraped content
+- Leads Marketplace page (`/leads`) with search, filters, quality scores, pricing cards, and lead categories
+- Network Hub page (`/network`) with 4 tabs: Experts, Investors, Partners, Lenders - all populated with sample data
+- API Platform developer portal (`/developers` with `/api` alias) with endpoint documentation, pricing tiers, and code examples
+
 **Navigation Bar Restructuring (Brain AI Architecture):**
 - New navigation structure: [Logo] Discover | Build | Manage | [Project Switcher] | [User]
 - Discover dropdown: Opportunity Feed, Validate Idea (Idea Engine)
