@@ -1,44 +1,80 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { Menu, X, ChevronDown, Brain, Compass, Lightbulb, Users, DollarSign, Wrench, BookOpen, Bookmark } from 'lucide-react'
+import { 
+  Menu, 
+  X, 
+  ChevronDown, 
+  Brain, 
+  Lightbulb, 
+  FileText, 
+  FolderKanban,
+  Search
+} from 'lucide-react'
 
 const guestNavItems = [
   { name: 'Home', path: '/' },
-  { name: 'Browse Ideas', path: '/discover' },
-  { name: 'Idea Engine', path: '/idea-engine' },
+  { name: 'Explore', path: '/discover' },
+  { name: 'Ideate', path: '/idea-engine' },
   { name: 'Pricing', path: '/pricing' },
 ]
 
 const authNavItems = [
-  { name: 'Dashboard', path: '/dashboard', icon: Compass },
-  { name: 'Discover', path: '/discover', icon: Compass },
-  { name: 'Saved', path: '/saved', icon: Bookmark },
   { 
-    name: 'Builder', 
+    name: 'My Projects', 
+    path: '/dashboard',
+    icon: FolderKanban,
+  },
+  { 
+    name: 'Ideate', 
     icon: Lightbulb,
     dropdown: [
-      { name: 'Idea Engine', path: '/idea-engine' },
-      { name: 'AI Expert Match', path: '/ai-match' },
-      { name: 'AI Roadmap', path: '/ai-roadmap' },
-      { name: 'Expert Marketplace', path: '/expert-marketplace' },
+      { name: 'Idea Engine', path: '/idea-engine', description: 'Validate & refine your ideas' },
+      { name: 'AI Expert Match', path: '/ai-match', description: 'Find the right expertise' },
     ]
   },
-  { name: 'Leads', path: '/leads', icon: Users },
-  { name: 'Content', path: '/content', icon: BookOpen },
-  { name: 'Network', path: '/network', icon: Users },
-  { name: 'Funding', path: '/funding', icon: DollarSign },
-  { name: 'Tools', path: '/tools', icon: Wrench },
-  { name: 'Learn', path: '/learn', icon: BookOpen },
+  { 
+    name: 'Explore', 
+    icon: Search,
+    dropdown: [
+      { name: 'Opportunities', path: '/discover', description: 'Browse AI-curated opportunities' },
+      { name: 'Saved Ideas', path: '/saved', description: 'Your bookmarked opportunities' },
+    ]
+  },
+  { 
+    name: 'Build', 
+    icon: FileText,
+    dropdown: [
+      { name: 'Business Plan', path: '/build/business-plan', description: 'Generate comprehensive plans' },
+      { name: 'Report Studio', path: '/build/reports', description: 'SWOT, PESTLE, Feasibility' },
+      { name: 'Financial Models', path: '/build/financials', description: 'Projections & analysis' },
+      { name: 'Pitch Deck', path: '/build/pitch-deck', description: 'Investor presentations' },
+    ]
+  },
 ]
+
+type NavItem = {
+  name: string
+  path?: string
+  icon?: React.ComponentType<{ className?: string }>
+  dropdown?: { name: string; path: string; description?: string }[]
+}
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [builderDropdownOpen, setBuilderDropdownOpen] = useState(false)
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const { isAuthenticated, user, logout } = useAuthStore()
   const location = useLocation()
 
   const navItems = isAuthenticated ? authNavItems : guestNavItems
+
+  const handleDropdownEnter = (name: string) => {
+    setActiveDropdown(name)
+  }
+
+  const handleDropdownLeave = () => {
+    setActiveDropdown(null)
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -54,30 +90,37 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              'dropdown' in item ? (
-                <div key={item.name} className="relative">
+            {navItems.map((item: NavItem) => (
+              'dropdown' in item && item.dropdown ? (
+                <div 
+                  key={item.name} 
+                  className="relative"
+                  onMouseEnter={() => handleDropdownEnter(item.name)}
+                  onMouseLeave={handleDropdownLeave}
+                >
                   <button
-                    className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-                    onMouseEnter={() => setBuilderDropdownOpen(true)}
-                    onMouseLeave={() => setBuilderDropdownOpen(false)}
+                    className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      activeDropdown === item.name
+                        ? 'text-gray-900 bg-gray-100'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                   >
+                    {item.icon && <item.icon className="w-4 h-4" />}
                     {item.name}
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === item.name ? 'rotate-180' : ''}`} />
                   </button>
-                  {builderDropdownOpen && (
-                    <div 
-                      className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1"
-                      onMouseEnter={() => setBuilderDropdownOpen(true)}
-                      onMouseLeave={() => setBuilderDropdownOpen(false)}
-                    >
-                      {item.dropdown?.map((subItem) => (
+                  {activeDropdown === item.name && (
+                    <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg py-2">
+                      {item.dropdown.map((subItem) => (
                         <Link
                           key={subItem.path}
                           to={subItem.path}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="block px-4 py-3 hover:bg-gray-50 transition-colors"
                         >
-                          {subItem.name}
+                          <div className="text-sm font-medium text-gray-900">{subItem.name}</div>
+                          {subItem.description && (
+                            <div className="text-xs text-gray-500 mt-0.5">{subItem.description}</div>
+                          )}
                         </Link>
                       ))}
                     </div>
@@ -86,13 +129,14 @@ export default function Navbar() {
               ) : (
                 <Link
                   key={item.path}
-                  to={item.path}
-                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                  to={item.path || '/'}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     location.pathname === item.path
                       ? 'text-gray-900 bg-gray-100'
                       : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
+                  {item.icon && <item.icon className="w-4 h-4" />}
                   {item.name}
                 </Link>
               )
@@ -105,35 +149,37 @@ export default function Navbar() {
                 {user?.brainTier && (
                   <Link
                     to="/brain"
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-full"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-full transition-colors"
                   >
                     <Brain className="w-4 h-4" />
-                    AI Co-founder
+                    <span>AI Co-founder</span>
                   </Link>
                 )}
                 <button
                   onClick={logout}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   Sign Out
                 </button>
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">
-                    {user?.name?.charAt(0) || 'U'}
-                  </span>
-                </div>
+                <Link to="/dashboard" className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">
+                      {user?.name?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                </Link>
               </>
             ) : (
               <>
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/signup"
-                  className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg"
+                  className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg transition-colors"
                 >
                   Get Started
                 </Link>
@@ -153,39 +199,67 @@ export default function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200">
+        <div className="md:hidden border-t border-gray-200 bg-white">
           <div className="px-4 py-3 space-y-1">
-            {navItems.map((item) => (
-              'dropdown' in item ? (
-                <div key={item.name}>
-                  <div className="px-3 py-2 text-sm font-medium text-gray-500">{item.name}</div>
-                  {item.dropdown?.map((subItem) => (
-                    <Link
-                      key={subItem.path}
-                      to={subItem.path}
-                      className="block pl-6 pr-3 py-2 text-sm text-gray-700"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {subItem.name}
-                    </Link>
-                  ))}
+            {navItems.map((item: NavItem) => (
+              'dropdown' in item && item.dropdown ? (
+                <div key={item.name} className="py-2">
+                  <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-500">
+                    {item.icon && <item.icon className="w-4 h-4" />}
+                    {item.name}
+                  </div>
+                  <div className="ml-4 space-y-1">
+                    {item.dropdown.map((subItem) => (
+                      <Link
+                        key={subItem.path}
+                        to={subItem.path}
+                        className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {subItem.name}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <Link
                   key={item.path}
-                  to={item.path}
-                  className="block px-3 py-2 text-sm font-medium text-gray-700"
+                  to={item.path || '/'}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
+                  {item.icon && <item.icon className="w-4 h-4" />}
                   {item.name}
                 </Link>
               )
             ))}
-            {!isAuthenticated && (
+            
+            {isAuthenticated && user?.brainTier && (
+              <Link
+                to="/brain"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 rounded-md mt-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Brain className="w-4 h-4" />
+                AI Co-founder
+              </Link>
+            )}
+            
+            {isAuthenticated ? (
+              <button
+                onClick={() => {
+                  logout()
+                  setMobileMenuOpen(false)
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+              >
+                Sign Out
+              </button>
+            ) : (
               <div className="pt-3 border-t border-gray-200 space-y-2">
                 <Link
                   to="/login"
-                  className="block px-3 py-2 text-sm font-medium text-gray-700"
+                  className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign In
