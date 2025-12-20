@@ -25,27 +25,15 @@ const authNavItems = [
     dropdown: [
       { name: 'Opportunity Feed', path: '/discover', description: 'Browse AI-curated opportunities' },
       { name: 'Validate Idea', path: '/idea-engine', description: 'Idea Engine - refine your concepts' },
-      { name: 'Find Co-founder', path: '/co-founder', description: 'Match with compatible partners' },
     ]
   },
   { 
     name: 'Build', 
     icon: Hammer,
     dropdown: [
-      { 
-        name: 'Consultant Report Studio', 
-        path: '/build/reports',
-        description: 'Professional analysis reports',
-        submenu: [
-          { name: 'Feasibility Study', path: '/build/reports/feasibility' },
-          { name: 'Market Analysis', path: '/build/reports/market' },
-          { name: 'Strategic Assessment', path: '/build/reports/strategy' },
-          { name: 'Progress Report', path: '/build/reports/progress' },
-        ]
-      },
-      { name: 'Business Plan Generator', path: '/build/business-plan', description: 'Comprehensive business plans' },
-      { name: 'Financial Models', path: '/build/financials', description: 'Projections & analysis' },
-      { name: 'Pitch Deck Assistant', path: '/build/pitch-deck', description: 'Investor presentations' },
+      { name: 'Report Studio', path: '/build/reports', description: 'Feasibility, Market & Strategic analysis' },
+      { name: 'Business Plan', path: '/build/reports?type=business-plan', description: 'Comprehensive business plans' },
+      { name: 'Pitch Deck', path: '/build/reports?type=pitch-deck', description: 'Investor presentations' },
     ]
   },
   { 
@@ -54,7 +42,7 @@ const authNavItems = [
     dropdown: [
       { name: 'My Projects', path: '/dashboard', description: 'View all your projects' },
       { name: 'Saved Ideas', path: '/saved', description: 'Bookmarked opportunities' },
-      { name: 'AI Trainer', path: '/brain/trainer', description: 'Train your AI co-founder' },
+      { name: 'AI Co-founder', path: '/brain', description: 'Your AI assistant' },
     ]
   },
 ]
