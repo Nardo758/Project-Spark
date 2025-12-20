@@ -319,14 +319,19 @@ export default function Pricing() {
             ) : plan.name === 'Builder' ? (
               <button
                 type="button"
-                onClick={() => startSubscription('pro')}
-                disabled={!isAuthenticated || billingLoading !== null}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate(`/login?next=${encodeURIComponent('/pricing?plan=builder')}`)
+                  } else {
+                    startSubscription('pro')
+                  }
+                }}
+                disabled={billingLoading !== null}
                 className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
                   plan.highlighted
                     ? 'bg-white text-gray-900 hover:bg-gray-100'
                     : 'bg-gray-900 text-white hover:bg-gray-800'
                 }`}
-                title={!isAuthenticated ? 'Sign in to subscribe' : 'Subscribe with Stripe'}
               >
                 {billingLoading === 'pro' ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -340,14 +345,19 @@ export default function Pricing() {
             ) : (
               <button
                 type="button"
-                onClick={() => startSubscription('business')}
-                disabled={!isAuthenticated || billingLoading !== null}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate(`/login?next=${encodeURIComponent('/pricing?plan=scaler')}`)
+                  } else {
+                    startSubscription('business')
+                  }
+                }}
+                disabled={billingLoading !== null}
                 className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
                   plan.highlighted
                     ? 'bg-white text-gray-900 hover:bg-gray-100'
                     : 'bg-gray-900 text-white hover:bg-gray-800'
                 }`}
-                title={!isAuthenticated ? 'Sign in to subscribe' : 'Subscribe with Stripe'}
               >
                 {billingLoading === 'business' ? (
                   <span className="inline-flex items-center justify-center gap-2">
