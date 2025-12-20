@@ -1,224 +1,85 @@
 import { useMemo, useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Clock, Bookmark, Eye, Star, Filter, FileText, ChevronRight } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { Filter, Search, Target } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useBrainStore } from '../stores/brainStore'
-import { deepSeekAnalyze, type DeepSeekAnalyzeResponse } from '../services/deepseekApi'
-import { fetchActiveBrain, saveOpportunityToBrain } from '../services/brainApi'
-
-const categories = ['All', 'Healthcare', 'FinTech', 'E-commerce', 'Education', 'Real Estate', 'SaaS', 'Technology']
-const statuses = ['All', 'FRESH', 'OLD']
 
 type Opportunity = {
   id: number
   title: string
   description: string
   category: string
-  validation_count?: number | null
   market_size?: string | null
-  ai_competition_level?: string | null
   feasibility_score?: number | null
-  created_at?: string
-  views?: number
-  saves?: number
-  growth_rate?: number
-  tags?: string[]
-}
-
-type AccessInfo = {
-  age_days: number
-  days_until_unlock: number
-  is_accessible: boolean
-  is_unlocked: boolean
-  can_pay_to_unlock: boolean
-  unlock_price?: number | null
-  user_tier?: string | null
-  content_state?: string | null
-}
-
-type OpportunityAccessSnapshot = {
-  id: number
-  access_info?: AccessInfo | null
-  is_unlocked?: boolean
-  is_authenticated?: boolean
+  created_at?: string | null
 }
 
 type OpportunityList = {
   opportunities: Opportunity[]
   total: number
-  page: number
-  page_size: number
 }
 
-type WatchlistItem = {
-  id: number
-  opportunity_id: number
-  created_at: string
-  opportunity?: Opportunity | null
-}
-
-function getAgeInDays(createdAt?: string): number {
+function getAgeInDays(createdAt?: string | null): number {
   if (!createdAt) return 999
-  const created = new Date(createdAt).getTime()
-  if (Number.isNaN(created)) return 999
-  return Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24))
-}
-
-function getFreshnessStatus(createdAt?: string): { label: string; isFresh: boolean; daysAgo: number } {
-  const days = getAgeInDays(createdAt)
-  if (days <= 7) return { label: 'FRESH', isFresh: true, daysAgo: days }
-  return { label: `OLD • ${days} days`, isFresh: false, daysAgo: days }
-}
-
-function getStarRating(score?: number | null): number {
-  if (!score) return 3
-  if (score >= 90) return 5
-  if (score >= 75) return 4.5
-  if (score >= 60) return 4
-  if (score >= 45) return 3.5
-  return 3
-}
-
-function fmtCents(cents?: number | null) {
-  if (!cents) return null
-  return `$${(cents / 100).toFixed(0)}`
+  const t = new Date(createdAt).getTime()
+  if (Number.isNaN(t)) return 999
+  return Math.floor((Date.now() - t) / (1000 * 60 * 60 * 24))
 }
 
 export default function Discover() {
   const [searchParams] = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
-  const [searchQuery, setSearchQuery] = useState(initialQuery)
+  const [q, setQ] = useState(initialQuery)
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [selectedStatus, setSelectedStatus] = useState('All')
   const [showFilters, setShowFilters] = useState(false)
+  const [brainFilterOn, setBrainFilterOn] = useState(true)
   const navigate = useNavigate()
 
-  const { token, isAuthenticated } = useAuthStore()
+  const { isAuthenticated } = useAuthStore()
+  const brainEnabled = useBrainStore((s) => s.isEnabled)
   const brainName = useBrainStore((s) => s.brainName)
   const brainFocus = useBrainStore((s) => s.focusTags)
-  const brainEnabled = useBrainStore((s) => s.isEnabled)
-  const hydrateFromServer = useBrainStore((s) => s.hydrateFromServer)
-  const noteLearning = useBrainStore((s) => s.noteLearning)
-  const [brainFilterOn, setBrainFilterOn] = useState(true)
-  const [analysisByOppId, setAnalysisByOppId] = useState<Record<number, DeepSeekAnalyzeResponse>>({})
-  const queryClient = useQueryClient()
 
   const opportunitiesQuery = useQuery({
-    queryKey: ['opportunities', { q: searchQuery, category: selectedCategory, status: selectedStatus }],
+    queryKey: ['opportunities'],
     queryFn: async (): Promise<OpportunityList> => {
       const params = new URLSearchParams()
       params.set('limit', '50')
       params.set('skip', '0')
-      if (selectedCategory !== 'All') params.set('category', selectedCategory)
       const res = await fetch(`/api/v1/opportunities/?${params.toString()}`)
       if (!res.ok) throw new Error('Failed to load opportunities')
       return (await res.json()) as OpportunityList
     },
   })
 
-  const watchlistQuery = useQuery({
-    queryKey: ['watchlist'],
-    enabled: isAuthenticated && Boolean(token),
-    queryFn: async (): Promise<WatchlistItem[]> => {
-      const res = await fetch('/api/v1/watchlist/', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to load watchlist')
-      return (await res.json()) as WatchlistItem[]
-    },
-  })
+  const categories = useMemo(() => {
+    const set = new Set<string>()
+    for (const o of opportunitiesQuery.data?.opportunities ?? []) set.add(o.category)
+    return ['All', ...Array.from(set).sort()]
+  }, [opportunitiesQuery.data])
 
-  const watchlistByOppId = useMemo(() => {
-    const map = new Map<number, WatchlistItem>()
-    for (const item of watchlistQuery.data ?? []) {
-      map.set(item.opportunity_id, item)
-    }
-    return map
-  }, [watchlistQuery.data])
-
-  const addToWatchlist = useMutation({
-    mutationFn: async (opportunityId: number) => {
-      const res = await fetch('/api/v1/watchlist/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ opportunity_id: opportunityId }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.detail || 'Failed to save')
-      return data as WatchlistItem
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
-    },
-  })
-
-  const removeFromWatchlist = useMutation({
-    mutationFn: async (opportunityId: number) => {
-      const res = await fetch(`/api/v1/watchlist/opportunity/${opportunityId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok && res.status !== 204) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.detail || 'Failed to remove')
-      }
-      return true
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
-    },
-  })
-
-  const filteredOpportunities = useMemo(() => {
+  const filtered = useMemo(() => {
     const raw = opportunitiesQuery.data?.opportunities ?? []
-    const q = searchQuery.trim().toLowerCase()
+    const query = q.trim().toLowerCase()
     return raw.filter((opp) => {
-      const matchesSearch = !q || opp.title.toLowerCase().includes(q) || opp.description.toLowerCase().includes(q)
+      const matchesQuery =
+        !query || opp.title.toLowerCase().includes(query) || (opp.description || '').toLowerCase().includes(query)
       const matchesCategory = selectedCategory === 'All' || opp.category === selectedCategory
-      const status = getStatusFromAge(opp.created_at)
-      const matchesStatus = selectedStatus === 'All' || status === selectedStatus
       const matchesBrain =
         !brainEnabled ||
         !brainName ||
         !brainFilterOn ||
         brainFocus.length === 0 ||
         brainFocus.some((t) => opp.title.toLowerCase().includes(t.toLowerCase()) || opp.category.toLowerCase().includes(t.toLowerCase()))
-      return matchesSearch && matchesCategory && matchesStatus && matchesBrain
+      return matchesQuery && matchesCategory && matchesBrain
     })
-  }, [opportunitiesQuery.data, searchQuery, selectedCategory, selectedStatus, brainEnabled, brainName, brainFilterOn, brainFocus])
-
-  const discoveryMetrics = useMemo(() => {
-    const opps = filteredOpportunities
-    const avgMatch = opps.length > 0 
-      ? Math.round(opps.reduce((sum, o) => sum + (o.feasibility_score || 0), 0) / opps.length)
-      : 0
-    const avgAge = opps.length > 0
-      ? (opps.reduce((sum, o) => sum + getAgeInDays(o.created_at), 0) / opps.length).toFixed(1)
-      : '0'
-    const topCategory = selectedCategory !== 'All' ? selectedCategory : 
-      opps.reduce((acc, o) => {
-        acc[o.category] = (acc[o.category] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-    const topCat = typeof topCategory === 'string' ? topCategory :
-      Object.entries(topCategory).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
-    
-    return {
-      viewed: opps.length,
-      avgMatch,
-      topInterest: topCat,
-      avgFreshness: avgAge
-    }
-  }, [filteredOpportunities, selectedCategory])
+  }, [opportunitiesQuery.data, q, selectedCategory, brainEnabled, brainName, brainFilterOn, brainFocus])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover Opportunities</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover</h1>
         <p className="text-gray-600">Browse validated opportunities with free previews and pay‑as‑you‑go unlocks.</p>
       </div>
 
@@ -254,338 +115,118 @@ export default function Discover() {
       )}
 
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search opportunities..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          {brainEnabled && brainName && (
+
+          <div className="flex flex-wrap gap-2 items-center">
+            {brainEnabled && brainName ? (
+              <button
+                type="button"
+                onClick={() => setBrainFilterOn((v) => !v)}
+                className={`px-4 py-2 rounded-lg border font-medium ${
+                  brainFilterOn ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50'
+                }`}
+                title="Toggle Brain AI filtering"
+              >
+                🧠 Filter: {brainFilterOn ? 'ON' : 'OFF'}
+              </button>
+            ) : null}
+
             <button
               type="button"
-              onClick={() => setBrainFilterOn((v) => !v)}
-              className={`px-4 py-2 rounded-lg border font-medium ${
-                brainFilterOn ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50'
-              }`}
-              title="Toggle Brain AI filtering"
+              onClick={() => setShowFilters((v) => !v)}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
             >
-              🧠 Filter: {brainFilterOn ? 'ON' : 'OFF'}
+              <Filter className="w-4 h-4" />
+              Filters
             </button>
-          )}
-          <div className="flex gap-3">
+          </div>
+        </div>
+
+        {showFilters ? (
+          <div className="mt-4 flex flex-wrap gap-2 items-center">
+            <div className="text-sm text-gray-600">Category</div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {statuses.map(status => (
-                <option key={status} value={status}>{status}</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Opportunity Feed</h1>
-        </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
-        >
-          <Filter className="w-4 h-4" />
-          Filters
-        </button>
+        ) : null}
       </div>
 
-      {/* Active Filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        {selectedCategory !== 'All' && (
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm">
-            {selectedCategory}
-            <button onClick={() => setSelectedCategory('All')} className="hover:text-purple-900">×</button>
-          </span>
-        )}
-        {selectedStatus !== 'All' && (
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">
-            {selectedStatus}
-            <button onClick={() => setSelectedStatus('All')} className="hover:text-blue-900">×</button>
-          </span>
-        )}
-        {filteredOpportunities.map((opp) => (
-          (() => {
-            const status = getStatusFromAge(opp.created_at)
-            const saved = watchlistByOppId.has(opp.id)
-            const marketSize = opp.market_size || '—'
-            const competition = opp.ai_competition_level || '—'
-            const saving = addToWatchlist.isPending || removeFromWatchlist.isPending
-            const access = accessByOppId.get(opp.id) ?? null
-            const isAccessible = Boolean(access?.is_accessible)
-            const canPay = Boolean(access?.can_pay_to_unlock)
-            const unlockPrice = fmtCents(access?.unlock_price ?? null)
-            const analysis = analysisByOppId[opp.id] ?? null
+      {opportunitiesQuery.isLoading ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">Loading opportunities…</div>
+      ) : null}
 
-      <div className="grid lg:grid-cols-4 gap-6">
-        {/* Main Content - Opportunity Cards */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Search & Filters */}
-          {showFilters && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search opportunities..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+      {opportunitiesQuery.isError ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 text-red-700">Failed to load opportunities. Please try again.</div>
+      ) : null}
+
+      <div className="grid lg:grid-cols-3 gap-4">
+        {filtered.map((opp) => {
+          const age = getAgeInDays(opp.created_at)
+          return (
+            <div key={opp.id} className="bg-white border border-gray-200 rounded-2xl p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs text-gray-500">{opp.category}</div>
+                  <div className="mt-1 text-lg font-semibold text-gray-900">{opp.title}</div>
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">{opp.title}</h2>
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="w-4 h-4" />
-                    Market: {marketSize}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Target className="w-4 h-4" />
-                    Competition: {competition}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    Access: {isAccessible ? 'Unlocked' : 'Locked'}
-                  </div>
-                  {analysis && <div className="text-purple-700 font-semibold">🧠 DeepSeek {analysis.match_score}%</div>}
+                <div className="flex items-center gap-1 px-3 py-1 bg-green-50 rounded-full">
+                  <Target className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-semibold text-green-700">{Math.round(opp.feasibility_score ?? 0)}%</span>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Opportunity Cards */}
-          {opportunitiesQuery.isLoading && (
-            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
-              Loading opportunities...
-            </div>
-          )}
+              <div className="mt-3 text-sm text-gray-700 line-clamp-3">{opp.description}</div>
 
-          {opportunitiesQuery.isError && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 text-red-700">
-              Failed to load opportunities. Please try again.
-            </div>
-          )}
+              <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-600">
+                <div>Market: {opp.market_size || '—'}</div>
+                <div>Age: {age}d</div>
+              </div>
 
-                {brainEnabled && brainName && (
-                  <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
-                    <div className="text-xs font-semibold text-purple-800 uppercase tracking-wide">DeepSeek match</div>
-                    {analysis ? (
-                      <>
-                        <div className="mt-1 text-sm text-purple-900 font-semibold">🧠 {analysis.match_score}% Match</div>
-                        <div className="mt-1 text-sm text-purple-800">{analysis.reasoning}</div>
-                        <div className="mt-2 text-xs text-purple-700/80">
-                          ~{analysis.tokens_used.toLocaleString()} tokens • ~${analysis.estimated_cost_usd.toFixed(4)}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <div className="text-sm text-purple-800">Compute a low-cost quick match for this opportunity.</div>
-                        <button
-                          type="button"
-                          className="px-3 py-1.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium text-sm"
-                          onClick={async () => {
-                            if (!token) return navigate(`/login?next=${encodeURIComponent('/discover')}`)
-                            try {
-                              const result = await deepSeekAnalyze(String(token), opp.id)
-                              setAnalysisByOppId((m) => ({ ...m, [opp.id]: result }))
-                              // Refresh server brain totals (tokens/cost)
-                              const b = await fetchActiveBrain(String(token))
-                              hydrateFromServer(b)
-                              noteLearning(`DeepSeek match computed (+${result.match_score}% signal).`, 0)
-                            } catch (e) {
-                              noteLearning(e instanceof Error ? e.message : 'DeepSeek analysis failed', 0)
-                            }
-                          }}
-                        >
-                          Compute match
-                        </button>
-                      </div>
-                    )}
-                  </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link to={`/opportunity/${opp.id}`} className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 font-medium text-sm">
+                  View
+                </Link>
+                <Link
+                  to={`/build/reports?type=${encodeURIComponent('market-analysis')}&opp=${encodeURIComponent(String(opp.id))}`}
+                  className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-sm"
+                  title="Paid members: generate a report"
+                >
+                  Report
+                </Link>
+                {!isAuthenticated ? (
+                  <Link to="/signup" className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-sm">
+                    Save (free)
+                  </Link>
+                ) : (
+                  <Link to="/saved" className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium text-sm">
+                    Saved
+                  </Link>
                 )}
-
-                <div className="mt-5 grid md:grid-cols-2 gap-4">
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                    <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Preview (free)</div>
-                    <ul className="mt-2 text-sm text-gray-700 space-y-1">
-                      <li>• Problem statement</li>
-                      <li>• Market size estimate</li>
-                      <li>• Growth signal snapshot</li>
-                      <li>• Geographic breakdown</li>
-                      <li>• Validation methodology</li>
-                    </ul>
-                  </div>
-
-                  {/* Right Sidebar */}
-                  <div className="w-48 border-l border-gray-100 bg-gray-50 p-4 flex flex-col justify-between">
-                    <div className="space-y-3">
-                      <div className="text-center p-3 bg-purple-100 rounded-xl">
-                        <div className="text-xs text-purple-600 font-medium">AI Match</div>
-                        <div className="text-2xl font-bold text-purple-700">{aiMatch}%</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Market</div>
-                        <div className="text-sm font-semibold text-gray-900">{marketSize}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Growth</div>
-                        <div className={`text-sm font-semibold ${growthRate > 15 ? 'text-emerald-600' : 'text-gray-700'}`}>
-                          {maturity} (+{growthRate}%/yr)
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 mt-4">
-                      <button
-                        onClick={() => navigate(`/opportunity/${opp.id}`)}
-                        className="w-full px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => navigate(`/build/reports?opp=${opp.id}`)}
-                        className="w-full px-4 py-2 border border-gray-200 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1"
-                      >
-                        <FileText className="w-4 h-4" />
-                        Report
-                      </button>
-                      {isAuthenticated && (
-                        <button
-                          onClick={() => {
-                            const saved = watchlistByOppId.has(opp.id)
-                            if (saved) {
-                              removeFromWatchlist.mutate(opp.id)
-                            } else {
-                              addToWatchlist.mutate(opp.id)
-                            }
-                          }}
-                          disabled={addToWatchlist.isPending || removeFromWatchlist.isPending}
-                          className={`w-full px-4 py-2 text-sm font-medium rounded-lg flex items-center justify-center gap-1 ${
-                            watchlistByOppId.has(opp.id)
-                              ? 'bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100'
-                              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Bookmark className={`w-4 h-4 ${watchlistByOppId.has(opp.id) ? 'fill-amber-500' : ''}`} />
-                          {watchlistByOppId.has(opp.id) ? 'Saved' : 'Save'}
-                        </button>
-                      )}
-                    </div>
-                    {brainEnabled && brainName && (
-                      <div className="mt-3 text-xs text-gray-600">
-                        <span className="font-semibold text-gray-700">DeepSeek brain insights:</span>{' '}
-                        Fits your focus on {brainFocus.slice(0, 2).join(', ') || 'your goals'}.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-3">
-                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg">
-                  <Target className="w-5 h-5 text-green-600" />
-                  <span className="text-lg font-bold text-green-700">
-                    {Math.round((opp.feasibility_score ?? 0) as number)}% Match
-                  </span>
-                </div>
-                <div className="flex gap-2 flex-wrap justify-end">
-                  <button
-                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
-                    type="button"
-                    onClick={() => navigate(`/opportunity/${opp.id}`)}
-                  >
-                    View Details
-                  </button>
-                  {!isAccessible && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = `/opportunity/${opp.id}?unlock=1`
-                        if (!isAuthenticated) {
-                          navigate(`/login?next=${encodeURIComponent(next)}`)
-                          return
-                        }
-                        if (canPay) {
-                          navigate(next)
-                        } else {
-                          navigate('/pricing')
-                        }
-                      }}
-                      className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
-                      title={canPay ? 'Unlock full analysis' : 'View plans to unlock'}
-                    >
-                      {canPay && unlockPrice ? `Unlock ${unlockPrice}` : 'Unlock'}
-                    </button>
-                  )}
-
-                  {brainEnabled && isAuthenticated && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!token) return
-                        try {
-                          const b = await saveOpportunityToBrain(String(token), opp.id)
-                          hydrateFromServer(b)
-                          noteLearning('Saved to DeepSeek Brain.', 0)
-                        } catch (e) {
-                          noteLearning(e instanceof Error ? e.message : 'Failed to save to brain', 0)
-                        }
-                      }}
-                      className="px-4 py-2 border border-purple-200 rounded-lg bg-purple-50 hover:bg-purple-100 font-medium text-purple-800"
-                      title="Save to DeepSeek Brain"
-                    >
-                      Save to Brain
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    disabled={!isAuthenticated || saving}
-                    onClick={() => {
-                      if (!isAuthenticated) return
-                      if (saved) removeFromWatchlist.mutate(opp.id)
-                      else addToWatchlist.mutate(opp.id)
-                    }}
-                    className={`px-3 py-2 rounded-lg border font-medium flex items-center gap-2 ${
-                      saved ? 'bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100' : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50'
-                    } ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    title={!isAuthenticated ? 'Sign in to save opportunities' : saved ? 'Remove from saved' : 'Save for later'}
-                  >
-                    <Bookmark className="w-4 h-4" />
-                    {saved ? 'Saved' : 'Save'}
-                  </button>
-                </div>
               </div>
             </div>
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <button
-                onClick={() => navigate('/brain')}
-                className="w-full px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
-              >
-                Improve Your Matches
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+          )
+        })}
       </div>
     </div>
   )
 }
+
