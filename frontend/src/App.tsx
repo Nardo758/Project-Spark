@@ -29,6 +29,7 @@ import MagicLinkCallback from './pages/MagicLinkCallback'
 import Saved from './pages/Saved'
 import OpportunityDetail from './pages/OpportunityDetail'
 import ReportStudio from './pages/build/ReportStudio'
+import ApiPortal from './pages/ApiPortal'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -52,6 +53,10 @@ function App() {
         <Route path="ai-roadmap" element={<AIRoadmap />} />
         <Route path="ai-match" element={<AIMatch />} />
         <Route path="expert-marketplace" element={<ExpertMarketplace />} />
+        <Route path="find-expert-help" element={<ExpertMarketplace />} />
+        <Route path="find-money" element={<Funding />} />
+        <Route path="developers" element={<ApiPortal />} />
+        <Route path="api" element={<ApiPortal />} />
         <Route path="content" element={<Navigate to="/services" replace />} />
         <Route path="about" element={<About />} />
         <Route path="blog" element={<Blog />} />

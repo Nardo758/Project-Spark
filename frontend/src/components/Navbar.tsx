@@ -21,7 +21,7 @@ const guestNavItems = [
   { name: 'Consultant Studio', path: '/build/reports' },
   { name: 'Leads', path: '/leads' },
   { name: 'Join Network', path: '/network' },
-  { name: 'API', path: '/api' },
+  { name: 'API', path: '/developers' },
   { name: 'Pricing', path: '/pricing' },
 ]
 
@@ -61,7 +61,7 @@ const authNavItems = [
   { 
     name: 'API', 
     icon: Code,
-    path: '/api'
+    path: '/developers'
   },
   { 
     name: 'Manage', 
