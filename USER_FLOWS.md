@@ -19,6 +19,9 @@ OppGrid uses a **time-decay access model**. The backend returns entitlement info
 - `pay_per_unlock`: eligible for $15 one-time unlock (ARCHIVE), 30-day access, daily limit 5
 - `fast_pass`: eligible for $99 one-time unlock (Business tier, HOT), 30-day access
 
+**One-time unlock expiry:**
+- When a one-time unlock is active, the backend includes `unlock_expires_at` so the UI can display “access until …”.
+
 ---
 
 ### 1. User Registration & Authentication Flow
@@ -729,8 +732,11 @@ END
 ### Monetization / access control endpoints (time-decay + one-time purchases)
 - `POST /api/v1/subscriptions/pay-per-unlock` (Pay-per-unlock + Fast Pass PaymentIntent creation)
 - `POST /api/v1/subscriptions/confirm-pay-per-unlock` (confirm unlock + grant access)
+- `GET /api/v1/subscriptions/unlocks` (list one-time unlock history + expiries)
 - `POST /api/v1/subscriptions/checkout` (subscription checkout)
 - `POST /api/v1/subscriptions/portal` (billing portal)
+- `POST /api/v1/payments/deep-dive` (create Deep Dive $49 PaymentIntent)
+- `POST /api/v1/payments/confirm` (confirm generic payment intents, e.g. Deep Dive)
 - `POST /api/v1/webhook/stripe` (Stripe webhooks)
 
 ---
