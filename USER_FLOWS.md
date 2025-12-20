@@ -22,6 +22,8 @@ OppGrid uses a **time-decay access model**. The backend returns entitlement info
 **One-time unlock expiry:**
 - When a one-time unlock is active, the backend includes `unlock_expires_at` so the UI can display “access until …”.
 
+**Important:** Free tier has **no automatic access by age**. ARCHIVE (91+ days) becomes **eligible for pay-per-unlock**, not “free to view”.
+
 ---
 
 ### 1. User Registration & Authentication Flow

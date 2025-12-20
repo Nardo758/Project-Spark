@@ -109,7 +109,7 @@
 - [ ] Test subscription upgrade/downgrade flows
 - [ ] Test pay-per-unlock flow
 - [ ] Validate time-decay gating end-to-end (server-side enforcement):
-  - [ ] Free: cannot access locked opportunities without pay-per-unlock
+  - [ ] Free: cannot access opportunities without pay-per-unlock (ARCHIVE eligibility at 91+ days)
   - [ ] Pay-per-unlock grants access for 30 days; “already unlocked until …” shown
   - [ ] Daily pay-per-unlock limit enforced server-side (5/day)
   - [ ] Business Fast Pass eligibility only for HOT opportunities (0-7 days)

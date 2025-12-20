@@ -336,8 +336,11 @@ class StripeService:
         - Enterprise: 0+ days (real-time)
         - Business: 8+ days (fresh)
         - Pro: 31+ days (validated)
-        - Free: 91+ days (archive, requires pay-per-unlock)
+        - Free: no automatic access (ARCHIVE is pay-per-unlock)
         """
+        # Free tier does not get automatic access by age; it must unlock ARCHIVE via pay-per-unlock.
+        if tier == SubscriptionTier.FREE:
+            return False
         min_age = StripeService.get_access_window_days(tier)
         return opportunity_age_days >= min_age
 
