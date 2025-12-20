@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, contact
+from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, contact, leads
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 import logging
@@ -74,6 +74,7 @@ app.include_router(replit_auth.router, prefix="/auth", tags=["Replit Auth"])
 app.include_router(replit_auth.router, prefix="", tags=["Replit Auth Callback"])
 app.include_router(magic_link.router, prefix=f"{settings.API_V1_PREFIX}/magic-link", tags=["Magic Link Auth"])
 app.include_router(contact.router, prefix=f"{settings.API_V1_PREFIX}/contact", tags=["Contact"])
+app.include_router(leads.router, prefix=f"{settings.API_V1_PREFIX}/admin/leads", tags=["Admin Leads"])
 
 
 @app.get("/")

@@ -67,6 +67,22 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 - AI-generated Executive Summary with confidence score
 - Quick Actions sidebar: Business Plan Generator, Financial Models, Pitch Deck Assistant
 
+**Admin Lead Management System:**
+- New Lead model with status pipeline: new → contacted → qualified → nurturing → converted/lost
+- Lead sources tracking: organic, referral, paid_ads, social, partner, direct, other
+- Admin leads router with full CRUD endpoints at `/api/v1/admin/leads/`
+- Lead stats dashboard showing total, new, qualified, and conversion rate
+- Lead management UI in admin.html with search, filtering, and status badges
+- Email opt-in tracking per lead with sequence step tracking
+
+**Email Notification & Automation (Resend Integration):**
+- Email service using Resend API via Replit connector
+- Welcome emails sent automatically when new leads are created
+- 3-step nurture email sequence for lead engagement
+- Status update emails when lead status changes
+- Manual and bulk nurture email triggers from admin panel
+- Email template system with professional HTML formatting
+
 **Previous Payment & Access Control Enhancements:**
 - Deep Dive add-on ($49): Schema updated with can_buy_deep_dive and deep_dive_price fields
 - Enterprise contact modal: New EnterpriseContactModal component
