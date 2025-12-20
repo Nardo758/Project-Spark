@@ -3,6 +3,7 @@ import { Check, Loader2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
+import EnterpriseContactModal from '../components/EnterpriseContactModal'
 
 const plans = [
   {
@@ -71,6 +72,7 @@ export default function Pricing() {
   const [subClientSecret, setSubClientSecret] = useState<string | null>(null)
   const [subPublishableKey, setSubPublishableKey] = useState<string | null>(null)
   const [subPlanLabel, setSubPlanLabel] = useState<string>('')
+  const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
   const [subPendingTier, setSubPendingTier] = useState<'pro' | 'business' | null>(null)
 
   async function startSubscription(tier: 'pro' | 'business') {
@@ -391,9 +393,13 @@ export default function Pricing() {
         </div>
         <div className="mt-6 text-sm text-gray-600">
           Need earliest access (HOT 0–7 days)?{' '}
-          <a className="text-blue-600 hover:text-blue-700 font-medium" href="mailto:enterprise@oppgrid.com">
+          <button
+            type="button"
+            onClick={() => setEnterpriseModalOpen(true)}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
             Contact sales for Enterprise
-          </a>
+          </button>
           .
         </div>
         {isAuthenticated && (
@@ -437,6 +443,13 @@ export default function Pricing() {
           footnote="Your plan updates after confirmation (Stripe + webhooks may take a moment)."
           onClose={() => setSubOpen(false)}
           onConfirmed={confirmSubscriptionPayment}
+        />
+      )}
+
+      {enterpriseModalOpen && (
+        <EnterpriseContactModal
+          source="pricing"
+          onClose={() => setEnterpriseModalOpen(false)}
         />
       )}
     </div>
