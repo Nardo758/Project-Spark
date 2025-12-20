@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import PayPerUnlockModal from '../components/PayPerUnlockModal'
 
 const plans = [
   {
@@ -54,42 +55,53 @@ const plans = [
 export default function Pricing() {
   const { token, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
-  const location = useLocation()
-
-  const checkoutStatus = useMemo(() => {
-    const params = new URLSearchParams(location.search)
-    return params.get('checkout') || ''
-  }, [location.search])
 
   const [billingLoading, setBillingLoading] = useState<'pro' | 'business' | 'portal' | null>(null)
   const [billingError, setBillingError] = useState<string | null>(null)
+  const [billingSuccess, setBillingSuccess] = useState<string | null>(null)
 
-  async function startCheckout(tier: 'pro' | 'business') {
+  const [subOpen, setSubOpen] = useState(false)
+  const [subClientSecret, setSubClientSecret] = useState<string | null>(null)
+  const [subPublishableKey, setSubPublishableKey] = useState<string | null>(null)
+  const [subPlanLabel, setSubPlanLabel] = useState<string>('')
+
+  async function startSubscription(tier: 'pro' | 'business') {
     if (!token) {
       navigate(`/login?next=${encodeURIComponent('/pricing')}`)
       return
     }
     setBillingError(null)
+    setBillingSuccess(null)
     setBillingLoading(tier)
     try {
-      const origin = window.location.origin
-      const successUrl = `${origin}/pricing?checkout=success`
-      const cancelUrl = `${origin}/pricing?checkout=cancel`
+      // 1) Stripe publishable key (public endpoint)
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
 
-      const res = await fetch('/api/v1/subscriptions/checkout', {
+      // 2) Create subscription PaymentIntent (in-app Elements modal)
+      const res = await fetch('/api/v1/subscriptions/subscription-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tier, success_url: successUrl, cancel_url: cancelUrl }),
+        body: JSON.stringify({ tier }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.detail || 'Unable to start checkout')
-      if (!data?.url) throw new Error('Checkout URL missing')
-      window.location.href = String(data.url)
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start subscription')
+      if (!data?.client_secret) throw new Error('Missing payment client secret')
+
+      setSubPublishableKey(String(keyData.publishable_key))
+      setSubClientSecret(String(data.client_secret))
+      setSubPlanLabel(tier === 'pro' ? '$99/mo' : '$499/mo')
+      setSubOpen(true)
     } catch (e) {
-      setBillingError(e instanceof Error ? e.message : 'Unable to start checkout')
+      setBillingError(e instanceof Error ? e.message : 'Unable to start subscription')
     } finally {
       setBillingLoading(null)
     }
+  }
+
+  async function confirmSubscriptionPayment(_paymentIntentId: string) {
+    setBillingSuccess('Payment confirmed. Your plan will update shortly (Stripe + webhooks can take a moment).')
   }
 
   async function openBillingPortal() {
@@ -98,6 +110,7 @@ export default function Pricing() {
       return
     }
     setBillingError(null)
+    setBillingSuccess(null)
     setBillingLoading('portal')
     try {
       const returnUrl = window.location.href
@@ -124,19 +137,14 @@ export default function Pricing() {
         <p className="text-xl text-gray-600">Start for free, upgrade as you grow. Cancel anytime.</p>
       </div>
 
-      {checkoutStatus === 'success' && (
-        <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
-          Payment completed. Your plan will update shortly (it can take a moment for Stripe + webhooks to sync).
-        </div>
-      )}
-      {checkoutStatus === 'cancel' && (
-        <div className="mb-10 max-w-3xl mx-auto bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-4 py-3 text-sm">
-          Checkout canceled. You can restart anytime.
-        </div>
-      )}
       {billingError && (
         <div className="mb-10 max-w-3xl mx-auto bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
           {billingError}
+        </div>
+      )}
+      {billingSuccess && (
+        <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
+          {billingSuccess}
         </div>
       )}
 
@@ -199,7 +207,7 @@ export default function Pricing() {
             ) : plan.name === 'Builder' ? (
               <button
                 type="button"
-                onClick={() => startCheckout('pro')}
+                onClick={() => startSubscription('pro')}
                 disabled={!isAuthenticated || billingLoading !== null}
                 className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
                   plan.highlighted
@@ -211,7 +219,7 @@ export default function Pricing() {
                 {billingLoading === 'pro' ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Starting checkout…
+                    Starting payment…
                   </span>
                 ) : (
                   plan.cta
@@ -220,7 +228,7 @@ export default function Pricing() {
             ) : (
               <button
                 type="button"
-                onClick={() => startCheckout('business')}
+                onClick={() => startSubscription('business')}
                 disabled={!isAuthenticated || billingLoading !== null}
                 className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
                   plan.highlighted
@@ -232,7 +240,7 @@ export default function Pricing() {
                 {billingLoading === 'business' ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Starting checkout…
+                    Starting payment…
                   </span>
                 ) : (
                   plan.cta
@@ -295,6 +303,20 @@ export default function Pricing() {
           </div>
         )}
       </div>
+
+      {subOpen && subPublishableKey && subClientSecret && (
+        <PayPerUnlockModal
+          publishableKey={subPublishableKey}
+          clientSecret={subClientSecret}
+          amountLabel={subPlanLabel}
+          contextLabel="Subscription"
+          title={`Subscribe for ${subPlanLabel}`}
+          confirmLabel="Subscribe"
+          footnote="Your plan updates after confirmation (Stripe + webhooks may take a moment)."
+          onClose={() => setSubOpen(false)}
+          onConfirmed={confirmSubscriptionPayment}
+        />
+      )}
     </div>
   )
 }

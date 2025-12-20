@@ -63,6 +63,17 @@ class PortalSessionResponse(BaseModel):
     url: str
 
 
+class SubscriptionIntentCreate(BaseModel):
+    """Request to create an in-app subscription payment intent (Elements modal)."""
+    tier: str  # 'pro' or 'business'
+
+
+class SubscriptionIntentResponse(BaseModel):
+    """Response with PaymentIntent client secret for subscription signup."""
+    stripe_subscription_id: str
+    client_secret: str
+
+
 class UnlockOpportunityRequest(BaseModel):
     """Request to unlock an opportunity"""
     opportunity_id: int
