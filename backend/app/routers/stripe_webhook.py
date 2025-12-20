@@ -140,6 +140,8 @@ async def stripe_webhook(
             handle_subscription_updated(event_object, db)
         elif event_type == "customer.subscription.deleted":
             handle_subscription_deleted(event_object, db)
+        elif event_type == "checkout.session.expired":
+            handle_checkout_expired(event_object, db)
         else:
             logger.info(f"Unhandled webhook event type: {event_type}")
     except Exception as e:
@@ -429,6 +431,26 @@ def handle_subscription_deleted(stripe_subscription: dict, db: Session):
     subscription.stripe_subscription_id = None
     db.commit()
     logger.info(f"Canceled subscription for user {subscription.user_id}")
+
+
+def handle_checkout_expired(checkout_session: dict, db: Session):
+    """
+    Handle expired checkout session.
+    This is an informational event - the customer started checkout but didn't complete it.
+    We log it for analytics purposes.
+    """
+    session_id = checkout_session.get("id")
+    customer_email = checkout_session.get("customer_details", {}).get("email")
+    metadata = checkout_session.get("metadata", {}) or {}
+    tier = metadata.get("tier")
+    user_id = metadata.get("user_id")
+    
+    logger.info(
+        f"Checkout session expired: {session_id}, "
+        f"customer: {customer_email}, tier: {tier}, user_id: {user_id}"
+    )
+    # No database action needed - this is purely informational
+    # Could be used for abandoned cart analytics in the future
 
 
 def _map_payment_type_to_transaction_type(payment_type: str) -> TransactionType | None:

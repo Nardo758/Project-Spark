@@ -40,7 +40,7 @@ function PayPerUnlockInner({
     try {
       setSubmitting(true)
       const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card },
+        payment_method: { card: card as any },
       })
 
       if (result.error) {

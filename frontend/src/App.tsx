@@ -28,6 +28,7 @@ import AuthCallback from './pages/AuthCallback'
 import MagicLinkCallback from './pages/MagicLinkCallback'
 import Saved from './pages/Saved'
 import OpportunityDetail from './pages/OpportunityDetail'
+import ReportStudio from './pages/build/ReportStudio'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -81,6 +82,11 @@ function App() {
             </RequireAuth>
           }
         />
+        <Route path="build/reports" element={<ReportStudio />} />
+        <Route path="build/reports/:type" element={<ReportStudio />} />
+        <Route path="build/business-plan" element={<ReportStudio />} />
+        <Route path="build/financials" element={<ReportStudio />} />
+        <Route path="build/pitch-deck" element={<ReportStudio />} />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />

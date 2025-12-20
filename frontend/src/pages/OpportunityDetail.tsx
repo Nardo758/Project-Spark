@@ -177,10 +177,6 @@ export default function OpportunityDetail() {
     },
   })
 
-  const opp = opportunityQuery.data
-  const access = opp?.access_info
-  const saved = watchlistCheckQuery.data?.in_watchlist ?? false
-
   const [ppuOpen, setPpuOpen] = useState(false)
   const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
   const [ppuClientSecret, setPpuClientSecret] = useState<string | null>(null)
@@ -240,6 +236,45 @@ export default function OpportunityDetail() {
     autoUnlockStartedRef.current = true
     payPerUnlockMutation.mutate()
   }, [shouldAutoUnlock, isAuthenticated, opp, access?.is_accessible, access?.can_pay_to_unlock, payPerUnlockMutation])
+
+  const payPerUnlockMutation = useMutation({
+    mutationFn: async () => {
+      if (!token) throw new Error('Not authenticated')
+      // 1) Fetch Stripe publishable key (public endpoint)
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
+
+      // 2) Create PaymentIntent for pay-per-unlock
+      const res = await fetch('/api/v1/subscriptions/pay-per-unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ opportunity_id: opportunityId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start payment')
+
+      return {
+        publishableKey: keyData.publishable_key as string,
+        clientSecret: data.clientSecret as string,
+        amountCents: data.amount as number,
+      }
+    },
+    onSuccess: (data) => {
+      setPpuError(null)
+      setPpuPublishableKey(data.publishableKey)
+      setPpuClientSecret(data.clientSecret)
+      setPpuAmountLabel(fmtCents(data.amountCents) || '$15')
+      setPpuOpen(true)
+    },
+    onError: (e) => {
+      setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
+    },
+  })
+
+  const opp = opportunityQuery.data
+  const access = opp?.access_info
+  const saved = watchlistCheckQuery.data?.in_watchlist ?? false
 
   if (!Number.isFinite(opportunityId)) {
     return (

@@ -1,0 +1,61 @@
+src/brain-ai/
+├── core/
+│   ├── clients/
+│   │   ├── sintra-client.ts          # Sintra API wrapper
+│   │   ├── openai-client.ts          # OpenAI integration
+│   │   └── vector-db-client.ts       # Vector database client
+│   ├── services/
+│   │   ├── brain-manager.service.ts  # Brain lifecycle management
+│   │   ├── training.service.ts       # Knowledge processing
+│   │   ├── query.service.ts          # AI query processing
+│   │   ├── embedding.service.ts      # Vector generation
+│   │   └── content-gen.service.ts    # Document generation
+│   ├── adapters/
+│   │   ├── sintra.adapter.ts         # Sintra request/response mapping
+│   │   ├── training.adapter.ts       # Training data formatting
+│   │   └── query.adapter.ts          # Query optimization
+│   └── processors/
+│       ├── text.processor.ts         # Text extraction & chunking
+│       ├── embedding.processor.ts    # Vector processing
+│       └── metadata.processor.ts     # Metadata extraction
+├── features/
+│   ├── multi-brain/
+│   │   ├── context-switch.service.ts # Project/brain switching logic
+│   │   ├── profile-manager.service.ts # Manage up to 5 brain profiles
+│   │   ├── isolation.service.ts      # Data isolation between brains
+│   │   └── models/
+│   │       └── profile.model.ts      # Brain profile data model
+│   ├── ai-trainer/
+│   │   ├── trainer-ui.service.ts     # Training interface logic
+│   │   ├── daily-questions.service.ts # Personalized daily questions
+│   │   ├── feedback.service.ts       # Process user feedback
+│   │   └── progress.service.ts       # Track training progress
+│   ├── discovery-assist/
+│   │   ├── opportunity-matcher.service.ts # Match ideas to user profile
+│   │   ├── idea-validator.service.ts # AI-powered idea validation
+│   │   └── co-founder-matcher.service.ts # Find compatible co-founders
+│   └── builder-tools/
+│       ├── plan-generator.service.ts # Business plan generation
+│       ├── quick-save.service.ts     # "Save to Brain" functionality
+│       └── template.service.ts       # Document templates
+├── models/
+│   ├── brain.model.ts                # Brain data model
+│   ├── knowledge.model.ts            # Knowledge source model
+│   ├── query.model.ts                # Query/response model
+│   ├── user-context.model.ts         # User session & project context
+│   └── ai-match.model.ts             # AI matching score model
+├── repositories/
+│   ├── brain.repository.ts           # Brain data access
+│   ├── knowledge.repository.ts       # Knowledge storage
+│   ├── vector.repository.ts          # Vector operations
+│   └── context.repository.ts         # User context storage
+├── api/
+│   ├── brain.controller.ts           # REST API endpoints
+│   ├── training.controller.ts        # Training endpoints
+│   ├── query.controller.ts           # Query endpoints
+│   ├── context.controller.ts         # Project switching endpoints
+│   └── trainer.controller.ts         # AI trainer interface endpoints
+└── utils/
+    ├── session-manager.ts            # Manage active brain sessions
+    ├── match-calculator.ts           # Calculate AI match scores
+    └── analytics-tracker.ts          # Track user engagement metrics

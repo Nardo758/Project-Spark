@@ -1,0 +1,59 @@
+src/brain-ai/
+├── core/                          # (Same as previous structure)
+│   ├── clients/                   # (Same)
+│   ├── services/                  # (Same)
+│   ├── adapters/                  # (Same)
+│   └── processors/                # (Same)
+├── features/
+│   ├── content-analyst/           # NEW: Consultant report generation hub
+│   │   ├── report-orchestrator.service.ts   # Manages end-to-end report creation
+│   │   ├── frameworks/                      # Analysis frameworks library
+│   │   │   ├── swot-analysis.service.ts     # SWOT framework
+│   │   │   ├── pestle-analysis.service.ts   # PESTLE framework
+│   │   │   ├── porter-five-forces.service.ts # Competitive analysis
+│   │   │   └── feasibility-study.service.ts  # Feasibility assessment
+│   │   ├── research/
+│   │   │   ├── market-research.service.ts   # Market data & trends
+│   │   │   ├── competitive-intel.service.ts # Competitor analysis
+│   │   │   └── financial-benchmark.service.ts # Industry benchmarks
+│   │   ├── generators/
+│   │   │   ├── executive-summary.service.ts # Report executive summaries
+│   │   │   ├── recommendation-engine.service.ts # Actionable insights
+│   │   │   └── visualization.service.ts     # Charts, graphs, data viz
+│   │   ├── templates/
+│   │   │   ├── consultant-report.template.ts # Base report template
+│   │   │   ├── pitch-deck.template.ts       # Investor presentation
+│   │   │   └── progress-report.template.ts  # Project update reports
+│   │   └── quality/
+│   │       ├── fact-check.service.ts        # Data validation
+│   │       ├── coherence-check.service.ts   # Logical flow analysis
+│   │       └── professional-tone.service.ts # Language polishing
+│   ├── multi-brain/               # (Same as before)
+│   ├── ai-trainer/                # (Same)
+│   ├── discovery-assist/          # (Same)
+│   └── builder-tools/             # (Enhanced below)
+│       ├── plan-generator.service.ts
+│       ├── quick-save.service.ts
+│       ├── template.service.ts
+│       └── content-bridge.service.ts  # NEW: Links Build tools to Content
+├── models/                        # Enhanced models
+│   ├── brain.model.ts
+│   ├── knowledge.model.ts
+│   ├── query.model.ts
+│   ├── user-context.model.ts
+│   ├── ai-match.model.ts
+│   └── report.model.ts            # NEW: Consultant report data model
+├── repositories/                  # Enhanced repositories
+│   ├── brain.repository.ts
+│   ├── knowledge.repository.ts
+│   ├── vector.repository.ts
+│   ├── context.repository.ts
+│   └── report.repository.ts       # NEW: Report storage & retrieval
+├── api/                           # Enhanced API
+│   ├── brain.controller.ts
+│   ├── training.controller.ts
+│   ├── query.controller.ts
+│   ├── context.controller.ts
+│   ├── trainer.controller.ts
+│   └── content.controller.ts      # NEW: Content/report endpoints
+└── utils/                         # (Same)
