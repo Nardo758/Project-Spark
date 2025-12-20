@@ -126,6 +126,5 @@ BACKEND_URL = "https://9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spo
 FRONTEND_URL = "https://9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev"
 STRIPE_PRICE_PRO = "price_1SfkUWL1e5X3ider8JuVrp1B"
 STRIPE_PRICE_BUSINESS = "price_1SfkVFL1e5X3iderUsZCSFlS"
-STRIPE_RECONCILE_JOB_ENABLED = "true"
 # POSTGRES_URL removed - using Replit's native PostgreSQL via DATABASE_URL
 # If you need to override, set POSTGRES_URL in Secrets (not here)
