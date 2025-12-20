@@ -1,7 +1,54 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Lightbulb, Target, Users, Zap, TrendingUp, Play, CheckCircle, BarChart3, Globe, Rocket } from 'lucide-react'
 
+interface PlatformStats {
+  validated_ideas: number
+  total_market_opportunity: string
+  global_markets: number
+}
+
+interface FeaturedOpportunity {
+  id: number
+  title: string
+  description: string
+  score: number
+  market_size: string
+  validation_count: number
+  growth_rate: number
+}
+
 export default function Home() {
+  const [stats, setStats] = useState<PlatformStats | null>(null)
+  const [featured, setFeatured] = useState<FeaturedOpportunity | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [statsRes, featuredRes] = await Promise.all([
+          fetch('/api/v1/opportunities/stats/platform'),
+          fetch('/api/v1/opportunities/featured/top')
+        ])
+        
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          setStats(statsData)
+        }
+        
+        if (featuredRes.ok) {
+          const featuredData = await featuredRes.json()
+          setFeatured(featuredData)
+        }
+      } catch (err) {
+        console.error('Failed to fetch landing page data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
   return (
     <div className="bg-white">
       {/* Hero Section - Side by Side Layout */}
@@ -12,7 +59,7 @@ export default function Home() {
             {/* Left - Hero Content */}
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6">
-                176+ Validated Opportunities
+                {stats ? `${stats.validated_ideas}+` : '...'} Validated Opportunities
               </div>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight leading-tight">
                 Transform Market Signals into{' '}
@@ -42,15 +89,15 @@ export default function Home() {
               {/* Stats Bar */}
               <div className="mt-12 flex gap-10">
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">176</div>
+                  <div className="text-3xl font-bold text-gray-900">{stats?.validated_ideas ?? '...'}</div>
                   <div className="text-sm text-gray-500">Validated Ideas</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">$47B+</div>
+                  <div className="text-3xl font-bold text-gray-900">{stats?.total_market_opportunity ?? '...'}</div>
                   <div className="text-sm text-gray-500">Market Opportunity</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">6</div>
+                  <div className="text-3xl font-bold text-gray-900">{stats?.global_markets ?? '...'}</div>
                   <div className="text-sm text-gray-500">Global Markets</div>
                 </div>
               </div>
@@ -58,47 +105,73 @@ export default function Home() {
 
             {/* Right - Opportunity Card Preview */}
             <div className="relative">
-              <div className="absolute -top-4 right-0 inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-md text-sm text-gray-600">
-                <Users className="w-4 h-4" />
-                534 users want this
-              </div>
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mt-8">
-                <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Unlock This Week’s Top Opportunity</div>
-                <div className="flex justify-between items-start">
-                  <h3 className="text-lg font-semibold text-gray-900 pr-4">
-                    Managing passwords across all my devices is a security risk
-                  </h3>
-                  <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                    <span className="text-emerald-600 font-bold text-lg">87</span>
+              {featured && (
+                <>
+                  <div className="absolute -top-4 right-0 inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-md text-sm text-gray-600">
+                    <Users className="w-4 h-4" />
+                    {featured.validation_count} users want this
+                  </div>
+                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mt-8">
+                    <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Unlock This Week's Top Opportunity</div>
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-lg font-semibold text-gray-900 pr-4">
+                        {featured.title}
+                      </h3>
+                      <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                        <span className="text-emerald-600 font-bold text-lg">{featured.score}</span>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-sm text-gray-500">
+                      {featured.description}
+                    </p>
+                    <div className="mt-5 grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                      <div>
+                        <div className="text-xs text-gray-400">Market Size</div>
+                        <div className="font-semibold text-gray-900">{featured.market_size}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-400">Submissions</div>
+                        <div className="font-semibold text-gray-900">{featured.validation_count}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-400">Growth</div>
+                        <div className="font-semibold text-emerald-600">+{featured.growth_rate.toFixed(0)}%</div>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-2 rounded-full" style={{ width: `${Math.min(featured.score, 100)}%` }} />
+                      </div>
+                      <div className="mt-2 flex items-center gap-2 text-sm text-emerald-600">
+                        <TrendingUp className="w-4 h-4" />
+                        +{featured.growth_rate.toFixed(0)}% monthly growth
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              {!featured && !loading && (
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mt-8">
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No opportunities available yet</p>
+                    <Link to="/idea-engine" className="text-purple-600 hover:text-purple-700 font-medium mt-2 inline-block">
+                      Submit your first idea
+                    </Link>
                   </div>
                 </div>
-                <p className="mt-3 text-sm text-gray-500">
-                  Mainstream users need invisible password security that works without thinking about it
-                </p>
-                <div className="mt-5 grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
-                  <div>
-                    <div className="text-xs text-gray-400">Market Size</div>
-                    <div className="font-semibold text-gray-900">$3B-$8B</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-400">Submissions</div>
-                    <div className="font-semibold text-gray-900">534</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-400">Growth</div>
-                    <div className="font-semibold text-emerald-600">+34%</div>
+              )}
+              {loading && (
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mt-8 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
                   </div>
                 </div>
-                <div className="mt-4">
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 h-2 rounded-full" style={{ width: '75%' }} />
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 text-sm text-emerald-600">
-                    <TrendingUp className="w-4 h-4" />
-                    +34% monthly growth
-                  </div>
-                </div>
-              </div>
+              )}
               <Link to="/discover" className="mt-4 inline-flex items-center text-purple-600 hover:text-purple-700 font-medium text-sm">
                 See More Opportunities <ArrowRight className="w-4 h-4 ml-1" />
               </Link>

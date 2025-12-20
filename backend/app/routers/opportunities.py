@@ -313,3 +313,72 @@ def search_opportunities(
         page=skip // limit + 1,
         page_size=limit
     )
+
+
+@router.get("/stats/platform")
+def get_platform_stats(db: Session = Depends(get_db)):
+    """Get platform statistics for the landing page"""
+    validated_count = db.query(Opportunity).filter(
+        Opportunity.status == "active",
+        Opportunity.ai_analyzed == True
+    ).count()
+    
+    import re
+    total_market_value = 0
+    opportunities_with_market = db.query(Opportunity).filter(
+        Opportunity.ai_market_size_estimate.isnot(None)
+    ).all()
+    
+    for opp in opportunities_with_market:
+        estimate = opp.ai_market_size_estimate or ""
+        billions = re.findall(r'\$?([\d.]+)\s*B', estimate, re.IGNORECASE)
+        millions = re.findall(r'\$?([\d.]+)\s*M', estimate, re.IGNORECASE)
+        for num in billions:
+            total_market_value += float(num)
+        for num in millions:
+            total_market_value += float(num) / 1000
+    
+    unique_countries = db.query(func.count(func.distinct(Opportunity.country))).filter(
+        Opportunity.country.isnot(None),
+        Opportunity.country != ""
+    ).scalar() or 0
+    
+    unique_scopes = db.query(func.count(func.distinct(Opportunity.geographic_scope))).scalar() or 0
+    markets = max(unique_countries, unique_scopes, 1)
+    
+    return {
+        "validated_ideas": validated_count or 0,
+        "total_market_opportunity": f"${max(total_market_value, 1):.0f}B+",
+        "global_markets": markets
+    }
+
+
+@router.get("/featured/top")
+def get_featured_opportunity(db: Session = Depends(get_db)):
+    """Get the top featured opportunity for the landing page"""
+    opportunity = db.query(Opportunity).filter(
+        Opportunity.status == "active",
+        Opportunity.ai_analyzed == True,
+        Opportunity.ai_opportunity_score.isnot(None)
+    ).order_by(
+        desc(Opportunity.ai_opportunity_score),
+        desc(Opportunity.validation_count)
+    ).first()
+    
+    if not opportunity:
+        opportunity = db.query(Opportunity).filter(
+            Opportunity.status == "active"
+        ).order_by(desc(Opportunity.created_at)).first()
+    
+    if not opportunity:
+        return None
+    
+    return {
+        "id": opportunity.id,
+        "title": opportunity.title,
+        "description": opportunity.ai_summary or opportunity.description[:150] + "..." if len(opportunity.description) > 150 else opportunity.description,
+        "score": opportunity.ai_opportunity_score or opportunity.severity * 20,
+        "market_size": opportunity.ai_market_size_estimate or opportunity.market_size or "$1B-$5B",
+        "validation_count": opportunity.validation_count,
+        "growth_rate": opportunity.growth_rate or 0
+    }
