@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import Layout from './components/Layout'
 import RequireAuth from './components/RequireAuth'
+import RequirePaid from './components/RequirePaid'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Discover from './pages/Discover'
@@ -15,6 +16,10 @@ import Leads from './pages/Leads'
 import Funding from './pages/Funding'
 import Tools from './pages/Tools'
 import Learn from './pages/Learn'
+import Cart from './pages/Cart'
+import Account from './pages/Account'
+import Purchases from './pages/Purchases'
+import Analytics from './pages/Analytics'
 import AIRoadmap from './pages/AIRoadmap'
 import AIMatch from './pages/AIMatch'
 import ExpertMarketplace from './pages/ExpertMarketplace'
@@ -42,12 +47,34 @@ function App() {
         <Route path="services" element={<Services />} />
         <Route path="network" element={<Network />} />
         <Route path="pricing" element={<Pricing />} />
+        <Route path="cart" element={<Cart />} />
         <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
-        <Route path="leads" element={<Leads />} />
-        <Route path="funding" element={<Funding />} />
-        <Route path="tools" element={<Tools />} />
+        <Route
+          path="leads"
+          element={
+            <RequireAuth>
+              <Leads />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="tools"
+          element={
+            <RequireAuth>
+              <Tools />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="funding"
+          element={
+            <RequirePaid>
+              <Funding />
+            </RequirePaid>
+          }
+        />
         <Route path="learn" element={<Learn />} />
         <Route path="ai-roadmap" element={<AIRoadmap />} />
         <Route path="ai-match" element={<AIMatch />} />
@@ -82,11 +109,70 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route path="build/reports" element={<ReportStudio />} />
-        <Route path="build/reports/:type" element={<ReportStudio />} />
-        <Route path="build/business-plan" element={<ReportStudio />} />
-        <Route path="build/financials" element={<ReportStudio />} />
-        <Route path="build/pitch-deck" element={<ReportStudio />} />
+        <Route
+          path="account"
+          element={
+            <RequireAuth>
+              <Account />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="purchases"
+          element={
+            <RequireAuth>
+              <Purchases />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="analytics"
+          element={
+            <RequirePaid>
+              <Analytics />
+            </RequirePaid>
+          }
+        />
+        <Route
+          path="build/reports"
+          element={
+            <RequirePaid>
+              <ReportStudio />
+            </RequirePaid>
+          }
+        />
+        <Route
+          path="build/reports/:type"
+          element={
+            <RequirePaid>
+              <ReportStudio />
+            </RequirePaid>
+          }
+        />
+        <Route
+          path="build/business-plan"
+          element={
+            <RequirePaid>
+              <ReportStudio />
+            </RequirePaid>
+          }
+        />
+        <Route
+          path="build/financials"
+          element={
+            <RequirePaid>
+              <ReportStudio />
+            </RequirePaid>
+          }
+        />
+        <Route
+          path="build/pitch-deck"
+          element={
+            <RequirePaid>
+              <ReportStudio />
+            </RequirePaid>
+          }
+        />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />
