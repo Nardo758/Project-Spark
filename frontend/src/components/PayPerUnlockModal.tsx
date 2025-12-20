@@ -6,13 +6,26 @@ type Props = {
   publishableKey: string
   clientSecret: string
   amountLabel: string
+  contextLabel?: string
+  title?: string
+  confirmLabel?: string
+  footnote?: string
   onClose: () => void
   onConfirmed: (paymentIntentId: string) => Promise<void>
 }
 
 type InnerProps = Omit<Props, 'publishableKey'>
 
-function PayPerUnlockInner({ clientSecret, amountLabel, onClose, onConfirmed }: InnerProps) {
+function PayPerUnlockInner({
+  clientSecret,
+  amountLabel,
+  contextLabel,
+  title,
+  confirmLabel,
+  footnote,
+  onClose,
+  onConfirmed,
+}: InnerProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [error, setError] = useState<string | null>(null)
@@ -36,7 +49,8 @@ function PayPerUnlockInner({ clientSecret, amountLabel, onClose, onConfirmed }: 
       }
 
       const pi = result.paymentIntent
-      if (!pi || pi.status !== 'succeeded') {
+      const ok = pi && (pi.status === 'succeeded' || pi.status === 'processing')
+      if (!ok) {
         setError(`Payment not completed (status: ${pi?.status || 'unknown'}).`)
         return
       }
@@ -55,8 +69,8 @@ function PayPerUnlockInner({ clientSecret, amountLabel, onClose, onConfirmed }: 
       <div className="w-full max-w-md rounded-2xl bg-white border border-gray-200 shadow-xl">
         <div className="p-5 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <div className="text-sm text-gray-500">Pay‑per‑unlock</div>
-            <div className="text-lg font-semibold text-gray-900">Unlock for {amountLabel}</div>
+            <div className="text-sm text-gray-500">{contextLabel || 'Pay‑per‑unlock'}</div>
+            <div className="text-lg font-semibold text-gray-900">{title || `Unlock for ${amountLabel}`}</div>
           </div>
           <button onClick={onClose} className="px-3 py-2 text-gray-600 hover:text-gray-900">
             ✕
@@ -90,12 +104,12 @@ function PayPerUnlockInner({ clientSecret, amountLabel, onClose, onConfirmed }: 
               className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 font-medium disabled:opacity-50"
               disabled={submitting || !stripe || !elements}
             >
-              {submitting ? 'Processing…' : `Pay ${amountLabel}`}
+              {submitting ? 'Processing…' : confirmLabel || `Pay ${amountLabel}`}
             </button>
           </div>
 
           <div className="mt-4 text-xs text-gray-500">
-            Your access will be granted after payment confirmation.
+            {footnote || 'Your access will be granted after payment confirmation.'}
           </div>
         </div>
       </div>
@@ -112,6 +126,10 @@ export default function PayPerUnlockModal(props: Props) {
       <PayPerUnlockInner
         clientSecret={props.clientSecret}
         amountLabel={props.amountLabel}
+        contextLabel={props.contextLabel}
+        title={props.title}
+        confirmLabel={props.confirmLabel}
+        footnote={props.footnote}
         onClose={props.onClose}
         onConfirmed={props.onConfirmed}
       />

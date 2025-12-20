@@ -133,8 +133,10 @@ class OpportunityGatedResponse(Opportunity):
     ai_key_risks: Optional[list] = None
     ai_next_steps: Optional[list] = None
     
-    # Layer 2 content (Business+ only)
+    # Layer 2 content (Business+ only, or Pro with paid add-on)
     deep_dive_available: bool = False
+    can_buy_deep_dive: bool = False  # Pro tier can buy for $49
+    deep_dive_price: Optional[int] = None  # Price in cents (4900 = $49)
     layer_2_content: Optional[dict] = None
     
     # Layer 3 content (Business with limits, Enterprise unlimited)

@@ -22,6 +22,8 @@ from app.schemas.subscription import (
     CheckoutSessionResponse,
     PortalSessionCreate,
     PortalSessionResponse,
+    SubscriptionIntentCreate,
+    SubscriptionIntentResponse,
     UnlockOpportunityRequest,
     UnlockOpportunityResponse,
     ExportRequest,
@@ -33,6 +35,7 @@ from app.schemas.subscription import (
 from datetime import datetime, timedelta
 from app.core.dependencies import get_current_active_user
 from app.services.stripe_service import stripe_service
+from app.services.stripe_service import get_stripe_client
 from app.services.usage_service import usage_service
 from app.core.config import settings
 from app.services.entitlements import get_opportunity_entitlements
@@ -199,6 +202,108 @@ def create_checkout_session(
         "session_id": session.id,
         "url": session.url
     }
+
+
+@router.post("/subscription-intent", response_model=SubscriptionIntentResponse)
+def create_subscription_intent(
+    payload: SubscriptionIntentCreate,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Create an in-app subscription flow (Stripe Elements modal).
+
+    This creates a Stripe Subscription in `default_incomplete` mode and returns the
+    latest invoice PaymentIntent client_secret for confirmation via stripe.confirmCardPayment().
+    """
+    from datetime import timezone
+
+    # Validate tier
+    try:
+        tier = SubscriptionTier(payload.tier)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid subscription tier: {payload.tier}")
+
+    if tier in (SubscriptionTier.FREE, SubscriptionTier.ENTERPRISE):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This tier is not self-serve via card payment.")
+
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+
+    # Prevent accidental duplicate active subscriptions. Use portal for upgrades/changes.
+    if subscription.stripe_subscription_id and subscription.status == SubscriptionStatus.ACTIVE:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have an active subscription. Use Manage billing.")
+
+    # If there's an old incomplete subscription attempt, best-effort cancel it on Stripe.
+    if subscription.stripe_subscription_id and subscription.status == SubscriptionStatus.INCOMPLETE:
+        try:
+            client = get_stripe_client()
+            client.Subscription.cancel(subscription.stripe_subscription_id)
+        except Exception:
+            # ignore; we'll proceed with a fresh attempt
+            pass
+
+    # Ensure Stripe customer exists
+    if not subscription.stripe_customer_id:
+        customer = stripe_service.create_customer(
+            email=current_user.email,
+            name=current_user.name,
+            metadata={"user_id": current_user.id},
+        )
+        subscription.stripe_customer_id = customer.id
+        db.commit()
+
+    price_id = stripe_service.STRIPE_PRICES.get(tier)
+    if not price_id:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Stripe price not configured for this tier")
+
+    try:
+        client = get_stripe_client()
+        stripe_sub = client.Subscription.create(
+            customer=subscription.stripe_customer_id,
+            items=[{"price": price_id}],
+            payment_behavior="default_incomplete",
+            payment_settings={"save_default_payment_method": "on_subscription"},
+            expand=["latest_invoice.payment_intent"],
+            metadata={"user_id": str(current_user.id), "tier": tier.value},
+        )
+        latest_invoice = getattr(stripe_sub, "latest_invoice", None)
+        payment_intent = getattr(latest_invoice, "payment_intent", None) if latest_invoice else None
+        client_secret = getattr(payment_intent, "client_secret", None)
+        if not client_secret:
+            raise HTTPException(status_code=500, detail="Stripe did not return a payment client secret")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unable to create subscription: {e}")
+
+    # Persist linkage for webhook reconciliation
+    subscription.stripe_subscription_id = stripe_sub.id
+    subscription.stripe_price_id = price_id
+    subscription.tier = tier
+    subscription.status = SubscriptionStatus.INCOMPLETE
+
+    cps = getattr(stripe_sub, "current_period_start", None)
+    cpe = getattr(stripe_sub, "current_period_end", None)
+    if isinstance(cps, (int, float)):
+        subscription.current_period_start = datetime.fromtimestamp(int(cps), tz=timezone.utc)
+    if isinstance(cpe, (int, float)):
+        subscription.current_period_end = datetime.fromtimestamp(int(cpe), tz=timezone.utc)
+
+    db.commit()
+
+    log_event(
+        db,
+        action="subscription.intent.create",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="subscription",
+        resource_id=str(getattr(subscription, "id", "")),
+        metadata={"tier": tier.value, "stripe_subscription_id": stripe_sub.id},
+    )
+
+    return {"stripe_subscription_id": stripe_sub.id, "client_secret": client_secret}
 
 
 @router.post("/portal", response_model=PortalSessionResponse)

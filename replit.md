@@ -28,6 +28,18 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 20, 2024)
 
+**Payment & Access Control Enhancements:**
+- Deep Dive add-on ($49): Schema updated with can_buy_deep_dive and deep_dive_price fields; entitlements service computes these for Pro tier users
+- Enterprise contact modal: New EnterpriseContactModal component replaces mailto links in Pricing and OpportunityDetail pages
+- Contact form endpoint: POST /api/v1/contact/enterprise sends email via Resend with proper error handling
+- Subscription reconciliation: Enabled STRIPE_RECONCILE_JOB_ENABLED for defense-in-depth webhook recovery
+
+**Idea Engine Payment Wiring:**
+- Two-step flow: FREE idea refinement (POST /api/v1/idea-engine/generate) + PAID validation ($9.99)
+- Stripe Elements integration for card input with payment intent creation
+- Full validation results displayed after successful payment (market size, competition, risks, next steps)
+- Authentication check with login redirect for unauthenticated users
+
 **Landing Page Redesign:**
 - Side-by-side hero layout with text on left, opportunity card preview on right
 - Green gradient background with emerald/purple accents matching original design

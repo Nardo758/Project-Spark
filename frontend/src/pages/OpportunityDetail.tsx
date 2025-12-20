@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Bookmark, CheckCircle2, Clock, Lock, ShieldCheck } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
+import EnterpriseContactModal from '../components/EnterpriseContactModal'
 
 type AccessInfo = {
   age_days: number
@@ -180,6 +181,7 @@ export default function OpportunityDetail() {
   const saved = watchlistCheckQuery.data?.in_watchlist ?? false
 
   const [ppuOpen, setPpuOpen] = useState(false)
+  const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
   const [ppuClientSecret, setPpuClientSecret] = useState<string | null>(null)
   const [ppuPublishableKey, setPpuPublishableKey] = useState<string | null>(null)
   const [ppuAmountLabel, setPpuAmountLabel] = useState<string>('$15')
@@ -389,12 +391,13 @@ export default function OpportunityDetail() {
                   {/* Pro HOT: placeholder + CTA to Enterprise */}
                   {contentState === 'placeholder' && (
                     <>
-                      <a
-                        href="mailto:enterprise@oppgrid.com"
+                      <button
+                        type="button"
+                        onClick={() => setEnterpriseModalOpen(true)}
                         className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
                       >
                         Contact for Enterprise
-                      </a>
+                      </button>
                       <button
                         type="button"
                         onClick={() => navigate('/discover')}
@@ -419,12 +422,13 @@ export default function OpportunityDetail() {
                           {payPerUnlockMutation.isPending ? 'Starting…' : `Fast pass ${payPrice || ''}`}
                         </button>
                       )}
-                      <a
-                        href="mailto:enterprise@oppgrid.com"
+                      <button
+                        type="button"
+                        onClick={() => setEnterpriseModalOpen(true)}
                         className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
                       >
                         Upgrade to Enterprise
-                      </a>
+                      </button>
                       <button
                         type="button"
                         onClick={() => navigate('/discover')}
@@ -540,6 +544,13 @@ export default function OpportunityDetail() {
           amountLabel={ppuAmountLabel}
           onClose={() => setPpuOpen(false)}
           onConfirmed={confirmPayPerUnlock}
+        />
+      )}
+
+      {enterpriseModalOpen && (
+        <EnterpriseContactModal
+          source="opportunity_detail"
+          onClose={() => setEnterpriseModalOpen(false)}
         />
       )}
     </div>

@@ -28,6 +28,8 @@ class OpportunityEntitlements:
     unlock_price: Optional[int]
     content_state: str  # full | preview | placeholder | locked | pay_per_unlock | fast_pass
     deep_dive_available: bool
+    can_buy_deep_dive: bool  # Pro tier can buy Layer 2 for $49
+    deep_dive_price: Optional[int]  # Price in cents (4900 = $49)
     execution_package_available: bool
 
 
@@ -107,7 +109,34 @@ def get_opportunity_entitlements(
     is_accessible = is_accessible_by_tier or is_unlocked
 
     tier_value = effective_tier.value
-    deep_dive_available = tier_value in ["business", "enterprise"] and is_accessible
+    
+    # Deep Dive (Layer 2) access logic:
+    # - Business/Enterprise: included with tier access
+    # - Pro: available for $49 add-on (check has_deep_dive field)
+    # - Free: not available
+    has_paid_deep_dive = False
+    if user:
+        unlock_record = db.query(UnlockedOpportunity).filter(
+            UnlockedOpportunity.user_id == user.id,
+            UnlockedOpportunity.opportunity_id == opportunity.id,
+        ).first()
+        if unlock_record and unlock_record.has_deep_dive:
+            has_paid_deep_dive = True
+    
+    deep_dive_available = (
+        (tier_value in ["business", "enterprise"] and is_accessible) or
+        has_paid_deep_dive
+    )
+    
+    # Pro tier can buy Deep Dive ($49) if they have base access but not Deep Dive yet
+    can_buy_deep_dive = (
+        is_authenticated and
+        tier_value == "pro" and
+        is_accessible and
+        not has_paid_deep_dive
+    )
+    deep_dive_price = stripe_service.DEEP_DIVE_PRICE if can_buy_deep_dive else None
+    
     execution_package_available = tier_value in ["business", "enterprise"] and is_accessible
 
     # UI/content state guidance (single source of truth):
@@ -147,6 +176,8 @@ def get_opportunity_entitlements(
         unlock_price=unlock_price,
         content_state=content_state,
         deep_dive_available=deep_dive_available,
+        can_buy_deep_dive=can_buy_deep_dive,
+        deep_dive_price=deep_dive_price,
         execution_package_available=execution_package_available,
     )
 

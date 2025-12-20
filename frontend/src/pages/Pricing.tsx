@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import PayPerUnlockModal from '../components/PayPerUnlockModal'
+import EnterpriseContactModal from '../components/EnterpriseContactModal'
 
 const plans = [
   {
@@ -54,42 +56,85 @@ const plans = [
 export default function Pricing() {
   const { token, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
-  const location = useLocation()
-
-  const checkoutStatus = useMemo(() => {
-    const params = new URLSearchParams(location.search)
-    return params.get('checkout') || ''
-  }, [location.search])
 
   const [billingLoading, setBillingLoading] = useState<'pro' | 'business' | 'portal' | null>(null)
   const [billingError, setBillingError] = useState<string | null>(null)
+  const [billingSuccess, setBillingSuccess] = useState<string | null>(null)
+  const [billingSyncing, setBillingSyncing] = useState(false)
+  const [subscriptionInfo, setSubscriptionInfo] = useState<null | {
+    tier: string
+    status: string
+    is_active: boolean
+    period_end: string | null
+  }>(null)
 
-  async function startCheckout(tier: 'pro' | 'business') {
+  const [subOpen, setSubOpen] = useState(false)
+  const [subClientSecret, setSubClientSecret] = useState<string | null>(null)
+  const [subPublishableKey, setSubPublishableKey] = useState<string | null>(null)
+  const [subPlanLabel, setSubPlanLabel] = useState<string>('')
+  const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
+  const [subPendingTier, setSubPendingTier] = useState<'pro' | 'business' | null>(null)
+
+  async function startSubscription(tier: 'pro' | 'business') {
     if (!token) {
       navigate(`/login?next=${encodeURIComponent('/pricing')}`)
       return
     }
     setBillingError(null)
+    setBillingSuccess(null)
     setBillingLoading(tier)
     try {
-      const origin = window.location.origin
-      const successUrl = `${origin}/pricing?checkout=success`
-      const cancelUrl = `${origin}/pricing?checkout=cancel`
+      // 1) Stripe publishable key (public endpoint)
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
 
-      const res = await fetch('/api/v1/subscriptions/checkout', {
+      // 2) Create subscription PaymentIntent (in-app Elements modal)
+      const res = await fetch('/api/v1/subscriptions/subscription-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tier, success_url: successUrl, cancel_url: cancelUrl }),
+        body: JSON.stringify({ tier }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.detail || 'Unable to start checkout')
-      if (!data?.url) throw new Error('Checkout URL missing')
-      window.location.href = String(data.url)
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start subscription')
+      if (!data?.client_secret) throw new Error('Missing payment client secret')
+
+      setSubPublishableKey(String(keyData.publishable_key))
+      setSubClientSecret(String(data.client_secret))
+      setSubPlanLabel(tier === 'pro' ? '$99/mo' : '$499/mo')
+      setSubPendingTier(tier)
+      setSubOpen(true)
     } catch (e) {
-      setBillingError(e instanceof Error ? e.message : 'Unable to start checkout')
+      setBillingError(e instanceof Error ? e.message : 'Unable to start subscription')
     } finally {
       setBillingLoading(null)
     }
+  }
+
+  const expectedTierLabel = useMemo(() => {
+    if (subPendingTier === 'pro') return 'pro'
+    if (subPendingTier === 'business') return 'business'
+    return null
+  }, [subPendingTier])
+
+  async function fetchMySubscription() {
+    if (!token) throw new Error('Not authenticated')
+    const res = await fetch('/api/v1/subscriptions/my-subscription', { headers: { Authorization: `Bearer ${token}` } })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data?.detail || 'Failed to load subscription status')
+    setSubscriptionInfo({
+      tier: String(data?.tier || ''),
+      status: String(data?.status || ''),
+      is_active: Boolean(data?.is_active),
+      period_end: (data?.period_end ? String(data.period_end) : null) as string | null,
+    })
+    return data as any
+  }
+
+  async function confirmSubscriptionPayment(_paymentIntentId: string) {
+    // Start polling for webhook reconciliation
+    setBillingSuccess('Payment confirmed. Syncing your plan…')
+    setBillingSyncing(true)
   }
 
   async function openBillingPortal() {
@@ -98,6 +143,7 @@ export default function Pricing() {
       return
     }
     setBillingError(null)
+    setBillingSuccess(null)
     setBillingLoading('portal')
     try {
       const returnUrl = window.location.href
@@ -117,6 +163,63 @@ export default function Pricing() {
     }
   }
 
+  useEffect(() => {
+    // Keep a snapshot of current subscription for signed-in users.
+    if (!isAuthenticated || !token) return
+    fetchMySubscription().catch(() => {
+      // ignore initial load errors; user might not have billing set up yet
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, token])
+
+  useEffect(() => {
+    if (!billingSyncing) return
+    if (!token) return
+
+    let cancelled = false
+    const startedAt = Date.now()
+    const timeoutMs = 60_000
+    const intervalMs = 3_000
+
+    async function tick() {
+      try {
+        const res = await fetch('/api/v1/subscriptions/my-subscription', { headers: { Authorization: `Bearer ${token}` } })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data?.detail || 'Failed to load subscription status')
+        if (cancelled) return
+        setSubscriptionInfo({
+          tier: String(data?.tier || ''),
+          status: String(data?.status || ''),
+          is_active: Boolean(data?.is_active),
+          period_end: (data?.period_end ? String(data.period_end) : null) as string | null,
+        })
+
+        if (isExpectedTierActive(data, expectedTierLabel)) {
+          setBillingSuccess('Your plan is active.')
+          setBillingSyncing(false)
+          setSubPendingTier(null)
+        } else if (Date.now() - startedAt > timeoutMs) {
+          setBillingSuccess('Payment confirmed. Plan sync is taking longer than usual — please refresh in a moment.')
+          setBillingSyncing(false)
+        }
+      } catch (e) {
+        if (cancelled) return
+        // Keep polling; intermittent failures happen during deploys.
+        if (Date.now() - startedAt > timeoutMs) {
+          setBillingError(e instanceof Error ? e.message : 'Failed to sync subscription status')
+          setBillingSyncing(false)
+        }
+      }
+    }
+
+    const id = window.setInterval(tick, intervalMs)
+    tick()
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [billingSyncing, token, expectedTierLabel])
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="text-center mb-16">
@@ -124,19 +227,38 @@ export default function Pricing() {
         <p className="text-xl text-gray-600">Start for free, upgrade as you grow. Cancel anytime.</p>
       </div>
 
-      {checkoutStatus === 'success' && (
-        <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
-          Payment completed. Your plan will update shortly (it can take a moment for Stripe + webhooks to sync).
-        </div>
-      )}
-      {checkoutStatus === 'cancel' && (
-        <div className="mb-10 max-w-3xl mx-auto bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-4 py-3 text-sm">
-          Checkout canceled. You can restart anytime.
-        </div>
-      )}
       {billingError && (
         <div className="mb-10 max-w-3xl mx-auto bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
           {billingError}
+        </div>
+      )}
+      {billingSuccess && (
+        <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
+          {billingSuccess}
+        </div>
+      )}
+      {subscriptionInfo && (
+        <div className="mb-10 max-w-3xl mx-auto bg-white border border-gray-200 text-gray-700 rounded-xl px-4 py-3 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <span className="font-medium">Current plan:</span>{' '}
+              <span className="font-semibold">{subscriptionInfo.tier || '—'}</span>{' '}
+              <span className="text-gray-500">({subscriptionInfo.status || '—'})</span>
+              {subscriptionInfo.period_end ? (
+                <span className="text-gray-500"> • Renews/ends {new Date(subscriptionInfo.period_end).toLocaleDateString()}</span>
+              ) : null}
+            </div>
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => fetchMySubscription().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh'))}
+                className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                disabled={billingSyncing}
+              >
+                Refresh
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -199,19 +321,24 @@ export default function Pricing() {
             ) : plan.name === 'Builder' ? (
               <button
                 type="button"
-                onClick={() => startCheckout('pro')}
-                disabled={!isAuthenticated || billingLoading !== null}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate(`/login?next=${encodeURIComponent('/pricing?plan=builder')}`)
+                  } else {
+                    startSubscription('pro')
+                  }
+                }}
+                disabled={billingLoading !== null}
                 className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
                   plan.highlighted
                     ? 'bg-white text-gray-900 hover:bg-gray-100'
                     : 'bg-gray-900 text-white hover:bg-gray-800'
                 }`}
-                title={!isAuthenticated ? 'Sign in to subscribe' : 'Subscribe with Stripe'}
               >
                 {billingLoading === 'pro' ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Starting checkout…
+                    Starting payment…
                   </span>
                 ) : (
                   plan.cta
@@ -220,19 +347,24 @@ export default function Pricing() {
             ) : (
               <button
                 type="button"
-                onClick={() => startCheckout('business')}
-                disabled={!isAuthenticated || billingLoading !== null}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate(`/login?next=${encodeURIComponent('/pricing?plan=scaler')}`)
+                  } else {
+                    startSubscription('business')
+                  }
+                }}
+                disabled={billingLoading !== null}
                 className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
                   plan.highlighted
                     ? 'bg-white text-gray-900 hover:bg-gray-100'
                     : 'bg-gray-900 text-white hover:bg-gray-800'
                 }`}
-                title={!isAuthenticated ? 'Sign in to subscribe' : 'Subscribe with Stripe'}
               >
                 {billingLoading === 'business' ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Starting checkout…
+                    Starting payment…
                   </span>
                 ) : (
                   plan.cta
@@ -261,9 +393,13 @@ export default function Pricing() {
         </div>
         <div className="mt-6 text-sm text-gray-600">
           Need earliest access (HOT 0–7 days)?{' '}
-          <a className="text-blue-600 hover:text-blue-700 font-medium" href="mailto:enterprise@oppgrid.com">
+          <button
+            type="button"
+            onClick={() => setEnterpriseModalOpen(true)}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
             Contact sales for Enterprise
-          </a>
+          </button>
           .
         </div>
         {isAuthenticated && (
@@ -295,6 +431,35 @@ export default function Pricing() {
           </div>
         )}
       </div>
+
+      {subOpen && subPublishableKey && subClientSecret && (
+        <PayPerUnlockModal
+          publishableKey={subPublishableKey}
+          clientSecret={subClientSecret}
+          amountLabel={subPlanLabel}
+          contextLabel="Subscription"
+          title={`Subscribe for ${subPlanLabel}`}
+          confirmLabel="Subscribe"
+          footnote="Your plan updates after confirmation (Stripe + webhooks may take a moment)."
+          onClose={() => setSubOpen(false)}
+          onConfirmed={confirmSubscriptionPayment}
+        />
+      )}
+
+      {enterpriseModalOpen && (
+        <EnterpriseContactModal
+          source="pricing"
+          onClose={() => setEnterpriseModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
+
+function isExpectedTierActive(raw: any, expectedTier: string | null) {
+  const tier = String(raw?.tier || '').toLowerCase()
+  const isActive = Boolean(raw?.is_active)
+  if (!expectedTier) return isActive
+  return isActive && tier === expectedTier
+}
+

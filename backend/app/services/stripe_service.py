@@ -114,6 +114,7 @@ class StripeService:
     # Pay-per-unlock pricing
     PAY_PER_UNLOCK_PRICE = 1500  # $15.00 in cents
     FAST_PASS_PRICE = 9900  # $99.00 in cents (Business HOT fast-pass)
+    DEEP_DIVE_PRICE = 4900  # $49.00 in cents (Layer 2 add-on for Pro tier)
 
     # Subscription tier limits (updated per pricing strategy)
     TIER_LIMITS = {
