@@ -11,7 +11,7 @@
 
 - [x] Run Alembic migrations: `cd backend && alembic upgrade head` *(migrations applied, current revision: 20251219_0005)*
 - [x] Verify all tables created: users, subscriptions, opportunities, transactions, success_fee_agreements, milestones, expert_bookings *(all tables present + additional tables)*
-- [ ] Seed initial expert data if needed *(experts table empty - seed when ready)*
+- [x] Seed initial expert data if needed *(8 experts seeded with diverse specializations)*
 - [ ] (Optional) Set `REQUIRE_MIGRATIONS=1` in production to fail startup if DB migrations aren't applied
 
 ## Stripe Configuration
