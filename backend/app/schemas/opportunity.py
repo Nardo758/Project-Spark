@@ -3,6 +3,31 @@ from typing import Optional
 from datetime import datetime
 
 
+class FreshnessBadge(BaseModel):
+    """Freshness badge based on opportunity age"""
+    icon: str
+    label: str
+    color: str
+    tier_required: str
+    description: str
+
+
+class OpportunityAccessInfo(BaseModel):
+    """Access information for an opportunity based on user's tier"""
+    age_days: int
+    freshness_badge: FreshnessBadge
+    is_accessible: bool
+    is_unlocked: bool
+    unlock_method: Optional[str] = None
+    days_until_unlock: int
+    can_pay_to_unlock: bool
+    unlock_price: Optional[int] = None
+    user_tier: Optional[str] = None
+    # Guidance for frontend rendering; derived from entitlements rules.
+    # full | preview | placeholder | locked | pay_per_unlock | fast_pass
+    content_state: Optional[str] = None
+
+
 class OpportunityBase(BaseModel):
     title: str
     description: str
@@ -83,6 +108,11 @@ class Opportunity(OpportunityBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
+    # Optional entitlement info (included when endpoints compute it).
+    is_unlocked: bool = False
+    is_authenticated: bool = False
+    access_info: Optional[OpportunityAccessInfo] = None
+
     class Config:
         from_attributes = True
 
@@ -92,31 +122,6 @@ class OpportunityList(BaseModel):
     total: int
     page: int
     page_size: int
-
-
-class FreshnessBadge(BaseModel):
-    """Freshness badge based on opportunity age"""
-    icon: str
-    label: str
-    color: str
-    tier_required: str
-    description: str
-
-
-class OpportunityAccessInfo(BaseModel):
-    """Access information for an opportunity based on user's tier"""
-    age_days: int
-    freshness_badge: FreshnessBadge
-    is_accessible: bool
-    is_unlocked: bool
-    unlock_method: Optional[str] = None
-    days_until_unlock: int
-    can_pay_to_unlock: bool
-    unlock_price: Optional[int] = None
-    user_tier: Optional[str] = None
-    # Guidance for frontend rendering; derived from entitlements rules.
-    # full | preview | placeholder | locked | pay_per_unlock | fast_pass
-    content_state: Optional[str] = None
 
 
 class OpportunityGatedResponse(Opportunity):

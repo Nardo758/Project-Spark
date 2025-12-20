@@ -52,9 +52,12 @@ def get_opportunities(
     geographic_scope: Optional[str] = None,
     country: Optional[str] = None,
     completion_status: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
     """Get list of opportunities with filtering and pagination"""
+    from app.models.subscription import SubscriptionTier
+
     query = db.query(Opportunity).filter(Opportunity.status == status)
 
     # Filter by category
@@ -88,8 +91,70 @@ def get_opportunities(
     total = query.count()
     opportunities = query.offset(skip).limit(limit).all()
 
+    # Enrich list items with entitlement/access info so cards can render consistent CTAs.
+    enriched: list[dict] = []
+    for opp in opportunities:
+        ent = get_opportunity_entitlements(db, opp, current_user)
+        tier_value = ent.user_tier.value if ent.user_tier else (SubscriptionTier.FREE.value if current_user else None)
+        enriched.append(
+            {
+                "id": opp.id,
+                "title": opp.title,
+                "description": opp.description,
+                "category": opp.category,
+                "subcategory": opp.subcategory,
+                "severity": opp.severity,
+                "market_size": opp.market_size,
+                "is_anonymous": opp.is_anonymous,
+                "geographic_scope": opp.geographic_scope,
+                "country": opp.country,
+                "region": opp.region,
+                "city": opp.city,
+                "validation_count": opp.validation_count,
+                "growth_rate": opp.growth_rate,
+                "author_id": opp.author_id,
+                "status": opp.status,
+                "completion_status": opp.completion_status,
+                "solution_description": opp.solution_description,
+                "solved_at": opp.solved_at,
+                "solved_by": opp.solved_by,
+                "feasibility_score": opp.feasibility_score,
+                "duplicate_of": opp.duplicate_of,
+                "ai_analyzed": opp.ai_analyzed,
+                "ai_analyzed_at": opp.ai_analyzed_at,
+                "ai_opportunity_score": opp.ai_opportunity_score,
+                "ai_summary": opp.ai_summary,
+                "ai_market_size_estimate": opp.ai_market_size_estimate,
+                "ai_competition_level": opp.ai_competition_level,
+                "ai_urgency_level": opp.ai_urgency_level,
+                "ai_target_audience": opp.ai_target_audience,
+                "ai_pain_intensity": opp.ai_pain_intensity,
+                "ai_generated_title": opp.ai_generated_title,
+                "ai_problem_statement": opp.ai_problem_statement,
+                "source_platform": opp.source_platform,
+                "source_url": opp.source_url,
+                "raw_source_data": opp.raw_source_data,
+                "created_at": opp.created_at,
+                "updated_at": opp.updated_at,
+                "is_authenticated": ent.is_authenticated,
+                "is_unlocked": ent.is_unlocked,
+                "access_info": {
+                    "age_days": ent.age_days,
+                    "freshness_badge": ent.freshness_badge,
+                    "is_accessible": ent.is_accessible,
+                    "is_unlocked": ent.is_unlocked,
+                    "unlock_method": ent.unlock_method,
+                    "days_until_unlock": ent.days_until_unlock,
+                    "can_pay_to_unlock": ent.can_pay_to_unlock,
+                    "unlock_price": ent.unlock_price,
+                    "user_tier": tier_value if ent.is_authenticated else None,
+                    "content_state": getattr(ent, "content_state", None),
+                },
+            }
+        )
+
     return OpportunityList(
-        opportunities=opportunities,
+        opportunities=enriched,
         total=total,
         page=skip // limit + 1,
         page_size=limit
@@ -295,9 +360,12 @@ def search_opportunities(
     q: str = Query(..., min_length=1),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
     """Search opportunities by title or description"""
+    from app.models.subscription import SubscriptionTier
+
     search_term = f"%{q}%"
     query = db.query(Opportunity).filter(
         (Opportunity.title.ilike(search_term)) |
@@ -307,8 +375,69 @@ def search_opportunities(
     total = query.count()
     opportunities = query.offset(skip).limit(limit).all()
 
+    enriched: list[dict] = []
+    for opp in opportunities:
+        ent = get_opportunity_entitlements(db, opp, current_user)
+        tier_value = ent.user_tier.value if ent.user_tier else (SubscriptionTier.FREE.value if current_user else None)
+        enriched.append(
+            {
+                "id": opp.id,
+                "title": opp.title,
+                "description": opp.description,
+                "category": opp.category,
+                "subcategory": opp.subcategory,
+                "severity": opp.severity,
+                "market_size": opp.market_size,
+                "is_anonymous": opp.is_anonymous,
+                "geographic_scope": opp.geographic_scope,
+                "country": opp.country,
+                "region": opp.region,
+                "city": opp.city,
+                "validation_count": opp.validation_count,
+                "growth_rate": opp.growth_rate,
+                "author_id": opp.author_id,
+                "status": opp.status,
+                "completion_status": opp.completion_status,
+                "solution_description": opp.solution_description,
+                "solved_at": opp.solved_at,
+                "solved_by": opp.solved_by,
+                "feasibility_score": opp.feasibility_score,
+                "duplicate_of": opp.duplicate_of,
+                "ai_analyzed": opp.ai_analyzed,
+                "ai_analyzed_at": opp.ai_analyzed_at,
+                "ai_opportunity_score": opp.ai_opportunity_score,
+                "ai_summary": opp.ai_summary,
+                "ai_market_size_estimate": opp.ai_market_size_estimate,
+                "ai_competition_level": opp.ai_competition_level,
+                "ai_urgency_level": opp.ai_urgency_level,
+                "ai_target_audience": opp.ai_target_audience,
+                "ai_pain_intensity": opp.ai_pain_intensity,
+                "ai_generated_title": opp.ai_generated_title,
+                "ai_problem_statement": opp.ai_problem_statement,
+                "source_platform": opp.source_platform,
+                "source_url": opp.source_url,
+                "raw_source_data": opp.raw_source_data,
+                "created_at": opp.created_at,
+                "updated_at": opp.updated_at,
+                "is_authenticated": ent.is_authenticated,
+                "is_unlocked": ent.is_unlocked,
+                "access_info": {
+                    "age_days": ent.age_days,
+                    "freshness_badge": ent.freshness_badge,
+                    "is_accessible": ent.is_accessible,
+                    "is_unlocked": ent.is_unlocked,
+                    "unlock_method": ent.unlock_method,
+                    "days_until_unlock": ent.days_until_unlock,
+                    "can_pay_to_unlock": ent.can_pay_to_unlock,
+                    "unlock_price": ent.unlock_price,
+                    "user_tier": tier_value if ent.is_authenticated else None,
+                    "content_state": getattr(ent, "content_state", None),
+                },
+            }
+        )
+
     return OpportunityList(
-        opportunities=opportunities,
+        opportunities=enriched,
         total=total,
         page=skip // limit + 1,
         page_size=limit
