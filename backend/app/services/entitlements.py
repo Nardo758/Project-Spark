@@ -26,6 +26,7 @@ class OpportunityEntitlements:
     days_until_unlock: int
     can_pay_to_unlock: bool
     unlock_price: Optional[int]
+    content_state: str  # full | preview | placeholder | locked | pay_per_unlock | fast_pass
     deep_dive_available: bool
     execution_package_available: bool
 
@@ -89,15 +90,48 @@ def get_opportunity_entitlements(
     is_accessible_by_tier = is_authenticated and stripe_service.can_access_opportunity_by_age(effective_tier, age_days)
     days_until_unlock = stripe_service.get_days_until_unlock(effective_tier, age_days)
 
-    # Pay-per-unlock availability policy (current): Free tier + Archive (91+ days) + not already unlocked
-    can_pay_to_unlock = (age_days >= 91) and (not is_authenticated or effective_tier == SubscriptionTier.FREE) and (not is_unlocked)
-    unlock_price = stripe_service.PAY_PER_UNLOCK_PRICE if can_pay_to_unlock else None
+    # One-time unlock policies:
+    # - Free tier: Archive (91+ days) can pay-per-unlock $15 (Layer 1) if not already unlocked.
+    # - Business tier: HOT (0-7 days) can optionally "fast pass" a single opportunity for $99 if not already unlocked.
+    can_pay_to_unlock = False
+    unlock_price: int | None = None
+
+    if not is_unlocked:
+        if effective_tier == SubscriptionTier.FREE and age_days >= 91:
+            can_pay_to_unlock = True
+            unlock_price = stripe_service.PAY_PER_UNLOCK_PRICE
+        elif is_authenticated and effective_tier == SubscriptionTier.BUSINESS and age_days <= 7:
+            can_pay_to_unlock = True
+            unlock_price = stripe_service.FAST_PASS_PRICE
 
     is_accessible = is_accessible_by_tier or is_unlocked
 
     tier_value = effective_tier.value
     deep_dive_available = tier_value in ["business", "enterprise"] and is_accessible
     execution_package_available = tier_value in ["business", "enterprise"] and is_accessible
+
+    # UI/content state guidance (single source of truth):
+    # This drives "preview vs placeholder vs full" behaviors.
+    if is_accessible:
+        content_state = "full"
+    else:
+        if not is_authenticated:
+            content_state = "locked"
+        elif effective_tier == SubscriptionTier.FREE:
+            content_state = "pay_per_unlock" if age_days >= 91 else "locked"
+        elif effective_tier == SubscriptionTier.PRO:
+            # Pro: 31+ full Layer 1; 8-30 preview; 0-7 placeholder
+            if age_days <= 7:
+                content_state = "placeholder"
+            elif age_days <= 30:
+                content_state = "preview"
+            else:
+                content_state = "locked"
+        elif effective_tier == SubscriptionTier.BUSINESS:
+            # Business: 8+ full Layer 1+2; 0-7 preview + fast-pass / enterprise
+            content_state = "fast_pass" if age_days <= 7 else "locked"
+        else:
+            content_state = "locked"
 
     return OpportunityEntitlements(
         is_authenticated=is_authenticated,
@@ -111,6 +145,7 @@ def get_opportunity_entitlements(
         days_until_unlock=days_until_unlock,
         can_pay_to_unlock=can_pay_to_unlock,
         unlock_price=unlock_price,
+        content_state=content_state,
         deep_dive_available=deep_dive_available,
         execution_package_available=execution_package_available,
     )

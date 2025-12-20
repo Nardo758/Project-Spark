@@ -26,7 +26,16 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 *   **Payments & Transactions:** Integrates Stripe for payment processing, subscription management, and pay-per-unlock features. It includes a `SuccessFeeAgreement` infrastructure with milestone tracking and payout splitting for expert services.
 *   **Opportunity Analysis:** AI generates opportunity scores, market size estimates, competition levels, and business model suggestions, which are displayed on opportunity cards and detailed pages. Content gating is enforced server-side based on user subscription tiers or unlock status.
 
-## Recent Changes (December 19, 2024)
+## Recent Changes (December 20, 2024)
+
+**Landing Page Redesign:**
+- Side-by-side hero layout with text on left, opportunity card preview on right
+- Green gradient background with emerald/purple accents matching original design
+- Stats bar: 176 Validated Ideas, $47B+ Market Opportunity, 6 Global Markets
+- Trending opportunity card with score badge (87), market size, submissions, growth metrics
+- Eight sections: Hero, Social Proof, Three Paths, AI Co-founder, 3-Step Process, Validated Intelligence, Final CTA, Footer
+
+## Previous Changes (December 19, 2024)
 
 **DeepSeek Transformation - Navigation & User Flows:**
 - Updated navigation with conditional display based on auth state:

@@ -14,6 +14,7 @@ type AccessInfo = {
   unlock_price?: number | null
   user_tier?: string | null
   freshness_badge?: { label: string; icon: string; color: string; tier_required: string; description: string }
+  content_state?: string | null
 }
 
 type Opportunity = {
@@ -174,22 +175,6 @@ export default function OpportunityDetail() {
     },
   })
 
-  const unlockMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/v1/subscriptions/unlock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ opportunity_id: opportunityId }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.detail || 'Unable to unlock')
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
-    },
-  })
-
   const opp = opportunityQuery.data
   const access = opp?.access_info
   const saved = watchlistCheckQuery.data?.in_watchlist ?? false
@@ -229,6 +214,7 @@ export default function OpportunityDetail() {
   const canPay = Boolean(access?.can_pay_to_unlock)
   const daysUntil = access?.days_until_unlock ?? 0
   const payPrice = fmtCents(access?.unlock_price ?? null)
+  const contentState = access?.content_state || null
 
   const payPerUnlockMutation = useMutation({
     mutationFn: async () => {
@@ -370,7 +356,9 @@ export default function OpportunityDetail() {
                       Unlocks for your tier in <span className="font-semibold">{daysUntil} days</span>.
                     </div>
                   ) : canPay ? (
-                    <div>Pay-per-unlock available: <span className="font-semibold">{payPrice}</span> (Stripe UI is next).</div>
+                    <div>
+                      One-time unlock available: <span className="font-semibold">{payPrice}</span>.
+                    </div>
                   ) : (
                     <div>Upgrade or unlock to access.</div>
                   )}
@@ -379,14 +367,91 @@ export default function OpportunityDetail() {
 
               {!isAccessible && isAuthenticated && (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => unlockMutation.mutate()}
-                    disabled={unlockMutation.isPending}
-                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
-                  >
-                    {unlockMutation.isPending ? 'Unlocking…' : 'Unlock (subscription)'}
-                  </button>
+                  {/* Pro 8-30: preview + CTA to Business (no unlock) */}
+                  {contentState === 'preview' && (
+                    <>
+                      <Link
+                        to="/pricing"
+                        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+                      >
+                        Upgrade to Business
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/discover')}
+                        className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                      >
+                        No thanks
+                      </button>
+                    </>
+                  )}
+
+                  {/* Pro HOT: placeholder + CTA to Enterprise */}
+                  {contentState === 'placeholder' && (
+                    <>
+                      <a
+                        href="mailto:enterprise@oppgrid.com"
+                        className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+                      >
+                        Contact for Enterprise
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/discover')}
+                        className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                      >
+                        No thanks
+                      </button>
+                    </>
+                  )}
+
+                  {/* Business HOT: preview + fast pass + Enterprise CTA */}
+                  {contentState === 'fast_pass' && (
+                    <>
+                      {canPay && (
+                        <button
+                          type="button"
+                          onClick={() => payPerUnlockMutation.mutate()}
+                          disabled={payPerUnlockMutation.isPending}
+                          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
+                          title="Fast pass single-opportunity access"
+                        >
+                          {payPerUnlockMutation.isPending ? 'Starting…' : `Fast pass ${payPrice || ''}`}
+                        </button>
+                      )}
+                      <a
+                        href="mailto:enterprise@oppgrid.com"
+                        className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                      >
+                        Upgrade to Enterprise
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/discover')}
+                        className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                      >
+                        I’ll wait
+                      </button>
+                    </>
+                  )}
+
+                  {/* Default locked (e.g., Free <91 days): show upgrade + no-thanks */}
+                  {contentState === 'locked' && (
+                    <>
+                      <Link to="/pricing" className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium">
+                        View plans
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/discover')}
+                        className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                      >
+                        No thanks
+                      </button>
+                    </>
+                  )}
+
+                  {/* Free archive pay-per-unlock */}
                   {canPay && (
                     <button
                       type="button"
@@ -398,9 +463,6 @@ export default function OpportunityDetail() {
                       {payPerUnlockMutation.isPending ? 'Starting payment…' : `Pay‑per‑unlock ${payPrice || ''}`}
                     </button>
                   )}
-                  <Link to="/pricing" className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium">
-                    View plans
-                  </Link>
                 </div>
               )}
               {!isAccessible && !isAuthenticated && (
@@ -411,6 +473,13 @@ export default function OpportunityDetail() {
                   >
                     Sign in to unlock
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/discover')}
+                    className="ml-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                  >
+                    No thanks
+                  </button>
                 </div>
               )}
             </div>

@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     AI_ANALYSIS_JOB_ENABLED: bool = True
     AI_ANALYSIS_BATCH_SIZE: int = 20
 
+    # Stripe subscription reconciliation (defense-in-depth for missed webhooks)
+    STRIPE_RECONCILE_JOB_ENABLED: bool = False
+    STRIPE_RECONCILE_JOB_INTERVAL_SECONDS: int = 21600  # 6 hours
+
     # Email Configuration (Resend)
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: Optional[str] = "noreply@yourdomain.com"
