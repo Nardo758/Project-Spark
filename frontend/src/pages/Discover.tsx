@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Search, Clock, Bookmark, Eye, Star, Filter, FileText, ChevronRight } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import { useBrainStore } from '../stores/brainStore'
+import { deepSeekAnalyze, type DeepSeekAnalyzeResponse } from '../services/deepseekApi'
+import { fetchActiveBrain, saveOpportunityToBrain } from '../services/brainApi'
 
 const categories = ['All', 'Healthcare', 'FinTech', 'E-commerce', 'Education', 'Real Estate', 'SaaS', 'Technology']
 const statuses = ['All', 'FRESH', 'OLD']
@@ -92,6 +95,13 @@ export default function Discover() {
   const navigate = useNavigate()
 
   const { token, isAuthenticated } = useAuthStore()
+  const brainName = useBrainStore((s) => s.brainName)
+  const brainFocus = useBrainStore((s) => s.focusTags)
+  const brainEnabled = useBrainStore((s) => s.isEnabled)
+  const hydrateFromServer = useBrainStore((s) => s.hydrateFromServer)
+  const noteLearning = useBrainStore((s) => s.noteLearning)
+  const [brainFilterOn, setBrainFilterOn] = useState(true)
+  const [analysisByOppId, setAnalysisByOppId] = useState<Record<number, DeepSeekAnalyzeResponse>>({})
   const queryClient = useQueryClient()
 
   const opportunitiesQuery = useQuery({
@@ -169,13 +179,17 @@ export default function Discover() {
     return raw.filter((opp) => {
       const matchesSearch = !q || opp.title.toLowerCase().includes(q) || opp.description.toLowerCase().includes(q)
       const matchesCategory = selectedCategory === 'All' || opp.category === selectedCategory
-      const freshness = getFreshnessStatus(opp.created_at)
-      const matchesStatus = selectedStatus === 'All' || 
-        (selectedStatus === 'FRESH' && freshness.isFresh) ||
-        (selectedStatus === 'OLD' && !freshness.isFresh)
-      return matchesSearch && matchesCategory && matchesStatus
+      const status = getStatusFromAge(opp.created_at)
+      const matchesStatus = selectedStatus === 'All' || status === selectedStatus
+      const matchesBrain =
+        !brainEnabled ||
+        !brainName ||
+        !brainFilterOn ||
+        brainFocus.length === 0 ||
+        brainFocus.some((t) => opp.title.toLowerCase().includes(t.toLowerCase()) || opp.category.toLowerCase().includes(t.toLowerCase()))
+      return matchesSearch && matchesCategory && matchesStatus && matchesBrain
     })
-  }, [opportunitiesQuery.data, searchQuery, selectedCategory, selectedStatus])
+  }, [opportunitiesQuery.data, searchQuery, selectedCategory, selectedStatus, brainEnabled, brainName, brainFilterOn, brainFocus])
 
   const discoveryMetrics = useMemo(() => {
     const opps = filteredOpportunities
@@ -203,13 +217,85 @@ export default function Discover() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <span>Discover</span>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-gray-900">AI-Curated Opportunities</span>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover Opportunities</h1>
+        <p className="text-gray-600">Browse validated opportunities with free previews and pay‑as‑you‑go unlocks.</p>
+      </div>
+
+      {!isAuthenticated && (
+        <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="text-sm text-gray-700">
+            You’re viewing the public feed. Create a free account to save opportunities, and unlock premium analysis when you’re ready.
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/services')}
+              className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium"
+            >
+              Explore services
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/pricing')}
+              className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium"
+            >
+              See pricing
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/signup')}
+              className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 font-medium"
+            >
+              Create account
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search opportunities..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          {brainEnabled && brainName && (
+            <button
+              type="button"
+              onClick={() => setBrainFilterOn((v) => !v)}
+              className={`px-4 py-2 rounded-lg border font-medium ${
+                brainFilterOn ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50'
+              }`}
+              title="Toggle Brain AI filtering"
+            >
+              🧠 Filter: {brainFilterOn ? 'ON' : 'OFF'}
+            </button>
+          )}
+          <div className="flex gap-3">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {statuses.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Opportunity Feed</h1>
         </div>
@@ -236,13 +322,18 @@ export default function Discover() {
             <button onClick={() => setSelectedStatus('All')} className="hover:text-blue-900">×</button>
           </span>
         )}
-        {searchQuery && (
-          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
-            "{searchQuery}"
-            <button onClick={() => setSearchQuery('')} className="hover:text-gray-900">×</button>
-          </span>
-        )}
-      </div>
+        {filteredOpportunities.map((opp) => (
+          (() => {
+            const status = getStatusFromAge(opp.created_at)
+            const saved = watchlistByOppId.has(opp.id)
+            const marketSize = opp.market_size || '—'
+            const competition = opp.ai_competition_level || '—'
+            const saving = addToWatchlist.isPending || removeFromWatchlist.isPending
+            const access = accessByOppId.get(opp.id) ?? null
+            const isAccessible = Boolean(access?.is_accessible)
+            const canPay = Boolean(access?.can_pay_to_unlock)
+            const unlockPrice = fmtCents(access?.unlock_price ?? null)
+            const analysis = analysisByOppId[opp.id] ?? null
 
       <div className="grid lg:grid-cols-4 gap-6">
         {/* Main Content - Opportunity Cards */}
@@ -261,25 +352,21 @@ export default function Discover() {
                     className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
-                <div className="flex gap-3">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    {statuses.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{opp.title}</h2>
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="w-4 h-4" />
+                    Market: {marketSize}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Target className="w-4 h-4" />
+                    Competition: {competition}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    Access: {isAccessible ? 'Unlocked' : 'Locked'}
+                  </div>
+                  {analysis && <div className="text-purple-700 font-semibold">🧠 DeepSeek {analysis.match_score}%</div>}
                 </div>
               </div>
             </div>
@@ -298,83 +385,54 @@ export default function Discover() {
             </div>
           )}
 
-          {filteredOpportunities.map((opp) => {
-            const freshness = getFreshnessStatus(opp.created_at)
-            const stars = getStarRating(opp.feasibility_score)
-            const aiMatch = opp.feasibility_score || Math.floor(Math.random() * 20) + 75
-            const views = opp.views || Math.floor(Math.random() * 200) + 50
-            const saves = opp.saves || Math.floor(Math.random() * 50) + 10
-            const growthRate = opp.growth_rate || Math.floor(Math.random() * 30) + 5
-            const marketSize = opp.market_size || '$50M - $100M'
-            const maturity = growthRate > 20 ? 'Growing' : growthRate > 10 ? 'Stable' : 'Mature'
-
-            return (
-              <div 
-                key={opp.id} 
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-md transition-all"
-              >
-                <div className="flex">
-                  {/* Main Content */}
-                  <div className="flex-1 p-6">
-                    {/* Freshness Badge & Rating */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded ${
-                        freshness.isFresh 
-                          ? 'bg-emerald-100 text-emerald-700' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {freshness.label}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-4 h-4 ${
-                              i < Math.floor(stars) 
-                                ? 'text-amber-400 fill-amber-400' 
-                                : i < stars 
-                                  ? 'text-amber-400 fill-amber-200'
-                                  : 'text-gray-300'
-                            }`} 
-                          />
-                        ))}
-                        <span className="text-sm text-gray-500 ml-1">{stars.toFixed(1)}</span>
+                {brainEnabled && brainName && (
+                  <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
+                    <div className="text-xs font-semibold text-purple-800 uppercase tracking-wide">DeepSeek match</div>
+                    {analysis ? (
+                      <>
+                        <div className="mt-1 text-sm text-purple-900 font-semibold">🧠 {analysis.match_score}% Match</div>
+                        <div className="mt-1 text-sm text-purple-800">{analysis.reasoning}</div>
+                        <div className="mt-2 text-xs text-purple-700/80">
+                          ~{analysis.tokens_used.toLocaleString()} tokens • ~${analysis.estimated_cost_usd.toFixed(4)}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <div className="text-sm text-purple-800">Compute a low-cost quick match for this opportunity.</div>
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium text-sm"
+                          onClick={async () => {
+                            if (!token) return navigate(`/login?next=${encodeURIComponent('/discover')}`)
+                            try {
+                              const result = await deepSeekAnalyze(String(token), opp.id)
+                              setAnalysisByOppId((m) => ({ ...m, [opp.id]: result }))
+                              // Refresh server brain totals (tokens/cost)
+                              const b = await fetchActiveBrain(String(token))
+                              hydrateFromServer(b)
+                              noteLearning(`DeepSeek match computed (+${result.match_score}% signal).`, 0)
+                            } catch (e) {
+                              noteLearning(e instanceof Error ? e.message : 'DeepSeek analysis failed', 0)
+                            }
+                          }}
+                        >
+                          Compute match
+                        </button>
                       </div>
-                    </div>
+                    )}
+                  </div>
+                )}
 
-                    {/* Title */}
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">{opp.title}</h2>
-
-                    {/* Description */}
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{opp.description}</p>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                        #{opp.category.toLowerCase().replace(/\s/g, '')}
-                      </span>
-                      {opp.tags?.slice(0, 3).map((tag, i) => (
-                        <span key={i} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Metrics */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        {views} views
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Bookmark className="w-4 h-4" />
-                        {saves} saves
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {freshness.daysAgo === 0 ? 'Today' : `${freshness.daysAgo}d ago`}
-                      </span>
-                    </div>
+                <div className="mt-5 grid md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Preview (free)</div>
+                    <ul className="mt-2 text-sm text-gray-700 space-y-1">
+                      <li>• Problem statement</li>
+                      <li>• Market size estimate</li>
+                      <li>• Growth signal snapshot</li>
+                      <li>• Geographic breakdown</li>
+                      <li>• Validation methodology</li>
+                    </ul>
                   </div>
 
                   {/* Right Sidebar */}
@@ -432,41 +490,88 @@ export default function Discover() {
                         </button>
                       )}
                     </div>
+                    {brainEnabled && brainName && (
+                      <div className="mt-3 text-xs text-gray-600">
+                        <span className="font-semibold text-gray-700">DeepSeek brain insights:</span>{' '}
+                        Fits your focus on {brainFocus.slice(0, 2).join(', ') || 'your goals'}.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            )
-          })}
+              <div className="flex flex-col items-end gap-3">
+                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg">
+                  <Target className="w-5 h-5 text-green-600" />
+                  <span className="text-lg font-bold text-green-700">
+                    {Math.round((opp.feasibility_score ?? 0) as number)}% Match
+                  </span>
+                </div>
+                <div className="flex gap-2 flex-wrap justify-end">
+                  <button
+                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+                    type="button"
+                    onClick={() => navigate(`/opportunity/${opp.id}`)}
+                  >
+                    View Details
+                  </button>
+                  {!isAccessible && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = `/opportunity/${opp.id}?unlock=1`
+                        if (!isAuthenticated) {
+                          navigate(`/login?next=${encodeURIComponent(next)}`)
+                          return
+                        }
+                        if (canPay) {
+                          navigate(next)
+                        } else {
+                          navigate('/pricing')
+                        }
+                      }}
+                      className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                      title={canPay ? 'Unlock full analysis' : 'View plans to unlock'}
+                    >
+                      {canPay && unlockPrice ? `Unlock ${unlockPrice}` : 'Unlock'}
+                    </button>
+                  )}
 
-          {filteredOpportunities.length === 0 && !opportunitiesQuery.isLoading && (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <p className="text-gray-500">No opportunities found matching your criteria.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Right Sidebar - Discovery Metrics */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
-              Your Discovery Metrics
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Ideas Viewed</span>
-                <span className="text-lg font-bold text-gray-900">{discoveryMetrics.viewed}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Avg. Match Score</span>
-                <span className="text-lg font-bold text-purple-600">{discoveryMetrics.avgMatch}%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Top Interest</span>
-                <span className="text-sm font-semibold text-gray-900">{discoveryMetrics.topInterest}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Avg. Freshness</span>
-                <span className="text-sm font-semibold text-gray-900">{discoveryMetrics.avgFreshness} days</span>
+                  {brainEnabled && isAuthenticated && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!token) return
+                        try {
+                          const b = await saveOpportunityToBrain(String(token), opp.id)
+                          hydrateFromServer(b)
+                          noteLearning('Saved to DeepSeek Brain.', 0)
+                        } catch (e) {
+                          noteLearning(e instanceof Error ? e.message : 'Failed to save to brain', 0)
+                        }
+                      }}
+                      className="px-4 py-2 border border-purple-200 rounded-lg bg-purple-50 hover:bg-purple-100 font-medium text-purple-800"
+                      title="Save to DeepSeek Brain"
+                    >
+                      Save to Brain
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!isAuthenticated || saving}
+                    onClick={() => {
+                      if (!isAuthenticated) return
+                      if (saved) removeFromWatchlist.mutate(opp.id)
+                      else addToWatchlist.mutate(opp.id)
+                    }}
+                    className={`px-3 py-2 rounded-lg border font-medium flex items-center gap-2 ${
+                      saved ? 'bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100' : 'bg-white border-gray-200 text-gray-800 hover:bg-gray-50'
+                    } ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title={!isAuthenticated ? 'Sign in to save opportunities' : saved ? 'Remove from saved' : 'Save for later'}
+                  >
+                    <Bookmark className="w-4 h-4" />
+                    {saved ? 'Saved' : 'Save'}
+                  </button>
+                </div>
               </div>
             </div>
             <div className="mt-6 pt-4 border-t border-gray-100">

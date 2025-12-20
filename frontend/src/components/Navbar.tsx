@@ -1,16 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { 
-  Menu, 
-  X, 
-  ChevronDown, 
-  ChevronRight,
-  Search,
-  Hammer,
-  Settings,
-  FolderOpen
-} from 'lucide-react'
+import { Menu, X, ChevronDown, Brain, Compass, Lightbulb, Users, DollarSign, Wrench, BookOpen, Bookmark } from 'lucide-react'
+import { useBrainStore } from '../stores/brainStore'
+import { useQuery } from '@tanstack/react-query'
+import { fetchActiveBrain } from '../services/brainApi'
 
 const guestNavItems = [
   { name: 'Discover', path: '/discover' },
@@ -72,6 +66,27 @@ export default function Navbar() {
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
   const { isAuthenticated, user, logout } = useAuthStore()
   const location = useLocation()
+  const brainName = useBrainStore((s) => s.brainName)
+  const brainScore = useBrainStore((s) => s.matchScore)
+  const brainTokens = useBrainStore((s) => s.tokensUsed)
+  const brainCost = useBrainStore((s) => s.estimatedCostUsd)
+  const brainEnabled = useBrainStore((s) => s.isEnabled)
+  const hydrateFromServer = useBrainStore((s) => s.hydrateFromServer)
+  const noteLearning = useBrainStore((s) => s.noteLearning)
+  const token = useAuthStore((s) => s.token)
+
+  const brainQuery = useQuery({
+    queryKey: ['brain-active'],
+    enabled: Boolean(isAuthenticated && token),
+    queryFn: async () => fetchActiveBrain(String(token)),
+    refetchInterval: 30_000,
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (!brainQuery.data) return
+    hydrateFromServer(brainQuery.data)
+  }, [brainQuery.data, hydrateFromServer])
 
   const navItems = isAuthenticated ? authNavItems : guestNavItems
 
@@ -176,16 +191,34 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-                  <FolderOpen className="w-4 h-4 text-gray-600" />
-                  <select 
-                    className="text-sm font-medium text-gray-700 bg-transparent border-none focus:outline-none cursor-pointer"
-                    defaultValue="default"
-                  >
-                    <option value="default">My First Project</option>
-                    <option value="new">+ New Project</option>
-                  </select>
-                </div>
+                {brainEnabled && (
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/brain"
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-full"
+                      title="DeepSeek Brain: match score + tokens + cost"
+                    >
+                      <Brain className="w-4 h-4" />
+                      <span className="max-w-[160px] truncate">{brainName ? `${brainName}` : 'DeepSeek Brain'}</span>
+                      {brainName ? (
+                        <span className="text-purple-700">{brainScore}%</span>
+                      ) : null}
+                      {brainName ? (
+                        <span className="text-xs text-purple-700/80">{brainTokens.toLocaleString()} tokens • ~${brainCost.toFixed(2)}</span>
+                      ) : null}
+                    </Link>
+                    {brainName && (
+                      <button
+                        type="button"
+                        onClick={() => noteLearning('Quick training is server-driven (coming next).', 0)}
+                        className="px-3 py-1.5 text-sm font-medium text-gray-800 border border-gray-200 rounded-full hover:bg-gray-50"
+                        title="Quick Train"
+                      >
+                        Quick train
+                      </button>
+                    )}
+                  </div>
+                )}
                 <button
                   onClick={logout}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"

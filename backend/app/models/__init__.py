@@ -20,6 +20,7 @@ from .partner import PartnerOutreach, PartnerOutreachStatus
 from .tracking import TrackingEvent
 from .audit_log import AuditLog
 from .job_run import JobRun
+from .brain import Brain
 
 __all__ = [
     "User",
@@ -57,4 +58,5 @@ __all__ = [
     "TrackingEvent",
     "AuditLog",
     "JobRun",
+    "Brain",
 ]

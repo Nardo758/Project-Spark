@@ -53,6 +53,12 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: Optional[str] = None
     GITHUB_CLIENT_SECRET: Optional[str] = None
 
+    # DeepSeek (OpenAI-compatible)
+    DEEPSEEK_API_KEY: Optional[str] = None
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    DEEPSEEK_MODEL: str = "deepseek-chat"
+    DEEPSEEK_USD_PER_1K_TOKENS: str = "0.001"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
