@@ -17,6 +17,8 @@ type BrainState = {
   focusTags: string[]
   matchScore: number
   knowledgeItems: number
+  tokensUsed: number
+  estimatedCostUsd: number
   lastTrainedAt: number | null
   lastLearningMessage: string | null
   timeline: BrainEvent[]
@@ -31,6 +33,13 @@ type BrainState = {
 
 function clamp01To100(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)))
+}
+
+function estimateCostUsd(tokens: number) {
+  // UI-only estimate: DeepSeek is very cost-effective; this is intentionally conservative.
+  // Adjust once backend returns real token/cost usage.
+  const usdPer1kTokens = 0.001
+  return (tokens / 1000) * usdPer1kTokens
 }
 
 function makeId() {
@@ -50,6 +59,8 @@ export const useBrainStore = create<BrainState>()(
       focusTags: [],
       matchScore: 0,
       knowledgeItems: 0,
+      tokensUsed: 0,
+      estimatedCostUsd: 0,
       lastTrainedAt: null,
       lastLearningMessage: null,
       timeline: [],
@@ -58,13 +69,16 @@ export const useBrainStore = create<BrainState>()(
 
       createBrain: ({ brainName, focusTags }) => {
         const base = 42
+        const tokens = 1200
         set((s) => ({
           brainName,
           focusTags,
           matchScore: clamp01To100(Math.max(s.matchScore, base)),
           knowledgeItems: Math.max(s.knowledgeItems, 0),
+          tokensUsed: s.tokensUsed + tokens,
+          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
           lastTrainedAt: Date.now(),
-          lastLearningMessage: 'Your Brain AI is live — it will learn from every interaction.',
+          lastLearningMessage: 'DeepSeek Brain is live — it will learn from every interaction.',
           timeline: pushTimeline(s, {
             type: 'create_brain',
             deltaScore: Math.max(0, base - s.matchScore),
@@ -75,19 +89,25 @@ export const useBrainStore = create<BrainState>()(
 
       quickTrain: () => {
         const inc = 3
+        const tokens = 450
         set((s) => ({
           matchScore: clamp01To100(s.matchScore + inc),
+          tokensUsed: s.tokensUsed + tokens,
+          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
           lastTrainedAt: Date.now(),
-          lastLearningMessage: `+${inc}%: Completed quick training`,
+          lastLearningMessage: `+${inc}%: DeepSeek updated your brain (quick train)`,
           timeline: pushTimeline(s, { type: 'answer_question', deltaScore: inc, message: 'Quick training session completed' }),
         }))
       },
 
       saveOpportunity: ({ opportunityId, category, title }) => {
         const inc = 5
+        const tokens = 800
         set((s) => ({
           matchScore: clamp01To100(s.matchScore + inc),
           knowledgeItems: s.knowledgeItems + 1,
+          tokensUsed: s.tokensUsed + tokens,
+          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
           lastTrainedAt: Date.now(),
           lastLearningMessage: `+${inc}%: Saved ${category ? category + ' ' : ''}opportunity${title ? ` (“${title}”)` : ''}`,
           timeline: pushTimeline(s, {
@@ -100,10 +120,13 @@ export const useBrainStore = create<BrainState>()(
 
       answerDailyQuestion: ({ topic }) => {
         const inc = 4
+        const tokens = 650
         set((s) => ({
           matchScore: clamp01To100(s.matchScore + inc),
+          tokensUsed: s.tokensUsed + tokens,
+          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
           lastTrainedAt: Date.now(),
-          lastLearningMessage: `+${inc}%: Deepened understanding of ${topic}`,
+          lastLearningMessage: `+${inc}%: DeepSeek learned more about ${topic}`,
           timeline: pushTimeline(s, { type: 'answer_question', deltaScore: inc, message: `Answered daily question: ${topic}` }),
         }))
       },
@@ -118,6 +141,8 @@ export const useBrainStore = create<BrainState>()(
         focusTags: s.focusTags,
         matchScore: s.matchScore,
         knowledgeItems: s.knowledgeItems,
+        tokensUsed: s.tokensUsed,
+        estimatedCostUsd: s.estimatedCostUsd,
         lastTrainedAt: s.lastTrainedAt,
         timeline: s.timeline,
       }),

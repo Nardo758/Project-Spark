@@ -307,9 +307,15 @@ export default function Discover() {
             const isAccessible = Boolean(access?.is_accessible)
             const canPay = Boolean(access?.can_pay_to_unlock)
             const unlockPrice = fmtCents(access?.unlock_price ?? null)
-            const brainMatch = brainEnabled && brainName
-              ? Math.max(0, Math.min(100, Math.round((brainScore * 0.5) + ((opp.feasibility_score ?? 0) * 0.5))))
-              : null
+            const brainMatch =
+              brainEnabled && brainName
+                ? Math.max(0, Math.min(100, Math.round((brainScore * 0.5) + ((opp.feasibility_score ?? 0) * 0.5))))
+                : null
+            const deepSeekReason =
+              brainEnabled && brainName
+                ? `Matches your brain focus (${brainFocus.slice(0, 2).join(', ') || 'your goals'}) and similar saved knowledge.`
+                : null
+            const deepSeekTokens = brainEnabled && brainName ? 220 : null
 
             return (
           <div key={opp.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:border-gray-300 hover:shadow-md transition-all">
@@ -347,9 +353,20 @@ export default function Discover() {
                     Access: {isAccessible ? 'Unlocked' : 'Locked'}
                   </div>
                   {brainMatch !== null && (
-                    <div className="text-purple-700 font-semibold">🧠 {brainMatch}%</div>
+                    <div className="text-purple-700 font-semibold">🧠 DeepSeek {brainMatch}%</div>
                   )}
                 </div>
+
+                {brainMatch !== null && deepSeekReason && (
+                  <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
+                    <div className="text-xs font-semibold text-purple-800 uppercase tracking-wide">DeepSeek match</div>
+                    <div className="mt-1 text-sm text-purple-900 font-semibold">🧠 {brainMatch}% Match</div>
+                    <div className="mt-1 text-sm text-purple-800">{deepSeekReason}</div>
+                    {deepSeekTokens !== null && (
+                      <div className="mt-2 text-xs text-purple-700/80">~{deepSeekTokens} tokens (quick match)</div>
+                    )}
+                  </div>
+                )}
 
                 <div className="mt-5 grid md:grid-cols-2 gap-4">
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
@@ -376,7 +393,7 @@ export default function Discover() {
                     </div>
                     {brainEnabled && brainName && (
                       <div className="mt-3 text-xs text-gray-600">
-                        <span className="font-semibold text-gray-700">Brain insights:</span>{' '}
+                        <span className="font-semibold text-gray-700">DeepSeek brain insights:</span>{' '}
                         Fits your focus on {brainFocus.slice(0, 2).join(', ') || 'your goals'}.
                       </div>
                     )}
@@ -425,7 +442,7 @@ export default function Discover() {
                       type="button"
                       onClick={() => saveToBrain({ opportunityId: opp.id, category: opp.category, title: opp.title })}
                       className="px-4 py-2 border border-purple-200 rounded-lg bg-purple-50 hover:bg-purple-100 font-medium text-purple-800"
-                      title="Save to My Brain"
+                      title="Save to DeepSeek Brain"
                     >
                       Save to Brain
                     </button>

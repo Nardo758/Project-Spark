@@ -41,6 +41,8 @@ export default function Navbar() {
   const location = useLocation()
   const brainName = useBrainStore((s) => s.brainName)
   const brainScore = useBrainStore((s) => s.matchScore)
+  const brainTokens = useBrainStore((s) => s.tokensUsed)
+  const brainCost = useBrainStore((s) => s.estimatedCostUsd)
   const brainEnabled = useBrainStore((s) => s.isEnabled)
   const quickTrain = useBrainStore((s) => s.quickTrain)
 
@@ -113,11 +115,16 @@ export default function Navbar() {
                     <Link
                       to="/brain"
                       className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-full"
-                      title="Your Brain AI learns from every interaction"
+                      title="DeepSeek Brain: match score + tokens + cost"
                     >
                       <Brain className="w-4 h-4" />
-                      <span className="max-w-[160px] truncate">{brainName || 'Untrained Brain'}</span>
-                      <span className="text-purple-700">{brainName ? `${brainScore}%` : ''}</span>
+                      <span className="max-w-[160px] truncate">{brainName ? `${brainName}` : 'DeepSeek Brain'}</span>
+                      {brainName ? (
+                        <span className="text-purple-700">{brainScore}%</span>
+                      ) : null}
+                      {brainName ? (
+                        <span className="text-xs text-purple-700/80">{brainTokens.toLocaleString()} tokens • ~${brainCost.toFixed(2)}</span>
+                      ) : null}
                     </Link>
                     {brainName && (
                       <button

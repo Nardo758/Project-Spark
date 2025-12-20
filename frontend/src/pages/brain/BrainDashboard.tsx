@@ -22,6 +22,8 @@ export default function BrainDashboard() {
   const focusTags = useBrainStore((s) => s.focusTags)
   const matchScore = useBrainStore((s) => s.matchScore)
   const knowledgeItems = useBrainStore((s) => s.knowledgeItems)
+  const tokensUsed = useBrainStore((s) => s.tokensUsed)
+  const estimatedCostUsd = useBrainStore((s) => s.estimatedCostUsd)
   const lastTrainedAt = useBrainStore((s) => s.lastTrainedAt)
   const createBrain = useBrainStore((s) => s.createBrain)
   const quickTrain = useBrainStore((s) => s.quickTrain)
@@ -47,8 +49,12 @@ export default function BrainDashboard() {
             <Brain className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{brainName ? `🧠 ${brainName}` : 'Your Brain AI'}</h1>
-            <p className="text-gray-600">{brainName ? `AI Match: ${matchScore}% • Knowledge: ${knowledgeItems} items` : 'Create your first business brain to start learning.'}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{brainName ? `🧠 ${brainName}` : 'DeepSeek Brain'}</h1>
+            <p className="text-gray-600">
+              {brainName
+                ? `DeepSeek Match: ${matchScore}% • Knowledge: ${knowledgeItems} items • ${tokensUsed.toLocaleString()} tokens • ~${estimatedCostUsd.toFixed(2)}`
+                : 'Create your DeepSeek Brain to start learning from your actions and uploads.'}
+            </p>
           </div>
         </div>
         <div className="mt-4 md:mt-0 flex gap-3">
@@ -69,7 +75,7 @@ export default function BrainDashboard() {
               onClick={() => setCreating(true)}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
             >
-              Create My Brain AI
+              Create DeepSeek Brain
             </button>
           )}
         </div>
@@ -283,7 +289,7 @@ export default function BrainDashboard() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="Sustainability Tech"
                 />
-                <div className="mt-2 text-xs text-gray-500">Tip: the more you teach your Brain AI now, the smarter it becomes faster.</div>
+                <div className="mt-2 text-xs text-gray-500">Tip: DeepSeek supports large context; the more you teach your brain now, the smarter it becomes faster.</div>
               </div>
               <div className="flex justify-end gap-2">
                 <button

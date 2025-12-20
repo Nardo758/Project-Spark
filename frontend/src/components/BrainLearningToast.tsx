@@ -30,7 +30,7 @@ export default function BrainLearningToast() {
           <Brain className="w-5 h-5 text-purple-700" />
         </div>
         <div className="text-sm text-gray-800">
-          <div className="font-semibold text-gray-900">Brain AI learned</div>
+          <div className="font-semibold text-gray-900">DeepSeek Brain updated</div>
           <div className="mt-0.5">{message}</div>
         </div>
       </div>
