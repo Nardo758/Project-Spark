@@ -21,6 +21,8 @@ from .tracking import TrackingEvent
 from .audit_log import AuditLog
 from .job_run import JobRun
 from .lead import Lead, LeadStatus, LeadSource
+from .saved_search import SavedSearch
+from .lead_purchase import LeadPurchase
 
 __all__ = [
     "User",
@@ -61,4 +63,6 @@ __all__ = [
     "Lead",
     "LeadStatus",
     "LeadSource",
+    "SavedSearch",
+    "LeadPurchase",
 ]
