@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
@@ -59,11 +59,19 @@ export default function Pricing() {
   const [billingLoading, setBillingLoading] = useState<'pro' | 'business' | 'portal' | null>(null)
   const [billingError, setBillingError] = useState<string | null>(null)
   const [billingSuccess, setBillingSuccess] = useState<string | null>(null)
+  const [billingSyncing, setBillingSyncing] = useState(false)
+  const [subscriptionInfo, setSubscriptionInfo] = useState<null | {
+    tier: string
+    status: string
+    is_active: boolean
+    period_end: string | null
+  }>(null)
 
   const [subOpen, setSubOpen] = useState(false)
   const [subClientSecret, setSubClientSecret] = useState<string | null>(null)
   const [subPublishableKey, setSubPublishableKey] = useState<string | null>(null)
   const [subPlanLabel, setSubPlanLabel] = useState<string>('')
+  const [subPendingTier, setSubPendingTier] = useState<'pro' | 'business' | null>(null)
 
   async function startSubscription(tier: 'pro' | 'business') {
     if (!token) {
@@ -92,6 +100,7 @@ export default function Pricing() {
       setSubPublishableKey(String(keyData.publishable_key))
       setSubClientSecret(String(data.client_secret))
       setSubPlanLabel(tier === 'pro' ? '$99/mo' : '$499/mo')
+      setSubPendingTier(tier)
       setSubOpen(true)
     } catch (e) {
       setBillingError(e instanceof Error ? e.message : 'Unable to start subscription')
@@ -100,8 +109,30 @@ export default function Pricing() {
     }
   }
 
+  const expectedTierLabel = useMemo(() => {
+    if (subPendingTier === 'pro') return 'pro'
+    if (subPendingTier === 'business') return 'business'
+    return null
+  }, [subPendingTier])
+
+  async function fetchMySubscription() {
+    if (!token) throw new Error('Not authenticated')
+    const res = await fetch('/api/v1/subscriptions/my-subscription', { headers: { Authorization: `Bearer ${token}` } })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data?.detail || 'Failed to load subscription status')
+    setSubscriptionInfo({
+      tier: String(data?.tier || ''),
+      status: String(data?.status || ''),
+      is_active: Boolean(data?.is_active),
+      period_end: (data?.period_end ? String(data.period_end) : null) as string | null,
+    })
+    return data as any
+  }
+
   async function confirmSubscriptionPayment(_paymentIntentId: string) {
-    setBillingSuccess('Payment confirmed. Your plan will update shortly (Stripe + webhooks can take a moment).')
+    // Start polling for webhook reconciliation
+    setBillingSuccess('Payment confirmed. Syncing your plan…')
+    setBillingSyncing(true)
   }
 
   async function openBillingPortal() {
@@ -130,6 +161,63 @@ export default function Pricing() {
     }
   }
 
+  useEffect(() => {
+    // Keep a snapshot of current subscription for signed-in users.
+    if (!isAuthenticated || !token) return
+    fetchMySubscription().catch(() => {
+      // ignore initial load errors; user might not have billing set up yet
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, token])
+
+  useEffect(() => {
+    if (!billingSyncing) return
+    if (!token) return
+
+    let cancelled = false
+    const startedAt = Date.now()
+    const timeoutMs = 60_000
+    const intervalMs = 3_000
+
+    async function tick() {
+      try {
+        const res = await fetch('/api/v1/subscriptions/my-subscription', { headers: { Authorization: `Bearer ${token}` } })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data?.detail || 'Failed to load subscription status')
+        if (cancelled) return
+        setSubscriptionInfo({
+          tier: String(data?.tier || ''),
+          status: String(data?.status || ''),
+          is_active: Boolean(data?.is_active),
+          period_end: (data?.period_end ? String(data.period_end) : null) as string | null,
+        })
+
+        if (isExpectedTierActive(data, expectedTierLabel)) {
+          setBillingSuccess('Your plan is active.')
+          setBillingSyncing(false)
+          setSubPendingTier(null)
+        } else if (Date.now() - startedAt > timeoutMs) {
+          setBillingSuccess('Payment confirmed. Plan sync is taking longer than usual — please refresh in a moment.')
+          setBillingSyncing(false)
+        }
+      } catch (e) {
+        if (cancelled) return
+        // Keep polling; intermittent failures happen during deploys.
+        if (Date.now() - startedAt > timeoutMs) {
+          setBillingError(e instanceof Error ? e.message : 'Failed to sync subscription status')
+          setBillingSyncing(false)
+        }
+      }
+    }
+
+    const id = window.setInterval(tick, intervalMs)
+    tick()
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [billingSyncing, token, expectedTierLabel])
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="text-center mb-16">
@@ -145,6 +233,30 @@ export default function Pricing() {
       {billingSuccess && (
         <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
           {billingSuccess}
+        </div>
+      )}
+      {subscriptionInfo && (
+        <div className="mb-10 max-w-3xl mx-auto bg-white border border-gray-200 text-gray-700 rounded-xl px-4 py-3 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <span className="font-medium">Current plan:</span>{' '}
+              <span className="font-semibold">{subscriptionInfo.tier || '—'}</span>{' '}
+              <span className="text-gray-500">({subscriptionInfo.status || '—'})</span>
+              {subscriptionInfo.period_end ? (
+                <span className="text-gray-500"> • Renews/ends {new Date(subscriptionInfo.period_end).toLocaleDateString()}</span>
+              ) : null}
+            </div>
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => fetchMySubscription().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh'))}
+                className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                disabled={billingSyncing}
+              >
+                Refresh
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -320,3 +432,11 @@ export default function Pricing() {
     </div>
   )
 }
+
+function isExpectedTierActive(raw: any, expectedTier: string | null) {
+  const tier = String(raw?.tier || '').toLowerCase()
+  const isActive = Boolean(raw?.is_active)
+  if (!expectedTier) return isActive
+  return isActive && tier === expectedTier
+}
+
