@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { Menu, X, ChevronDown, Brain, Compass, Lightbulb, Users, DollarSign, Wrench, BookOpen, Bookmark } from 'lucide-react'
 import { useBrainStore } from '../stores/brainStore'
+import { useQuery } from '@tanstack/react-query'
+import { fetchActiveBrain } from '../services/brainApi'
 
 const guestNavItems = [
   { name: 'Home', path: '/' },
@@ -44,7 +46,22 @@ export default function Navbar() {
   const brainTokens = useBrainStore((s) => s.tokensUsed)
   const brainCost = useBrainStore((s) => s.estimatedCostUsd)
   const brainEnabled = useBrainStore((s) => s.isEnabled)
-  const quickTrain = useBrainStore((s) => s.quickTrain)
+  const hydrateFromServer = useBrainStore((s) => s.hydrateFromServer)
+  const noteLearning = useBrainStore((s) => s.noteLearning)
+  const token = useAuthStore((s) => s.token)
+
+  const brainQuery = useQuery({
+    queryKey: ['brain-active'],
+    enabled: Boolean(isAuthenticated && token),
+    queryFn: async () => fetchActiveBrain(String(token)),
+    refetchInterval: 30_000,
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (!brainQuery.data) return
+    hydrateFromServer(brainQuery.data)
+  }, [brainQuery.data, hydrateFromServer])
 
   const navItems = isAuthenticated ? authNavItems : guestNavItems
 
@@ -129,7 +146,7 @@ export default function Navbar() {
                     {brainName && (
                       <button
                         type="button"
-                        onClick={quickTrain}
+                        onClick={() => noteLearning('Quick training is server-driven (coming next).', 0)}
                         className="px-3 py-1.5 text-sm font-medium text-gray-800 border border-gray-200 rounded-full hover:bg-gray-50"
                         title="Quick Train"
                       >

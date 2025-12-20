@@ -5,6 +5,8 @@ import {
   TrendingUp, Clock, Star, ChevronRight, Plus
 } from 'lucide-react'
 import { useBrainStore } from '../../stores/brainStore'
+import { useAuthStore } from '../../stores/authStore'
+import { upsertBrain } from '../../services/brainApi'
 
 const knowledgeSources = [
   { name: 'Business_plan.pdf', size: '2.1MB', date: 'Feb 10', type: 'pdf' },
@@ -25,9 +27,9 @@ export default function BrainDashboard() {
   const tokensUsed = useBrainStore((s) => s.tokensUsed)
   const estimatedCostUsd = useBrainStore((s) => s.estimatedCostUsd)
   const lastTrainedAt = useBrainStore((s) => s.lastTrainedAt)
-  const createBrain = useBrainStore((s) => s.createBrain)
-  const quickTrain = useBrainStore((s) => s.quickTrain)
-  const answerDailyQuestion = useBrainStore((s) => s.answerDailyQuestion)
+  const hydrateFromServer = useBrainStore((s) => s.hydrateFromServer)
+  const noteLearning = useBrainStore((s) => s.noteLearning)
+  const { token } = useAuthStore()
 
   const [creating, setCreating] = useState(false)
   const [draftName, setDraftName] = useState('EcoPack Ventures')
@@ -64,7 +66,7 @@ export default function BrainDashboard() {
           {brainName ? (
             <button
               type="button"
-              onClick={quickTrain}
+              onClick={() => noteLearning('Quick training is server-driven (coming next).', 0)}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
             >
               Quick Train
@@ -104,7 +106,7 @@ export default function BrainDashboard() {
           <div className="mt-4 md:mt-0">
             <button
               type="button"
-              onClick={() => answerDailyQuestion({ topic: 'Your primary goal' })}
+              onClick={() => noteLearning('Daily training is server-driven (coming next).', 0)}
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center gap-2"
             >
               <Zap className="w-5 h-5" />
@@ -304,8 +306,16 @@ export default function BrainDashboard() {
                   onClick={() => {
                     const name = draftName.trim() || 'My Brain'
                     const focus = draftFocus.trim()
-                    createBrain({ brainName: name, focusTags: focus ? [focus] : [] })
-                    setCreating(false)
+                    if (!token) return
+                    upsertBrain(String(token), { name, focus_tags: focus ? [focus] : [] })
+                      .then((b) => {
+                        hydrateFromServer(b)
+                        noteLearning('DeepSeek Brain created.', 0)
+                        setCreating(false)
+                      })
+                      .catch((e) => {
+                        noteLearning(e instanceof Error ? e.message : 'Failed to create brain', 0)
+                      })
                   }}
                   className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium"
                 >

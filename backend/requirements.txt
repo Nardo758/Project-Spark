@@ -17,3 +17,4 @@ httpx==0.27.0
 authlib==1.3.0
 stripe==8.5.0
 anthropic==0.75.0
+alembic==1.14.0

@@ -4,6 +4,8 @@ import { CheckCircle2, Lock, Search, Target, Clock, TrendingUp, Bookmark } from 
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useBrainStore } from '../stores/brainStore'
+import { deepSeekAnalyze, type DeepSeekAnalyzeResponse } from '../services/deepseekApi'
+import { fetchActiveBrain, saveOpportunityToBrain } from '../services/brainApi'
 
 const categories = ['All', 'Healthcare', 'FinTech', 'E-commerce', 'Education', 'Real Estate', 'SaaS']
 const statuses = ['All', 'HOT', 'FRESH', 'VALIDATED', 'ARCHIVE']
@@ -76,11 +78,12 @@ export default function Discover() {
 
   const { token, isAuthenticated } = useAuthStore()
   const brainName = useBrainStore((s) => s.brainName)
-  const brainScore = useBrainStore((s) => s.matchScore)
   const brainFocus = useBrainStore((s) => s.focusTags)
   const brainEnabled = useBrainStore((s) => s.isEnabled)
-  const saveToBrain = useBrainStore((s) => s.saveOpportunity)
+  const hydrateFromServer = useBrainStore((s) => s.hydrateFromServer)
+  const noteLearning = useBrainStore((s) => s.noteLearning)
   const [brainFilterOn, setBrainFilterOn] = useState(true)
+  const [analysisByOppId, setAnalysisByOppId] = useState<Record<number, DeepSeekAnalyzeResponse>>({})
   const queryClient = useQueryClient()
 
   const opportunitiesQuery = useQuery({
@@ -307,15 +310,7 @@ export default function Discover() {
             const isAccessible = Boolean(access?.is_accessible)
             const canPay = Boolean(access?.can_pay_to_unlock)
             const unlockPrice = fmtCents(access?.unlock_price ?? null)
-            const brainMatch =
-              brainEnabled && brainName
-                ? Math.max(0, Math.min(100, Math.round((brainScore * 0.5) + ((opp.feasibility_score ?? 0) * 0.5))))
-                : null
-            const deepSeekReason =
-              brainEnabled && brainName
-                ? `Matches your brain focus (${brainFocus.slice(0, 2).join(', ') || 'your goals'}) and similar saved knowledge.`
-                : null
-            const deepSeekTokens = brainEnabled && brainName ? 220 : null
+            const analysis = analysisByOppId[opp.id] ?? null
 
             return (
           <div key={opp.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:border-gray-300 hover:shadow-md transition-all">
@@ -352,18 +347,43 @@ export default function Discover() {
                     <Clock className="w-4 h-4" />
                     Access: {isAccessible ? 'Unlocked' : 'Locked'}
                   </div>
-                  {brainMatch !== null && (
-                    <div className="text-purple-700 font-semibold">🧠 DeepSeek {brainMatch}%</div>
-                  )}
+                  {analysis && <div className="text-purple-700 font-semibold">🧠 DeepSeek {analysis.match_score}%</div>}
                 </div>
 
-                {brainMatch !== null && deepSeekReason && (
+                {brainEnabled && brainName && (
                   <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
                     <div className="text-xs font-semibold text-purple-800 uppercase tracking-wide">DeepSeek match</div>
-                    <div className="mt-1 text-sm text-purple-900 font-semibold">🧠 {brainMatch}% Match</div>
-                    <div className="mt-1 text-sm text-purple-800">{deepSeekReason}</div>
-                    {deepSeekTokens !== null && (
-                      <div className="mt-2 text-xs text-purple-700/80">~{deepSeekTokens} tokens (quick match)</div>
+                    {analysis ? (
+                      <>
+                        <div className="mt-1 text-sm text-purple-900 font-semibold">🧠 {analysis.match_score}% Match</div>
+                        <div className="mt-1 text-sm text-purple-800">{analysis.reasoning}</div>
+                        <div className="mt-2 text-xs text-purple-700/80">
+                          ~{analysis.tokens_used.toLocaleString()} tokens • ~${analysis.estimated_cost_usd.toFixed(4)}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <div className="text-sm text-purple-800">Compute a low-cost quick match for this opportunity.</div>
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium text-sm"
+                          onClick={async () => {
+                            if (!token) return navigate(`/login?next=${encodeURIComponent('/discover')}`)
+                            try {
+                              const result = await deepSeekAnalyze(String(token), opp.id)
+                              setAnalysisByOppId((m) => ({ ...m, [opp.id]: result }))
+                              // Refresh server brain totals (tokens/cost)
+                              const b = await fetchActiveBrain(String(token))
+                              hydrateFromServer(b)
+                              noteLearning(`DeepSeek match computed (+${result.match_score}% signal).`, 0)
+                            } catch (e) {
+                              noteLearning(e instanceof Error ? e.message : 'DeepSeek analysis failed', 0)
+                            }
+                          }}
+                        >
+                          Compute match
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -440,7 +460,16 @@ export default function Discover() {
                   {brainEnabled && isAuthenticated && (
                     <button
                       type="button"
-                      onClick={() => saveToBrain({ opportunityId: opp.id, category: opp.category, title: opp.title })}
+                      onClick={async () => {
+                        if (!token) return
+                        try {
+                          const b = await saveOpportunityToBrain(String(token), opp.id)
+                          hydrateFromServer(b)
+                          noteLearning('Saved to DeepSeek Brain.', 0)
+                        } catch (e) {
+                          noteLearning(e instanceof Error ? e.message : 'Failed to save to brain', 0)
+                        }
+                      }}
                       className="px-4 py-2 border border-purple-200 rounded-lg bg-purple-50 hover:bg-purple-100 font-medium text-purple-800"
                       title="Save to DeepSeek Brain"
                     >

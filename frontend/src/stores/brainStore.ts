@@ -24,22 +24,22 @@ type BrainState = {
   timeline: BrainEvent[]
 
   setEnabled: (enabled: boolean) => void
-  createBrain: (input: { brainName: string; focusTags: string[] }) => void
-  quickTrain: () => void
-  saveOpportunity: (input: { opportunityId: number; category?: string | null; title?: string | null }) => void
-  answerDailyQuestion: (input: { topic: string }) => void
+  hydrateFromServer: (input: {
+    name: string
+    focus_tags: string[]
+    match_score: number
+    knowledge_items: number
+    tokens_used: number
+    estimated_cost_usd: number
+  }) => void
+
+  // UI-only feedback helpers (server updates happen via API calls)
+  noteLearning: (message: string, deltaScore?: number) => void
   dismissLearningMessage: () => void
 }
 
 function clamp01To100(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)))
-}
-
-function estimateCostUsd(tokens: number) {
-  // UI-only estimate: DeepSeek is very cost-effective; this is intentionally conservative.
-  // Adjust once backend returns real token/cost usage.
-  const usdPer1kTokens = 0.001
-  return (tokens / 1000) * usdPer1kTokens
 }
 
 function makeId() {
@@ -67,67 +67,26 @@ export const useBrainStore = create<BrainState>()(
 
       setEnabled: (enabled) => set({ isEnabled: enabled }),
 
-      createBrain: ({ brainName, focusTags }) => {
-        const base = 42
-        const tokens = 1200
+      hydrateFromServer: (input) => {
         set((s) => ({
-          brainName,
-          focusTags,
-          matchScore: clamp01To100(Math.max(s.matchScore, base)),
-          knowledgeItems: Math.max(s.knowledgeItems, 0),
-          tokensUsed: s.tokensUsed + tokens,
-          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
+          brainName: input.name,
+          focusTags: input.focus_tags ?? [],
+          matchScore: clamp01To100(input.match_score ?? s.matchScore),
+          knowledgeItems: Math.max(0, input.knowledge_items ?? s.knowledgeItems),
+          tokensUsed: Math.max(0, input.tokens_used ?? s.tokensUsed),
+          estimatedCostUsd: Math.max(0, input.estimated_cost_usd ?? s.estimatedCostUsd),
+        }))
+      },
+
+      noteLearning: (message, deltaScore = 0) => {
+        set((s) => ({
           lastTrainedAt: Date.now(),
-          lastLearningMessage: 'DeepSeek Brain is live — it will learn from every interaction.',
+          lastLearningMessage: message,
           timeline: pushTimeline(s, {
-            type: 'create_brain',
-            deltaScore: Math.max(0, base - s.matchScore),
-            message: `Created brain “${brainName}”`,
+            type: 'answer_question',
+            deltaScore,
+            message,
           }),
-        }))
-      },
-
-      quickTrain: () => {
-        const inc = 3
-        const tokens = 450
-        set((s) => ({
-          matchScore: clamp01To100(s.matchScore + inc),
-          tokensUsed: s.tokensUsed + tokens,
-          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
-          lastTrainedAt: Date.now(),
-          lastLearningMessage: `+${inc}%: DeepSeek updated your brain (quick train)`,
-          timeline: pushTimeline(s, { type: 'answer_question', deltaScore: inc, message: 'Quick training session completed' }),
-        }))
-      },
-
-      saveOpportunity: ({ opportunityId, category, title }) => {
-        const inc = 5
-        const tokens = 800
-        set((s) => ({
-          matchScore: clamp01To100(s.matchScore + inc),
-          knowledgeItems: s.knowledgeItems + 1,
-          tokensUsed: s.tokensUsed + tokens,
-          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
-          lastTrainedAt: Date.now(),
-          lastLearningMessage: `+${inc}%: Saved ${category ? category + ' ' : ''}opportunity${title ? ` (“${title}”)` : ''}`,
-          timeline: pushTimeline(s, {
-            type: 'save_opportunity',
-            deltaScore: inc,
-            message: `Saved opportunity #${opportunityId}${category ? ` (${category})` : ''}`,
-          }),
-        }))
-      },
-
-      answerDailyQuestion: ({ topic }) => {
-        const inc = 4
-        const tokens = 650
-        set((s) => ({
-          matchScore: clamp01To100(s.matchScore + inc),
-          tokensUsed: s.tokensUsed + tokens,
-          estimatedCostUsd: estimateCostUsd(s.tokensUsed + tokens),
-          lastTrainedAt: Date.now(),
-          lastLearningMessage: `+${inc}%: DeepSeek learned more about ${topic}`,
-          timeline: pushTimeline(s, { type: 'answer_question', deltaScore: inc, message: `Answered daily question: ${topic}` }),
         }))
       },
 
