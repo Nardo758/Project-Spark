@@ -195,31 +195,6 @@ export default function OpportunityDetail() {
   const [ppuError, setPpuError] = useState<string | null>(null)
   const [ppuConfirmMode, setPpuConfirmMode] = useState<'subscription_unlock' | 'payments_confirm'>('subscription_unlock')
 
-  if (!Number.isFinite(opportunityId)) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <p className="text-gray-700">Invalid opportunity id.</p>
-      </div>
-    )
-  }
-
-  if (opportunityQuery.isLoading) {
-    return <div className="max-w-4xl mx-auto px-4 py-10">Loading opportunity…</div>
-  }
-
-  if (opportunityQuery.isError || !opp) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <p className="text-red-700">Failed to load opportunity.</p>
-        <div className="mt-4">
-          <button className="text-blue-600 font-medium" onClick={() => navigate(-1)}>
-            Go back
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   const isAccessible = Boolean(access?.is_accessible)
   const canPay = Boolean(access?.can_pay_to_unlock)
   const daysUntil = access?.days_until_unlock ?? 0
@@ -288,7 +263,7 @@ export default function OpportunityDetail() {
       setPpuError(null)
       setPpuPublishableKey(data.publishableKey)
       setPpuClientSecret(data.clientSecret)
-      setPpuAmountLabel(fmtCents(opp.deep_dive_price ?? 4900) || '$49')
+      setPpuAmountLabel(fmtCents(opportunityQuery.data?.deep_dive_price ?? 4900) || '$49')
       setPpuConfirmMode('payments_confirm')
       setPpuOpen(true)
     },
@@ -321,6 +296,32 @@ export default function OpportunityDetail() {
     if (!res.ok) throw new Error(data?.detail || 'Failed to confirm payment')
     await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId] })
     await queryClient.invalidateQueries({ queryKey: ['opportunity', opportunityId, { authed: Boolean(token) }] })
+  }
+
+  // NOTE: keep hook calls above all early returns.
+  if (!Number.isFinite(opportunityId)) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <p className="text-gray-700">Invalid opportunity id.</p>
+      </div>
+    )
+  }
+
+  if (opportunityQuery.isLoading) {
+    return <div className="max-w-4xl mx-auto px-4 py-10">Loading opportunity…</div>
+  }
+
+  if (opportunityQuery.isError || !opp) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-10">
+        <p className="text-red-700">Failed to load opportunity.</p>
+        <div className="mt-4">
+          <button className="text-blue-600 font-medium" onClick={() => navigate(-1)}>
+            Go back
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
