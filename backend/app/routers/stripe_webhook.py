@@ -213,6 +213,10 @@ def handle_payment_intent_succeeded(payment_intent: dict, db: Session):
         _fulfill_project_payment(payment_intent, metadata, db)
     elif payment_type == "idea_validation" or metadata.get("service") == "idea_validation":
         _fulfill_idea_validation(payment_intent, metadata, db)
+    elif payment_type == "deep_dive":
+        _fulfill_deep_dive(payment_intent, metadata, db)
+    elif payment_type == "fast_pass":
+        _fulfill_fast_pass(payment_intent, metadata, db)
 
 
 def handle_payment_intent_failed(payment_intent: dict, db: Session):
@@ -538,3 +542,78 @@ def _fail_idea_validation(payment_intent: dict, metadata: dict, db: Session):
     row.status = IdeaValidationStatus.FAILED
     row.error_message = "payment_failed"
     db.commit()
+
+
+def _fulfill_deep_dive(payment_intent: dict, metadata: dict, db: Session):
+    """Fulfill Deep Dive ($49) - add Layer 2 access to opportunity."""
+    user_id = metadata.get("user_id")
+    opportunity_id = metadata.get("opportunity_id")
+    payment_intent_id = payment_intent.get("id")
+    
+    if not user_id or not opportunity_id:
+        logger.warning("Missing user_id or opportunity_id for deep_dive fulfillment")
+        return
+    
+    unlock = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.user_id == int(user_id),
+        UnlockedOpportunity.opportunity_id == int(opportunity_id)
+    ).first()
+    
+    if unlock:
+        if unlock.has_deep_dive:
+            logger.info(f"Deep Dive already unlocked for user {user_id}, opportunity {opportunity_id}")
+            return
+        unlock.has_deep_dive = True
+        unlock.deep_dive_payment_intent_id = payment_intent_id
+        unlock.deep_dive_unlocked_at = datetime.utcnow()
+    else:
+        unlock = UnlockedOpportunity(
+            user_id=int(user_id),
+            opportunity_id=int(opportunity_id),
+            unlock_method=UnlockMethod.DEEP_DIVE,
+            amount_paid=payment_intent.get("amount"),
+            stripe_payment_intent_id=payment_intent_id,
+            has_deep_dive=True,
+            deep_dive_payment_intent_id=payment_intent_id,
+            deep_dive_unlocked_at=datetime.utcnow()
+        )
+        db.add(unlock)
+    
+    db.commit()
+    logger.info(f"Fulfilled Deep Dive for user {user_id}, opportunity {opportunity_id}")
+
+
+def _fulfill_fast_pass(payment_intent: dict, metadata: dict, db: Session):
+    """Fulfill Fast Pass ($99) - unlock HOT opportunity for Business tier."""
+    user_id = metadata.get("user_id")
+    opportunity_id = metadata.get("opportunity_id")
+    payment_intent_id = payment_intent.get("id")
+    
+    if not user_id or not opportunity_id:
+        logger.warning("Missing user_id or opportunity_id for fast_pass fulfillment")
+        return
+    
+    existing = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.user_id == int(user_id),
+        UnlockedOpportunity.opportunity_id == int(opportunity_id)
+    ).first()
+    
+    if existing:
+        logger.info(f"Opportunity already unlocked for user {user_id}, opportunity {opportunity_id}")
+        return
+    
+    now = datetime.utcnow()
+    expires_at = now + timedelta(days=30)
+    
+    unlock = UnlockedOpportunity(
+        user_id=int(user_id),
+        opportunity_id=int(opportunity_id),
+        unlock_method=UnlockMethod.FAST_PASS,
+        amount_paid=payment_intent.get("amount"),
+        stripe_payment_intent_id=payment_intent_id,
+        expires_at=expires_at,
+        has_deep_dive=True
+    )
+    db.add(unlock)
+    db.commit()
+    logger.info(f"Fulfilled Fast Pass for user {user_id}, opportunity {opportunity_id}")

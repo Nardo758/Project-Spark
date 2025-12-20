@@ -162,6 +162,8 @@ async def get_opportunity(
         "is_authenticated": ent.is_authenticated,
         "access_info": access_info,
         "deep_dive_available": ent.deep_dive_available,
+        "can_buy_deep_dive": ent.can_buy_deep_dive,
+        "deep_dive_price": ent.deep_dive_price,
         "execution_package_available": ent.execution_package_available,
         # Always show basic AI fields (Layer 0 - hook content)
         "ai_analyzed": opportunity.ai_analyzed,
