@@ -734,29 +734,29 @@ END
 
 ## Next Steps for Implementation
 
-### Phase 1: Complete Partially Implemented Flows (Week 1-2)
-1. Wire up settings page to backend APIs
-2. Make profile page dynamic with real data
-3. Connect analytics dashboard to live endpoints
-4. Implement watchlist functionality
+### Phase 1: Align monetization + gating UX (Week 1-2)
+1. Publish a single “tier × opportunity-age” decision matrix (HOT 0-7, FRESH 8-30, VALIDATED 31-90, ARCHIVE 91+).
+2. Wire Opportunity cards + detail views to the API’s gated `content_state` (e.g. `full`, `preview`, `locked`, `pay_per_unlock`, `fast_pass`) and render consistent CTAs.
+3. Implement “locked” UX: countdown/unlock date + Upgrade CTA (use server-provided eligibility where possible).
+4. Implement pay-per-unlock UX ($15, 30-day expiry, daily limit 5): purchase, success state, “already unlocked until …”, and unlock history in Account.
+5. Ensure one-time add-ons show clear rules + expiry in the UI:
+   - Deep Dive add-on ($49) eligibility + “already unlocked” behavior
+   - Fast Pass ($99) eligibility + “already unlocked” behavior
 
-### Phase 2: Critical Missing Flows (Week 3-4)
-5. Add email verification system
-6. Implement password reset backend
-7. Build impact points calculation
-8. Create badges system
+### Phase 2: Subscription lifecycle hardening (Week 3-4)
+6. Ensure upgrade/downgrade/cancel paths work both via in-app controls and Stripe Billing Portal; verify downgrades retain one-time unlocks.
+7. Add webhook observability for money-moving actions: idempotency, retry visibility, admin surface area for failures.
+8. Add post-payment and lifecycle email touchpoints (receipt, upgrade/downgrade, unlock expiring/expired).
 
-### Phase 3: Enhanced Features (Week 5-8)
-9. Add notifications system
-10. Implement OAuth login
-11. Build admin dashboard
-12. Add social features (following, sharing)
+### Phase 3: Growth + measurement (Week 5-8)
+9. Instrument key events (`upgrade_modal_viewed`, `checkout_started`, `pay_per_unlock_intent_created`, `fast_pass_purchased`, etc.) and validate funnels.
+10. Run A/B tests for upgrade prompts (timing/copy) and pay-per-unlock pricing/limits.
+11. Decide + implement trials and refund policy (and associated webhook + entitlement logic).
 
-### Phase 4: Premium Features (Future)
-13. Payment/subscription system
-14. Real-time updates with WebSockets
-15. Advanced analytics
-16. Mobile app considerations
+### Phase 4: Platform expansion (Future)
+12. Persona-based onboarding paths (founder / scout / investor / corporate) + tailored dashboards.
+13. Marketplace + network expansion (experts, execution partners, templates).
+14. Deeper “AI co-founder” workflows (roadmaps, progress tracking, outcomes analytics).
 
 ---
 

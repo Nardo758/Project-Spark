@@ -1,0 +1,16 @@
+HTTP/2 200 
+content-type: text/html; charset=utf-8
+content-length: 5617
+date: Sat, 20 Dec 2025 02:35:36 GMT
+server: elb
+x-ds-served-by: chat
+cache-control: no-cache, must-revalidate, proxy-revalidate, max-age=0
+x-ds-trace-id: 1aa3f75916753fa5c13f2c87b1711b0e
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+vary: Accept-Encoding
+x-cache: Miss from cloudfront
+via: 1.1 44b13d2e12ad74e58c5a56d9c368da6c.cloudfront.net (CloudFront)
+x-amz-cf-pop: IAD61-P3
+x-amz-cf-id: TNtjnOVnl1wZHTka33y8wE1vQBzaXA7_qzVInB7Iizaq6AIrsuzf-w==
+
