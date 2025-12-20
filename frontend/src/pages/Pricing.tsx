@@ -1,68 +1,144 @@
-import { Check, Brain } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Check, Loader2 } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../stores/authStore'
 
 const plans = [
   {
-    name: 'Free',
+    name: 'Explorer',
     price: '$0',
-    description: 'Get started with basic features',
+    period: '/month',
+    description: 'Start free and browse the archive',
     features: [
-      'Browse 10 opportunities/month',
-      'Basic idea validation',
-      'Community access',
-      'Email support',
+      'Browse 91+ day opportunities (Archive)',
+      'Basic search & filters',
+      'Save opportunities',
+      'Pay‑per‑unlock ($15 / opportunity)',
     ],
-    cta: 'Start Free',
+    cta: 'Get Started',
     highlighted: false,
   },
   {
-    name: 'Pro',
-    price: '$399',
+    name: 'Builder',
+    price: '$99',
     period: '/month',
-    description: 'Everything you need to build',
+    description: 'Early access + AI co-founder basics',
     features: [
-      'Unlimited opportunities',
-      'Advanced AI validation',
-      'Expert marketplace access',
-      'AI Co-founder Basic included',
-      'Priority support',
-      'Custom roadmaps',
+      'Unlimited access to 31+ day opportunities (Validated)',
+      'Preview 8–30 day opportunities (Fresh)',
+      'AI Co‑founder (Basic)',
+      'Deep Dive add‑on ($49 / opportunity)',
+      'CSV export + advanced filters',
     ],
-    cta: 'Get Pro',
+    cta: 'Start Free Trial',
     highlighted: true,
     badge: 'Most Popular',
   },
   {
-    name: 'Business',
-    price: '$599',
+    name: 'Scaler',
+    price: '$499',
     period: '/month',
-    description: 'For growing teams',
+    description: 'Full access to Fresh + deeper intelligence',
     features: [
-      'Everything in Pro',
-      'Team collaboration (5 seats)',
-      '3 Brain AI profiles',
-      'White-label content',
-      'API access',
-      'Dedicated support',
+      'Full access to 8+ day opportunities (Fresh)',
+      'Full Layer 1 & 2 on all accessible opportunities',
+      'Fast Pass ($99) for HOT 0–7 day opportunities',
+      'Team-ready exports & reporting',
+      'API access (coming soon)',
     ],
-    cta: 'Get Business',
+    cta: 'Get Scaler',
     highlighted: false,
   },
 ]
 
-const brainAddons = [
-  { name: 'Business Brain', price: '+$199', desc: '3 Brain profiles, team features' },
-  { name: 'Expert Brain', price: '+$299', desc: '5 Brains, white-label AI, API' },
-  { name: 'Enterprise Brain', price: 'Custom', desc: 'Unlimited, dedicated instances' },
-]
-
 export default function Pricing() {
+  const { token, isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const checkoutStatus = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('checkout') || ''
+  }, [location.search])
+
+  const [billingLoading, setBillingLoading] = useState<'pro' | 'business' | 'portal' | null>(null)
+  const [billingError, setBillingError] = useState<string | null>(null)
+
+  async function startCheckout(tier: 'pro' | 'business') {
+    if (!token) {
+      navigate(`/login?next=${encodeURIComponent('/pricing')}`)
+      return
+    }
+    setBillingError(null)
+    setBillingLoading(tier)
+    try {
+      const origin = window.location.origin
+      const successUrl = `${origin}/pricing?checkout=success`
+      const cancelUrl = `${origin}/pricing?checkout=cancel`
+
+      const res = await fetch('/api/v1/subscriptions/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tier, success_url: successUrl, cancel_url: cancelUrl }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start checkout')
+      if (!data?.url) throw new Error('Checkout URL missing')
+      window.location.href = String(data.url)
+    } catch (e) {
+      setBillingError(e instanceof Error ? e.message : 'Unable to start checkout')
+    } finally {
+      setBillingLoading(null)
+    }
+  }
+
+  async function openBillingPortal() {
+    if (!token) {
+      navigate(`/login?next=${encodeURIComponent('/pricing')}`)
+      return
+    }
+    setBillingError(null)
+    setBillingLoading('portal')
+    try {
+      const returnUrl = window.location.href
+      const res = await fetch('/api/v1/subscriptions/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ return_url: returnUrl }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to open billing portal')
+      if (!data?.url) throw new Error('Portal URL missing')
+      window.location.href = String(data.url)
+    } catch (e) {
+      setBillingError(e instanceof Error ? e.message : 'Unable to open billing portal')
+    } finally {
+      setBillingLoading(null)
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="text-center mb-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>
-        <p className="text-xl text-gray-600">Start free, upgrade when you're ready to scale</p>
+        <p className="text-xl text-gray-600">Start for free, upgrade as you grow. Cancel anytime.</p>
       </div>
+
+      {checkoutStatus === 'success' && (
+        <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
+          Payment completed. Your plan will update shortly (it can take a moment for Stripe + webhooks to sync).
+        </div>
+      )}
+      {checkoutStatus === 'cancel' && (
+        <div className="mb-10 max-w-3xl mx-auto bg-gray-50 border border-gray-200 text-gray-700 rounded-xl px-4 py-3 text-sm">
+          Checkout canceled. You can restart anytime.
+        </div>
+      )}
+      {billingError && (
+        <div className="mb-10 max-w-3xl mx-auto bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+          {billingError}
+        </div>
+      )}
 
       <div className="grid md:grid-cols-3 gap-8 mb-16">
         {plans.map((plan) => (
@@ -109,57 +185,115 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <Link
-              to="/signup"
-              className={`block w-full text-center py-3 rounded-lg font-medium ${
-                plan.highlighted
-                  ? 'bg-white text-gray-900 hover:bg-gray-100'
-                  : 'bg-gray-900 text-white hover:bg-gray-800'
-              }`}
-            >
-              {plan.cta}
-            </Link>
+            {plan.name === 'Explorer' ? (
+              <Link
+                to={isAuthenticated ? '/discover' : '/signup'}
+                className={`block w-full text-center py-3 rounded-lg font-medium ${
+                  plan.highlighted
+                    ? 'bg-white text-gray-900 hover:bg-gray-100'
+                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                }`}
+              >
+                {isAuthenticated ? 'Browse opportunities' : plan.cta}
+              </Link>
+            ) : plan.name === 'Builder' ? (
+              <button
+                type="button"
+                onClick={() => startCheckout('pro')}
+                disabled={!isAuthenticated || billingLoading !== null}
+                className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
+                  plan.highlighted
+                    ? 'bg-white text-gray-900 hover:bg-gray-100'
+                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                }`}
+                title={!isAuthenticated ? 'Sign in to subscribe' : 'Subscribe with Stripe'}
+              >
+                {billingLoading === 'pro' ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Starting checkout…
+                  </span>
+                ) : (
+                  plan.cta
+                )}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => startCheckout('business')}
+                disabled={!isAuthenticated || billingLoading !== null}
+                className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
+                  plan.highlighted
+                    ? 'bg-white text-gray-900 hover:bg-gray-100'
+                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                }`}
+                title={!isAuthenticated ? 'Sign in to subscribe' : 'Subscribe with Stripe'}
+              >
+                {billingLoading === 'business' ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Starting checkout…
+                  </span>
+                ) : (
+                  plan.cta
+                )}
+              </button>
+            )}
           </div>
         ))}
       </div>
 
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 lg:p-12">
-        <div className="flex items-start gap-4 mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Brain className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Brain AI Add-ons</h2>
-            <p className="text-gray-600">Supercharge your subscription with AI Co-founder capabilities</p>
-          </div>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {brainAddons.map((addon) => (
-            <div key={addon.name} className="bg-white rounded-xl p-6 border border-purple-200">
-              <h3 className="font-semibold text-gray-900 mb-1">{addon.name}</h3>
-              <div className="text-2xl font-bold text-purple-600 mb-2">{addon.price}</div>
-              <p className="text-sm text-gray-600">{addon.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="mt-16 text-center">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Pay-Per-Unlock Options</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">One‑time unlock options</h3>
         <div className="inline-flex gap-4 flex-wrap justify-center">
           <div className="bg-white border border-gray-200 rounded-lg px-6 py-3">
             <span className="text-gray-600">Archive:</span>
-            <span className="ml-2 font-bold text-gray-900">$9</span>
+            <span className="ml-2 font-bold text-gray-900">$15</span>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg px-6 py-3">
-            <span className="text-gray-600">Quick Look:</span>
-            <span className="ml-2 font-bold text-gray-900">$29</span>
+            <span className="text-gray-600">Deep Dive add‑on:</span>
+            <span className="ml-2 font-bold text-gray-900">$49</span>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg px-6 py-3">
             <span className="text-gray-600">Fast Pass:</span>
             <span className="ml-2 font-bold text-gray-900">$99</span>
           </div>
         </div>
+        <div className="mt-6 text-sm text-gray-600">
+          Need earliest access (HOT 0–7 days)?{' '}
+          <a className="text-blue-600 hover:text-blue-700 font-medium" href="mailto:enterprise@oppgrid.com">
+            Contact sales for Enterprise
+          </a>
+          .
+        </div>
+        {isAuthenticated && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={openBillingPortal}
+              disabled={billingLoading !== null}
+              className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+            >
+              {billingLoading === 'portal' ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Opening billing portal…
+                </span>
+              ) : (
+                'Manage billing'
+              )}
+            </button>
+          </div>
+        )}
+        {!isAuthenticated && (
+          <div className="mt-4 text-sm text-gray-600">
+            To subscribe,{' '}
+            <Link className="text-blue-600 hover:text-blue-700 font-medium" to={`/login?next=${encodeURIComponent('/pricing')}`}>
+              sign in
+            </Link>
+            .
+          </div>
+        )}
       </div>
     </div>
   )

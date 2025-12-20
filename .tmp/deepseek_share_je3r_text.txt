@@ -1,0 +1,137 @@
+Excellent. Here is the complete, integrated copy for your landing page, structured to fit the visual layout of your new page while incorporating the strongest elements from your old one.
+
+### 🎯 **Integrated Landing Page Copy**
+
+**Section 1: Hero Section**
+*(Use the clean visual layout from your NEW page)*
+*   **Main Headline:** Transform Market Signals into Business Opportunities
+*   **Sub-headline:** Discover validated market opportunities backed by real consumer insights. From AI-powered validation to expert execution playbooks—everything you need to build what people actually want.
+*   **Primary Call-to-Action Button:** Validate Your Idea
+*   **Secondary Link (Optional):** Watch Demo
+
+---
+
+**Section 2: Social Proof / Social Validation**
+*(Place immediately below the Hero)*
+*   **Social Proof Stats Bar:**
+    *   **176** Validated Ideas
+    *   **$47B+** Market Opportunity
+    *   **6** Global Markets Tracked
+*   **Live Opportunity Teaser:**
+    *   **Headline:** 🔓 Unlock This Week’s Top Opportunity
+    *   **Problem Statement:** "Managing passwords across all my devices is a security risk."
+    *   **Validated Insight:** "Mainstream users need invisible password security that works without thinking about it."
+    *   **Key Metrics:** `Market Size: $3B-$8B` | `Signal Strength: 534 Submissions` | `Growth: +34% MoM`
+    *   *(Small CTA Link)*: See More Opportunities →
+
+---
+
+**Section 3: "Three Paths to Success"**
+*(Replace the "From Opportunity to Execution in Three Steps" placeholder in your NEW page)*
+*   **Section Title:** Choose Your Path to Success
+*   **Section Subtitle:** Whether you're building, advising, or creating content, OppGrid is designed for you.
+
+*   **Path 1: Build Ideas**
+    *   **Icon:** 🚀
+    *   **Title:** Build & Launch
+    *   **Description:** Discover validated opportunities and execute with AI-powered guidance, step-by-step playbooks, and access to a vetted expert network.
+    *   **Button:** Explore Opportunities
+
+*   **Path 2: Contribute Ideas**
+    *   **Icon:** 💡
+    *   **Title:** Contribute & Earn
+    *   **Description:** Spot a trend? Submit market signals. Get paid when your contributions help identify top-tier opportunities and connect with the teams building them.
+    *   **Button:** Become a Scout
+
+*   **Path 3: Create Content**
+    *   **Icon:** ✍️
+    *   **Title:** Research & Create
+    *   **Description:** Use our AI analyst to generate deep-dive reports, trend analyses, and data-driven content. Instantly cite validated opportunities.
+    *   **Button:** Start Creating
+
+---
+
+**Section 4: Core Feature – "Meet Your AI Co-founder"**
+*(Place after "Three Paths")*
+*   **Section Title:** Your AI Co-founder is Ready
+*   **Section Subtitle:** A persistent AI that understands your goals, skills, and progress. Get hyper-personalized guidance at every stage—from discovery to scale.
+
+*   **Benefit 1:**
+    *   **Icon/Title:** 📈 Personal Paths
+    *   **Description:** Get a custom roadmap tailored to your selected opportunity, skills, and resources.
+*   **Benefit 2:**
+    *   **Icon/Title:** 🎯 Smart Matching
+    *   **Description:** Automatically connect with the most relevant experts, tools, and playbooks in our network.
+*   **Benefit 3:**
+    *   **Icon/Title:** 🤝 Expert Network
+    *   **Description:** Access one-on-one consultations with industry operators, marketers, and engineers vetted by our team.
+
+---
+
+**Section 5: Process Explanation – "The OppGrid Flow"**
+*(Reuse the clean 3-step visual structure from your NEW page)*
+*   **Section Title:** From Signal to Launch in Three Steps
+*   **Section Subtitle:** A systematic approach to turn noise into your next business.
+
+*   **Step 1: Discover & Validate**
+    *   **Description:** Browse our vault of scored opportunities. Each brief includes validated consumer pain points, market size analysis (TAM/SAM/SOM), and early signal strength.
+*   **Step 2: Plan & Assemble**
+    *   **Description:** Activate your AI Co-founder. Generate a strategic action plan, assess resource needs, and get matched with experts for your core team.
+*   **Step 3: Execute with AI**
+    *   **Description:** Launch with confidence. Your AI assistant helps track KPIs, automate tasks, and recommend pivots using real-time market data.
+
+---
+
+**Section 6: "Validated Intelligence, Not Raw Data"**
+*(Replace the corresponding placeholder section in your NEW page)*
+*   **Section Title:** Validated Market Intelligence, Not Just Data
+*   **Section Body:** We analyze thousands of consumer discussions, reviews, and search trends to deliver **structured, actionable briefs**. Every opportunity includes:
+    *   **Problem Validation:** Quantified consumer pain points and demand signals.
+    *   **Market Analysis:** TAM, SAM, SOM estimates and competitive landscape.
+    *   **Execution Insights:** Geographic fit analysis, channel suggestions, and monetization models.
+    *   **Source Transparency:** See the core discussions and data behind each insight.
+
+---
+
+**Section 7: Pricing**
+*(Use the clean multi-column table structure from your NEW page)*
+*   **Section Title:** Simple, Transparent Pricing
+*   **Section Subtitle:** Start for free, upgrade as you grow. Cancel anytime.
+
+| | **Explorer** | **Builder** | **Scaler** |
+| :--- | :--- | :--- | :--- |
+| **Price** | **$0** / month | **$99** / month | **$499** / month |
+| **Core Access** | • Browse 90+ day old opportunities<br>• Basic search & filters | • **Unlimited** access to 31+ day opportunities<br>• AI Co-founder Basic | • **Full** access to 8+ day opportunities<br>• AI Co-founder Advanced |
+| **Deep Intelligence** | — | • Unlock Deep Dive Analysis ($49/add-on) | • **Full Layer 1 & 2** on all accessible ops |
+| **Fast-Track Options** | • Pay-Per-Unlock ($15/opp) | • Preview 8-30 day ops | • **Fast Pass** ($99) for 0-7 day ops |
+| **Tools & Export** | • Save up to 5 ideas | • Research Dashboard<br>• Advanced filters & CSV export | • API Access (coming soon)<br>• White-label reports |
+| **CTA Button** | [Get Started] | [Start Free Trial] | [Contact for Demo] |
+
+---
+
+**Section 8: Final CTA & Footer**
+*   **Final CTA Section:**
+    *   **Headline:** Ready to Build What’s Next?
+    *   **Button:** Start Your First Opportunity – It’s Free
+*   **Footer:**
+    *   **Links:** About • How It Works • Pricing • Blog • Contact • Terms • Privacy
+    *   **Copyright:** © 2024 OppGrid. All rights reserved.
+
+### 🎨 Visual Integration Guide
+
+To help you visualize where this copy fits, here's a mapping to your new page's structure:
+
+```mermaid
+flowchart TD
+    A[Hero Section<br>New Page Layout] --> B[Social Proof Bar<br>From Old Page]
+    B --> C[Three Paths to Success<br>Old Page Content in New Layout]
+    C --> D[AI Co-founder Feature<br>From Old Page]
+    D --> E[Three-Step Process<br>New Layout, New Text]
+    E --> F[Value Prop: Validated Intelligence<br>New Text]
+    F --> G[Pricing Table<br>New Layout, New Text<br>Matching Your Flowchart]
+    G --> H[Final CTA & Footer]
+```
+
+This integrated copy is ready for you to plug directly into your new landing page's design framework. The pricing table now **perfectly aligns** with the tier logic from your flowchart, which is crucial for user trust and conversion.
+
+Do you need any specific section adapted further for character limits or a particular visual component?
