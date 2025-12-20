@@ -5,6 +5,13 @@ import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
 
+type MySubscriptionResponse = {
+  tier?: string | null
+  status?: string | null
+  is_active?: boolean | null
+  period_end?: string | null
+}
+
 const plans = [
   {
     name: 'Explorer',
@@ -128,10 +135,11 @@ export default function Pricing() {
       is_active: Boolean(data?.is_active),
       period_end: (data?.period_end ? String(data.period_end) : null) as string | null,
     })
-    return data as any
+    return data as MySubscriptionResponse
   }
 
-  async function confirmSubscriptionPayment(_paymentIntentId: string) {
+  async function confirmSubscriptionPayment(paymentIntentId: string) {
+    void paymentIntentId
     // Start polling for webhook reconciliation
     setBillingSuccess('Payment confirmed. Syncing your plan…')
     setBillingSyncing(true)
@@ -456,9 +464,10 @@ export default function Pricing() {
   )
 }
 
-function isExpectedTierActive(raw: any, expectedTier: string | null) {
-  const tier = String(raw?.tier || '').toLowerCase()
-  const isActive = Boolean(raw?.is_active)
+function isExpectedTierActive(raw: unknown, expectedTier: string | null) {
+  const obj = (raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}) as Record<string, unknown>
+  const tier = String(obj.tier ?? '').toLowerCase()
+  const isActive = Boolean(obj.is_active)
   if (!expectedTier) return isActive
   return isActive && tier === expectedTier
 }

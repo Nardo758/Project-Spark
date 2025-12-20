@@ -1,15 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel
 from typing import Optional, List
 import os
 import json
+import asyncio
 from datetime import datetime
 
 from anthropic import Anthropic
 
 from app.db.database import get_db
+from app.db.database import SessionLocal
 from app.models.opportunity import Opportunity
 
 router = APIRouter()
@@ -79,6 +82,52 @@ Consider:
 - Competition (existing solutions and their gaps)
 - Timing (is this problem growing or shrinking?)
 - Feasibility (can a startup solve this?)"""
+
+def _build_top_opportunities(db: Session, limit: int) -> list[dict]:
+    opportunities = db.query(Opportunity).filter(
+        Opportunity.ai_analyzed == True,
+        Opportunity.ai_opportunity_score.isnot(None)
+    ).order_by(
+        Opportunity.ai_opportunity_score.desc()
+    ).limit(limit).all()
+
+    return [{
+        "id": opp.id,
+        "title": opp.title,
+        "category": opp.category,
+        "ai_opportunity_score": opp.ai_opportunity_score,
+        "ai_summary": opp.ai_summary,
+        "ai_market_size_estimate": opp.ai_market_size_estimate,
+        "ai_competition_level": opp.ai_competition_level,
+        "ai_urgency_level": opp.ai_urgency_level,
+        "ai_target_audience": opp.ai_target_audience,
+        "validation_count": opp.validation_count,
+        "severity": opp.severity
+    } for opp in opportunities]
+
+
+def _build_analysis_stats(db: Session) -> dict:
+    total = db.query(func.count(Opportunity.id)).scalar()
+    analyzed = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.ai_analyzed == True
+    ).scalar()
+
+    avg_score = db.query(func.avg(Opportunity.ai_opportunity_score)).filter(
+        Opportunity.ai_opportunity_score.isnot(None)
+    ).scalar()
+
+    high_potential = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.ai_opportunity_score >= 70
+    ).scalar()
+
+    return {
+        "total_opportunities": total,
+        "analyzed_opportunities": analyzed,
+        "pending_analysis": total - analyzed,
+        "average_score": round(avg_score, 1) if avg_score else 0,
+        "high_potential_count": high_potential
+    }
+
 
 def analyze_single_opportunity(opp: Opportunity) -> dict:
     prompt = f"""Analyze this opportunity:
@@ -232,46 +281,71 @@ async def analyze_batch(request: BatchAnalysisRequest, db: Session = Depends(get
 
 @router.get("/top-opportunities")
 async def get_top_opportunities(limit: int = 5, db: Session = Depends(get_db)):
-    opportunities = db.query(Opportunity).filter(
-        Opportunity.ai_analyzed == True,
-        Opportunity.ai_opportunity_score.isnot(None)
-    ).order_by(
-        Opportunity.ai_opportunity_score.desc()
-    ).limit(limit).all()
-    
-    return [{
-        "id": opp.id,
-        "title": opp.title,
-        "category": opp.category,
-        "ai_opportunity_score": opp.ai_opportunity_score,
-        "ai_summary": opp.ai_summary,
-        "ai_market_size_estimate": opp.ai_market_size_estimate,
-        "ai_competition_level": opp.ai_competition_level,
-        "ai_urgency_level": opp.ai_urgency_level,
-        "ai_target_audience": opp.ai_target_audience,
-        "validation_count": opp.validation_count,
-        "severity": opp.severity
-    } for opp in opportunities]
+    return _build_top_opportunities(db, limit)
 
 @router.get("/stats")
 async def get_analysis_stats(db: Session = Depends(get_db)):
-    total = db.query(func.count(Opportunity.id)).scalar()
-    analyzed = db.query(func.count(Opportunity.id)).filter(
-        Opportunity.ai_analyzed == True
-    ).scalar()
-    
-    avg_score = db.query(func.avg(Opportunity.ai_opportunity_score)).filter(
-        Opportunity.ai_opportunity_score.isnot(None)
-    ).scalar()
-    
-    high_potential = db.query(func.count(Opportunity.id)).filter(
-        Opportunity.ai_opportunity_score >= 70
-    ).scalar()
-    
-    return {
-        "total_opportunities": total,
-        "analyzed_opportunities": analyzed,
-        "pending_analysis": total - analyzed,
-        "average_score": round(avg_score, 1) if avg_score else 0,
-        "high_potential_count": high_potential
-    }
+    return _build_analysis_stats(db)
+
+
+@router.get("/stream")
+async def stream_landing_page_data(limit: int = 1, interval: float = 10.0):
+    """
+    Public real-time stream for the landing page.
+
+    Uses Server-Sent Events (SSE) so the static landing page can subscribe to:
+    - `stats`: /ai-analysis/stats payload
+    - `top_opportunities`: /ai-analysis/top-opportunities payload (limited)
+    """
+
+    async def event_generator():
+        last_state: str | None = None
+
+        while True:
+            state_obj: dict
+            db = None
+            try:
+                db = SessionLocal()
+                state_obj = {
+                    "stats": _build_analysis_stats(db),
+                    "top_opportunities": _build_top_opportunities(db, limit),
+                }
+            except Exception:
+                # Best-effort: don't crash the stream if DB isn't configured/available.
+                state_obj = {
+                    "error": "backend_unavailable",
+                }
+            finally:
+                try:
+                    if db is not None:
+                        db.close()
+                except Exception:
+                    pass
+
+            state_str = json.dumps(state_obj, separators=(",", ":"))
+
+            if state_str != last_state:
+                payload_obj = {
+                    "ts": datetime.utcnow().isoformat() + "Z",
+                    **state_obj,
+                }
+                payload_str = json.dumps(payload_obj, separators=(",", ":"))
+                # Send as a named event so clients can addEventListener('update', ...)
+                yield f"event: update\ndata: {payload_str}\n\n"
+                last_state = state_str
+            else:
+                # Keepalive so proxies don't terminate "idle" streams.
+                yield "event: ping\ndata: {}\n\n"
+
+            await asyncio.sleep(max(1.0, float(interval)))
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            # Prevent Nginx buffering when present (harmless otherwise)
+            "X-Accel-Buffering": "no",
+        },
+    )

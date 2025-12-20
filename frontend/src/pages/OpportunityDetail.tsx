@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Bookmark, CheckCircle2, Clock, Lock, ShieldCheck } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
@@ -60,6 +60,7 @@ function fmtCents(cents?: number | null) {
 export default function OpportunityDetail() {
   const { id } = useParams()
   const opportunityId = Number(id)
+  const location = useLocation()
   const navigate = useNavigate()
 
   const { token, isAuthenticated, user } = useAuthStore()
@@ -182,6 +183,59 @@ export default function OpportunityDetail() {
   const [ppuPublishableKey, setPpuPublishableKey] = useState<string | null>(null)
   const [ppuAmountLabel, setPpuAmountLabel] = useState<string>('$15')
   const [ppuError, setPpuError] = useState<string | null>(null)
+  const autoUnlockStartedRef = useRef(false)
+
+  const payPerUnlockMutation = useMutation({
+    mutationFn: async () => {
+      if (!token) throw new Error('Not authenticated')
+      if (!Number.isFinite(opportunityId)) throw new Error('Invalid opportunity id')
+      // 1) Fetch Stripe publishable key (public endpoint)
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
+
+      // 2) Create PaymentIntent for pay-per-unlock
+      const res = await fetch('/api/v1/subscriptions/pay-per-unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ opportunity_id: opportunityId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start payment')
+
+      return {
+        publishableKey: String(keyData.publishable_key),
+        clientSecret: String(data.client_secret),
+        amountCents: Number(data.amount),
+      }
+    },
+    onSuccess: (data) => {
+      setPpuError(null)
+      setPpuPublishableKey(data.publishableKey)
+      setPpuClientSecret(data.clientSecret)
+      setPpuAmountLabel(fmtCents(data.amountCents) || '$15')
+      setPpuOpen(true)
+    },
+    onError: (e) => {
+      setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
+    },
+  })
+
+  const shouldAutoUnlock = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('unlock') === '1'
+  }, [location.search])
+
+  useEffect(() => {
+    if (!shouldAutoUnlock) return
+    if (!isAuthenticated) return
+    if (!opp) return
+    if (autoUnlockStartedRef.current) return
+    if (access?.is_accessible) return
+    if (!access?.can_pay_to_unlock) return
+    autoUnlockStartedRef.current = true
+    payPerUnlockMutation.mutate()
+  }, [shouldAutoUnlock, isAuthenticated, opp, access?.is_accessible, access?.can_pay_to_unlock, payPerUnlockMutation])
 
   const payPerUnlockMutation = useMutation({
     mutationFn: async () => {

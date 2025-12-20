@@ -12,6 +12,7 @@ type Opportunity = {
   title: string
   description: string
   category: string
+  validation_count?: number | null
   market_size?: string | null
   ai_competition_level?: string | null
   feasibility_score?: number | null
@@ -20,6 +21,24 @@ type Opportunity = {
   saves?: number
   growth_rate?: number
   tags?: string[]
+}
+
+type AccessInfo = {
+  age_days: number
+  days_until_unlock: number
+  is_accessible: boolean
+  is_unlocked: boolean
+  can_pay_to_unlock: boolean
+  unlock_price?: number | null
+  user_tier?: string | null
+  content_state?: string | null
+}
+
+type OpportunityAccessSnapshot = {
+  id: number
+  access_info?: AccessInfo | null
+  is_unlocked?: boolean
+  is_authenticated?: boolean
 }
 
 type OpportunityList = {
@@ -56,6 +75,11 @@ function getStarRating(score?: number | null): number {
   if (score >= 60) return 4
   if (score >= 45) return 3.5
   return 3
+}
+
+function fmtCents(cents?: number | null) {
+  if (!cents) return null
+  return `$${(cents / 100).toFixed(0)}`
 }
 
 export default function Discover() {
