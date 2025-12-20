@@ -2,15 +2,15 @@
 
 ## Environment & Secrets
 
-- [ ] **STRIPE_WEBHOOK_SECRET** - Add to secrets (get from Stripe Dashboard > Webhooks)
-- [ ] **SESSION_SECRET** - Generate secure random string for JWT signing
-- [ ] **APIFY_API_KEY** - For automated opportunity scraping (if using scheduler)
-- [ ] Configure Stripe webhook endpoint URL in Stripe Dashboard pointing to `/api/v1/webhook/stripe`
+- [x] **STRIPE_WEBHOOK_SECRET** - Add to secrets (get from Stripe Dashboard > Webhooks)
+- [x] **SESSION_SECRET** - Generate secure random string for JWT signing
+- [x] **APIFY_API_KEY** - For automated opportunity scraping (if using scheduler)
+- [x] Configure Stripe webhook endpoint URL in Stripe Dashboard pointing to `/api/v1/webhook/stripe`
 
 ## Database
 
-- [ ] Run Alembic migrations: `cd backend && alembic upgrade head`
-- [ ] Verify all tables created: users, subscriptions, opportunities, transactions, success_fee_agreements, milestones, expert_bookings
+- [x] Run Alembic migrations: `cd backend && alembic upgrade head`
+- [x] Verify all tables created: users, subscriptions, opportunities, transactions, success_fee_agreements, milestones, expert_bookings
 - [ ] Seed initial expert data if needed
 - [ ] (Optional) Set `REQUIRE_MIGRATIONS=1` in production to fail startup if DB migrations aren’t applied
 
