@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Bookmark, CheckCircle2, Clock, Lock, ShieldCheck } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
@@ -60,6 +60,7 @@ function fmtCents(cents?: number | null) {
 export default function OpportunityDetail() {
   const { id } = useParams()
   const opportunityId = Number(id)
+  const location = useLocation()
   const navigate = useNavigate()
 
   const { token, isAuthenticated, user } = useAuthStore()
@@ -186,6 +187,7 @@ export default function OpportunityDetail() {
   const [ppuPublishableKey, setPpuPublishableKey] = useState<string | null>(null)
   const [ppuAmountLabel, setPpuAmountLabel] = useState<string>('$15')
   const [ppuError, setPpuError] = useState<string | null>(null)
+  const autoUnlockStartedRef = useRef(false)
 
   const payPerUnlockMutation = useMutation({
     mutationFn: async () => {
@@ -222,6 +224,22 @@ export default function OpportunityDetail() {
       setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
     },
   })
+
+  const shouldAutoUnlock = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('unlock') === '1'
+  }, [location.search])
+
+  useEffect(() => {
+    if (!shouldAutoUnlock) return
+    if (!isAuthenticated) return
+    if (!opp) return
+    if (autoUnlockStartedRef.current) return
+    if (access?.is_accessible) return
+    if (!access?.can_pay_to_unlock) return
+    autoUnlockStartedRef.current = true
+    payPerUnlockMutation.mutate()
+  }, [shouldAutoUnlock, isAuthenticated, opp, access?.is_accessible, access?.can_pay_to_unlock, payPerUnlockMutation])
 
   if (!Number.isFinite(opportunityId)) {
     return (
