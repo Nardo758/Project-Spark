@@ -205,7 +205,8 @@ def create_lead_purchase_intent(
         amount=int(lead.lead_price_cents),
         currency="usd",
         metadata={
-            "type": TransactionType.MICRO_PAYMENT.value,
+            # Custom type so the webhook can fulfill lead purchases distinctly.
+            "type": "lead_purchase",
             "transaction_id": str(tx.id),
             "user_id": str(current_user.id),
             "purpose": "lead_purchase",
