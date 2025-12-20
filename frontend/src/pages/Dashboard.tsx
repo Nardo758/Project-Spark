@@ -132,7 +132,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Content Sales</span>
+                  <span className="text-gray-600">Service Sales</span>
                   <span className="font-semibold text-gray-900">$248</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full">

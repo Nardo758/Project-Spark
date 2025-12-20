@@ -55,7 +55,7 @@ function PaymentForm({
 
   async function handleSubmit() {
     if (!stripe || !elements) return
-    const card = elements.getElement(CardElement) as any
+    const card = elements.getElement(CardElement)
     if (!card) return
 
     setError(null)

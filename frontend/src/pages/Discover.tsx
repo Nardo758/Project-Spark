@@ -138,8 +138,39 @@ export default function Discover() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Discover Opportunities</h1>
-        <p className="text-gray-600">AI-validated business opportunities matched to your skills and interests</p>
+        <p className="text-gray-600">Browse validated opportunities with free previews and pay‑as‑you‑go unlocks.</p>
       </div>
+
+      {!isAuthenticated && (
+        <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="text-sm text-gray-700">
+            You’re viewing the public feed. Create a free account to save opportunities, and unlock premium analysis when you’re ready.
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/services')}
+              className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium"
+            >
+              Explore services
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/pricing')}
+              className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium"
+            >
+              See pricing
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/signup')}
+              className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 font-medium"
+            >
+              Create account
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">

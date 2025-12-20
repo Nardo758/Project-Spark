@@ -9,6 +9,20 @@ import IdeaEngine from './pages/IdeaEngine'
 import Pricing from './pages/Pricing'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import Services from './pages/Services'
+import Network from './pages/Network'
+import Leads from './pages/Leads'
+import Funding from './pages/Funding'
+import Tools from './pages/Tools'
+import Learn from './pages/Learn'
+import AIRoadmap from './pages/AIRoadmap'
+import AIMatch from './pages/AIMatch'
+import ExpertMarketplace from './pages/ExpertMarketplace'
+import About from './pages/About'
+import Blog from './pages/Blog'
+import Contact from './pages/Contact'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 import BrainDashboard from './pages/brain/BrainDashboard'
 import AuthCallback from './pages/AuthCallback'
 import MagicLinkCallback from './pages/MagicLinkCallback'
@@ -24,10 +38,25 @@ function App() {
         <Route index element={isAuthenticated ? <Dashboard /> : <Home />} />
         <Route path="discover" element={<Discover />} />
         <Route path="idea-engine" element={<IdeaEngine />} />
+        <Route path="services" element={<Services />} />
+        <Route path="network" element={<Network />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
+        <Route path="leads" element={<Leads />} />
+        <Route path="funding" element={<Funding />} />
+        <Route path="tools" element={<Tools />} />
+        <Route path="learn" element={<Learn />} />
+        <Route path="ai-roadmap" element={<AIRoadmap />} />
+        <Route path="ai-match" element={<AIMatch />} />
+        <Route path="expert-marketplace" element={<ExpertMarketplace />} />
+        <Route path="content" element={<Navigate to="/services" replace />} />
+        <Route path="about" element={<About />} />
+        <Route path="blog" element={<Blog />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="terms" element={<Terms />} />
+        <Route path="privacy" element={<Privacy />} />
         <Route
           path="saved"
           element={

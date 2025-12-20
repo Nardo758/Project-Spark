@@ -5,8 +5,9 @@ import { Menu, X, ChevronDown, Brain, Compass, Lightbulb, Users, DollarSign, Wre
 
 const guestNavItems = [
   { name: 'Home', path: '/' },
-  { name: 'Browse Ideas', path: '/discover' },
-  { name: 'Idea Engine', path: '/idea-engine' },
+  { name: 'Discover', path: '/discover' },
+  { name: 'Services', path: '/services' },
+  { name: 'Network', path: '/network' },
   { name: 'Pricing', path: '/pricing' },
 ]
 
@@ -25,7 +26,7 @@ const authNavItems = [
     ]
   },
   { name: 'Leads', path: '/leads', icon: Users },
-  { name: 'Content', path: '/content', icon: BookOpen },
+  { name: 'Services', path: '/services', icon: Wrench },
   { name: 'Network', path: '/network', icon: Users },
   { name: 'Funding', path: '/funding', icon: DollarSign },
   { name: 'Tools', path: '/tools', icon: Wrench },

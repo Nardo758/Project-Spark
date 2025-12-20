@@ -62,23 +62,50 @@ function clearCookie(name: string) {
   document.cookie = `${name}=; max-age=0; path=/`
 }
 
-function normalizeUser(raw: any): User | null {
-  if (!raw) return null
-  const id = Number(raw.id)
+function normalizeUser(raw: unknown): User | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+
+  const id = Number(obj.id)
   if (!Number.isFinite(id)) return null
 
-  const email = String(raw.email || '')
-  const name = String(raw.name || raw.full_name || email.split('@')[0] || 'User')
+  const email = typeof obj.email === 'string' ? obj.email : ''
+  const nameCandidate =
+    (typeof obj.name === 'string' && obj.name) ||
+    (typeof obj.full_name === 'string' && obj.full_name) ||
+    email.split('@')[0] ||
+    'User'
+  const name = String(nameCandidate)
+
+  const tierRaw = typeof obj.tier === 'string' ? obj.tier.toLowerCase() : ''
+  const validTiers = ['free', 'pro', 'business', 'enterprise'] as const
+  const tier: User['tier'] = validTiers.includes(tierRaw as (typeof validTiers)[number]) ? (tierRaw as User['tier']) : undefined
+
+  const brainTierRaw =
+    typeof obj.brainTier === 'string'
+      ? obj.brainTier.toLowerCase()
+      : typeof obj.brain_tier === 'string'
+        ? obj.brain_tier.toLowerCase()
+        : ''
+  const validBrainTiers = ['basic', 'business', 'expert', 'enterprise'] as const
+  const brainTier: User['brainTier'] = validBrainTiers.includes(brainTierRaw as (typeof validBrainTiers)[number])
+    ? (brainTierRaw as User['brainTier'])
+    : undefined
 
   return {
     id,
     email,
     name,
-    avatar_url: raw.avatar_url ?? raw.avatar ?? undefined,
-    is_verified: raw.is_verified ?? undefined,
-    is_admin: raw.is_admin ?? undefined,
-    tier: raw.tier ?? undefined,
-    brainTier: raw.brainTier ?? undefined,
+    avatar_url:
+      typeof obj.avatar_url === 'string'
+        ? obj.avatar_url
+        : typeof obj.avatar === 'string'
+          ? obj.avatar
+          : undefined,
+    is_verified: typeof obj.is_verified === 'boolean' ? obj.is_verified : undefined,
+    is_admin: typeof obj.is_admin === 'boolean' ? obj.is_admin : undefined,
+    tier,
+    brainTier,
   }
 }
 

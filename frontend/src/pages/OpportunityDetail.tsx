@@ -187,6 +187,42 @@ export default function OpportunityDetail() {
   const [ppuAmountLabel, setPpuAmountLabel] = useState<string>('$15')
   const [ppuError, setPpuError] = useState<string | null>(null)
 
+  const payPerUnlockMutation = useMutation({
+    mutationFn: async () => {
+      if (!token) throw new Error('Not authenticated')
+      if (!Number.isFinite(opportunityId)) throw new Error('Invalid opportunity id')
+      // 1) Fetch Stripe publishable key (public endpoint)
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
+
+      // 2) Create PaymentIntent for pay-per-unlock
+      const res = await fetch('/api/v1/subscriptions/pay-per-unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ opportunity_id: opportunityId }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start payment')
+
+      return {
+        publishableKey: String(keyData.publishable_key),
+        clientSecret: String(data.client_secret),
+        amountCents: Number(data.amount),
+      }
+    },
+    onSuccess: (data) => {
+      setPpuError(null)
+      setPpuPublishableKey(data.publishableKey)
+      setPpuClientSecret(data.clientSecret)
+      setPpuAmountLabel(fmtCents(data.amountCents) || '$15')
+      setPpuOpen(true)
+    },
+    onError: (e) => {
+      setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
+    },
+  })
+
   if (!Number.isFinite(opportunityId)) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -217,41 +253,6 @@ export default function OpportunityDetail() {
   const daysUntil = access?.days_until_unlock ?? 0
   const payPrice = fmtCents(access?.unlock_price ?? null)
   const contentState = access?.content_state || null
-
-  const payPerUnlockMutation = useMutation({
-    mutationFn: async () => {
-      if (!token) throw new Error('Not authenticated')
-      // 1) Fetch Stripe publishable key (public endpoint)
-      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
-      const keyData = await keyRes.json().catch(() => ({}))
-      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
-
-      // 2) Create PaymentIntent for pay-per-unlock
-      const res = await fetch('/api/v1/subscriptions/pay-per-unlock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ opportunity_id: opportunityId }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.detail || 'Unable to start payment')
-
-      return {
-        publishableKey: keyData.publishable_key as string,
-        clientSecret: data.client_secret as string,
-        amountCents: data.amount as number,
-      }
-    },
-    onSuccess: (data) => {
-      setPpuError(null)
-      setPpuPublishableKey(data.publishableKey)
-      setPpuClientSecret(data.clientSecret)
-      setPpuAmountLabel(fmtCents(data.amountCents) || '$15')
-      setPpuOpen(true)
-    },
-    onError: (e) => {
-      setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
-    },
-  })
 
   async function confirmPayPerUnlock(paymentIntentId: string) {
     if (!token) throw new Error('Not authenticated')

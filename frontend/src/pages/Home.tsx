@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Lightbulb, Target, Users, Zap, TrendingUp, Play, CheckCircle, BarChart3, Globe, Rocket } from 'lucide-react'
+import { ArrowRight, Lightbulb, Target, Users, Zap, TrendingUp, CheckCircle, BarChart3, Globe, Rocket, Wrench } from 'lucide-react'
 
 interface PlatformStats {
   validated_ideas: number
@@ -71,19 +71,19 @@ export default function Home() {
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link
-                  to="/idea-engine"
+                  to="/discover"
                   className="inline-flex items-center justify-center px-6 py-3.5 text-base font-medium text-white bg-black hover:bg-gray-800 rounded-lg gap-2"
                 >
                   <Zap className="w-5 h-5" />
-                  Validate Your Idea
+                  Browse Opportunities
                 </Link>
-                <button 
-                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                <Link
+                  to="/services"
                   className="inline-flex items-center justify-center px-6 py-3.5 text-base font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg gap-2"
                 >
-                  <Play className="w-5 h-5" />
-                  Watch Demo
-                </button>
+                  <Wrench className="w-5 h-5" />
+                  Explore Services
+                </Link>
               </div>
               
               {/* Stats Bar */}
@@ -214,14 +214,14 @@ export default function Home() {
             </div>
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
-                <Users className="w-6 h-6 text-purple-600" />
+                <Wrench className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Research & Create</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Services & Reports</h3>
               <p className="text-gray-600 mb-6">
                 Use our AI analyst to generate deep-dive reports, trend analyses, and data-driven content. Instantly cite validated opportunities.
               </p>
-              <Link to="/content" className="inline-flex items-center text-purple-600 font-medium hover:text-purple-700">
-                Start Creating <ArrowRight className="w-4 h-4 ml-1" />
+              <Link to="/services" className="inline-flex items-center text-purple-600 font-medium hover:text-purple-700">
+                Explore Services <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </div>
