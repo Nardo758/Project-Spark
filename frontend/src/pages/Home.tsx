@@ -60,7 +60,7 @@ export default function Home() {
                 534 users want this
               </div>
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mt-8">
-                <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Trending Opportunity</div>
+                <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Unlock This Week’s Top Opportunity</div>
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg font-semibold text-gray-900 pr-4">
                     Managing passwords across all my devices is a security risk
