@@ -5,7 +5,7 @@
 - [x] **STRIPE_WEBHOOK_SECRET** - Add to secrets (get from Stripe Dashboard > Webhooks) *(configured)*
 - [x] **SESSION_SECRET** - Generate secure random string for JWT signing *(configured)*
 - [x] **APIFY_API_KEY** - For automated opportunity scraping (if using scheduler) *(configured as APIFY_API_TOKEN)*
-- [ ] Configure Stripe webhook endpoint URL in Stripe Dashboard pointing to `/api/v1/webhook/stripe`
+- [x] Configure Stripe webhook endpoint URL in Stripe Dashboard pointing to `/api/v1/webhook/stripe` *(receiving live events)*
 
 ## Database
 
@@ -23,8 +23,8 @@
 - [x] Set environment variables:
   - `STRIPE_PRICE_PRO` - Stripe price ID for Pro tier *(price_1SfkUWL1e5X3ider8JuVrp1B)*
   - `STRIPE_PRICE_BUSINESS` - Stripe price ID for Business tier *(price_1SfkVFL1e5X3iderUsZCSFlS)*
-- [ ] Configure pay-per-unlock price ($15)
-- [ ] Test webhook delivery in Stripe Dashboard
+- [x] Configure pay-per-unlock price ($15) *(hardcoded in stripe_service.py - uses PaymentIntent, no Stripe product needed)*
+- [x] Test webhook delivery in Stripe Dashboard *(webhook receiving events, checkout.session.expired handled)*
 
 ## Authentication
 
