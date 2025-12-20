@@ -18,36 +18,17 @@ interface FeaturedOpportunity {
   growth_rate: number
 }
 
-interface PathStats {
-  build_launch: {
-    opportunities_this_week: number
-    avg_ai_score: number
-    active_opportunities: number
-  }
-  contribute_earn: {
-    total_validations: number
-    active_scouts: number
-    rewards_paid: string
-  }
-  research_create: {
-    deep_dives_delivered: number
-    trending_industries: string[]
-  }
-}
-
 export default function Home() {
   const [stats, setStats] = useState<PlatformStats | null>(null)
   const [featured, setFeatured] = useState<FeaturedOpportunity | null>(null)
-  const [pathStats, setPathStats] = useState<PathStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, featuredRes, pathsRes] = await Promise.all([
+        const [statsRes, featuredRes] = await Promise.all([
           fetch('/api/v1/opportunities/stats/platform'),
-          fetch('/api/v1/opportunities/featured/top'),
-          fetch('/api/v1/opportunities/stats/paths')
+          fetch('/api/v1/opportunities/featured/top')
         ])
         
         if (statsRes.ok) {
@@ -58,11 +39,6 @@ export default function Home() {
         if (featuredRes.ok) {
           const featuredData = await featuredRes.json()
           setFeatured(featuredData)
-        }
-        
-        if (pathsRes.ok) {
-          const pathsData = await pathsRes.json()
-          setPathStats(pathsData)
         }
       } catch (err) {
         console.error('Failed to fetch landing page data:', err)
@@ -212,91 +188,38 @@ export default function Home() {
             <p className="mt-4 text-lg text-gray-600">Whether you're building, advising, or creating content, OppGrid is designed for you.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Build & Launch Card */}
-            <div className="relative bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow group">
-              {/* Floating Badge */}
-              <div className="absolute -top-3 right-4 inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-medium shadow-lg">
-                <TrendingUp className="w-3 h-3" />
-                {pathStats?.build_launch.opportunities_this_week || 0} new this week
-              </div>
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
                 <Rocket className="w-6 h-6 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Build & Launch</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-6">
                 Discover validated opportunities and execute with AI-powered guidance, step-by-step playbooks, and access to a vetted expert network.
               </p>
-              {/* Stats Row */}
-              <div className="flex gap-4 mb-6 py-3 border-t border-gray-100">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600">{pathStats?.build_launch.active_opportunities || 0}</div>
-                  <div className="text-xs text-gray-500">Active</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-emerald-600">{pathStats?.build_launch.avg_ai_score || 0}</div>
-                  <div className="text-xs text-gray-500">Avg Score</div>
-                </div>
-              </div>
               <Link to="/discover" className="inline-flex items-center text-blue-600 font-medium hover:text-blue-700">
                 Explore Opportunities <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-
-            {/* Contribute & Earn Card */}
-            <div className="relative bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow group">
-              {/* Floating Badge */}
-              <div className="absolute -top-3 right-4 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500 text-white rounded-full text-xs font-medium shadow-lg">
-                <Users className="w-3 h-3" />
-                {pathStats?.contribute_earn.active_scouts || 0} scouts active
-              </div>
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-6">
                 <Lightbulb className="w-6 h-6 text-amber-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Contribute & Earn</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-6">
                 Spot a trend? Submit market signals. Get paid when your contributions help identify top-tier opportunities and connect with teams.
               </p>
-              {/* Stats Row */}
-              <div className="flex gap-4 mb-6 py-3 border-t border-gray-100">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-amber-600">{pathStats?.contribute_earn.total_validations || 0}</div>
-                  <div className="text-xs text-gray-500">Validations</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-emerald-600">{pathStats?.contribute_earn.rewards_paid || '$0'}</div>
-                  <div className="text-xs text-gray-500">Paid Out</div>
-                </div>
-              </div>
               <Link to="/signup" className="inline-flex items-center text-amber-600 font-medium hover:text-amber-700">
                 Become a Scout <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
-
-            {/* Research & Create Card */}
-            <div className="relative bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow group">
-              {/* Floating Badge */}
-              <div className="absolute -top-3 right-4 inline-flex items-center gap-1.5 px-3 py-1 bg-purple-500 text-white rounded-full text-xs font-medium shadow-lg">
-                <BarChart3 className="w-3 h-3" />
-                {pathStats?.research_create.deep_dives_delivered || 0} reports ready
-              </div>
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
-                <Target className="w-6 h-6 text-purple-600" />
+                <Users className="w-6 h-6 text-purple-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Research & Create</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-6">
                 Use our AI analyst to generate deep-dive reports, trend analyses, and data-driven content. Instantly cite validated opportunities.
               </p>
-              {/* Trending Industries */}
-              <div className="mb-6 py-3 border-t border-gray-100">
-                <div className="text-xs text-gray-500 mb-2">Trending Industries</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {(pathStats?.research_create.trending_industries || ['Tech', 'Health', 'Finance']).slice(0, 3).map((industry, i) => (
-                    <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
-                      {industry}
-                    </span>
-                  ))}
-                </div>
-              </div>
               <Link to="/content" className="inline-flex items-center text-purple-600 font-medium hover:text-purple-700">
                 Start Creating <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
