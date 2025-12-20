@@ -366,12 +366,13 @@ def create_pay_per_unlock(
     db: Session = Depends(get_db)
 ):
     """
-    Create a payment intent for pay-per-unlock ($15).
+    Create a payment intent for one-time unlock.
     
-    Only available for:
-    - Free tier users
-    - Archive opportunities (91+ days old)
-    - Max 5 unlocks per day
+    Supports:
+    - Free tier + Archive (91+ days): pay-per-unlock ($15)
+    - Business tier + HOT (0-7 days): fast pass ($99) single-opportunity access
+    
+    Daily limit: best-effort 5 attempts/day (shared across these one-time unlocks).
     """
     from datetime import timezone
     from sqlalchemy import text
@@ -403,17 +404,30 @@ def create_pay_per_unlock(
             detail="Opportunity already unlocked"
         )
     
-    # Check eligibility for pay-per-unlock (free tier only)
-    if subscription.tier != SubscriptionTier.FREE:
+    unlock_type: str
+    amount_cents: int
+
+    # Eligibility rules based on the product matrix.
+    if subscription.tier == SubscriptionTier.FREE:
+        if age_days < 91:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Pay-per-unlock only available for opportunities 91+ days old. This opportunity is {age_days} days old."
+            )
+        unlock_type = "pay_per_unlock"
+        amount_cents = stripe_service.PAY_PER_UNLOCK_PRICE
+    elif subscription.tier == SubscriptionTier.BUSINESS:
+        if age_days > 7:
+            raise HTTPException(
+                status_code=400,
+                detail="Fast pass is only available for HOT opportunities (0-7 days old)."
+            )
+        unlock_type = "fast_pass"
+        amount_cents = stripe_service.FAST_PASS_PRICE
+    else:
         raise HTTPException(
             status_code=400,
-            detail="Pay-per-unlock is only available for free tier users. Your subscription already includes access to this opportunity."
-        )
-    
-    if age_days < 91:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Pay-per-unlock only available for opportunities 91+ days old. This opportunity is {age_days} days old."
+            detail="One-time unlock is only available for Free (Archive) or Business (HOT fast pass) tiers."
         )
 
     # Concurrency-safe daily limit (5/day): use a per-user/day advisory lock on Postgres,
@@ -465,10 +479,12 @@ def create_pay_per_unlock(
     
     # Create payment intent
     try:
-        payment_intent = stripe_service.create_payment_intent_for_unlock(
+        payment_intent = stripe_service.create_payment_intent_for_one_time_unlock(
             customer_id=subscription.stripe_customer_id,
             opportunity_id=unlock_data.opportunity_id,
-            user_id=current_user.id
+            user_id=current_user.id,
+            amount_cents=amount_cents,
+            unlock_type=unlock_type,
         )
     except Exception:
         attempt.status = PayPerUnlockAttemptStatus.CANCELED
@@ -492,7 +508,7 @@ def create_pay_per_unlock(
     return {
         "client_secret": payment_intent.client_secret,
         "payment_intent_id": payment_intent.id,
-        "amount": stripe_service.PAY_PER_UNLOCK_PRICE,
+        "amount": amount_cents,
         "opportunity_id": unlock_data.opportunity_id
     }
 
@@ -533,7 +549,8 @@ def confirm_pay_per_unlock(
         )
     
     # Verify metadata
-    if payment_intent.metadata.get("type") != "pay_per_unlock":
+    payment_type = payment_intent.metadata.get("type")
+    if payment_type not in ("pay_per_unlock", "fast_pass"):
         raise HTTPException(status_code=400, detail="Invalid payment type")
     
     opportunity_id = int(payment_intent.metadata.get("opportunity_id", 0))

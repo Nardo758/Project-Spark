@@ -127,6 +127,7 @@ async def get_opportunity(
         "can_pay_to_unlock": ent.can_pay_to_unlock,
         "unlock_price": ent.unlock_price,
         "user_tier": tier_value if ent.is_authenticated else None,
+        "content_state": getattr(ent, "content_state", None),
     }
     
     # Create response dict from opportunity
@@ -178,6 +179,26 @@ async def get_opportunity(
         # Raw source data
         "raw_source_data": opportunity.raw_source_data,
     }
+
+    # Apply preview/placeholder masking for HOT/early windows to match the product matrix.
+    # We do this here (API layer) so all clients get consistent behavior.
+    content_state = getattr(ent, "content_state", None)
+    if content_state == "placeholder":
+        # Pro HOT (0-7 days): show that something exists, but hide details.
+        response_data["title"] = "New Opportunity (HOT)"
+        response_data["description"] = "This opportunity is in the Enterprise-only early access window."
+        response_data["ai_summary"] = None
+        response_data["ai_target_audience"] = None
+        response_data["ai_market_size_estimate"] = None
+        response_data["ai_competition_level"] = None
+        response_data["ai_urgency_level"] = None
+        response_data["ai_pain_intensity"] = None
+        response_data["feasibility_score"] = None
+        response_data["market_size"] = None
+    elif content_state in {"preview", "fast_pass"}:
+        # Pro FRESH (8-30) and Business HOT (0-7): show title + key metrics, hide deep narrative.
+        response_data["description"] = "Preview available. Unlock or upgrade to see full details."
+        response_data["ai_summary"] = None
     
     # Gate Layer 1 content (Problem Overview) based on access
     if ent.is_accessible:

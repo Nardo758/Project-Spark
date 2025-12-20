@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.database import SessionLocal
 from app.models.job_run import JobRun
+from app.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
 from app.models.transaction import Transaction, TransactionStatus, TransactionType
 
 logger = logging.getLogger(__name__)
@@ -149,6 +150,86 @@ async def _apify_import_and_analyze_job(db: Session) -> dict:
     return {"actor_id": actor_id, "import": import_result, "analysis": analyzed}
 
 
+def _stripe_status_to_local(status: str | None) -> SubscriptionStatus:
+    s = (status or "").lower()
+    if s in ("active", "trialing"):
+        return SubscriptionStatus.ACTIVE
+    if s == "past_due":
+        return SubscriptionStatus.PAST_DUE
+    if s == "canceled":
+        return SubscriptionStatus.CANCELED
+    return SubscriptionStatus.INCOMPLETE
+
+
+def _epoch_to_dt(ts: int | None) -> datetime | None:
+    if not ts:
+        return None
+    return datetime.fromtimestamp(int(ts), tz=timezone.utc)
+
+
+async def _stripe_subscription_reconcile_job(db: Session) -> dict:
+    """
+    Defense-in-depth: periodically reconcile Stripe subscription truth with our DB.
+
+    This catches cases where a webhook was missed/delayed and prevents entitlement drift.
+    """
+    from app.services.stripe_service import stripe_service, get_stripe_client
+
+    try:
+        client = get_stripe_client()
+    except Exception as e:
+        return {"enabled": False, "error": f"Stripe not configured: {e}"}
+
+    q = db.query(Subscription).filter(Subscription.stripe_subscription_id.isnot(None))
+    subs = q.order_by(Subscription.updated_at.asc().nullsfirst(), Subscription.id.asc()).limit(500).all()
+
+    checked = 0
+    updated = 0
+    errors: list[dict] = []
+
+    pro_price = stripe_service.STRIPE_PRICES.get(SubscriptionTier.PRO)
+    business_price = stripe_service.STRIPE_PRICES.get(SubscriptionTier.BUSINESS)
+
+    for s in subs:
+        checked += 1
+        try:
+            stripe_sub = client.Subscription.retrieve(s.stripe_subscription_id)
+            local_status = _stripe_status_to_local(getattr(stripe_sub, "status", None))
+
+            # Period + cancel flags
+            s.current_period_start = _epoch_to_dt(getattr(stripe_sub, "current_period_start", None)) or s.current_period_start
+            s.current_period_end = _epoch_to_dt(getattr(stripe_sub, "current_period_end", None)) or s.current_period_end
+            s.cancel_at_period_end = bool(getattr(stripe_sub, "cancel_at_period_end", False))
+            s.status = local_status
+
+            # Tier mapping via current subscription item price_id
+            try:
+                items = getattr(getattr(stripe_sub, "items", None), "data", None) or []
+                price_id = None
+                if items:
+                    price = getattr(items[0], "price", None)
+                    price_id = getattr(price, "id", None)
+                if price_id:
+                    s.stripe_price_id = price_id
+                    if pro_price and price_id == pro_price:
+                        s.tier = SubscriptionTier.PRO
+                    elif business_price and price_id == business_price:
+                        s.tier = SubscriptionTier.BUSINESS
+            except Exception:
+                # Ignore tier mapping errors; keep status reconciliation.
+                pass
+
+            db.add(s)
+            updated += 1
+        except Exception as e:
+            errors.append({"subscription_id": s.id, "stripe_subscription_id": s.stripe_subscription_id, "error": str(e)})
+
+    if updated:
+        db.commit()
+
+    return {"enabled": True, "checked": checked, "updated": updated, "errors": errors[:25]}
+
+
 async def _loop(job_name: str, interval_seconds: int, fn: Callable[[Session], Awaitable[dict]]) -> None:
     # Stagger initial run slightly so startup can settle.
     await asyncio.sleep(3)
@@ -179,4 +260,8 @@ def start_background_jobs() -> None:
     if settings.APIFY_IMPORT_JOB_ENABLED:
         loop.create_task(_loop("apify_import_and_analyze", settings.APIFY_IMPORT_JOB_INTERVAL_SECONDS, _apify_import_and_analyze_job))
         logger.info("Started job: apify_import_and_analyze")
+
+    if settings.STRIPE_RECONCILE_JOB_ENABLED:
+        loop.create_task(_loop("stripe_subscription_reconcile", settings.STRIPE_RECONCILE_JOB_INTERVAL_SECONDS, _stripe_subscription_reconcile_job))
+        logger.info("Started job: stripe_subscription_reconcile")
 

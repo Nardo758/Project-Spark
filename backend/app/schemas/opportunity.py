@@ -114,6 +114,9 @@ class OpportunityAccessInfo(BaseModel):
     can_pay_to_unlock: bool
     unlock_price: Optional[int] = None
     user_tier: Optional[str] = None
+    # Guidance for frontend rendering; derived from entitlements rules.
+    # full | preview | placeholder | locked | pay_per_unlock | fast_pass
+    content_state: Optional[str] = None
 
 
 class OpportunityGatedResponse(Opportunity):
