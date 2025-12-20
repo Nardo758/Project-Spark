@@ -40,6 +40,8 @@
 - [ ] `/api/v1/auth/*` - Authentication flows
 - [ ] `/api/v1/opportunities/*` - Opportunity CRUD
 - [ ] `/api/v1/subscriptions/*` - Subscription management
+- [ ] `/api/v1/subscriptions/unlocks` - Unlock history (one-time purchases)
+- [ ] `/api/v1/payments/*` - Deep Dive purchase + confirmation
 - [ ] `/api/v1/experts/*` - Expert matching & booking
 - [ ] `/api/v1/agreements/*` - Success-fee agreements
 - [ ] `/api/v1/milestones/*` - Milestone tracking
@@ -57,6 +59,13 @@
 - [ ] Profile Onboarding (profile-onboarding.html) - New user setup
 - [ ] Pricing (pricing.html) - Subscription tiers
 - [ ] Admin Panel (admin.html) - Admin controls
+
+## Implemented in Code (Checklist)
+
+- [x] **Opportunity list returns entitlement info** (cards can render `content_state` + `unlock_expires_at`)
+- [x] **Pay-per-unlock / Fast Pass**: server-side daily limit tracking + expiry surfaced in API responses
+- [x] **Deep Dive**: in-app purchase endpoint + confirmation path (in addition to webhook fulfillment)
+- [x] **Unlock history endpoint** (`/api/v1/subscriptions/unlocks`) for “what did I buy and when does it expire”
 
 ## Performance & Security
 
