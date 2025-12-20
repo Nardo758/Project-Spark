@@ -8,13 +8,20 @@ import {
   ChevronRight,
   Search,
   Hammer,
+  Users,
+  DollarSign,
+  Target,
+  Code,
   Settings,
   FolderOpen
 } from 'lucide-react'
 
 const guestNavItems = [
   { name: 'Discover', path: '/discover' },
-  { name: 'Build', path: '/idea-engine' },
+  { name: 'Consultant Studio', path: '/build/reports' },
+  { name: 'Leads', path: '/leads' },
+  { name: 'Join Network', path: '/network' },
+  { name: 'API', path: '/api' },
   { name: 'Pricing', path: '/pricing' },
 ]
 
@@ -31,18 +38,39 @@ const authNavItems = [
     name: 'Build', 
     icon: Hammer,
     dropdown: [
-      { name: 'Report Studio', path: '/build/reports', description: 'Feasibility, Market & Strategic analysis' },
-      { name: 'Business Plan', path: '/build/reports?type=business-plan', description: 'Comprehensive business plans' },
-      { name: 'Pitch Deck', path: '/build/reports?type=pitch-deck', description: 'Investor presentations' },
+      { name: 'Consultant Studio', path: '/build/reports', description: 'AI-powered feasibility studies' },
+      { name: 'Business Plan Generator', path: '/build/business-plan', description: 'Comprehensive business plans' },
+      { name: 'Pitch Deck', path: '/build/pitch-deck', description: 'Investor presentations' },
     ]
+  },
+  { 
+    name: 'Find Expert Help', 
+    icon: Users,
+    path: '/find-expert-help'
+  },
+  { 
+    name: 'Find Money', 
+    icon: DollarSign,
+    path: '/find-money'
+  },
+  { 
+    name: 'Leads', 
+    icon: Target,
+    path: '/leads'
+  },
+  { 
+    name: 'API', 
+    icon: Code,
+    path: '/api'
   },
   { 
     name: 'Manage', 
     icon: Settings,
     dropdown: [
-      { name: 'My Projects', path: '/dashboard', description: 'View all your projects' },
+      { name: 'Dashboard', path: '/dashboard', description: 'Your personalized dashboard' },
+      { name: 'My Projects', path: '/projects', description: 'View all your projects' },
       { name: 'Saved Ideas', path: '/saved', description: 'Bookmarked opportunities' },
-      { name: 'AI Co-founder', path: '/brain', description: 'Your AI assistant' },
+      { name: 'Settings', path: '/settings', description: 'Account settings' },
     ]
   },
 ]
