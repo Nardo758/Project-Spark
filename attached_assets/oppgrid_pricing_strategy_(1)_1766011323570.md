@@ -1,3 +1,13 @@
+# NOTE (Historical / Ideation)
+This document lives in `attached_assets/` and contains strategy drafts and copy explorations.
+
+**Canonical implementation plan and rules live here:**
+- `USER_FLOWS.md` (phased implementation plan)
+- `replit.md` (time-decay windows + one-time purchase rules)
+- `PRODUCTION_TODO.md` (production checklist)
+
+If anything in this file conflicts with the above, treat the above as the source of truth.
+
 # OppGrid Pricing Strategy
 ## Time-Decay Model with Pay-Per-Idea Mechanics
 
@@ -1808,7 +1818,7 @@ Most people start with Layer 1. If the opportunity looks promising, that's when 
 
 You could scrape Reddit yourself, but by the time you find and validate an opportunity, Business tier subscribers are already executing."
 
-### "Why do older opportunities become free? Doesn't that devalue them?"
+### "Why do older opportunities become pay-per-unlock eligible? Doesn't that devalue them?"
 
 **Response:**
 "Not at all. Here's why:
@@ -1819,9 +1829,11 @@ You could scrape Reddit yourself, but by the time you find and validate an oppor
 
 3. **Hooks for upgrade:** Free users who find value in old opportunities naturally want access to fresh ones—that's our conversion funnel.
 
-4. **Market expectation:** Information naturally becomes commoditized over time. We're monetizing the freshness premium, not the information itself."
+4. **Market expectation:** Information naturally becomes commoditized over time. We're monetizing the freshness premium, not the information itself.
 
-### "What if I wait for everything to become free?"
+In our model, older opportunities don’t “become free” automatically—they become **cheaper to access** (e.g., pay-per-unlock for ARCHIVE) while premium tiers pay for **freshness windows**."
+
+### "What if I wait instead of paying?"
 
 **Response:**
 "You absolutely can—but you'll be competing against:
@@ -1830,7 +1842,7 @@ You could scrape Reddit yourself, but by the time you find and validate an oppor
 - Business customers who had a 61-day head start  
 - Pro customers who had a 60-day head start
 
-By the time an opportunity is free, the market has already moved. Someone is already building it. Your competitive advantage is gone.
+By the time an opportunity is widely accessible (e.g., ARCHIVE + pay-per-unlock), the market has already moved. Someone may already be building it. Your competitive advantage is reduced.
 
 The real question: Is saving $99/month worth giving up every first-mover advantage?"
 
@@ -1995,7 +2007,7 @@ Ready to move faster? [Compare pricing tiers →]
 
 Hi [Name],
 
-Good news! Three opportunities you saved are aging into the free tier this week:
+Good news! Three opportunities you saved are becoming **ARCHIVE (pay-per-unlock eligible)** this week:
 
 🔓 **Unlocking Dec 18** (2 days):  
 "AI-powered meal planning app for busy parents" (Score: 8.7)  

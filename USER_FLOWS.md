@@ -2,6 +2,25 @@
 
 ## Core User Flows
 
+## Opportunity Access Model (Canonical)
+
+OppGrid uses a **time-decay access model**. The backend returns entitlement info (e.g., `content_state`) for each opportunity, and the UI should render CTAs based on that state.
+
+**Time windows (days since discovered/created):**
+- **HOT**: 0–7 days
+- **FRESH**: 8–30 days
+- **VALIDATED**: 31–90 days
+- **ARCHIVE**: 91+ days
+
+**Common entitlement states (example):**
+- `full`: show all content available to the user
+- `preview`: show limited fields + upgrade CTA
+- `locked`: show locked state + countdown/unlock info + upgrade CTA
+- `pay_per_unlock`: eligible for $15 one-time unlock (ARCHIVE), 30-day access, daily limit 5
+- `fast_pass`: eligible for $99 one-time unlock (Business tier, HOT), 30-day access
+
+---
+
 ### 1. User Registration & Authentication Flow
 
 #### 1A. New User Registration
@@ -15,7 +34,7 @@ Enter Details:
   - Email
   - Password (min 8 chars)
   ↓
-Submit Form → POST /api/auth/register
+Submit Form → POST /api/v1/auth/register
   ↓
 [SUCCESS] → Auto-login with JWT token
   ↓
@@ -40,7 +59,7 @@ Enter Credentials:
   - Email
   - Password
   ↓
-Submit Form → POST /api/auth/login
+Submit Form → POST /api/v1/auth/login
   ↓
 [SUCCESS] → Receive JWT token
   ↓
@@ -54,7 +73,7 @@ END
 - Invalid credentials → Show "Invalid email or password"
 - Account not verified → (Future) Prompt email verification
 
-#### 1C. Password Reset Flow (Partial - Backend Missing)
+#### 1C. Password Reset Flow (If Enabled)
 ```
 START → Sign-in Page
   ↓
@@ -62,13 +81,13 @@ Click "Forgot Password?" → Reset Password Page (reset-password.html)
   ↓
 Enter Email Address
   ↓
-[MISSING] Submit → POST /api/auth/request-reset
+[If enabled] Submit → POST /api/v1/auth/request-reset
   ↓
 [MISSING] Send email with reset token
   ↓
 [MISSING] User clicks email link
   ↓
-[MISSING] Enter new password → POST /api/auth/reset-password
+[If enabled] Enter new password → POST /api/v1/auth/reset-password
   ↓
 Redirect to Sign-in
 END
@@ -82,7 +101,7 @@ END
 ```
 START → Dashboard (index.html)
   ↓
-Page loads → GET /api/opportunities
+Page loads → GET /api/v1/opportunities
   ↓
 Display opportunities as cards with:
   - Title, Description
@@ -90,7 +109,8 @@ Display opportunities as cards with:
   - Validation count
   - Feasibility score badge
   - Geographic scope badge
-  - "I Need This Too" button
+  - Access badge / state (e.g. HOT/FRESH/VALIDATED/ARCHIVE)
+  - CTA varies by entitlement (`content_state`): View / Upgrade / Unlock
   ↓
 USER ACTIONS:
   ├─ Click card → View full details (modal/detail page)
@@ -111,7 +131,7 @@ USER SELECTS FILTERS:
   ├─ Category (from predefined list)
   └─ Completion Status (open/in_progress/solved/abandoned)
   ↓
-Apply Filters → GET /api/opportunities?filters
+Apply Filters → GET /api/v1/opportunities?filters
   ↓
 Display filtered results
   ↓
@@ -127,7 +147,7 @@ Navigate to Search Page (search.html)
   ↓
 Enter search query
   ↓
-Submit → POST /api/opportunities/search
+Submit → POST /api/v1/opportunities/search
   ↓
 Backend searches:
   - Title (weighted)
@@ -151,7 +171,7 @@ Display category grid with counts
   ↓
 Select category → Filter opportunities
   ↓
-GET /api/opportunities?category={category}
+GET /api/v1/opportunities?category={category}
   ↓
 Display category-specific opportunities
 END
@@ -171,7 +191,7 @@ Click "I Need This Too" button
   ├─ NO → Redirect to sign-in (signin.html?redirect=...)
   └─ YES → Continue
   ↓
-POST /api/validations
+POST /api/v1/validations
   - opportunity_id
   - user_id (from JWT)
   ↓
@@ -189,7 +209,7 @@ END
 ```
 Click "Validated ✓" button
   ↓
-DELETE /api/validations/{validation_id}
+DELETE /api/v1/validations/{validation_id}
   ↓
 Update count (-1)
   ↓
@@ -211,7 +231,7 @@ Click "Add Comment"
   ↓
 Enter comment text
   ↓
-Submit → POST /api/comments
+Submit → POST /api/v1/comments
   ↓
 Display new comment with:
   - User avatar/name
@@ -225,7 +245,7 @@ END
 
 **Like Comment:**
 ```
-Click like button → PUT /api/comments/{id}/like
+Click like button → PUT /api/v1/comments/{id}/like
   ↓
 Increment like count
   ↓
@@ -261,7 +281,7 @@ Enter Details:
   ↓
 Backend checks similarity
   ↓
-POST /api/analytics/check-duplicate
+POST /api/v1/analytics/check-duplicate
   ↓
 IF similarity > 50%:
   ├─ Show duplicate warning modal
@@ -271,7 +291,7 @@ IF similarity > 50%:
   │   └─ "Submit Anyway" → Continue
   └─ Continue
   ↓
-Submit → POST /api/opportunities
+Submit → POST /api/v1/opportunities
   ↓
 [SUCCESS]
   ↓
@@ -306,11 +326,11 @@ Display sections:
   └─ Watchlist (saved opportunities)
   ↓
 [NEEDED - Dynamic]
-GET /api/users/me
+GET /api/v1/users/me
   ↓
 Fetch real user data
   ↓
-GET /api/opportunities?user_id={user_id}
+GET /api/v1/opportunities?user_id={user_id}
   ↓
 Display user's opportunities
 END
@@ -338,7 +358,7 @@ Click "Save Changes"
 Form submission handler exists
   ↓
 [NEEDED]
-PUT /api/users/me
+PUT /api/v1/users/me
   - name
   - bio
   - avatar_url
@@ -367,13 +387,13 @@ NOTIFICATION PREFERENCES [MISSING]:
   [NEEDED]
   ├─ Email notifications toggle
   ├─ Push notifications toggle
-  └─ PUT /api/users/me/preferences
+  └─ PUT /api/v1/users/me/preferences
   ↓
 ACCOUNT SETTINGS:
   ├─ Change Password [EXISTS]
   │   ├─ Enter current password
   │   ├─ Enter new password
-  │   └─ PUT /api/users/me/password
+  │   └─ PUT /api/v1/users/me/password
   ├─ Enable 2FA [MISSING]
   ├─ Data Export [MISSING]
   └─ Delete Account [MISSING]
@@ -398,10 +418,10 @@ Display placeholder charts
   ↓
 [NEEDED - Dynamic]
 PARALLEL API CALLS:
-  ├─ GET /api/analytics/completion-stats
-  ├─ GET /api/analytics/top-feasible
-  ├─ GET /api/analytics/geographic/distribution
-  └─ GET /api/analytics/feasibility/{id} (for selected opportunity)
+  ├─ GET /api/v1/analytics/completion-stats
+  ├─ GET /api/v1/analytics/top-feasible
+  ├─ GET /api/v1/analytics/geographic/distribution
+  └─ GET /api/v1/analytics/feasibility/{id} (for selected opportunity)
   ↓
 RENDER INTERACTIVE CHARTS:
   ├─ Validation trends over time
@@ -423,7 +443,7 @@ START → Viewing opportunity
   ↓
 Click "View Feasibility Analysis"
   ↓
-GET /api/analytics/feasibility/{opportunity_id}
+GET /api/v1/analytics/feasibility/{opportunity_id}
   ↓
 Display analysis modal/page:
   ├─ Overall Score (0-100)
@@ -444,7 +464,7 @@ START → Dashboard or Research tab
   ↓
 Click "Most Feasible" filter/tab
   ↓
-GET /api/analytics/top-feasible?min_score=50&limit=20
+GET /api/v1/analytics/top-feasible?min_score=50&limit=20
   ↓
 Display ranked list with:
   - Rank number
@@ -473,7 +493,7 @@ Select scope from dropdown:
   ├─ International
   └─ Online
   ↓
-GET /api/analytics/geographic/by-scope?scope={scope}
+GET /api/v1/analytics/geographic/by-scope?scope={scope}
   ↓
 Display filtered opportunities
   ↓
@@ -490,7 +510,7 @@ Enter/select:
   ├─ Region (conditional)
   └─ City (conditional)
   ↓
-GET /api/analytics/geographic/by-location?country={country}&region={region}&city={city}
+GET /api/v1/analytics/geographic/by-location?country={country}&region={region}&city={city}
   ↓
 Display location-specific opportunities
   ↓
@@ -510,7 +530,7 @@ START → Opportunity details
   ↓
 Click "Mark as In Progress"
   ↓
-PUT /api/opportunities/{id}
+PUT /api/v1/opportunities/{id}
   - completion_status: "in_progress"
   ↓
 Update status badge
@@ -531,7 +551,7 @@ Enter solution details:
   ├─ Solution Description (required)
   └─ Solved By (user/organization)
   ↓
-Submit → PUT /api/opportunities/{id}
+Submit → PUT /api/v1/opportunities/{id}
   - completion_status: "solved"
   - solution_description
   - solved_by
@@ -622,7 +642,7 @@ END
 
 ### Priority 1: Critical Flows (Enable Core Value)
 1. **Dynamic Profile Data Loading** (4A)
-   - GET /api/users/me integration
+   - GET /api/v1/users/me integration
    - Display real activity feed
 
 2. **Settings Backend Integration** (4C)
@@ -640,12 +660,12 @@ END
 
 ### Priority 2: Enhanced User Experience
 5. **Email Verification** (1A, 1C)
-   - POST /api/auth/verify-email
+   - POST /api/v1/auth/verify-email
    - Email sending service integration
 
 6. **Password Reset Backend** (1C)
-   - POST /api/auth/request-reset
-   - POST /api/auth/reset-password
+   - POST /api/v1/auth/request-reset
+   - POST /api/v1/auth/reset-password
 
 7. **Impact Points System** (4A, 8A)
    - Calculate points for actions
@@ -681,30 +701,37 @@ END
 
 | User Flow | Required Endpoints | Status |
 |-----------|-------------------|--------|
-| Registration | POST /api/auth/register | ✅ |
-| Login | POST /api/auth/login | ✅ |
-| Browse Opportunities | GET /api/opportunities | ✅ |
-| Filter Opportunities | GET /api/opportunities?filters | ✅ |
-| Search | POST /api/opportunities/search | ✅ |
-| Create Opportunity | POST /api/opportunities | ✅ |
-| Duplicate Check | POST /api/analytics/check-duplicate | ✅ |
-| Validate | POST /api/validations | ✅ |
-| Remove Validation | DELETE /api/validations/{id} | ✅ |
-| Comment | POST /api/comments | ✅ |
-| Like Comment | PUT /api/comments/{id}/like | ✅ |
-| Feasibility Analysis | GET /api/analytics/feasibility/{id} | ✅ |
-| Top Feasible | GET /api/analytics/top-feasible | ✅ |
-| Geographic Filter | GET /api/analytics/geographic/* | ✅ |
-| Completion Stats | GET /api/analytics/completion-stats | ✅ |
-| Get Profile | GET /api/users/me | ✅ |
-| Update Profile | PUT /api/users/me | ✅ |
-| Password Reset Request | POST /api/auth/request-reset | ❌ |
-| Password Reset | POST /api/auth/reset-password | ❌ |
-| Email Verification | POST /api/auth/verify-email | ❌ |
-| Watchlist Add | POST /api/users/me/watchlist | ❌ |
-| Watchlist Remove | DELETE /api/users/me/watchlist/{id} | ❌ |
-| Notifications | GET /api/notifications | ❌ |
-| OAuth Login | POST /api/auth/oauth/{provider} | ❌ |
+| Registration | POST /api/v1/auth/register | ✅ |
+| Login | POST /api/v1/auth/login | ✅ |
+| Browse Opportunities | GET /api/v1/opportunities | ✅ |
+| Filter Opportunities | GET /api/v1/opportunities?filters | ✅ |
+| Search | POST /api/v1/opportunities/search | ✅ |
+| Create Opportunity | POST /api/v1/opportunities | ✅ |
+| Duplicate Check | POST /api/v1/analytics/check-duplicate | ✅ |
+| Validate | POST /api/v1/validations | ✅ |
+| Remove Validation | DELETE /api/v1/validations/{id} | ✅ |
+| Comment | POST /api/v1/comments | ✅ |
+| Like Comment | PUT /api/v1/comments/{id}/like | ✅ |
+| Feasibility Analysis | GET /api/v1/analytics/feasibility/{id} | ✅ |
+| Top Feasible | GET /api/v1/analytics/top-feasible | ✅ |
+| Geographic Filter | GET /api/v1/analytics/geographic/* | ✅ |
+| Completion Stats | GET /api/v1/analytics/completion-stats | ✅ |
+| Get Profile | GET /api/v1/users/me | ✅ |
+| Update Profile | PUT /api/v1/users/me | ✅ |
+| Password Reset Request | POST /api/v1/auth/request-reset | (depends on deployment) |
+| Password Reset | POST /api/v1/auth/reset-password | (depends on deployment) |
+| Email Verification | POST /api/v1/auth/verify-email | (depends on deployment) |
+| Watchlist Add | POST /api/v1/users/me/watchlist | (planned) |
+| Watchlist Remove | DELETE /api/v1/users/me/watchlist/{id} | (planned) |
+| Notifications | GET /api/v1/notifications | (planned) |
+| OAuth Login | POST /api/v1/auth/oauth/{provider} | (depends on deployment) |
+
+### Monetization / access control endpoints (time-decay + one-time purchases)
+- `POST /api/v1/subscriptions/pay-per-unlock` (Pay-per-unlock + Fast Pass PaymentIntent creation)
+- `POST /api/v1/subscriptions/confirm-pay-per-unlock` (confirm unlock + grant access)
+- `POST /api/v1/subscriptions/checkout` (subscription checkout)
+- `POST /api/v1/subscriptions/portal` (billing portal)
+- `POST /api/v1/webhook/stripe` (Stripe webhooks)
 
 ---
 
