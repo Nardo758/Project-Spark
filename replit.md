@@ -37,24 +37,40 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 20, 2024)
 
-**Payment & Access Control Enhancements:**
-- Deep Dive add-on ($49): Schema updated with can_buy_deep_dive and deep_dive_price fields; entitlements service computes these for Pro tier users
-- Enterprise contact modal: New EnterpriseContactModal component replaces mailto links in Pricing and OpportunityDetail pages
-- Contact form endpoint: POST /api/v1/contact/enterprise sends email via Resend with proper error handling
-- Subscription reconciliation: Enabled STRIPE_RECONCILE_JOB_ENABLED for defense-in-depth webhook recovery
+**Navigation Bar Restructuring (Brain AI Architecture):**
+- New navigation structure: [Logo] Discover | Build | Manage | [Project Switcher] | [User]
+- Discover dropdown: Opportunity Feed, Validate Idea (Idea Engine)
+- Build dropdown: Report Studio, Business Plan, Pitch Deck
+- Manage dropdown: My Projects, Saved Ideas, AI Co-founder
+- Guest navigation: Discover, Build, Pricing, Sign In, Get Started
 
-**Idea Engine Payment Wiring:**
-- Two-step flow: FREE idea refinement (POST /api/v1/idea-engine/generate) + PAID validation ($9.99)
-- Stripe Elements integration for card input with payment intent creation
-- Full validation results displayed after successful payment (market size, competition, risks, next steps)
-- Authentication check with login redirect for unauthenticated users
+**Landing Page Redesign (Dual Entry Points):**
+- Explorer path: Search & Discover with search box for browsing AI-curated opportunities
+- Ideator path: Build & Validate with textarea for describing business ideas
+- Live Platform Metrics sidebar: Validated Ideas, Market Opportunity, Active Markets, Validated Opps
+- Trending This Week section with category growth percentages
+- Featured Consultant Report Studio CTA with dark gradient section
 
-**Landing Page Redesign:**
-- Side-by-side hero layout with text on left, opportunity card preview on right
-- Green gradient background with emerald/purple accents matching original design
-- Stats bar: 176 Validated Ideas, $47B+ Market Opportunity, 6 Global Markets
-- Trending opportunity card with score badge (87), market size, submissions, growth metrics
-- Eight sections: Hero, Social Proof, Three Paths, AI Co-founder, 3-Step Process, Validated Intelligence, Final CTA, Footer
+**Discover Page Enhancements:**
+- FRESH/OLD freshness badges based on opportunity age (7 days = FRESH)
+- AI Match scores displayed prominently (purple badge with percentage)
+- Star ratings based on feasibility score
+- Views, saves, and timestamp metrics on each card
+- Personal Discovery Metrics sidebar: Ideas Viewed, Avg Match Score, Top Interest, Avg Freshness
+- Save/Unsave watchlist functionality restored with visual feedback
+- "Generate Report" button links to Consultant Report Studio
+
+**Consultant Report Studio (/build/reports):**
+- Report type selection: Feasibility Study, Market Analysis, Strategic Assessment, Progress Report
+- Data Sources Integration status with live updating indicators
+- Real-Time Validation Metrics grid
+- AI-generated Executive Summary with confidence score
+- Quick Actions sidebar: Business Plan Generator, Financial Models, Pitch Deck Assistant
+
+**Previous Payment & Access Control Enhancements:**
+- Deep Dive add-on ($49): Schema updated with can_buy_deep_dive and deep_dive_price fields
+- Enterprise contact modal: New EnterpriseContactModal component
+- Subscription reconciliation: Enabled STRIPE_RECONCILE_JOB_ENABLED
 
 ## Previous Changes (December 19, 2024)
 

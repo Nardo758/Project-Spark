@@ -177,10 +177,6 @@ export default function OpportunityDetail() {
     },
   })
 
-  const opp = opportunityQuery.data
-  const access = opp?.access_info
-  const saved = watchlistCheckQuery.data?.in_watchlist ?? false
-
   const [ppuOpen, setPpuOpen] = useState(false)
   const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
   const [ppuClientSecret, setPpuClientSecret] = useState<string | null>(null)
@@ -224,6 +220,10 @@ export default function OpportunityDetail() {
       setPpuError(e instanceof Error ? e.message : 'Unable to start payment')
     },
   })
+
+  const opp = opportunityQuery.data
+  const access = opp?.access_info
+  const saved = watchlistCheckQuery.data?.in_watchlist ?? false
 
   const shouldAutoUnlock = useMemo(() => {
     const params = new URLSearchParams(location.search)

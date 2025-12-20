@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
-import { useQuery, useMutation, useQueries, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2, Lock, Search, Target, Clock, TrendingUp, Bookmark } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Search, Clock, Bookmark, Eye, Star, Filter, FileText, ChevronRight } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useBrainStore } from '../stores/brainStore'
 import { deepSeekAnalyze, type DeepSeekAnalyzeResponse } from '../services/deepseekApi'
 import { fetchActiveBrain, saveOpportunityToBrain } from '../services/brainApi'
 
-const categories = ['All', 'Healthcare', 'FinTech', 'E-commerce', 'Education', 'Real Estate', 'SaaS']
-const statuses = ['All', 'HOT', 'FRESH', 'VALIDATED', 'ARCHIVE']
+const categories = ['All', 'Healthcare', 'FinTech', 'E-commerce', 'Education', 'Real Estate', 'SaaS', 'Technology']
+const statuses = ['All', 'FRESH', 'OLD']
 
 type Opportunity = {
   id: number
@@ -20,6 +20,10 @@ type Opportunity = {
   ai_competition_level?: string | null
   feasibility_score?: number | null
   created_at?: string
+  views?: number
+  saves?: number
+  growth_rate?: number
+  tags?: string[]
 }
 
 type AccessInfo = {
@@ -54,15 +58,26 @@ type WatchlistItem = {
   opportunity?: Opportunity | null
 }
 
-function getStatusFromAge(createdAt?: string): 'HOT' | 'FRESH' | 'VALIDATED' | 'ARCHIVE' {
-  if (!createdAt) return 'ARCHIVE'
+function getAgeInDays(createdAt?: string): number {
+  if (!createdAt) return 999
   const created = new Date(createdAt).getTime()
-  if (Number.isNaN(created)) return 'ARCHIVE'
-  const ageDays = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24))
-  if (ageDays <= 7) return 'HOT'
-  if (ageDays <= 30) return 'FRESH'
-  if (ageDays <= 90) return 'VALIDATED'
-  return 'ARCHIVE'
+  if (Number.isNaN(created)) return 999
+  return Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24))
+}
+
+function getFreshnessStatus(createdAt?: string): { label: string; isFresh: boolean; daysAgo: number } {
+  const days = getAgeInDays(createdAt)
+  if (days <= 7) return { label: 'FRESH', isFresh: true, daysAgo: days }
+  return { label: `OLD • ${days} days`, isFresh: false, daysAgo: days }
+}
+
+function getStarRating(score?: number | null): number {
+  if (!score) return 3
+  if (score >= 90) return 5
+  if (score >= 75) return 4.5
+  if (score >= 60) return 4
+  if (score >= 45) return 3.5
+  return 3
 }
 
 function fmtCents(cents?: number | null) {
@@ -71,9 +86,12 @@ function fmtCents(cents?: number | null) {
 }
 
 export default function Discover() {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const initialQuery = searchParams.get('q') || ''
+  const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
+  const [showFilters, setShowFilters] = useState(false)
   const navigate = useNavigate()
 
   const { token, isAuthenticated } = useAuthStore()
@@ -89,7 +107,6 @@ export default function Discover() {
   const opportunitiesQuery = useQuery({
     queryKey: ['opportunities', { q: searchQuery, category: selectedCategory, status: selectedStatus }],
     queryFn: async (): Promise<OpportunityList> => {
-      // Server-side search exists, but to keep this minimal and robust, we fetch a page and filter client-side.
       const params = new URLSearchParams()
       params.set('limit', '50')
       params.set('skip', '0')
@@ -174,36 +191,29 @@ export default function Discover() {
     })
   }, [opportunitiesQuery.data, searchQuery, selectedCategory, selectedStatus, brainEnabled, brainName, brainFilterOn, brainFocus])
 
-  const accessQueries = useQueries({
-    queries: filteredOpportunities.map((opp) => ({
-      queryKey: ['opportunity-access', opp.id, { authed: Boolean(token) }],
-      queryFn: async (): Promise<OpportunityAccessSnapshot> => {
-        const headers: Record<string, string> = {}
-        if (token) headers.Authorization = `Bearer ${token}`
-        const res = await fetch(`/api/v1/opportunities/${opp.id}`, { headers })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data?.detail || 'Failed to load access metadata')
-        return {
-          id: opp.id,
-          access_info: (data as OpportunityAccessSnapshot).access_info ?? null,
-          is_unlocked: Boolean((data as OpportunityAccessSnapshot).is_unlocked),
-          is_authenticated: Boolean((data as OpportunityAccessSnapshot).is_authenticated),
-        }
-      },
-      staleTime: 60_000,
-      retry: 1,
-    })),
-  })
-
-  const accessByOppId = useMemo(() => {
-    const map = new Map<number, AccessInfo | null>()
-    for (const q of accessQueries) {
-      const data = q.data
-      if (!data) continue
-      map.set(data.id, data.access_info ?? null)
+  const discoveryMetrics = useMemo(() => {
+    const opps = filteredOpportunities
+    const avgMatch = opps.length > 0 
+      ? Math.round(opps.reduce((sum, o) => sum + (o.feasibility_score || 0), 0) / opps.length)
+      : 0
+    const avgAge = opps.length > 0
+      ? (opps.reduce((sum, o) => sum + getAgeInDays(o.created_at), 0) / opps.length).toFixed(1)
+      : '0'
+    const topCategory = selectedCategory !== 'All' ? selectedCategory : 
+      opps.reduce((acc, o) => {
+        acc[o.category] = (acc[o.category] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+    const topCat = typeof topCategory === 'string' ? topCategory :
+      Object.entries(topCategory).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
+    
+    return {
+      viewed: opps.length,
+      avgMatch,
+      topInterest: topCat,
+      avgFreshness: avgAge
     }
-    return map
-  }, [accessQueries])
+  }, [filteredOpportunities, selectedCategory])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -287,17 +297,30 @@ export default function Discover() {
               ))}
             </select>
           </div>
+          <h1 className="text-2xl font-bold text-gray-900">Opportunity Feed</h1>
         </div>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+        >
+          <Filter className="w-4 h-4" />
+          Filters
+        </button>
       </div>
 
-      <div className="grid gap-6">
-        {opportunitiesQuery.isLoading && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6">Loading opportunities…</div>
+      {/* Active Filters */}
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        {selectedCategory !== 'All' && (
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm">
+            {selectedCategory}
+            <button onClick={() => setSelectedCategory('All')} className="hover:text-purple-900">×</button>
+          </span>
         )}
-        {opportunitiesQuery.isError && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 text-red-700">
-            Failed to load opportunities. Please try again.
-          </div>
+        {selectedStatus !== 'All' && (
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm">
+            {selectedStatus}
+            <button onClick={() => setSelectedStatus('All')} className="hover:text-blue-900">×</button>
+          </span>
         )}
         {filteredOpportunities.map((opp) => (
           (() => {
@@ -312,26 +335,22 @@ export default function Discover() {
             const unlockPrice = fmtCents(access?.unlock_price ?? null)
             const analysis = analysisByOppId[opp.id] ?? null
 
-            return (
-          <div key={opp.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:border-gray-300 hover:shadow-md transition-all">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded ${
-                    status === 'HOT' ? 'bg-red-100 text-red-700' :
-                    status === 'FRESH' ? 'bg-blue-100 text-blue-700' :
-                    status === 'VALIDATED' ? 'bg-green-100 text-green-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {status}
-                  </span>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded ${
-                    isAccessible ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {isAccessible ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                    {isAccessible ? 'Full access' : 'Preview'}
-                  </span>
-                  <span className="text-sm text-gray-500">{opp.category}</span>
+      <div className="grid lg:grid-cols-4 gap-6">
+        {/* Main Content - Opportunity Cards */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Search & Filters */}
+          {showFilters && (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search opportunities..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">{opp.title}</h2>
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600">
@@ -349,6 +368,22 @@ export default function Discover() {
                   </div>
                   {analysis && <div className="text-purple-700 font-semibold">🧠 DeepSeek {analysis.match_score}%</div>}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Opportunity Cards */}
+          {opportunitiesQuery.isLoading && (
+            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
+              Loading opportunities...
+            </div>
+          )}
+
+          {opportunitiesQuery.isError && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6 text-red-700">
+              Failed to load opportunities. Please try again.
+            </div>
+          )}
 
                 {brainEnabled && brainName && (
                   <div className="mt-4 bg-purple-50 border border-purple-200 rounded-xl p-4">
@@ -399,17 +434,61 @@ export default function Discover() {
                       <li>• Validation methodology</li>
                     </ul>
                   </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                    <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Locked (purchase required)</div>
-                    <ul className="mt-2 text-sm text-gray-700 space-y-1">
-                      <li>• Competitive analysis</li>
-                      <li>• TAM / SAM / SOM</li>
-                      <li>• Acquisition channels</li>
-                      <li>• Revenue projections</li>
-                      <li>• Risk assessment</li>
-                    </ul>
-                    <div className="mt-3 text-xs text-gray-600">
-                      Validations: {typeof opp.validation_count === 'number' ? opp.validation_count : '—'}
+
+                  {/* Right Sidebar */}
+                  <div className="w-48 border-l border-gray-100 bg-gray-50 p-4 flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <div className="text-center p-3 bg-purple-100 rounded-xl">
+                        <div className="text-xs text-purple-600 font-medium">AI Match</div>
+                        <div className="text-2xl font-bold text-purple-700">{aiMatch}%</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">Market</div>
+                        <div className="text-sm font-semibold text-gray-900">{marketSize}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">Growth</div>
+                        <div className={`text-sm font-semibold ${growthRate > 15 ? 'text-emerald-600' : 'text-gray-700'}`}>
+                          {maturity} (+{growthRate}%/yr)
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mt-4">
+                      <button
+                        onClick={() => navigate(`/opportunity/${opp.id}`)}
+                        className="w-full px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => navigate(`/build/reports?opp=${opp.id}`)}
+                        className="w-full px-4 py-2 border border-gray-200 bg-white text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Report
+                      </button>
+                      {isAuthenticated && (
+                        <button
+                          onClick={() => {
+                            const saved = watchlistByOppId.has(opp.id)
+                            if (saved) {
+                              removeFromWatchlist.mutate(opp.id)
+                            } else {
+                              addToWatchlist.mutate(opp.id)
+                            }
+                          }}
+                          disabled={addToWatchlist.isPending || removeFromWatchlist.isPending}
+                          className={`w-full px-4 py-2 text-sm font-medium rounded-lg flex items-center justify-center gap-1 ${
+                            watchlistByOppId.has(opp.id)
+                              ? 'bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100'
+                              : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Bookmark className={`w-4 h-4 ${watchlistByOppId.has(opp.id) ? 'fill-amber-500' : ''}`} />
+                          {watchlistByOppId.has(opp.id) ? 'Saved' : 'Save'}
+                        </button>
+                      )}
                     </div>
                     {brainEnabled && brainName && (
                       <div className="mt-3 text-xs text-gray-600">
@@ -495,17 +574,18 @@ export default function Discover() {
                 </div>
               </div>
             </div>
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <button
+                onClick={() => navigate('/brain')}
+                className="w-full px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
+              >
+                Improve Your Matches
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-            )
-          })()
-        ))}
-      </div>
-
-      {filteredOpportunities.length === 0 && !opportunitiesQuery.isLoading && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No opportunities found matching your criteria.</p>
         </div>
-      )}
+      </div>
     </div>
   )
 }
