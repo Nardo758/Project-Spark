@@ -93,31 +93,31 @@ export default function Home() {
               </p>
 
               {/* CTA Buttons Row */}
-              <div className="flex gap-3 mb-12">
+              <div className="flex gap-2.5 mb-12">
                 {/* Validate Your Idea */}
                 <Link
                   to="/build/reports"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors whitespace-nowrap"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   Validate Your Idea
                 </Link>
 
                 {/* Identify a Location */}
                 <Link
                   to="/build/reports"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors whitespace-nowrap"
                 >
-                  <Target className="w-4 h-4" />
+                  <Target className="w-3.5 h-3.5" />
                   Identify a Location
                 </Link>
 
                 {/* Watch Demo */}
                 <Link
                   to="/about"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
                 >
-                  <Play className="w-4 h-4" />
+                  <Play className="w-3.5 h-3.5" />
                   Watch Demo
                 </Link>
               </div>
