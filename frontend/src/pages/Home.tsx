@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { 
   ArrowRight, 
   Search, 
@@ -30,7 +30,6 @@ interface FeaturedOpportunity {
 }
 
 export default function Home() {
-  const navigate = useNavigate()
   const [stats, setStats] = useState<PlatformStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [featuredOpp, setFeaturedOpp] = useState<FeaturedOpportunity | null>(null)
@@ -94,36 +93,33 @@ export default function Home() {
               </p>
 
               {/* CTA Buttons Row */}
-              <div className="flex gap-3 mb-12">
+              <div className="flex flex-wrap gap-3 mb-12">
                 {/* Validate Your Idea */}
-                <button
-                  type="button"
-                  onClick={() => navigate('/build/reports')}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+                <Link
+                  to="/build/reports"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap"
                 >
                   <Sparkles className="w-4 h-4" />
                   Validate Your Idea
-                </button>
+                </Link>
 
                 {/* Identify a Location */}
-                <button
-                  type="button"
-                  onClick={() => navigate('/build/reports')}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+                <Link
+                  to="/build/reports"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors whitespace-nowrap"
                 >
                   <Target className="w-4 h-4" />
                   Identify a Location
-                </button>
+                </Link>
 
                 {/* Watch Demo */}
-                <button
-                  type="button"
-                  onClick={() => navigate('/about')}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-medium rounded-lg transition-colors bg-white cursor-pointer"
+                <Link
+                  to="/about"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap"
                 >
                   <Play className="w-4 h-4" />
                   Watch Demo
-                </button>
+                </Link>
               </div>
 
               {/* Stats Row */}
