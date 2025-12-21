@@ -371,4 +371,47 @@ Respond only with valid JSON."""
             return heuristic_result
 
 
+    async def generate_response(self, prompt: str, model: str = "deepseek") -> Dict[str, Any]:
+        """
+        Generate a response from the AI model.
+        
+        Args:
+            prompt: The prompt to send to the model
+            model: Which model to use ("deepseek" or "claude")
+        
+        Returns:
+            Dictionary with the response
+        """
+        client = get_anthropic_client()
+        if not client:
+            logger.warning("No AI client available, returning empty response")
+            return {"error": "AI service not available", "response": None}
+        
+        try:
+            model_id = self.fast_model if model == "deepseek" else self.model
+            
+            response = client.messages.create(
+                model=model_id,
+                max_tokens=1500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = response.content[0].text.strip()
+            
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+            
+            try:
+                parsed = json.loads(response_text)
+                return {"response": parsed, "raw": response_text}
+            except json.JSONDecodeError:
+                return {"response": response_text, "raw": response_text}
+                
+        except Exception as e:
+            logger.error(f"AI generation failed: {e}")
+            return {"error": str(e), "response": None}
+
+
 llm_ai_engine_service = LLMAIEngineService()

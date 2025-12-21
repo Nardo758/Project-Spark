@@ -72,9 +72,9 @@ class AIOrchestrator:
         self, data: Dict[str, Any], task_type: AITaskType
     ) -> Dict[str, Any]:
         """Call DeepSeek service for platform coordination tasks"""
-        from .llm_ai_engine import LLMAIEngine
+        from .llm_ai_engine import llm_ai_engine_service
         
-        engine = LLMAIEngine()
+        engine = llm_ai_engine_service
         
         prompt = self._build_prompt_for_task(task_type, data)
         
@@ -99,9 +99,9 @@ class AIOrchestrator:
         self, data: Dict[str, Any], task_type: AITaskType
     ) -> Dict[str, Any]:
         """Call Claude service for creative generation tasks"""
-        from .llm_ai_engine import LLMAIEngine
+        from .llm_ai_engine import llm_ai_engine_service
         
-        engine = LLMAIEngine()
+        engine = llm_ai_engine_service
         
         prompt = self._build_prompt_for_task(task_type, data)
         

@@ -24,6 +24,10 @@ from .lead import Lead, LeadStatus, LeadSource
 from .saved_search import SavedSearch
 from .lead_purchase import LeadPurchase
 from .generated_report import GeneratedReport, ReportType, ReportStatus
+from .consultant_activity import ConsultantActivity, ConsultantPath
+from .detected_trend import DetectedTrend
+from .trend_opportunity_mapping import TrendOpportunityMapping
+from .location_analysis_cache import LocationAnalysisCache, BusinessType
 
 __all__ = [
     "User",
@@ -69,4 +73,10 @@ __all__ = [
     "GeneratedReport",
     "ReportType",
     "ReportStatus",
+    "ConsultantActivity",
+    "ConsultantPath",
+    "DetectedTrend",
+    "TrendOpportunityMapping",
+    "LocationAnalysisCache",
+    "BusinessType",
 ]
