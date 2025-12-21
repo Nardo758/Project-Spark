@@ -12,7 +12,9 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user, get_current_user_optional
 from app.db.database import get_db
-from app.models.lead_marketplace import Lead, LeadPurchase, LeadStatus, LeadView, SavedSearch
+from app.models.lead_marketplace import MarketplaceLead, LeadStatus, LeadView
+from app.models.lead_purchase import LeadPurchase
+from app.models.saved_search import SavedSearch
 from app.models.opportunity import Opportunity
 from app.models.transaction import Transaction, TransactionStatus, TransactionType
 from app.models.user import User
@@ -55,19 +57,19 @@ def list_marketplace_leads(
     status_filter: str = Query(LeadStatus.ACTIVE.value, alias="status"),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Lead)
+    query = db.query(MarketplaceLead)
 
     if status_filter:
-        query = query.filter(Lead.status == status_filter)
+        query = query.filter(MarketplaceLead.status == status_filter)
     if q:
         like = f"%{q}%"
-        query = query.filter((Lead.public_title.ilike(like)) | (Lead.anonymized_summary.ilike(like)))
+        query = query.filter((MarketplaceLead.public_title.ilike(like)) | (MarketplaceLead.anonymized_summary.ilike(like)))
     if industry:
-        query = query.filter(Lead.industry == industry)
+        query = query.filter(MarketplaceLead.industry == industry)
     if location:
-        query = query.filter(Lead.location.ilike(f"%{location}%"))
+        query = query.filter(MarketplaceLead.location.ilike(f"%{location}%"))
 
-    query = query.order_by(desc(Lead.published_at), desc(Lead.id))
+    query = query.order_by(desc(MarketplaceLead.published_at), desc(MarketplaceLead.id))
     total = query.count()
     leads = query.offset(skip).limit(limit).all()
 
@@ -80,7 +82,7 @@ def get_marketplace_lead(
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    lead = db.query(MarketplaceLead).filter(MarketplaceLead.id == lead_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
 
@@ -108,7 +110,7 @@ def track_lead_view(
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    lead = db.query(MarketplaceLead).filter(MarketplaceLead.id == lead_id).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
 
@@ -137,11 +139,11 @@ def admin_create_lead_from_opportunity(
     # Ensure uniqueness for public_id (best-effort).
     public_id = _gen_public_id()
     for _ in range(10):
-        if db.query(Lead).filter(Lead.public_id == public_id).first() is None:
+        if db.query(MarketplaceLead).filter(MarketplaceLead.public_id == public_id).first() is None:
             break
         public_id = _gen_public_id()
 
-    lead = Lead(
+    lead = MarketplaceLead(
         opportunity_id=payload.opportunity_id,
         public_id=public_id,
         public_title=payload.public_title,
@@ -181,7 +183,7 @@ def create_lead_purchase_intent(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.status == LeadStatus.ACTIVE.value).first()
+    lead = db.query(MarketplaceLead).filter(MarketplaceLead.id == lead_id, MarketplaceLead.status == LeadStatus.ACTIVE.value).first()
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
 

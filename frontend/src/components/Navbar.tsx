@@ -21,6 +21,12 @@ import {
   FolderOpen
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { useBrainStore } from '../stores/brainStore'
+import { fetchActiveBrain } from '../services/brainApi'
+
+function isPaidTier(tier?: string) {
+  return tier === 'pro' || tier === 'business' || tier === 'enterprise'
+}
 
 const guestNavItems = [
   { name: 'Discover', path: '/discover' },

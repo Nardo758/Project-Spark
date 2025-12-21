@@ -36,14 +36,14 @@ class SavedSearchFrequency(str, enum.Enum):
     WEEKLY = "weekly"
 
 
-class Lead(Base):
+class MarketplaceLead(Base):
     """
     Leads Marketplace
 
-    A Lead is a purchasable, anonymized "package" derived from an Opportunity.
+    A MarketplaceLead is a purchasable, anonymized "package" derived from an Opportunity.
     """
 
-    __tablename__ = "leads"
+    __tablename__ = "marketplace_leads"
 
     id = Column(Integer, primary_key=True, index=True)
     opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=True, index=True)
@@ -75,65 +75,18 @@ class Lead(Base):
     admin_notes = Column(Text, nullable=True)
 
     opportunity = relationship("Opportunity")
-    purchases = relationship("LeadPurchase", back_populates="lead", cascade="all, delete-orphan")
     views = relationship("LeadView", back_populates="lead", cascade="all, delete-orphan")
-
-
-class LeadPurchase(Base):
-    __tablename__ = "lead_purchases"
-
-    id = Column(Integer, primary_key=True, index=True)
-    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
-    buyer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-
-    # Stripe/PayPal charge id, session id, etc
-    transaction_id = Column(String(255), nullable=True)
-    payment_provider = Column(String(20), nullable=True, default=LeadPaymentProvider.STRIPE.value)
-    payment_status = Column(String(20), nullable=False, default=LeadPaymentStatus.PENDING.value, index=True)
-
-    amount_paid_cents = Column(Integer, nullable=False, default=0)
-    purchased_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    download_count = Column(Integer, nullable=False, default=0)
-    last_downloaded_at = Column(DateTime(timezone=True), nullable=True)
-
-    lead = relationship("Lead", back_populates="purchases")
-    buyer = relationship("User")
-
-    __table_args__ = (
-        UniqueConstraint("lead_id", "buyer_id", name="uq_lead_purchase_lead_buyer"),
-        {"sqlite_autoincrement": True},
-    )
-
-
-class SavedSearch(Base):
-    __tablename__ = "saved_searches"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-
-    name = Column(String(120), nullable=False)
-    filters_json = Column(Text, nullable=False)
-    notification_frequency = Column(String(20), nullable=False, default=SavedSearchFrequency.INSTANT.value)
-    is_active = Column(Boolean, nullable=False, default=True)
-
-    last_notified_at = Column(DateTime(timezone=True), nullable=True)
-    match_count = Column(Integer, nullable=False, default=0)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user = relationship("User")
 
 
 class LeadView(Base):
     __tablename__ = "lead_views"
 
     id = Column(Integer, primary_key=True, index=True)
-    lead_id = Column(Integer, ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
+    lead_id = Column(Integer, ForeignKey("marketplace_leads.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     session_id = Column(String(120), nullable=True)
     viewed_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    lead = relationship("Lead", back_populates="views")
+    lead = relationship("MarketplaceLead", back_populates="views")
     user = relationship("User")
 

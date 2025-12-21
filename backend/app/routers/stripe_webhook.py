@@ -15,7 +15,8 @@ from app.db.database import get_db
 from app.models.user import User
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus, UnlockedOpportunity, UnlockMethod
-from app.models.lead_marketplace import Lead, LeadPurchase
+from app.models.lead_marketplace import MarketplaceLead
+from app.models.lead_purchase import LeadPurchase
 from app.models.network_hub import MessageThread, ThreadType
 from app.models.opportunity import Opportunity
 from app.models.stripe_event import (

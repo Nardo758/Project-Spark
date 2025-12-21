@@ -25,7 +25,7 @@ from .saved_search import SavedSearch
 from .lead_purchase import LeadPurchase
 from .generated_report import GeneratedReport, ReportType, ReportStatus
 from .brain import Brain
-from .lead_marketplace import Lead, LeadPurchase, SavedSearch, LeadView
+from .lead_marketplace import MarketplaceLead, LeadView
 from .network_hub import ConnectionRequest, MessageThread, Message
 from .api_key import APIKey
 
@@ -74,9 +74,7 @@ __all__ = [
     "ReportType",
     "ReportStatus",
     "Brain",
-    "Lead",
-    "LeadPurchase",
-    "SavedSearch",
+    "MarketplaceLead",
     "LeadView",
     "ConnectionRequest",
     "MessageThread",
