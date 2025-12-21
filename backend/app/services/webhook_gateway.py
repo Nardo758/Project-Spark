@@ -141,43 +141,103 @@ class WebhookGateway:
             required = self.REQUIRED_FIELDS.get(source, [])
             raise WebhookValidationError(f"Missing required fields: {required}")
 
-        from sqlalchemy.exc import IntegrityError
+        from sqlalchemy import text
+        import json
         
         external_id = self.extract_external_id(source, data)
         
-        rate_limit = self._check_rate_limit_simple(source)
-        if rate_limit["exceeded"]:
-            logger.warning(f"Rate limit exceeded for source: {source}")
-            raise RateLimitExceededError(
-                f"Rate limit exceeded for source {source}",
-                retry_after=rate_limit.get("retry_after", 60)
-            )
-
-        try:
-            scraped_source = ScrapedSource(
-                external_id=external_id,
-                source_type=source,
-                scrape_id=scrape_id,
-                raw_data=data,
-                processed=0,
-                received_at=datetime.utcnow(),
-            )
-            self.db.add(scraped_source)
-            self.db.commit()
-            self.db.refresh(scraped_source)
-        except IntegrityError:
-            self.db.rollback()
-            logger.info(f"Duplicate entry detected via constraint: {source}/{external_id}")
+        if external_id and self.check_duplicate(source, external_id):
+            logger.info(f"Duplicate entry skipped (pre-rate-limit check): {source}/{external_id}")
             return {"status": "duplicate", "external_id": external_id}
+        
+        now = datetime.utcnow()
+        window_start = now.replace(second=0, microsecond=0)
+        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+
+        ensure_counter_sql = text("""
+            INSERT INTO rate_limit_counters (source, window_start, count, max_requests, created_at)
+            VALUES (:source, :window_start, 0, :max_requests, :now)
+            ON CONFLICT (source, window_start) DO NOTHING
+        """)
+        
+        lock_and_reserve_sql = text("""
+            UPDATE rate_limit_counters
+            SET count = count + 1, updated_at = :now
+            WHERE source = :source AND window_start = :window_start
+              AND count < max_requests
+            RETURNING id, count
+        """)
+        
+        insert_sql = text("""
+            INSERT INTO scraped_sources (external_id, source_type, scrape_id, raw_data, processed, received_at)
+            VALUES (:external_id, :source_type, :scrape_id, CAST(:raw_data AS JSONB), 0, :received_at)
+            ON CONFLICT (source_type, external_id) WHERE external_id IS NOT NULL
+            DO NOTHING
+            RETURNING id
+        """)
+        
+        release_slot_sql = text("""
+            UPDATE rate_limit_counters
+            SET count = GREATEST(count - 1, 0), updated_at = :now
+            WHERE source = :source AND window_start = :window_start
+        """)
+        
+        try:
+            self.db.execute(ensure_counter_sql, {
+                "source": source,
+                "window_start": window_start,
+                "max_requests": max_requests,
+                "now": now,
+            })
+            
+            result = self.db.execute(lock_and_reserve_sql, {
+                "source": source,
+                "window_start": window_start,
+                "now": now,
+            })
+            row = result.fetchone()
+            
+            if row is None:
+                self.db.rollback()
+                logger.warning(f"Rate limit exceeded for source: {source}")
+                raise RateLimitExceededError(
+                    f"Rate limit exceeded for source {source}",
+                    retry_after=60
+                )
+            
+            result = self.db.execute(insert_sql, {
+                "external_id": external_id,
+                "source_type": source,
+                "scrape_id": scrape_id,
+                "raw_data": json.dumps(data),
+                "received_at": now,
+            })
+            row = result.fetchone()
+            
+            if row is None:
+                self.db.execute(release_slot_sql, {
+                    "source": source,
+                    "window_start": window_start,
+                    "now": now,
+                })
+                self.db.commit()
+                logger.info(f"Duplicate entry detected via ON CONFLICT: {source}/{external_id}")
+                return {"status": "duplicate", "external_id": external_id}
+            
+            source_id = row[0]
+            self.db.commit()
+            
+        except RateLimitExceededError:
+            raise
         except Exception as e:
             self.db.rollback()
             raise
 
-        logger.info(f"Webhook processed: source={source}, id={scraped_source.id}")
+        logger.info(f"Webhook processed: source={source}, id={source_id}")
 
         return {
             "status": "accepted",
-            "source_id": scraped_source.id,
+            "source_id": source_id,
             "external_id": external_id,
             "source": source,
         }
@@ -217,6 +277,9 @@ class WebhookGateway:
             "items": [],
         }
 
+        from sqlalchemy import text
+        import json
+        
         valid_items = []
         for item in items:
             if source not in self.SUPPORTED_SOURCES:
@@ -231,6 +294,7 @@ class WebhookGateway:
                 continue
             
             external_id = self.extract_external_id(source, item)
+            
             if external_id and self.check_duplicate(source, external_id):
                 results["duplicates"] += 1
                 results["items"].append({"status": "duplicate", "external_id": external_id})
@@ -241,49 +305,91 @@ class WebhookGateway:
         if not valid_items:
             return results
         
-        from sqlalchemy.exc import IntegrityError
+        now = datetime.utcnow()
+        window_start = now.replace(second=0, microsecond=0)
+        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
         
-        rate_limit = self._check_rate_limit_simple(source)
-        if rate_limit["exceeded"]:
-            raise RateLimitExceededError(
-                f"Rate limit exceeded for source {source}",
-                retry_after=rate_limit.get("retry_after", 60)
-            )
+        ensure_counter_sql = text("""
+            INSERT INTO rate_limit_counters (source, window_start, count, max_requests, created_at)
+            VALUES (:source, :window_start, 0, :max_requests, :now)
+            ON CONFLICT (source, window_start) DO NOTHING
+        """)
         
-        remaining_quota = rate_limit.get("remaining", 100)
+        lock_and_reserve_sql = text("""
+            UPDATE rate_limit_counters
+            SET count = count + 1, updated_at = :now
+            WHERE source = :source AND window_start = :window_start
+              AND count < max_requests
+            RETURNING id, count
+        """)
         
-        for i, (item, external_id) in enumerate(valid_items):
-            if i >= remaining_quota:
-                results["rate_limited"] += len(valid_items) - i
-                results["items"].append({
-                    "status": "rate_limited",
-                    "message": f"{len(valid_items) - i} items skipped due to rate limit"
-                })
-                break
-            
+        insert_sql = text("""
+            INSERT INTO scraped_sources (external_id, source_type, scrape_id, raw_data, processed, received_at)
+            VALUES (:external_id, :source_type, :scrape_id, CAST(:raw_data AS JSONB), 0, :received_at)
+            ON CONFLICT (source_type, external_id) WHERE external_id IS NOT NULL
+            DO NOTHING
+            RETURNING id
+        """)
+        
+        release_slot_sql = text("""
+            UPDATE rate_limit_counters
+            SET count = GREATEST(count - 1, 0), updated_at = :now
+            WHERE source = :source AND window_start = :window_start
+        """)
+        
+        self.db.execute(ensure_counter_sql, {
+            "source": source,
+            "window_start": window_start,
+            "max_requests": max_requests,
+            "now": now,
+        })
+        self.db.commit()
+        
+        for item, external_id in valid_items:
             try:
-                scraped_source = ScrapedSource(
-                    external_id=external_id,
-                    source_type=source,
-                    scrape_id=scrape_id,
-                    raw_data=item,
-                    processed=0,
-                    received_at=datetime.utcnow(),
-                )
-                self.db.add(scraped_source)
-                self.db.commit()
-                self.db.refresh(scraped_source)
-                
-                results["accepted"] += 1
-                results["items"].append({
-                    "status": "accepted",
-                    "source_id": scraped_source.id,
-                    "external_id": external_id,
+                result = self.db.execute(lock_and_reserve_sql, {
+                    "source": source,
+                    "window_start": window_start,
+                    "now": now,
                 })
-            except IntegrityError:
-                self.db.rollback()
-                results["duplicates"] += 1
-                results["items"].append({"status": "duplicate", "external_id": external_id})
+                row = result.fetchone()
+                
+                if row is None:
+                    self.db.rollback()
+                    results["rate_limited"] += 1
+                    results["items"].append({
+                        "status": "rate_limited",
+                        "external_id": external_id,
+                        "message": "Rate limit exceeded"
+                    })
+                    continue
+                
+                result = self.db.execute(insert_sql, {
+                    "external_id": external_id,
+                    "source_type": source,
+                    "scrape_id": scrape_id,
+                    "raw_data": json.dumps(item),
+                    "received_at": now,
+                })
+                row = result.fetchone()
+                
+                if row is None:
+                    self.db.execute(release_slot_sql, {
+                        "source": source,
+                        "window_start": window_start,
+                        "now": now,
+                    })
+                    self.db.commit()
+                    results["duplicates"] += 1
+                    results["items"].append({"status": "duplicate", "external_id": external_id})
+                else:
+                    self.db.commit()
+                    results["accepted"] += 1
+                    results["items"].append({
+                        "status": "accepted",
+                        "source_id": row[0],
+                        "external_id": external_id,
+                    })
             except Exception as e:
                 self.db.rollback()
                 results["errors"] += 1
@@ -327,6 +433,121 @@ class WebhookGateway:
             "external_id": external_id,
         }
     
+    def _check_rate_limit_soft(self, source: str) -> Dict[str, Any]:
+        """
+        Soft rate limit check - only checks if limit is reached, doesn't reserve.
+        
+        Used before attempting insert. The actual counter increment happens
+        after successful insert to ensure duplicates don't consume quota.
+        """
+        from sqlalchemy import text
+        
+        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        now = datetime.utcnow()
+        window_start = now.replace(second=0, microsecond=0)
+        
+        check_sql = text("""
+            SELECT count FROM rate_limit_counters 
+            WHERE source = :source AND window_start = :window_start
+        """)
+        
+        result = self.db.execute(check_sql, {
+            "source": source,
+            "window_start": window_start,
+        })
+        row = result.fetchone()
+        
+        if row is None:
+            return {"exceeded": False, "remaining": max_requests}
+        
+        current_count = row[0]
+        if current_count >= max_requests:
+            return {"exceeded": True, "retry_after": 60}
+        
+        return {"exceeded": False, "remaining": max_requests - current_count}
+
+    def _increment_rate_limit_counter(self, source: str, slots: int = 1) -> None:
+        """
+        Increment rate limit counter AFTER successful insert.
+        
+        Uses ON CONFLICT to atomically create or increment the counter.
+        Only called after insert succeeds, so duplicates never consume quota.
+        """
+        from sqlalchemy import text
+        
+        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        now = datetime.utcnow()
+        window_start = now.replace(second=0, microsecond=0)
+        
+        upsert_sql = text("""
+            INSERT INTO rate_limit_counters (source, window_start, count, max_requests, created_at)
+            VALUES (:source, :window_start, :slots, :max_requests, :now)
+            ON CONFLICT (source, window_start) DO UPDATE SET
+                count = rate_limit_counters.count + :slots,
+                updated_at = :now
+        """)
+        
+        self.db.execute(upsert_sql, {
+            "source": source,
+            "window_start": window_start,
+            "slots": slots,
+            "max_requests": max_requests,
+            "now": now,
+        })
+
+    def _atomic_rate_limit_reserve(self, source: str, slots: int = 1) -> Dict[str, Any]:
+        """
+        Atomically reserve rate limit slot(s) using ON CONFLICT for concurrency safety.
+        
+        Uses the rate_limit_counters table with INSERT...ON CONFLICT DO UPDATE
+        to atomically increment the counter and check against the limit.
+        
+        Returns: {"success": True/False, "retry_after": seconds if failed}
+        """
+        from sqlalchemy import text
+        
+        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        now = datetime.utcnow()
+        window_start = now.replace(second=0, microsecond=0)
+        
+        reserve_sql = text("""
+            INSERT INTO rate_limit_counters (source, window_start, count, max_requests, created_at)
+            VALUES (:source, :window_start, :slots, :max_requests, :now)
+            ON CONFLICT (source, window_start) DO UPDATE SET
+                count = CASE 
+                    WHEN rate_limit_counters.count + :slots <= rate_limit_counters.max_requests 
+                    THEN rate_limit_counters.count + :slots 
+                    ELSE rate_limit_counters.count 
+                END,
+                updated_at = :now
+            RETURNING count, max_requests, 
+                (rate_limit_counters.count + :slots <= rate_limit_counters.max_requests) AS reserved
+        """)
+        
+        try:
+            result = self.db.execute(reserve_sql, {
+                "source": source,
+                "window_start": window_start,
+                "slots": slots,
+                "max_requests": max_requests,
+                "now": now,
+            })
+            row = result.fetchone()
+            self.db.commit()
+            
+            if row is None:
+                return {"success": False, "retry_after": 60}
+            
+            count, max_req, reserved = row
+            if not reserved:
+                return {"success": False, "retry_after": 60, "current": count, "max": max_req}
+            
+            return {"success": True, "remaining": max_req - count}
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Rate limit reservation failed: {e}")
+            return {"success": True}
+
     def _check_rate_limit_simple(self, source: str) -> Dict[str, Any]:
         """
         Stage 4: Simple rate limiting based on recent accepted entries.
