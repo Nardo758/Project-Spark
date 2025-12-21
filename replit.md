@@ -45,6 +45,14 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 - Stats row (Validated Ideas, Market Opportunity, Global Markets) moved closer to buttons
 - Featured opportunity card with clickable link to opportunity detail page
 - "176+ Validated Opportunities" badge links to Discover page
+- Responsive button layout: wraps on mobile, single row on desktop
+
+**Branding & Navigation Updates:**
+- Added slogan "The Opportunity Intelligence Platform" below all OppGrid logos (Navbar and Footer)
+- Slogan uses compact 9px font size for clean appearance
+- Centered navigation tabs in Navbar (Discover, Consultant Studio, Leads, Join Network, API, Pricing)
+- Navbar layout: Logo (left) | Centered Nav Tabs | Sign In/Get Started (right)
+- Consistent branding across all pages via shared Navbar component
 
 ## Previous Changes (December 20, 2024)
 
