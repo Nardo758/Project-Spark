@@ -143,7 +143,7 @@ export default function Home() {
                   <div className="text-xs text-gray-500">Global Markets</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-emerald-500">
                     {loading ? '...' : stats?.reports_generated || 50}
                   </div>
                   <div className="text-xs text-gray-500">Reports Generated</div>
