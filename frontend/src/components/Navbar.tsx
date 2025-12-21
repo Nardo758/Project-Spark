@@ -115,19 +115,23 @@ export default function Navbar() {
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center gap-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">OG</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold text-xl text-gray-900 leading-tight">OppGrid</span>
-                <span className="text-[10px] text-gray-500 leading-tight">The Opportunity Intelligence Platform</span>
+                <span className="text-[9px] text-gray-500 leading-tight">The Opportunity Intelligence Platform</span>
               </div>
             </Link>
+          </div>
 
-            <div className="hidden md:flex items-center gap-1">
+          {/* Centered Navigation */}
+          <div className="hidden md:flex items-center justify-center flex-1">
+            <div className="flex items-center gap-1">
               {navItems.map((item: NavItem) => (
                 'dropdown' in item && item.dropdown ? (
                   <div 
