@@ -173,16 +173,24 @@ async def receive_apify_webhook(
         run_id = resource.get("id", "")
         
         if not dataset_id:
-            logger.warning("No dataset ID in Apify webhook")
-            return {"status": "skipped", "reason": "no_dataset_id"}
+            logger.warning(f"No dataset ID in Apify webhook. Body: {body}")
+            raise HTTPException(status_code=400, detail="No datasetId provided")
         
-        source_type = "twitter"
-        if "reddit" in actor_id.lower():
+        # Detect source type from actor ID
+        source_type = "custom"  # Default to custom for unknown actors
+        actor_lower = actor_id.lower()
+        if "twitter" in actor_lower or "tweet" in actor_lower:
+            source_type = "twitter"
+        elif "reddit" in actor_lower:
             source_type = "reddit"
-        elif "yelp" in actor_id.lower():
+        elif "yelp" in actor_lower:
             source_type = "yelp"
-        elif "google" in actor_id.lower() or "maps" in actor_id.lower():
+        elif "google" in actor_lower or "maps" in actor_lower:
             source_type = "google_maps"
+        elif "craigslist" in actor_lower or "classifieds" in actor_lower:
+            source_type = "craigslist"
+        
+        logger.info(f"Detected source type: {source_type} from actor: {actor_id}")
         
         dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?format=json&clean=true&limit=1000"
         
