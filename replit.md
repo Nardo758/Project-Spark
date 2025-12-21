@@ -35,7 +35,18 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 *   **Payments & Transactions:** Integrates Stripe for payment processing, subscription management, and pay-per-unlock features. It includes a `SuccessFeeAgreement` infrastructure with milestone tracking and payout splitting for expert services.
 *   **Opportunity Analysis:** AI generates opportunity scores, market size estimates, competition levels, and business model suggestions, which are displayed on opportunity cards and detailed pages. Content gating is enforced server-side based on user subscription tiers or unlock status.
 
-## Recent Changes (December 20, 2024)
+## Recent Changes (December 21, 2024)
+
+**Home Page Hero Section Improvements:**
+- Redesigned CTA buttons row with three clickable buttons: "Validate Your Idea", "Identify a Location", "Watch Demo"
+- Fixed button click blocking issue by adding `pointer-events-none` to gradient overlay and `relative z-10` to content container
+- Buttons now link to Consultant Studio (`/build/reports`) and About page (`/about`)
+- Shrunk buttons and stats by ~10% for more compact layout
+- Stats row (Validated Ideas, Market Opportunity, Global Markets) moved closer to buttons
+- Featured opportunity card with clickable link to opportunity detail page
+- "176+ Validated Opportunities" badge links to Discover page
+
+## Previous Changes (December 20, 2024)
 
 **DeepSeek Roadmap Implementation (Phases 4-6):**
 - Updated navigation: Discover | Consultant Studio | Leads | Join Network | API | Pricing
