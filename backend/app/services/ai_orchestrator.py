@@ -74,6 +74,7 @@ class AIOrchestrator:
         """Call DeepSeek service for platform coordination tasks"""
         import openai
         import json
+        import asyncio
         
         deepseek_key = os.getenv("DEEPSEEK_API_KEY")
         
@@ -83,17 +84,19 @@ class AIOrchestrator:
         
         prompt = self._build_prompt_for_task(task_type, data)
         
-        try:
+        def sync_deepseek_call():
             client = openai.OpenAI(
                 api_key=deepseek_key,
                 base_url="https://api.deepseek.com"
             )
-            
-            response = client.chat.completions.create(
+            return client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=1500
             )
+        
+        try:
+            response = await asyncio.to_thread(sync_deepseek_call)
             
             response_text = response.choices[0].message.content.strip()
             
