@@ -97,7 +97,7 @@ export default function Home() {
                 {/* Validate Your Idea */}
                 <Link
                   to="/build/reports"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4" />
                   Validate Your Idea
@@ -106,7 +106,7 @@ export default function Home() {
                 {/* Identify a Location */}
                 <Link
                   to="/build/reports"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
                 >
                   <Target className="w-4 h-4" />
                   Identify a Location
@@ -115,7 +115,7 @@ export default function Home() {
                 {/* Watch Demo */}
                 <Link
                   to="/about"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-medium rounded-lg transition-colors bg-white"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-medium rounded-lg transition-colors bg-white cursor-pointer"
                 >
                   <Play className="w-4 h-4" />
                   Watch Demo
