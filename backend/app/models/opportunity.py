@@ -77,3 +77,4 @@ class Opportunity(Base):
     author = relationship("User", back_populates="opportunities")
     validations = relationship("Validation", back_populates="opportunity", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="opportunity", cascade="all, delete-orphan")
+    generated_reports = relationship("GeneratedReport", back_populates="opportunity")

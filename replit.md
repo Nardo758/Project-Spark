@@ -54,6 +54,15 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 - Navbar layout: Logo (left) | Centered Nav Tabs | Sign In/Get Started (right)
 - Consistent branding across all pages via shared Navbar component
 
+**Report Tracking System:**
+- New `generated_reports` database table to track Consultant Report Studio usage
+- Report types: Feasibility Study, Market Analysis, Strategic Assessment, Progress Report
+- Report statuses: pending, generating, completed, failed
+- Tracks: user_id, opportunity_id, report_type, confidence_score, generation_time_ms, tokens_used
+- API endpoints: POST /api/v1/reports/ (create), GET /api/v1/reports/ (list), GET /api/v1/reports/my-stats (user stats), GET /api/v1/reports/stats (admin stats)
+- Frontend Report Studio now records report generation with real-time stats display
+- User's recent reports shown in sidebar with confidence scores and timestamps
+
 ## Previous Changes (December 20, 2024)
 
 **DeepSeek Roadmap Implementation (Phases 4-6):**
