@@ -72,14 +72,41 @@ class AIOrchestrator:
         self, data: Dict[str, Any], task_type: AITaskType
     ) -> Dict[str, Any]:
         """Call DeepSeek service for platform coordination tasks"""
-        from .llm_ai_engine import llm_ai_engine_service
+        import openai
+        import json
         
-        engine = llm_ai_engine_service
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+        
+        if not deepseek_key:
+            logger.warning("DeepSeek API key not found, falling back to Claude")
+            return await self._call_claude(data, task_type)
         
         prompt = self._build_prompt_for_task(task_type, data)
         
         try:
-            result = await engine.generate_response(prompt)
+            client = openai.OpenAI(
+                api_key=deepseek_key,
+                base_url="https://api.deepseek.com"
+            )
+            
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500
+            )
+            
+            response_text = response.choices[0].message.content.strip()
+            
+            try:
+                if response_text.startswith("```"):
+                    response_text = response_text.split("```")[1]
+                    if response_text.startswith("json"):
+                        response_text = response_text[4:]
+                parsed = json.loads(response_text)
+                result = {"response": parsed, "raw": response_text}
+            except json.JSONDecodeError:
+                result = {"response": response_text, "raw": response_text}
+            
             return {
                 "ai_service": "deepseek",
                 "task_type": task_type.value,
