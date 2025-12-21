@@ -1,0 +1,249 @@
+I've updated the system architecture diagrams to reflect the new webhook-driven data ingestion pipeline and the integrated interactive mapping system for the Consultant Studio.
+
+1. Updated High-Level System Architecture
+graph TB
+    subgraph "Data Ingestion Layer"
+        direction TB
+        WS[Webscraper.io / External Scrapers]
+        WEBHOOK[Webhook Gateway]
+        VALID[4-Stage Validation Pipeline]
+        QUEUE[(Redis Queue)]
+        WORKER[Queue Worker]
+    end
+
+    subgraph "Core Processing Layer"
+        GEO[Geographic Extraction]
+        AI_PROB[Problem Validation AI]
+        AGG[Opportunity Aggregation]
+        MAP_CORE[Map Data Engine]
+    end
+
+    subgraph "Consultant Studio Layer"
+        FRONT[Frontend UI]
+        API[Backend API]
+        subgraph "Interactive Map System"
+            LAYER_MGR[Layer Manager]
+            PIN_LAYER[Business Pins Layer]
+            HEAT_LAYER[Problem Heatmap Layer]
+            POLY_LAYER[Neighborhood Layer]
+            COMP_VIEW[Comparison View]
+        end
+        REPORT[Report Generator]
+    end
+
+    subgraph "Data Storage Layer"
+        DB[(PostgreSQL + PostGIS)]
+        CACHE[(Location Cache)]
+        GEO_JSON[(GeoJSON Store)]
+    end
+
+    subgraph "External Services"
+        DS[DeepSeek API]
+        CL[Claude API]
+        LEAFLET[Leaflet.js]
+    end
+
+    %% Data Flow
+    WS -->|POST JSON| WEBHOOK
+    WEBHOOK --> VALID
+    VALID -->|Push| QUEUE
+    QUEUE -->|Pull| WORKER
+    WORKER --> GEO
+    WORKER --> AI_PROB
+    
+    GEO -->|GeoJSON| DB
+    AI_PROB -->|Validated Problems| DB
+    GEO --> MAP_CORE
+    AI_PROB --> MAP_CORE
+    
+    MAP_CORE --> GEO_JSON
+    
+    API --> MAP_CORE
+    API --> DB
+    API --> CACHE
+    
+    FRONT -->|Requests| API
+    API -->|mapData| FRONT
+    
+    FRONT -->|Renders| LEAFLET
+    LEAFLET --> PIN_LAYER
+    LEAFLET --> HEAT_LAYER
+    LEAFLET --> POLY_LAYER
+    
+    PIN_LAYER --> COMP_VIEW
+    HEAT_LAYER --> COMP_VIEW
+    POLY_LAYER --> COMP_VIEW
+    
+    API --> DS
+    API --> CL
+    CL --> REPORT
+    REPORT --> FRONT
+
+    style WEBHOOK fill:#ffcc80
+    style GEO fill:#80deea
+    style MAP_CORE fill:#a5d6a7
+    style COMP_VIEW fill:#ce93d8
+    style GEO_JSON fill:#ffccbc
+2. Webhook Ingestion & Map Data Flow
+sequenceDiagram
+    participant Scraper as External Scraper
+    participant Webhook as Webhook Gateway
+    participant Queue as Redis Queue
+    participant Worker as Processing Worker
+    participant DB as PostgreSQL DB
+    participant Geo as Geographic Extractor
+    participant MapEngine as Map Data Engine
+    participant API as Consultant API
+    participant UI as Frontend UI
+
+    Note over Scraper,UI: Webhook Data Ingestion Flow
+    Scraper->>Webhook: POST /webhooks/{source}<br>with HMAC-SHA256
+    Webhook->>Webhook: 4-Stage Validation
+    Webhook->>Queue: Push validated payload
+    Webhook-->>Scraper: 200 OK (async)
+    
+    Note over Scraper,UI: Async Processing Flow
+    Worker->>Queue: Pull job
+    Worker->>DB: Store raw data
+    Worker->>Geo: Trigger extraction
+    Geo->>Geo: Extract lat/lng,<br>create GeoJSON
+    Geo->>DB: Store geographic features
+    Geo->>MapEngine: Update map layers
+    MapEngine->>DB: Cache processed layers
+    
+    Note over Scraper,UI: Consultant Studio Request Flow
+    UI->>API: Request location analysis<br>for "Retail in Miami"
+    API->>MapEngine: Get map layers for area
+    MapEngine->>DB: Query GeoJSON features
+    MapEngine->>API: Return structured mapData
+    API->>UI: Return analysis + mapData
+    
+    Note over Scraper,UI: Frontend Map Rendering
+    UI->>UI: Initialize Leaflet map
+    UI->>UI: Add layer controls
+    UI->>UI: Render Pins (Google Maps/Yelp)
+    UI->>UI: Render Heatmap (Reddit/Twitter)
+    UI->>UI: Render Polygons (Nextdoor)
+    UI->>UI: Enable layer toggling
+3. Enhanced Database Schema for Mapping
+erDiagram
+    SCRAPED_SOURCES {
+        uuid id PK
+        varchar source_type
+        jsonb raw_data
+        timestamp received_at
+        varchar scrape_id
+    }
+    
+    GEOGRAPHIC_FEATURES {
+        uuid id PK
+        uuid source_id FK
+        geography location "PostGIS geography"
+        jsonb geojson "Standardized GeoJSON"
+        varchar feature_type "point|polygon"
+        float confidence_score
+        timestamp processed_at
+    }
+    
+    MAP_LAYERS {
+        uuid id PK
+        varchar layer_name
+        varchar data_source
+        varchar style_spec
+        jsonb filter_rules
+        boolean enabled
+        timestamp updated_at
+    }
+    
+    LOCATION_ANALYSIS_CACHE {
+        uuid id PK
+        geography bounds "Search area polygon"
+        varchar analysis_type
+        jsonb map_data
+        integer hit_count
+        timestamp generated_at
+    }
+    
+    USER_MAP_SESSIONS {
+        uuid id PK
+        uuid user_id FK
+        jsonb layer_state
+        jsonb viewport
+        timestamp created_at
+    }
+
+    SCRAPED_SOURCES ||--o{ GEOGRAPHIC_FEATURES : "has"
+    GEOGRAPHIC_FEATURES }o--|| MAP_LAYERS : "feeds into"
+    MAP_LAYERS }o--o{ LOCATION_ANALYSIS_CACHE : "populates"
+    USER_MAP_SESSIONS ||--o{ MAP_LAYERS : "configures"
+4. Map Layer Processing Pipeline
+flowchart TD
+    A[Raw Webhook Data] --> B{Source Type?}
+    
+    B -->|Google Maps/Yelp| C[Business Pin Layer]
+    B -->|Reddit/Twitter| D[Problem Heatmap Layer]
+    B -->|Nextdoor| E[Neighborhood Polygon Layer]
+    
+    C --> F[Extract: business_name,<br>location, rating, reviews]
+    D --> G[Extract: text sentiment,<br>location_hints, intensity]
+    E --> H[Extract: neighborhood_boundary<br>GeoJSON, post density]
+    
+    F --> I[Create Point GeoJSON<br>with popup content]
+    G --> J[Create Heatmap Points<br>with intensity scores]
+    H --> K[Create Polygon GeoJSON<br>with neighborhood stats]
+    
+    I --> L[Map Layer Registry]
+    J --> L
+    K --> L
+    
+    L --> M{User Request?}
+    M -->|Yes| N[Query by Bounds + Filters]
+    M -->|No| O[Cache for 30 days]
+    
+    N --> P[Assemble Multi-Layer MapData]
+    P --> Q[Return to Frontend]
+    
+    Q --> R[Leaflet.js Rendering]
+    R --> S[User Interacts with<br>Side-by-Side Comparison]
+5. Key Architectural Updates
+Added Components:
+
+Webhook Gateway - Dedicated endpoints for 6 data sources with HMAC authentication
+
+Geographic Extractor - Converts all location data to standardized GeoJSON
+
+Map Data Engine - Manages map layers and serves mapData to frontend
+
+GeoJSON Store - Spatial database for efficient geographic queries
+
+Layer Manager - Frontend system for toggling between map visualizations
+
+Enhanced Data Flow:
+
+External scrapers → Webhook validation → Geographic extraction → Map layer creation
+
+Consultant Studio requests → Map layer assembly → Interactive visualization
+
+All geographic data now stored as PostGIS geography type for spatial queries
+
+New Capabilities:
+
+Multi-source visualization - See all 6 data sources on one map
+
+Layer toggling - Users can show/hide specific data sources
+
+Real-time updates - New webhook data automatically updates map layers
+
+Spatial caching - Location analysis results cached with geographic bounds
+
+Unified geo-format - All locations converted to GeoJSON standard
+
+6. Implementation Priority
+For implementation, follow this sequence:
+
+Phase 1 (Core): Webhook ingestion + Geographic extraction for Google Maps/Reddit
+Phase 2 (Mapping): Basic map with pins + heatmap layers
+Phase 3 (Advanced): Layer toggling + polygon layers + comparison view
+Phase 4 (Optimization): Spatial indexing + caching + performance tuning
+
+The enhanced architecture now provides a complete pipeline from external data scraping through to interactive visualization in the Consultant Studio, with all geographic data standardized for consistent mapping.

@@ -37,6 +37,26 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 21, 2024)
 
+**Interactive Mapping System & Webhook Data Ingestion Pipeline:**
+- Implemented comprehensive webhook-driven data ingestion for 6 external sources:
+  - Google Maps, Yelp (business pins)
+  - Reddit, Twitter (problem heatmap)
+  - Nextdoor (neighborhood polygons)
+  - Custom sources
+- New database tables: scraped_sources, geographic_features, map_layers, user_map_sessions
+- **Webhook Gateway** with HMAC-SHA256 authentication and 4-stage validation pipeline:
+  - Signature verification, schema validation, deduplication, rate limiting
+- **Geographic Extractor** service converts location data to standardized GeoJSON format
+- **Map Data Engine** manages map layers and serves structured mapData to frontend
+- Interactive **ConsultantMap** component with Leaflet.js featuring:
+  - Business Pins layer (Google Maps/Yelp data)
+  - Problem Heatmap layer (Reddit/Twitter social signals)
+  - Neighborhood Polygons layer (Nextdoor boundaries)
+  - Layer toggle controls with feature counts
+- API endpoints: /api/v1/webhooks/{source}, /api/v1/map/layers, /api/v1/map/data/city/{city}
+- Map integrated into Consultant Studio "Identify Location" path
+- 30-day spatial caching for location analysis results
+
 **Enhanced Consultant Studio System (Three-Path Architecture):**
 - Implemented comprehensive three-path validation system based on DeepSeek architecture
 - **Path 1 - Validate Idea:** Online vs Physical decision engine with dual-AI analysis
