@@ -71,11 +71,14 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             {/* Left Column - Main Content */}
             <div>
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6">
+              {/* Badge - Clickable */}
+              <Link 
+                to="/discover"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6 hover:bg-emerald-200 transition-colors"
+              >
                 <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                 {loading ? '...' : `${stats?.validated_ideas || 176}+ Validated Opportunities`}
-              </div>
+              </Link>
 
               {/* Headline */}
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight leading-tight mb-6">
@@ -89,22 +92,48 @@ export default function Home() {
                 Discover validated market opportunities backed by real consumer insights. From AI-powered validation to expert execution playbooks—everything you need to build what people actually want.
               </p>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap gap-4 mb-12">
+              {/* CTA Cards */}
+              <div className="grid sm:grid-cols-2 gap-4 mb-8">
+                {/* Validate Your Idea Card */}
                 <Link
-                  to="/idea-engine"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors"
+                  to="/build/reports"
+                  className="flex items-center gap-3 p-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-colors group"
                 >
-                  <Sparkles className="w-5 h-5" />
-                  Validate Your Idea
+                  <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Validate Your Idea</div>
+                    <div className="text-sm text-gray-400">AI-powered analysis</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
-                <button
-                  onClick={() => {}}
+
+                {/* Identify a Business Location Card */}
+                <Link
+                  to="/build/reports"
+                  className="flex items-center gap-3 p-4 bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 rounded-xl transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <Target className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">Identify a Business Location</div>
+                    <div className="text-sm text-gray-500">Market research</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 ml-auto text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </div>
+
+              {/* Watch Demo Button */}
+              <div className="mb-12">
+                <Link
+                  to="/about"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 hover:border-gray-400 text-gray-700 font-medium rounded-lg transition-colors bg-white"
                 >
                   <Play className="w-5 h-5" />
                   Watch Demo
-                </button>
+                </Link>
               </div>
 
               {/* Stats Row */}
@@ -132,13 +161,16 @@ export default function Home() {
 
             {/* Right Column - Featured Opportunity Card */}
             <div className="relative">
-              {/* Users want this badge */}
-              <div className="absolute -top-2 right-0 flex items-center gap-2 text-sm text-gray-500">
+              {/* Users want this badge - positioned above card */}
+              <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-3">
                 <Users className="w-4 h-4" />
                 <span>{featuredOpp?.submissions || 612} users want this</span>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 mt-8">
+              <Link 
+                to={`/opportunity/${featuredOpp?.id || 1}`}
+                className="block bg-white rounded-2xl border border-gray-200 shadow-lg p-6 hover:shadow-xl hover:border-emerald-200 transition-all group"
+              >
                 {/* Card Header */}
                 <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
                   UNLOCK THIS WEEK'S TOP OPPORTUNITY
@@ -146,7 +178,7 @@ export default function Home() {
 
                 {/* Title and Score */}
                 <div className="flex items-start justify-between gap-4 mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900 leading-snug">
+                  <h3 className="text-xl font-semibold text-gray-900 leading-snug group-hover:text-emerald-600 transition-colors">
                     {featuredOpp?.title || "Finding mental health therapists who accept insurance is difficult"}
                   </h3>
                   <div className="flex-shrink-0 w-14 h-14 bg-emerald-50 border-2 border-emerald-200 rounded-xl flex items-center justify-center">
@@ -186,15 +218,12 @@ export default function Home() {
                   <span>+{featuredOpp?.growth || 32}% monthly growth</span>
                 </div>
 
-                {/* See More Link */}
-                <Link 
-                  to="/discover"
-                  className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
-                >
+                {/* See More */}
+                <div className="inline-flex items-center gap-2 text-emerald-600 group-hover:text-emerald-700 font-medium">
                   See More Opportunities
                   <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
