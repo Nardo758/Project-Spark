@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, contact, leads, leads_marketplace, generated_reports
-from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, contact, brains, deepseek, marketplace, network_hub, developer_portal
+from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, contact, brains, deepseek, marketplace, network_hub, developer_portal, maps
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 import logging
@@ -83,6 +83,7 @@ app.include_router(contact.router, prefix=f"{settings.API_V1_PREFIX}/contact", t
 app.include_router(leads.router, prefix=f"{settings.API_V1_PREFIX}/admin/leads", tags=["Admin Leads"])
 app.include_router(leads_marketplace.router, prefix=f"{settings.API_V1_PREFIX}/marketplace/leads", tags=["Leads Marketplace"])
 app.include_router(generated_reports.router, prefix=f"{settings.API_V1_PREFIX}/reports", tags=["Generated Reports"])
+app.include_router(maps.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Maps"])
 
 
 @app.get("/")

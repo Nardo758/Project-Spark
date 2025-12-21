@@ -1,6 +1,6 @@
 # Friction (OppGrid) - Complete System Architecture & Features
 
-> **Last Updated:** 2025-12-20
+> **Last Updated:** 2025-12-21
 > **Version:** 2.0
 > **Project:** Friction - Problem Discovery Search Engine
 
@@ -31,6 +31,7 @@
 - 🤖 **AI Co-founder**: Personal AI assistant for opportunity analysis
 - 💡 **Idea Engine**: AI-powered idea validation and market analysis
 - 📊 **Analytics Dashboard**: Deep-dive analytics and feasibility scoring
+- 🗺️ **Consultant Studio Mapping**: Side-by-side comparison map (pins + density layers)
 - 🌐 **Expert Marketplace**: Connect with domain experts
 - 💳 **Payment Integration**: Stripe-powered subscriptions and one-time unlocks
 - 🔐 **Secure Authentication**: Multi-provider OAuth, magic links, 2FA
@@ -1377,6 +1378,64 @@ sequenceDiagram
 ```
 
 ---
+
+### 5. Webhook Ingestion & Map Data Flow (Consultant Studio)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Scraper as External Scraper
+    participant Webhook as Webhook Gateway
+    participant Queue as Job Queue
+    participant Worker as Processing Worker
+    participant DB as PostgreSQL
+    participant MapEngine as Map Data Engine
+    participant API as FastAPI
+    participant UI as React UI (Report Studio)
+
+    Note over Scraper,Worker: Ingestion (async)
+    Scraper->>Webhook: POST /api/v1/webhook/* (source payload)
+    Webhook->>Queue: enqueue job (validated payload)
+    Webhook-->>Scraper: 202 Accepted
+
+    Note over Queue,DB: Processing
+    Worker->>Queue: pull job
+    Worker->>DB: store normalized records
+    Worker->>MapEngine: update aggregated map layers
+
+    Note over UI,API: Consultant Studio request
+    UI->>API: GET /api/v1/maps/location-analysis?q=...
+    API->>MapEngine: build mapData (pins + density)
+    MapEngine->>DB: query relevant records
+    DB-->>MapEngine: features + stats
+    MapEngine-->>API: mapData
+    API-->>UI: { mapData }
+    UI->>UI: render side-by-side maps (Leaflet)
+```
+
+```mermaid
+flowchart TD
+    A[Raw Webhook Data] --> B{Source Type?}
+
+    B -->|Google Maps / Yelp| C[Business Pins Layer]
+    B -->|Reddit / Twitter| D[Problem Density Layer]
+    B -->|Nextdoor / GreatSchools| E[Neighborhood / Zone Layer]
+
+    C --> F[Normalize + extract location]
+    D --> G[Normalize + score intensity]
+    E --> H[Normalize polygons + stats]
+
+    F --> I[GeoJSON Features (Point)]
+    G --> J[Heat Points (lat/lng + intensity)]
+    H --> K[GeoJSON Features (Polygon)]
+
+    I --> L[Map Data Engine]
+    J --> L
+    K --> L
+
+    L --> M[API: /maps/location-analysis]
+    M --> N[Frontend: Side-by-side comparison view]
+```
 
 ## 🔒 Security Architecture
 
