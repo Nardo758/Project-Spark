@@ -123,24 +123,24 @@ export default function Home() {
               </div>
 
               {/* Stats Row */}
-              <div className="flex gap-12">
+              <div className="flex gap-10 -mt-4">
                 <div>
-                  <div className="text-3xl font-bold text-emerald-500">
+                  <div className="text-2xl font-bold text-emerald-500">
                     {loading ? '...' : stats?.validated_ideas || 176}
                   </div>
-                  <div className="text-sm text-gray-500">Validated Ideas</div>
+                  <div className="text-xs text-gray-500">Validated Ideas</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900">
                     {loading ? '...' : stats?.total_market_opportunity || '$463B+'}
                   </div>
-                  <div className="text-sm text-gray-500">Market Opportunity</div>
+                  <div className="text-xs text-gray-500">Market Opportunity</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900">
                     {loading ? '...' : stats?.global_markets || 5}
                   </div>
-                  <div className="text-sm text-gray-500">Global Markets</div>
+                  <div className="text-xs text-gray-500">Global Markets</div>
                 </div>
               </div>
             </div>
