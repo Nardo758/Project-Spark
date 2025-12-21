@@ -1291,5 +1291,36 @@ LOG_LEVEL=INFO
 ---
 
 **Document Version:** 1.0
-**Last Updated:** 2024-01-XX
+**Last Updated:** 2025-12-21
+
+---
+
+## 1A. CONSULTANT STUDIO (SIDE-BY-SIDE MAP COMPARISON)
+
+Adds an interactive mapping surface that supports:
+- **Pins layer** (businesses like Google Maps / Yelp)
+- **Problem density layer** (signals like Reddit / Twitter)
+- **Side-by-side comparison** (two synchronized maps)
+
+Backend endpoint:
+- `GET /api/v1/maps/location-analysis?q=...` → returns `mapData` with `layers.businesses` (GeoJSON) and `layers.problemHeatmap` (lat/lng/intensity)
+
+```mermaid
+graph TB
+    subgraph "React Frontend"
+        RS[Report Studio<br/>/build/reports]
+        MAPL[Leaflet Side-by-Side View]
+    end
+
+    subgraph "FastAPI Backend"
+        MAPS[routers/maps.py<br/>/api/v1/maps/*]
+        WEB[routers/webhook.py<br/>/api/v1/webhook/*]
+        DB[(PostgreSQL)]
+    end
+
+    RS --> MAPL
+    MAPL -->|GET /api/v1/maps/location-analysis| MAPS
+    MAPS -->|query opportunities + sources| DB
+    WEB -->|ingest source payloads| DB
+```
 **Application:** Friction (OppGrid API)
