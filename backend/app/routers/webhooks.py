@@ -152,6 +152,58 @@ async def get_pending_sources(
     }
 
 
+@router.get("/calendar")
+async def get_calendar_data(
+    days: int = 30,
+    db: Session = Depends(get_db),
+):
+    """
+    Get webhook run data grouped by date and source for calendar display.
+    Returns counts per day per source type for the last N days.
+    """
+    from sqlalchemy import func, text
+    from datetime import datetime, timedelta
+    from app.models.scraped_source import ScrapedSource
+    
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    results = db.query(
+        func.date(ScrapedSource.received_at).label("run_date"),
+        ScrapedSource.source_type,
+        func.count().label("count")
+    ).filter(
+        ScrapedSource.received_at >= cutoff_date
+    ).group_by(
+        func.date(ScrapedSource.received_at),
+        ScrapedSource.source_type
+    ).order_by(
+        func.date(ScrapedSource.received_at).desc()
+    ).all()
+    
+    calendar_data = {}
+    source_totals = {}
+    
+    for row in results:
+        date_str = row.run_date.isoformat() if row.run_date else None
+        if date_str:
+            if date_str not in calendar_data:
+                calendar_data[date_str] = {}
+            calendar_data[date_str][row.source_type] = row.count
+            source_totals[row.source_type] = source_totals.get(row.source_type, 0) + row.count
+    
+    total_sources = db.query(func.count()).select_from(ScrapedSource).filter(
+        ScrapedSource.received_at >= cutoff_date
+    ).scalar()
+    
+    return {
+        "days": days,
+        "calendar": calendar_data,
+        "source_totals": source_totals,
+        "total_items": total_sources or 0,
+        "sources": list(source_totals.keys())
+    }
+
+
 @apify_router.post("/apify")
 async def receive_apify_webhook(
     request: Request,
