@@ -1,0 +1,102 @@
+<<<<<<< cursor/user-tier-access-logic-d881
+import { 
+  Menu, 
+  X, 
+  ChevronDown, 
+  ChevronRight,
+  Search,
+  Hammer,
+  Users,
+  DollarSign,
+  Target,
+  Code,
+  Settings,
+  FolderOpen
+} from 'lucide-react'
+
+const guestNavItems = [
+  { name: 'Discover', path: '/discover' },
+  { name: 'Consultant Studio', path: '/build/reports' },
+  { name: 'Leads', path: '/leads' },
+  { name: 'Join Network', path: '/network' },
+  { name: 'API', path: '/developers' },
+  { name: 'Pricing', path: '/pricing' },
+]
+
+const authNavItems = [
+  { 
+    name: 'Discover', 
+    icon: Search,
+    dropdown: [
+      { name: 'Opportunity Feed', path: '/discover', description: 'Browse AI-curated opportunities' },
+      { name: 'Validate Idea', path: '/idea-engine', description: 'Idea Engine - refine your concepts' },
+    ]
+  },
+  { 
+    name: 'Build', 
+    icon: Hammer,
+    dropdown: [
+      { name: 'Consultant Studio', path: '/build/reports', description: 'AI-powered feasibility studies' },
+      { name: 'Business Plan Generator', path: '/build/business-plan', description: 'Comprehensive business plans' },
+      { name: 'Pitch Deck', path: '/build/pitch-deck', description: 'Investor presentations' },
+    ]
+  },
+  { 
+    name: 'Find Expert Help', 
+    icon: Users,
+    path: '/find-expert-help'
+  },
+  { 
+    name: 'Find Money', 
+    icon: DollarSign,
+    path: '/find-money'
+  },
+  { 
+    name: 'Leads', 
+    icon: Target,
+    path: '/leads'
+  },
+  { 
+    name: 'API', 
+    icon: Code,
+    path: '/developers'
+  },
+  { 
+    name: 'Manage', 
+    icon: Settings,
+    dropdown: [
+      { name: 'Dashboard', path: '/dashboard', description: 'Your personalized dashboard' },
+      { name: 'My Projects', path: '/projects', description: 'View all your projects' },
+      { name: 'Saved Ideas', path: '/saved', description: 'Bookmarked opportunities' },
+      { name: 'Settings', path: '/settings', description: 'Account settings' },
+    ]
+  },
+]
+
+type SubMenuItem = {
+  name: string
+  path: string
+}
+
+type DropdownItem = {
+  name: string
+  path: string
+  description?: string
+  submenu?: SubMenuItem[]
+}
+
+type NavItem = {
+  name: string
+  path?: string
+  icon?: React.ComponentType<{ className?: string }>
+  dropdown?: DropdownItem[]
+=======
+import { useBrainStore } from '../stores/brainStore'
+import { fetchActiveBrain } from '../services/brainApi'
+
+type NavLink = { name: string; path: string }
+
+function isPaidTier(tier?: string) {
+  return tier === 'pro' || tier === 'business' || tier === 'enterprise'
+>>>>>>> main
+}
