@@ -92,46 +92,32 @@ export default function Home() {
                 Discover validated market opportunities backed by real consumer insights. From AI-powered validation to expert execution playbooks—everything you need to build what people actually want.
               </p>
 
-              {/* CTA Cards */}
-              <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                {/* Validate Your Idea Card */}
+              {/* CTA Buttons Row */}
+              <div className="flex gap-3 mb-12">
+                {/* Validate Your Idea */}
                 <Link
                   to="/build/reports"
-                  className="flex items-center gap-3 p-4 bg-gray-900 hover:bg-gray-800 text-white rounded-xl transition-colors group"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
                 >
-                  <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium">Validate Your Idea</div>
-                    <div className="text-sm text-gray-400">AI-powered analysis</div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Sparkles className="w-4 h-4" />
+                  Validate Your Idea
                 </Link>
 
-                {/* Identify a Business Location Card */}
+                {/* Identify a Location */}
                 <Link
                   to="/build/reports"
-                  className="flex items-center gap-3 p-4 bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 rounded-xl transition-colors group"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
                 >
-                  <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <Target className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">Identify a Business Location</div>
-                    <div className="text-sm text-gray-500">Market research</div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 ml-auto text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Target className="w-4 h-4" />
+                  Identify a Location
                 </Link>
-              </div>
 
-              {/* Watch Demo Button */}
-              <div className="mb-12">
+                {/* Watch Demo */}
                 <Link
                   to="/about"
-                  className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 hover:border-gray-400 text-gray-700 font-medium rounded-lg transition-colors bg-white"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-medium rounded-lg transition-colors bg-white"
                 >
-                  <Play className="w-5 h-5" />
+                  <Play className="w-4 h-4" />
                   Watch Demo
                 </Link>
               </div>
