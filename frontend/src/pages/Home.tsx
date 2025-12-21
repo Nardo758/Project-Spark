@@ -362,7 +362,10 @@ export default function Home() {
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-gray-900 font-bold text-sm">OG</span>
               </div>
-              <span className="font-semibold text-xl">OppGrid</span>
+              <div className="flex flex-col">
+                <span className="font-semibold text-xl leading-tight">OppGrid</span>
+                <span className="text-[10px] text-gray-400 leading-tight">The Opportunity Intelligence Platform</span>
+              </div>
             </div>
             <div className="flex gap-6 text-sm text-gray-400 mb-4 md:mb-0">
               <Link to="/about" className="hover:text-white">About</Link>

@@ -121,7 +121,10 @@ export default function Navbar() {
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">OG</span>
               </div>
-              <span className="font-semibold text-xl text-gray-900">OppGrid</span>
+              <div className="flex flex-col">
+                <span className="font-semibold text-xl text-gray-900 leading-tight">OppGrid</span>
+                <span className="text-[10px] text-gray-500 leading-tight">The Opportunity Intelligence Platform</span>
+              </div>
             </Link>
 
             <div className="hidden md:flex items-center gap-1">
