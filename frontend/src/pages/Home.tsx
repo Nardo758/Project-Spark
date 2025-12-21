@@ -17,7 +17,6 @@ interface PlatformStats {
   total_market_opportunity: string
   global_markets: number
   validated_opportunities?: number
-  reports_generated?: number
 }
 
 interface FeaturedOpportunity {
