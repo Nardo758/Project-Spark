@@ -1180,7 +1180,20 @@
             <section id="section-scraper" class="hidden">
                 <div class="page-header">
                     <h1 class="spektral">Scraper Data Import</h1>
-                    <p>Upload and analyze Reddit scraper data to discover business opportunities</p>
+                    <p>Upload and analyze scraper data to discover business opportunities</p>
+                </div>
+
+                <!-- Webhook Calendar -->
+                <div class="content-section" style="margin-bottom: 24px;">
+                    <div class="section-header">
+                        <h2>Data Import Calendar</h2>
+                        <div class="section-actions">
+                            <button class="btn-sm btn-primary" onclick="loadWebhookCalendar()">Refresh</button>
+                        </div>
+                    </div>
+                    <div id="webhook-calendar-container">
+                        <div style="padding: 40px; text-align: center; color: var(--stone-400);">Loading calendar...</div>
+                    </div>
                 </div>
 
                 <div class="content-section">
@@ -1327,7 +1340,7 @@
                 case 'partners': loadPartners(); break;
                 case 'leads': loadLeads(); loadLeadStats(); break;
                 case 'reports': loadReports(); break;
-                case 'scraper': break;
+                case 'scraper': loadWebhookCalendar(); break;
             }
         }
 
@@ -2313,6 +2326,144 @@
             };
         }
 
+
+        const SOURCE_COLORS = {
+            twitter: { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6', text: '#60a5fa' },
+            reddit: { bg: 'rgba(249, 115, 22, 0.2)', border: '#f97316', text: '#fb923c' },
+            google_maps: { bg: 'rgba(34, 197, 94, 0.2)', border: '#22c55e', text: '#4ade80' },
+            yelp: { bg: 'rgba(239, 68, 68, 0.2)', border: '#ef4444', text: '#f87171' },
+            craigslist: { bg: 'rgba(168, 85, 247, 0.2)', border: '#a855f7', text: '#c084fc' },
+            custom: { bg: 'rgba(156, 163, 175, 0.2)', border: '#9ca3af', text: '#d1d5db' },
+            nextdoor: { bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981', text: '#34d399' },
+            linkedin: { bg: 'rgba(59, 130, 246, 0.2)', border: '#0077b5', text: '#0ea5e9' },
+            angel_list: { bg: 'rgba(0, 0, 0, 0.2)', border: '#333', text: '#a1a1aa' },
+            crunchbase: { bg: 'rgba(39, 95, 255, 0.2)', border: '#275fff', text: '#60a5fa' },
+            facebook: { bg: 'rgba(24, 119, 242, 0.2)', border: '#1877f2', text: '#3b82f6' },
+            instagram: { bg: 'rgba(225, 48, 108, 0.2)', border: '#e1306c', text: '#f472b6' },
+            youtube: { bg: 'rgba(255, 0, 0, 0.2)', border: '#ff0000', text: '#f87171' },
+            tiktok: { bg: 'rgba(0, 0, 0, 0.2)', border: '#000', text: '#a1a1aa' },
+            glassdoor: { bg: 'rgba(12, 170, 65, 0.2)', border: '#0caa41', text: '#4ade80' },
+            indeed: { bg: 'rgba(0, 63, 153, 0.2)', border: '#003f99', text: '#60a5fa' },
+            apify: { bg: 'rgba(0, 148, 133, 0.2)', border: '#009485', text: '#2dd4bf' },
+        };
+
+        function getSourceColor(source) {
+            return SOURCE_COLORS[source] || SOURCE_COLORS.custom;
+        }
+
+        async function loadWebhookCalendar() {
+            const container = document.getElementById('webhook-calendar-container');
+            
+            try {
+                const response = await fetch('/api/v1/webhooks/calendar?days=30');
+                if (!response.ok) throw new Error('Failed to fetch calendar data');
+                const data = await response.json();
+                
+                const days = [];
+                const today = new Date();
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    days.push({
+                        date: dateStr,
+                        dayOfWeek: date.getDay(),
+                        dayOfMonth: date.getDate(),
+                        month: date.toLocaleDateString('en-US', { month: 'short' }),
+                        isToday: i === 0,
+                    });
+                }
+
+                let sourceBadgesHtml = data.sources.map(source => {
+                    const colors = getSourceColor(source);
+                    const count = data.source_totals[source] || 0;
+                    return `<div style="padding: 6px 12px; border-radius: 20px; background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text}; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                        <span style="text-transform: capitalize;">${source.replace('_', ' ')}</span>
+                        <span style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 10px; font-size: 11px;">${count.toLocaleString()}</span>
+                    </div>`;
+                }).join('');
+
+                let calendarHtml = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="color: #fff; margin: 0;">Last 30 Days</h3>
+                            <p style="color: var(--stone-400); font-size: 13px; margin-top: 4px;">Data imports by source</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 28px; font-weight: 700; color: #fff;">${data.total_items.toLocaleString()}</div>
+                            <div style="font-size: 12px; color: var(--stone-400);">Total Items</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">${sourceBadgesHtml}</div>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px;">
+                        ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div style="text-align: center; font-size: 11px; color: var(--stone-500); padding: 4px;">${d}</div>`).join('')}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                `;
+
+                if (days[0].dayOfWeek > 0) {
+                    for (let i = 0; i < days[0].dayOfWeek; i++) {
+                        calendarHtml += `<div style="height: 80px;"></div>`;
+                    }
+                }
+
+                days.forEach(day => {
+                    const dayData = data.calendar[day.date] || {};
+                    const hasData = Object.keys(dayData).length > 0;
+                    const totalCount = Object.values(dayData).reduce((sum, count) => sum + count, 0);
+                    
+                    let barsHtml = Object.entries(dayData).slice(0, 4).map(([source, count]) => {
+                        const colors = getSourceColor(source);
+                        return `<div style="width: 100%; height: 4px; border-radius: 2px; background: ${colors.bg}; border: 1px solid ${colors.border};" title="${source}: ${count}"></div>`;
+                    }).join('');
+
+                    calendarHtml += `
+                        <div style="height: 80px; padding: 6px; border-radius: 8px; border: 1px solid ${day.isToday ? '#3b82f6' : 'var(--stone-700)'}; background: ${hasData ? 'rgba(255,255,255,0.03)' : 'transparent'}; ${day.isToday ? 'background: rgba(59,130,246,0.1);' : ''} cursor: pointer;" onclick="showDayDetails('${day.date}', ${JSON.stringify(dayData).replace(/"/g, '&quot;')})">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <span style="font-size: 11px; font-weight: 500; color: ${day.isToday ? '#60a5fa' : 'var(--stone-400)'};">
+                                    ${day.dayOfMonth === 1 ? day.month + ' ' + day.dayOfMonth : day.dayOfMonth}
+                                </span>
+                                ${totalCount > 0 ? `<span style="font-size: 11px; font-weight: 700; color: #fff; background: var(--stone-700); padding: 2px 6px; border-radius: 4px;">${totalCount}</span>` : ''}
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 6px;">${barsHtml}</div>
+                        </div>
+                    `;
+                });
+
+                calendarHtml += '</div><div id="day-details-container"></div>';
+                container.innerHTML = calendarHtml;
+                
+            } catch (error) {
+                container.innerHTML = `<div style="padding: 40px; text-align: center; color: #ef4444;">Error: ${error.message}</div>`;
+            }
+        }
+
+        function showDayDetails(dateStr, dayData) {
+            const container = document.getElementById('day-details-container');
+            if (!dayData || Object.keys(dayData).length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const date = new Date(dateStr + 'T00:00:00');
+            const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            let cardsHtml = Object.entries(dayData).map(([source, count]) => {
+                const colors = getSourceColor(source);
+                return `<div style="padding: 16px; border-radius: 8px; background: ${colors.bg}; border: 1px solid ${colors.border};">
+                    <p style="font-size: 13px; text-transform: capitalize; color: ${colors.text}; margin: 0;">${source.replace('_', ' ')}</p>
+                    <p style="font-size: 28px; font-weight: 700; color: #fff; margin: 8px 0 4px;">${count.toLocaleString()}</p>
+                    <p style="font-size: 11px; color: var(--stone-400); margin: 0;">items imported</p>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div style="margin-top: 16px; padding: 16px; background: var(--stone-800); border-radius: 8px; border: 1px solid var(--stone-700);">
+                    <h3 style="color: #fff; margin: 0 0 12px;">${formattedDate}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">${cardsHtml}</div>
+                </div>
+            `;
+        }
 
         async function analyzeScraperData() {
             const fileInput = document.getElementById('scraper-file');
