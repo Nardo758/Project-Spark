@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Bell, Brain, CircleHelp, Menu, MessageCircle, Search, ShoppingCart, X } from 'lucide-react'
-import { useAuthStore } from '../stores/authStore'
 import { 
+  Bell, 
+  Brain, 
+  CircleHelp, 
   Menu, 
-  X, 
+  MessageCircle, 
+  Search, 
+  ShoppingCart, 
+  X,
   ChevronDown, 
   ChevronRight,
-  Search,
   Hammer,
   Users,
   DollarSign,
@@ -17,6 +20,7 @@ import {
   Settings,
   FolderOpen
 } from 'lucide-react'
+import { useAuthStore } from '../stores/authStore'
 
 const guestNavItems = [
   { name: 'Discover', path: '/discover' },
