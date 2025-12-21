@@ -60,6 +60,15 @@ def get_anthropic_client():
         api_key = os.getenv("ANTHROPIC_API_KEY")
     
     if not api_key:
+        api_key = os.getenv("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
+    
+    if not api_key:
+        api_key = os.getenv("CLAUDE_API_KEY")
+    
+    if not api_key:
+        api_key = os.getenv("CLAUDE_API")
+    
+    if not api_key:
         return None
     
     try:
