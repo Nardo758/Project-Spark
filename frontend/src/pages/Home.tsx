@@ -65,8 +65,8 @@ export default function Home() {
     <div className="bg-white">
       {/* Hero Section - Transform Market Signals */}
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50/50 via-white to-emerald-50/30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.08),transparent_50%)]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.08),transparent_50%)] pointer-events-none" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
           
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             {/* Left Column - Main Content */}
