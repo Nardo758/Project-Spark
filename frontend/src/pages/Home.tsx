@@ -364,7 +364,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col">
                 <span className="font-semibold text-xl leading-tight">OppGrid</span>
-                <span className="text-[10px] text-gray-400 leading-tight">The Opportunity Intelligence Platform</span>
+                <span className="text-[9px] text-gray-400 leading-tight">The Opportunity Intelligence Platform</span>
               </div>
             </div>
             <div className="flex gap-6 text-sm text-gray-400 mb-4 md:mb-0">
