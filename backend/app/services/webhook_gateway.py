@@ -47,7 +47,7 @@ class WebhookGateway:
         "google_maps": ["place_id", "name", "location"],
         "yelp": ["business_id", "name", "coordinates"],
         "reddit": ["post_id", "subreddit", "title"],
-        "twitter": ["tweet_id", "text"],
+        "twitter": ["text"],  # tweet_id or tweetId accepted, text required
         "nextdoor": ["post_id", "neighborhood"],
         "custom": ["id", "data"],
     }
@@ -102,11 +102,15 @@ class WebhookGateway:
 
     def extract_external_id(self, source: str, data: Dict[str, Any]) -> Optional[str]:
         """Extract the external ID from the payload based on source type"""
+        if source == "twitter":
+            # Support both Apify format (tweetId) and standard format (tweet_id)
+            tweet_id = data.get("tweetId") or data.get("tweet_id") or data.get("id")
+            return str(tweet_id) if tweet_id else None
+        
         id_fields = {
             "google_maps": "place_id",
             "yelp": "business_id",
             "reddit": "post_id",
-            "twitter": "tweet_id",
             "nextdoor": "post_id",
             "custom": "id",
         }
