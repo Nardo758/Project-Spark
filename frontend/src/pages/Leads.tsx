@@ -4,12 +4,10 @@ import {
   Search, 
   Filter, 
   MapPin, 
-  DollarSign, 
   Building2, 
   TrendingUp,
   Star,
   Lock,
-  Eye,
   ShoppingCart,
   Bell,
   ChevronRight,
@@ -51,35 +49,38 @@ export default function Leads() {
   const [sortBy, setSortBy] = useState('recent')
 
   useEffect(() => {
-    fetchLeads()
-  }, [searchQuery, selectedIndustry, sortBy])
+    let cancelled = false
 
-  const fetchLeads = async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (searchQuery) params.append('search', searchQuery)
-      if (selectedIndustry !== 'All Industries') params.append('category', selectedIndustry.toLowerCase())
-      params.append('sort_by', sortBy)
-      
-      const headers: Record<string, string> = {}
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
-      }
-      
-      const response = await fetch(`/api/v1/marketplace/leads/browse?${params}`, { headers })
-      if (response.ok) {
+    async function fetchLeads() {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams()
+        if (searchQuery) params.append('search', searchQuery)
+        if (selectedIndustry !== 'All Industries') params.append('category', selectedIndustry.toLowerCase())
+        params.append('sort_by', sortBy)
+
+        const headers: Record<string, string> = {}
+        if (token) headers['Authorization'] = `Bearer ${token}`
+
+        const response = await fetch(`/api/v1/marketplace/leads/browse?${params}`, { headers })
+        if (!response.ok) return
         const data: MarketplaceResponse = await response.json()
+        if (cancelled) return
         setLeads(data.items)
         setTotalLeads(data.total)
         setCategories(data.categories)
+      } catch (error) {
+        console.error('Failed to fetch leads:', error)
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-    } catch (error) {
-      console.error('Failed to fetch leads:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    fetchLeads()
+    return () => {
+      cancelled = true
+    }
+  }, [searchQuery, selectedIndustry, sortBy, token])
 
   const handlePurchase = async (leadId: number) => {
     if (!isAuthenticated) return
@@ -96,9 +97,9 @@ export default function Leads() {
       })
       
       if (response.ok) {
-        setLeads(leads.map(lead => 
-          lead.id === leadId ? { ...lead, is_purchased: true } : lead
-        ))
+        setLeads((prev) =>
+          prev.map((lead) => (lead.id === leadId ? { ...lead, is_purchased: true } : lead)),
+        )
       }
     } catch (error) {
       console.error('Failed to purchase lead:', error)

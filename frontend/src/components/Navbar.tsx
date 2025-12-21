@@ -1,22 +1,27 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ComponentType, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Bell, Brain, CircleHelp, Menu, MessageCircle, Search, ShoppingCart, X } from 'lucide-react'
-import { useAuthStore } from '../stores/authStore'
-import { 
-  Menu, 
-  X, 
-  ChevronDown, 
+import {
+  Bell,
+  Brain,
+  ChevronDown,
   ChevronRight,
-  Search,
-  Hammer,
-  Users,
-  DollarSign,
-  Target,
+  CircleHelp,
   Code,
+  DollarSign,
+  Hammer,
+  Menu,
+  MessageCircle,
+  Search,
   Settings,
-  FolderOpen
+  ShoppingCart,
+  Target,
+  Users,
+  X,
 } from 'lucide-react'
+import { useAuthStore } from '../stores/authStore'
+import { useBrainStore } from '../stores/brainStore'
+import { fetchActiveBrain } from '../services/brainApi'
 
 const guestNavItems = [
   { name: 'Discover', path: '/discover' },
@@ -92,14 +97,25 @@ type DropdownItem = {
 type NavItem = {
   name: string
   path?: string
-  icon?: React.ComponentType<{ className?: string }>
+  icon?: ComponentType<{ className?: string }>
   dropdown?: DropdownItem[]
+}
+
+type NavLink = {
+  name: string
+  path: string
+}
+
+function isPaidTier(tier?: string) {
+  return tier === 'pro' || tier === 'business' || tier === 'enterprise'
 }
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
 
   const { isAuthenticated, user, logout } = useAuthStore()
   const token = useAuthStore((s) => s.token)
@@ -127,6 +143,13 @@ export default function Navbar() {
     if (!brainQuery.data) return
     hydrateFromServer(brainQuery.data)
   }, [brainQuery.data, hydrateFromServer])
+
+  useEffect(() => {
+    // Close open menus when navigating
+    setUserMenuOpen(false)
+    setActiveDropdown(null)
+    setActiveSubmenu(null)
+  }, [location.pathname])
 
   const navLinks: NavLink[] = useMemo(() => {
     if (!isAuthenticated) {
@@ -165,19 +188,28 @@ export default function Navbar() {
     ]
   }, [isAuthenticated, paidMember])
 
+  const navItems: NavItem[] = useMemo(() => {
+    return isAuthenticated ? authNavItems : guestNavItems
+  }, [isAuthenticated])
+
   const cartCount = 0
 
-  const onSubmitSearch = (e: React.FormEvent) => {
+  const onSubmitSearch = (e: FormEvent) => {
     e.preventDefault()
     const q = search.trim()
     navigate(q ? `/discover?q=${encodeURIComponent(q)}` : '/discover')
     setMobileMenuOpen(false)
   }
 
-  const linkClass = (path: string) =>
-    `px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-      location.pathname === path ? 'text-gray-900 bg-gray-100' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-    }`
+  const handleDropdownEnter = (name: string) => {
+    setActiveDropdown(name)
+    setActiveSubmenu(null)
+  }
+
+  const handleDropdownLeave = () => {
+    setActiveDropdown(null)
+    setActiveSubmenu(null)
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -199,8 +231,8 @@ export default function Navbar() {
           {/* Centered Navigation */}
           <div className="hidden md:flex items-center justify-center flex-1">
             <div className="flex items-center gap-1">
-              {navItems.map((item: NavItem) => (
-                'dropdown' in item && item.dropdown ? (
+              {navItems.map((item) =>
+                item.dropdown?.length ? (
                   <div 
                     key={item.name} 
                     className="relative"
@@ -214,6 +246,7 @@ export default function Navbar() {
                           : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
+                      {item.icon ? <item.icon className="w-4 h-4" /> : null}
                       {item.name}
                       <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === item.name ? 'rotate-180' : ''}`} />
                     </button>
@@ -229,6 +262,10 @@ export default function Navbar() {
                             <Link
                               to={subItem.path}
                               className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                              onClick={() => {
+                                setActiveDropdown(null)
+                                setActiveSubmenu(null)
+                              }}
                             >
                               <div>
                                 <div className="text-sm font-medium text-gray-900">{subItem.name}</div>
@@ -247,6 +284,10 @@ export default function Navbar() {
                                     key={sub.path}
                                     to={sub.path}
                                     className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    onClick={() => {
+                                      setActiveDropdown(null)
+                                      setActiveSubmenu(null)
+                                    }}
                                   >
                                     {sub.name}
                                   </Link>
@@ -260,18 +301,23 @@ export default function Navbar() {
                   </div>
                 ) : (
                   <Link
-                    key={item.path}
+                    key={item.name}
                     to={item.path || '/'}
                     className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                       location.pathname === item.path
                         ? 'text-gray-900 bg-gray-100'
                         : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                     }`}
+                    onClick={() => {
+                      setActiveDropdown(null)
+                      setActiveSubmenu(null)
+                    }}
                   >
+                    {item.icon ? <item.icon className="w-4 h-4" /> : null}
                     {item.name}
                   </Link>
                 )
-              ))}
+              )}
             </div>
           </div>
 
