@@ -93,7 +93,7 @@ export default function Home() {
               </p>
 
               {/* CTA Buttons Row */}
-              <div className="flex flex-wrap gap-3 mb-12">
+              <div className="flex gap-3 mb-12">
                 {/* Validate Your Idea */}
                 <Link
                   to="/build/reports"
