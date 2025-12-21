@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   Search, 
@@ -12,75 +12,106 @@ import {
   Eye,
   ShoppingCart,
   Bell,
-  ChevronRight
+  ChevronRight,
+  Loader2,
+  CheckCircle
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 
-const sampleLeads = [
-  {
-    id: 'LD-78421',
-    title: 'Profitable SaaS Business in Healthcare',
-    industry: 'Healthcare Tech',
-    dealSize: '$1M - $5M',
-    location: 'Texas, USA',
-    revenueRange: '$500K - $1M ARR',
-    qualityScore: 8.5,
-    price: 299,
-    views: 142,
-    status: 'active',
-    daysListed: 3,
-  },
-  {
-    id: 'LD-78422',
-    title: 'E-commerce Brand with Strong D2C Presence',
-    industry: 'E-commerce',
-    dealSize: '$2M - $10M',
-    location: 'California, USA',
-    revenueRange: '$2M - $5M',
-    qualityScore: 9.2,
-    price: 499,
-    views: 89,
-    status: 'active',
-    daysListed: 7,
-  },
-  {
-    id: 'LD-78423',
-    title: 'Manufacturing Business Seeking Strategic Buyer',
-    industry: 'Manufacturing',
-    dealSize: '$5M - $20M',
-    location: 'Ohio, USA',
-    revenueRange: '$3M - $8M',
-    qualityScore: 7.8,
-    price: 399,
-    views: 56,
-    status: 'active',
-    daysListed: 14,
-  },
-  {
-    id: 'LD-78424',
-    title: 'FinTech Startup with Patented Technology',
-    industry: 'FinTech',
-    dealSize: '$10M - $50M',
-    location: 'New York, USA',
-    revenueRange: '$1M - $3M ARR',
-    qualityScore: 9.5,
-    price: 799,
-    views: 203,
-    status: 'premium',
-    daysListed: 1,
-  },
-]
+interface MarketplaceLead {
+  id: number
+  category: string
+  company: string | null
+  location: string | null
+  quality_score: number
+  price: number
+  contact_count: number
+  last_active: string | null
+  verified: boolean
+  is_purchased: boolean
+}
 
-const industries = ['All Industries', 'Healthcare Tech', 'E-commerce', 'FinTech', 'SaaS', 'Manufacturing', 'Real Estate']
-const dealSizes = ['Any Size', '$100K - $500K', '$500K - $1M', '$1M - $5M', '$5M - $20M', '$20M+']
-const locations = ['All Locations', 'United States', 'California', 'Texas', 'New York', 'Florida', 'International']
+interface MarketplaceResponse {
+  items: MarketplaceLead[]
+  total: number
+  categories: { id: string; name: string; count: number }[]
+}
+
+const industries = ['All Industries', 'Healthcare', 'E-commerce', 'FinTech', 'SaaS', 'Manufacturing', 'Services']
 
 export default function Leads() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, token } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIndustry, setSelectedIndustry] = useState('All Industries')
-  const [selectedDealSize, setSelectedDealSize] = useState('Any Size')
-  const [selectedLocation, setSelectedLocation] = useState('All Locations')
+  const [leads, setLeads] = useState<MarketplaceLead[]>([])
+  const [totalLeads, setTotalLeads] = useState(0)
+  const [categories, setCategories] = useState<{ id: string; name: string; count: number }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [purchasing, setPurchasing] = useState<number | null>(null)
+  const [sortBy, setSortBy] = useState('recent')
+
+  useEffect(() => {
+    fetchLeads()
+  }, [searchQuery, selectedIndustry, sortBy])
+
+  const fetchLeads = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (searchQuery) params.append('search', searchQuery)
+      if (selectedIndustry !== 'All Industries') params.append('category', selectedIndustry.toLowerCase())
+      params.append('sort_by', sortBy)
+      
+      const headers: Record<string, string> = {}
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
+      const response = await fetch(`/api/v1/marketplace/leads/browse?${params}`, { headers })
+      if (response.ok) {
+        const data: MarketplaceResponse = await response.json()
+        setLeads(data.items)
+        setTotalLeads(data.total)
+        setCategories(data.categories)
+      }
+    } catch (error) {
+      console.error('Failed to fetch leads:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePurchase = async (leadId: number) => {
+    if (!isAuthenticated) return
+    
+    setPurchasing(leadId)
+    try {
+      const response = await fetch('/api/v1/marketplace/leads/purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ lead_id: leadId })
+      })
+      
+      if (response.ok) {
+        setLeads(leads.map(lead => 
+          lead.id === leadId ? { ...lead, is_purchased: true } : lead
+        ))
+      }
+    } catch (error) {
+      console.error('Failed to purchase lead:', error)
+    } finally {
+      setPurchasing(null)
+    }
+  }
+
+  const getQualityLabel = (score: number) => {
+    if (score >= 80) return 'Excellent'
+    if (score >= 60) return 'Good'
+    return 'Standard'
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,20 +126,20 @@ export default function Leads() {
 
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">847</div>
+              <div className="text-2xl font-bold">{totalLeads || '0'}</div>
               <div className="text-sm text-gray-400">Active Leads</div>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">$2.4B</div>
-              <div className="text-sm text-gray-400">Total Deal Value</div>
+              <div className="text-2xl font-bold">{categories.length}</div>
+              <div className="text-sm text-gray-400">Categories</div>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
               <div className="text-2xl font-bold">92%</div>
               <div className="text-sm text-gray-400">Response Rate</div>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">156</div>
-              <div className="text-sm text-gray-400">Closed This Month</div>
+              <div className="text-2xl font-bold">90</div>
+              <div className="text-sm text-gray-400">Day Access</div>
             </div>
           </div>
         </div>
@@ -121,7 +152,7 @@ export default function Leads() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search leads by keyword, industry, or location..."
+                placeholder="Search leads by keyword, industry, or company..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
@@ -135,20 +166,6 @@ export default function Leads() {
               >
                 {industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
               </select>
-              <select
-                value={selectedDealSize}
-                onChange={(e) => setSelectedDealSize(e.target.value)}
-                className="px-4 py-3 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-black"
-              >
-                {dealSizes.map(size => <option key={size} value={size}>{size}</option>)}
-              </select>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="px-4 py-3 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-black"
-              >
-                {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-              </select>
               <button className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2 transition-colors">
                 <Filter className="w-4 h-4" />
                 More Filters
@@ -160,99 +177,140 @@ export default function Leads() {
         <div className="flex gap-6">
           <div className="flex-1">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-gray-600">Showing {sampleLeads.length} leads</p>
+              <p className="text-gray-600">
+                {loading ? 'Loading...' : `Showing ${leads.length} of ${totalLeads} leads`}
+              </p>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Sort by:</span>
-                <select className="text-sm border border-gray-200 rounded-lg px-3 py-2">
-                  <option>Newest First</option>
-                  <option>Quality Score</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="text-sm border border-gray-200 rounded-lg px-3 py-2"
+                >
+                  <option value="recent">Newest First</option>
+                  <option value="quality">Quality Score</option>
+                  <option value="price">Price</option>
                 </select>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {sampleLeads.map((lead) => (
-                <div 
-                  key={lead.id} 
-                  className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-mono text-gray-400">{lead.id}</span>
-                        {lead.status === 'premium' && (
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-                            Premium
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              </div>
+            ) : leads.length === 0 ? (
+              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No leads found</h3>
+                <p className="text-gray-600">
+                  {searchQuery || selectedIndustry !== 'All Industries' 
+                    ? 'Try adjusting your filters or search query'
+                    : 'New leads will appear here as they become available'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {leads.map((lead) => (
+                  <div 
+                    key={lead.id} 
+                    className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-mono text-gray-400">LD-{lead.id}</span>
+                          {lead.verified && (
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Verified
+                            </span>
+                          )}
+                          {lead.quality_score >= 80 && (
+                            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
+                              Premium
+                            </span>
+                          )}
+                          {lead.is_purchased && (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                              Purchased
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {lead.company || `Business Opportunity in ${lead.category}`}
+                        </h3>
+                        
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+                          <span className="flex items-center gap-1">
+                            <Building2 className="w-4 h-4" />
+                            {lead.category || 'General'}
                           </span>
-                        )}
-                        {lead.daysListed <= 3 && (
-                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                            New
+                          {lead.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {lead.location}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <TrendingUp className="w-4 h-4" />
+                            {lead.contact_count} contact{lead.contact_count !== 1 ? 's' : ''}
                           </span>
-                        )}
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{lead.title}</h3>
-                      
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-                        <span className="flex items-center gap-1">
-                          <Building2 className="w-4 h-4" />
-                          {lead.industry}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
-                          {lead.dealSize}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {lead.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4" />
-                          {lead.revenueRange}
-                        </span>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                            <span className="font-medium">{lead.quality_score}</span>
+                            <span className="text-gray-400 text-sm">{getQualityLabel(lead.quality_score)}</span>
+                          </div>
+                          {lead.last_active && (
+                            <div className="text-gray-400 text-sm">
+                              Active {new Date(lead.last_active).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                          <span className="font-medium">{lead.qualityScore}</span>
-                          <span className="text-gray-400 text-sm">quality</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-gray-500 text-sm">
-                          <Eye className="w-4 h-4" />
-                          {lead.views} views
-                        </div>
-                        <div className="text-gray-400 text-sm">
-                          Listed {lead.daysListed} days ago
-                        </div>
+                      <div className="text-right ml-6">
+                        <div className="text-2xl font-bold text-gray-900">${lead.price}</div>
+                        <div className="text-sm text-gray-500 mb-3">one-time</div>
+                        
+                        {lead.is_purchased ? (
+                          <button 
+                            disabled
+                            className="w-full px-4 py-2 bg-green-100 text-green-700 rounded-lg flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            Purchased
+                          </button>
+                        ) : isAuthenticated ? (
+                          <button 
+                            onClick={() => handlePurchase(lead.id)}
+                            disabled={purchasing === lead.id}
+                            className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                          >
+                            {purchasing === lead.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <ShoppingCart className="w-4 h-4" />
+                            )}
+                            {purchasing === lead.id ? 'Processing...' : 'Purchase Lead'}
+                          </button>
+                        ) : (
+                          <Link
+                            to="/signup"
+                            className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Lock className="w-4 h-4" />
+                            Sign Up to Buy
+                          </Link>
+                        )}
                       </div>
-                    </div>
-
-                    <div className="text-right ml-6">
-                      <div className="text-2xl font-bold text-gray-900">${lead.price}</div>
-                      <div className="text-sm text-gray-500 mb-3">one-time</div>
-                      
-                      {isAuthenticated ? (
-                        <button className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2">
-                          <ShoppingCart className="w-4 h-4" />
-                          Purchase Lead
-                        </button>
-                      ) : (
-                        <Link
-                          to="/signup"
-                          className="w-full px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                        >
-                          <Lock className="w-4 h-4" />
-                          Sign Up to Buy
-                        </Link>
-                      )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="hidden lg:block w-80">
@@ -277,6 +335,30 @@ export default function Leads() {
                 </Link>
               )}
             </div>
+
+            {categories.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+                <h3 className="font-semibold text-gray-900 mb-4">Categories</h3>
+                <div className="space-y-2">
+                  {categories.filter(c => c.count > 0).map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedIndustry(cat.name)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                        selectedIndustry === cat.name 
+                          ? 'bg-black text-white' 
+                          : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>{cat.name}</span>
+                      <span className={selectedIndustry === cat.name ? 'text-white/70' : 'text-gray-400'}>
+                        {cat.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl p-6 text-white">
               <h3 className="font-semibold mb-2">How It Works</h3>

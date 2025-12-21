@@ -1,19 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
+  Search, 
   Users, 
-  Briefcase, 
   TrendingUp, 
-  Building2,
-  Star,
-  MapPin,
+  Briefcase, 
+  Building2, 
+  Star, 
+  MapPin, 
   MessageSquare,
   CheckCircle,
   ArrowRight,
-  Search,
-  Filter
+  Loader2
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+
+interface Expert {
+  id: number
+  name: string
+  headline: string | null
+  bio: string | null
+  skills: string[]
+  specialization: string[]
+  pricing_model: string
+  hourly_rate_cents: number | null
+  is_active: boolean
+}
 
 const tabs = [
   { id: 'experts', label: 'Experts', icon: Users, count: 234 },
@@ -22,46 +34,7 @@ const tabs = [
   { id: 'lenders', label: 'Lenders', icon: Building2, count: 42 },
 ]
 
-const experts = [
-  {
-    id: 1,
-    name: 'Michael Chen',
-    title: 'M&A Advisor',
-    company: 'Strategic Advisory Group',
-    location: 'San Francisco, CA',
-    expertise: ['SaaS', 'Technology', 'Healthcare'],
-    rating: 4.9,
-    deals: 47,
-    verified: true,
-    avatar: 'MC',
-  },
-  {
-    id: 2,
-    name: 'Sarah Williams',
-    title: 'Investment Banker',
-    company: 'Williams Capital',
-    location: 'New York, NY',
-    expertise: ['FinTech', 'E-commerce', 'Manufacturing'],
-    rating: 4.8,
-    deals: 62,
-    verified: true,
-    avatar: 'SW',
-  },
-  {
-    id: 3,
-    name: 'David Park',
-    title: 'Business Broker',
-    company: 'Park & Associates',
-    location: 'Los Angeles, CA',
-    expertise: ['Retail', 'Food & Beverage', 'Services'],
-    rating: 4.7,
-    deals: 38,
-    verified: true,
-    avatar: 'DP',
-  },
-]
-
-const investors = [
+const sampleInvestors = [
   {
     id: 1,
     name: 'Venture Growth Partners',
@@ -84,7 +57,7 @@ const investors = [
   },
 ]
 
-const partners = [
+const samplePartners = [
   {
     id: 1,
     name: 'Startup Legal LLP',
@@ -114,7 +87,7 @@ const partners = [
   },
 ]
 
-const lenders = [
+const sampleLenders = [
   {
     id: 1,
     name: 'Acquisition Finance Corp',
@@ -138,9 +111,48 @@ const lenders = [
 ]
 
 export default function Network() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, token } = useAuthStore()
   const [activeTab, setActiveTab] = useState('experts')
   const [searchQuery, setSearchQuery] = useState('')
+  const [experts, setExperts] = useState<Expert[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (activeTab === 'experts') {
+      fetchExperts()
+    }
+  }, [activeTab])
+
+  const fetchExperts = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/v1/experts/')
+      if (response.ok) {
+        const data = await response.json()
+        setExperts(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch experts:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatPrice = (cents: number | null) => {
+    if (!cents) return 'Contact for pricing'
+    return `$${(cents / 100).toFixed(0)}/hr`
+  }
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  }
+
+  const filteredExperts = experts.filter(expert => 
+    !searchQuery || 
+    expert.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    expert.headline?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    expert.specialization.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -167,7 +179,7 @@ export default function Network() {
                 <tab.icon className={`w-6 h-6 mx-auto mb-2 ${activeTab === tab.id ? 'text-indigo-600' : ''}`} />
                 <div className="font-semibold">{tab.label}</div>
                 <div className={`text-sm ${activeTab === tab.id ? 'text-gray-500' : 'text-gray-400'}`}>
-                  {tab.count} available
+                  {tab.id === 'experts' ? experts.length || tab.count : tab.count} available
                 </div>
               </button>
             ))}
@@ -188,76 +200,84 @@ export default function Network() {
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
-            <button className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2 transition-colors">
-              <Filter className="w-4 h-4" />
-              Filters
-            </button>
           </div>
         </div>
 
         {activeTab === 'experts' && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {experts.map((expert) => (
-              <div key={expert.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {expert.avatar}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{expert.name}</h3>
-                      {expert.verified && (
-                        <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500" />
-                      )}
+          loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+          ) : filteredExperts.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No experts found</h3>
+              <p className="text-gray-600">
+                {searchQuery ? 'Try adjusting your search query' : 'Experts will appear here as they join the platform'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredExperts.map((expert) => (
+                <div key={expert.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-semibold">
+                      {getInitials(expert.name)}
                     </div>
-                    <p className="text-sm text-gray-600">{expert.title}</p>
-                    <p className="text-sm text-gray-500">{expert.company}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900">{expert.name}</h3>
+                        {expert.is_active && (
+                          <CheckCircle className="w-4 h-4 text-blue-500 fill-blue-500" />
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">{expert.headline || 'Expert Consultant'}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                      4.8
+                    </span>
+                    <span className="font-medium text-indigo-600">
+                      {formatPrice(expert.hourly_rate_cents)}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {expert.specialization.slice(0, 3).map((spec) => (
+                      <span key={spec} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                        {spec}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-sm text-gray-500">{expert.pricing_model}</span>
+                    {isAuthenticated ? (
+                      <button className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" />
+                        Connect
+                      </button>
+                    ) : (
+                      <Link
+                        to="/signup"
+                        className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        Sign Up to Connect
+                      </Link>
+                    )}
                   </div>
                 </div>
-
-                <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {expert.location}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    {expert.rating}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {expert.expertise.map((exp) => (
-                    <span key={exp} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                      {exp}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-sm text-gray-500">{expert.deals} deals closed</span>
-                  {isAuthenticated ? (
-                    <button className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4" />
-                      Connect
-                    </button>
-                  ) : (
-                    <Link
-                      to="/signup"
-                      className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                      Sign Up to Connect
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
         )}
 
         {activeTab === 'investors' && (
           <div className="grid md:grid-cols-2 gap-6">
-            {investors.map((investor) => (
+            {sampleInvestors.map((investor) => (
               <div key={investor.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between">
                   <div>
@@ -319,7 +339,7 @@ export default function Network() {
 
         {activeTab === 'partners' && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {partners.map((partner) => (
+            {samplePartners.map((partner) => (
               <div key={partner.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="font-semibold text-gray-900">{partner.name}</h3>
@@ -364,7 +384,7 @@ export default function Network() {
 
         {activeTab === 'lenders' && (
           <div className="grid md:grid-cols-2 gap-6">
-            {lenders.map((lender) => (
+            {sampleLenders.map((lender) => (
               <div key={lender.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start justify-between">
                   <div>

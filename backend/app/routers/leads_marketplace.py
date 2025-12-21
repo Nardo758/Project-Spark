@@ -6,7 +6,7 @@ Public endpoints for browsing, purchasing, and managing saved searches for leads
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, cast, String
 from typing import Optional, List
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -155,7 +155,7 @@ def browse_leads(
 ):
     """Browse available leads in the marketplace."""
     q = db.query(Lead).filter(
-        Lead.status.in_([LeadStatus.NEW, LeadStatus.QUALIFIED])
+        cast(Lead.status, String).in_(["new", "qualified"])
     )
     
     if category:
@@ -200,7 +200,7 @@ def browse_leads(
         Lead.interest_category,
         func.count(Lead.id)
     ).filter(
-        Lead.status.in_([LeadStatus.NEW, LeadStatus.QUALIFIED])
+        cast(Lead.status, String).in_(["new", "qualified"])
     ).group_by(Lead.interest_category).all()
     
     categories = []
