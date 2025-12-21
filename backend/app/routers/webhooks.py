@@ -2,12 +2,17 @@ from fastapi import APIRouter, Request, Header, HTTPException, Depends
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+import httpx
+import logging
 
 from app.db.database import get_db
 from app.services.webhook_gateway import WebhookGateway, WebhookValidationError, RateLimitExceededError
 from app.services.geographic_extractor import GeographicExtractor
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+apify_router = APIRouter(prefix="/webhook", tags=["apify-webhook"])
 
 
 class WebhookPayload(BaseModel):
@@ -145,3 +150,83 @@ async def get_pending_sources(
             for s in sources
         ],
     }
+
+
+@apify_router.post("/apify")
+async def receive_apify_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Receive webhook from Apify when an actor run completes.
+    Apify sends run metadata with dataset URL - we fetch the data and process it.
+    """
+    import os
+    
+    try:
+        body = await request.json()
+        logger.info(f"Received Apify webhook: {body.get('eventType', 'unknown')}")
+        
+        resource = body.get("resource", {})
+        dataset_id = resource.get("defaultDatasetId")
+        actor_id = resource.get("actId", "")
+        run_id = resource.get("id", "")
+        
+        if not dataset_id:
+            logger.warning("No dataset ID in Apify webhook")
+            return {"status": "skipped", "reason": "no_dataset_id"}
+        
+        source_type = "twitter"
+        if "reddit" in actor_id.lower():
+            source_type = "reddit"
+        elif "yelp" in actor_id.lower():
+            source_type = "yelp"
+        elif "google" in actor_id.lower() or "maps" in actor_id.lower():
+            source_type = "google_maps"
+        
+        dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?format=json&clean=true&limit=1000"
+        
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.get(dataset_url)
+            response.raise_for_status()
+            items = response.json()
+        
+        logger.info(f"Fetched {len(items)} items from Apify dataset {dataset_id}")
+        
+        if not items:
+            return {"status": "success", "message": "No items in dataset", "count": 0}
+        
+        gateway = WebhookGateway(db)
+        stats = {"accepted": 0, "duplicates": 0, "errors": 0}
+        
+        for item in items:
+            try:
+                result = await gateway.process_webhook(
+                    source=source_type,
+                    payload=b"{}",
+                    data=item,
+                    signature=None,
+                    scrape_id=run_id,
+                    skip_hmac=True,
+                )
+                if result.get("status") == "accepted":
+                    stats["accepted"] += 1
+                elif result.get("status") == "duplicate":
+                    stats["duplicates"] += 1
+                else:
+                    stats["errors"] += 1
+            except Exception as e:
+                logger.error(f"Error processing item: {e}")
+                stats["errors"] += 1
+        
+        logger.info(f"Apify import complete: {stats}")
+        return {
+            "status": "success",
+            "dataset_id": dataset_id,
+            "source_type": source_type,
+            **stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Apify webhook error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

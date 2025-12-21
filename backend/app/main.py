@@ -79,6 +79,7 @@ app.include_router(leads_marketplace.router, prefix=f"{settings.API_V1_PREFIX}/m
 app.include_router(generated_reports.router, prefix=f"{settings.API_V1_PREFIX}/reports", tags=["Generated Reports"])
 app.include_router(consultant.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Consultant Studio"])
 app.include_router(webhooks.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Data Webhooks"])
+app.include_router(webhooks.apify_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Apify Webhook"])
 app.include_router(map_data.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Map Data"])
 
 
