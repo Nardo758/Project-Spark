@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, contact, leads, leads_marketplace, generated_reports
+from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, contact, brains, deepseek, marketplace, network_hub, developer_portal
 from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 import logging
@@ -57,6 +58,9 @@ app.include_router(profiles.router, prefix=f"{settings.API_V1_PREFIX}/profiles",
 app.include_router(experts.router, prefix=f"{settings.API_V1_PREFIX}/experts", tags=["Experts"])
 app.include_router(ai_engine.router, prefix=f"{settings.API_V1_PREFIX}/ai-engine", tags=["AI Engine"])
 app.include_router(payments.router, prefix=f"{settings.API_V1_PREFIX}/payments", tags=["Payments"])
+app.include_router(marketplace.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Marketplace"])
+app.include_router(network_hub.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Network Hub"])
+app.include_router(developer_portal.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Developer Portal"])
 app.include_router(stripe_webhook.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Stripe Webhooks"])
 app.include_router(agreements.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Agreements"])
 app.include_router(milestones.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Milestones"])
@@ -65,6 +69,8 @@ app.include_router(ai_chat.router, prefix=f"{settings.API_V1_PREFIX}/ai", tags=[
 app.include_router(ai_analysis.router, prefix=f"{settings.API_V1_PREFIX}/ai-analysis", tags=["AI Analysis"])
 app.include_router(idea_engine.router, prefix=f"{settings.API_V1_PREFIX}/idea-engine", tags=["Idea Engine"])
 app.include_router(idea_validations.router, prefix=f"{settings.API_V1_PREFIX}/idea-validations", tags=["Idea Validations"])
+app.include_router(brains.router, prefix=f"{settings.API_V1_PREFIX}/brains", tags=["Brains"])
+app.include_router(deepseek.router, prefix=f"{settings.API_V1_PREFIX}", tags=["DeepSeek"])
 app.include_router(webhook.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Webhooks"])
 app.include_router(scraper.router, prefix=f"{settings.API_V1_PREFIX}/scraper", tags=["Scraper"])
 app.include_router(replit_auth.router, prefix=f"{settings.API_V1_PREFIX}/replit-auth", tags=["Replit Auth"])

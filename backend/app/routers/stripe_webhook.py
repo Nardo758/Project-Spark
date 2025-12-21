@@ -15,6 +15,9 @@ from app.db.database import get_db
 from app.models.user import User
 from app.models.transaction import Transaction, TransactionType, TransactionStatus
 from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus, UnlockedOpportunity, UnlockMethod
+from app.models.lead_marketplace import Lead, LeadPurchase
+from app.models.network_hub import MessageThread, ThreadType
+from app.models.opportunity import Opportunity
 from app.models.stripe_event import (
     StripeWebhookEvent,
     StripeWebhookEventStatus,
@@ -207,7 +210,10 @@ def handle_payment_intent_succeeded(payment_intent: dict, db: Session):
             db.commit()
             logger.info(f"Created new transaction {tx.id} from webhook")
     
-    if payment_type == "pay_per_unlock":
+    # Phase 4/5 integration: lead purchases become Network Hub threads.
+    if payment_type == "lead_purchase" or metadata.get("purpose") == "lead_purchase" or metadata.get("lead_id"):
+        _fulfill_lead_purchase(payment_intent, metadata, db)
+    elif payment_type == "pay_per_unlock":
         _fulfill_pay_per_unlock(payment_intent, metadata, db)
     elif payment_type == "micro_payment":
         _fulfill_micro_payment(payment_intent, metadata, db)
@@ -456,6 +462,7 @@ def handle_checkout_expired(checkout_session: dict, db: Session):
 def _map_payment_type_to_transaction_type(payment_type: str) -> TransactionType | None:
     """Map metadata payment type to TransactionType enum."""
     mapping = {
+        "lead_purchase": TransactionType.MICRO_PAYMENT,
         "micro_payment": TransactionType.MICRO_PAYMENT,
         "project_payment": TransactionType.PROJECT_PAYMENT,
         "pay_per_unlock": TransactionType.PAY_PER_UNLOCK,
@@ -463,6 +470,95 @@ def _map_payment_type_to_transaction_type(payment_type: str) -> TransactionType 
         "revenue_share": TransactionType.REVENUE_SHARE,
     }
     return mapping.get(payment_type)
+
+
+def _fulfill_lead_purchase(payment_intent: dict, metadata: dict, db: Session):
+    """
+    Fulfill Leads Marketplace purchases:
+    - mark LeadPurchase as completed
+    - increment Lead.purchase_count
+    - create a Network Hub thread between buyer and seller (opportunity author)
+    """
+    lead_id_raw = metadata.get("lead_id")
+    user_id_raw = metadata.get("user_id")
+    payment_intent_id = payment_intent.get("id")
+    amount = int(payment_intent.get("amount") or 0)
+
+    if not lead_id_raw or not user_id_raw or not payment_intent_id:
+        logger.warning("Missing lead_id/user_id/payment_intent_id for lead_purchase fulfillment")
+        return
+
+    try:
+        lead_id = int(lead_id_raw)
+        buyer_id = int(user_id_raw)
+    except Exception:
+        logger.warning("Invalid lead_id/user_id for lead_purchase fulfillment")
+        return
+
+    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    if not lead:
+        logger.warning("Lead not found for lead_purchase fulfillment: %s", lead_id)
+        return
+
+    purchase = (
+        db.query(LeadPurchase)
+        .filter(LeadPurchase.lead_id == lead_id, LeadPurchase.buyer_id == buyer_id)
+        .first()
+    )
+    if purchase and purchase.payment_status == "completed":
+        # Already fulfilled; ensure thread exists (idempotent)
+        pass
+    else:
+        if not purchase:
+            purchase = LeadPurchase(
+                lead_id=lead_id,
+                buyer_id=buyer_id,
+                transaction_id=payment_intent_id,
+                payment_provider="stripe",
+                payment_status="completed",
+                amount_paid_cents=amount,
+            )
+            db.add(purchase)
+        else:
+            purchase.transaction_id = purchase.transaction_id or payment_intent_id
+            purchase.payment_provider = purchase.payment_provider or "stripe"
+            purchase.payment_status = "completed"
+            purchase.amount_paid_cents = purchase.amount_paid_cents or amount
+
+        # Keep lead counter in sync (best-effort, idempotency via purchase status check above)
+        lead.purchase_count = int(lead.purchase_count or 0) + 1
+
+    # Determine seller from underlying opportunity author.
+    seller_id: int | None = None
+    if lead.opportunity_id:
+        opp = db.query(Opportunity).filter(Opportunity.id == lead.opportunity_id).first()
+        if opp and opp.author_id:
+            seller_id = int(opp.author_id)
+
+    if seller_id and seller_id != buyer_id:
+        a, b = (buyer_id, seller_id) if buyer_id <= seller_id else (seller_id, buyer_id)
+        existing_thread = (
+            db.query(MessageThread)
+            .filter(
+                MessageThread.user_a_id == a,
+                MessageThread.user_b_id == b,
+                MessageThread.context_type == "lead",
+                MessageThread.context_id == str(lead_id),
+            )
+            .first()
+        )
+        if not existing_thread:
+            thread = MessageThread(
+                thread_type=ThreadType.LEAD.value,
+                user_a_id=a,
+                user_b_id=b,
+                context_type="lead",
+                context_id=str(lead_id),
+                last_message_at=datetime.utcnow(),
+            )
+            db.add(thread)
+
+    db.commit()
 
 
 def _map_price_to_tier(price_id: str) -> SubscriptionTier | None:

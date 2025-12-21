@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
 import { useAuthStore } from '../stores/authStore'
+import BrainLearningToast from './BrainLearningToast'
 
 export default function Layout() {
   const bootstrap = useAuthStore((s) => s.bootstrap)
@@ -18,6 +19,7 @@ export default function Layout() {
       <main>
         {isBootstrapped ? <Outlet /> : <div className="max-w-7xl mx-auto px-4 py-10">Loading…</div>}
       </main>
+      <BrainLearningToast />
     </div>
   )
 }
