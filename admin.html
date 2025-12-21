@@ -442,6 +442,32 @@
             color: var(--red-600);
         }
 
+        /* Lead statuses */
+        .badge-new {
+            background: var(--blue-100);
+            color: var(--blue-600);
+        }
+
+        .badge-qualified {
+            background: var(--green-100);
+            color: var(--green-600);
+        }
+
+        .badge-nurturing {
+            background: var(--violet-100);
+            color: var(--violet-700);
+        }
+
+        .badge-converted {
+            background: var(--green-100);
+            color: var(--green-600);
+        }
+
+        .badge-lost {
+            background: var(--red-100);
+            color: var(--red-600);
+        }
+
         .action-btns {
             display: flex;
             gap: 8px;
@@ -727,6 +753,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3.13a4 4 0 0 1 0 7.75"/>
                         </svg>
                         Partners
+                    </a>
+                </li>
+                <li>
+                    <a href="#leads" data-section="leads">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Leads
                     </a>
                 </li>
                 <li>
@@ -1044,6 +1078,69 @@
                 </div>
             </section>
 
+            <section id="section-leads" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Lead Management</h1>
+                    <p>Manage potential customers and lead nurturing campaigns</p>
+                </div>
+
+                <div class="stats-grid" id="leads-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Leads</div>
+                        <div class="stat-value" id="leads-total">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">New</div>
+                        <div class="stat-value" id="leads-new">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Qualified</div>
+                        <div class="stat-value" id="leads-qualified">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Conversion Rate</div>
+                        <div class="stat-value" id="leads-conversion">--%</div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Leads Pipeline</h2>
+                        <div class="section-actions">
+                            <input type="text" class="search-input" id="lead-search" placeholder="Search leads...">
+                            <select class="filter-select" id="lead-status-filter">
+                                <option value="">All statuses</option>
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="qualified">Qualified</option>
+                                <option value="nurturing">Nurturing</option>
+                                <option value="converted">Converted</option>
+                                <option value="lost">Lost</option>
+                            </select>
+                            <button class="btn-sm btn-success" onclick="bulkNurtureLeads()">Send Nurture Emails</button>
+                            <button class="btn-sm btn-primary" onclick="showLeadModal()">Add Lead</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Sequence</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-table-body">
+                            <tr><td colspan="8" class="loading">Loading leads...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section id="section-reports" class="hidden">
                 <div class="page-header">
                     <h1 class="spektral">Content Reports</h1>
@@ -1228,6 +1325,7 @@
                 case 'opportunities': loadOpportunities(); break;
                 case 'subscriptions': loadSubscriptions(); break;
                 case 'partners': loadPartners(); break;
+                case 'leads': loadLeads(); loadLeadStats(); break;
                 case 'reports': loadReports(); break;
                 case 'scraper': break;
             }
@@ -1881,6 +1979,241 @@
                 loadPartners();
             } catch (error) {
                 showToast('Failed to delete partner', 'error');
+            }
+        }
+
+        async function loadLeadStats() {
+            try {
+                const response = await fetchWithAuth('/api/v1/admin/leads/stats');
+                const stats = await response.json();
+                document.getElementById('leads-total').textContent = stats.total;
+                document.getElementById('leads-new').textContent = stats.new;
+                document.getElementById('leads-qualified').textContent = stats.qualified;
+                document.getElementById('leads-conversion').textContent = stats.conversion_rate + '%';
+            } catch (error) {
+                console.error('Failed to load lead stats:', error);
+            }
+        }
+
+        async function loadLeads() {
+            const search = document.getElementById('lead-search').value;
+            const statusFilter = document.getElementById('lead-status-filter').value;
+            const tbody = document.getElementById('leads-table-body');
+            
+            try {
+                let url = '/api/v1/admin/leads/?limit=50';
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (statusFilter) url += `&status_filter=${statusFilter}`;
+
+                const response = await fetchWithAuth(url);
+                const data = await response.json();
+                const leads = data.items || [];
+
+                if (leads.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No leads found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = leads.map(lead => `
+                    <tr>
+                        <td>${escapeHtml(lead.email)}</td>
+                        <td>${escapeHtml(lead.name || '-')}</td>
+                        <td>${escapeHtml(lead.company || '-')}</td>
+                        <td><span class="badge badge-${lead.status}">${lead.status}</span></td>
+                        <td>${lead.source}</td>
+                        <td>Step ${lead.email_sequence_step}/3</td>
+                        <td>${formatDate(lead.created_at)}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-sm btn-secondary" onclick="showLeadModal(${lead.id})">Edit</button>
+                                <button class="btn-sm btn-primary" onclick="sendNurtureEmail(${lead.id})" ${lead.email_sequence_step >= 3 || !lead.email_opt_in ? 'disabled' : ''}>Nurture</button>
+                                <button class="btn-sm btn-danger" onclick="deleteLead(${lead.id})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load leads:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load leads</td></tr>';
+            }
+        }
+
+        function showLeadModal(id = null, data = null) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            const email = data?.email || '';
+            const name = data?.name || '';
+            const company = data?.company || '';
+            const phone = data?.phone || '';
+            const source = data?.source || 'organic';
+            const status = data?.status || 'new';
+            const interest = data?.interest_category || '';
+            const notes = data?.notes || '';
+            const emailOptIn = data?.email_opt_in !== false;
+
+            modal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>${id ? 'Edit Lead' : 'Add Lead'}</h3>
+                        <button class="modal-close" onclick="closeModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="lead-email">Email *</label>
+                            <input id="lead-email" value="${escapeAttr(email)}" type="email" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-name">Name</label>
+                            <input id="lead-name" value="${escapeAttr(name)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-company">Company</label>
+                            <input id="lead-company" value="${escapeAttr(company)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-phone">Phone</label>
+                            <input id="lead-phone" value="${escapeAttr(phone)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-source">Source</label>
+                            <select id="lead-source">
+                                <option value="organic" ${source === 'organic' ? 'selected' : ''}>Organic</option>
+                                <option value="referral" ${source === 'referral' ? 'selected' : ''}>Referral</option>
+                                <option value="paid_ads" ${source === 'paid_ads' ? 'selected' : ''}>Paid Ads</option>
+                                <option value="social" ${source === 'social' ? 'selected' : ''}>Social</option>
+                                <option value="partner" ${source === 'partner' ? 'selected' : ''}>Partner</option>
+                                <option value="direct" ${source === 'direct' ? 'selected' : ''}>Direct</option>
+                                <option value="other" ${source === 'other' ? 'selected' : ''}>Other</option>
+                            </select>
+                        </div>
+                        ${id ? `
+                        <div class="form-group">
+                            <label for="lead-status">Status</label>
+                            <select id="lead-status">
+                                <option value="new" ${status === 'new' ? 'selected' : ''}>New</option>
+                                <option value="contacted" ${status === 'contacted' ? 'selected' : ''}>Contacted</option>
+                                <option value="qualified" ${status === 'qualified' ? 'selected' : ''}>Qualified</option>
+                                <option value="nurturing" ${status === 'nurturing' ? 'selected' : ''}>Nurturing</option>
+                                <option value="converted" ${status === 'converted' ? 'selected' : ''}>Converted</option>
+                                <option value="lost" ${status === 'lost' ? 'selected' : ''}>Lost</option>
+                            </select>
+                        </div>
+                        ` : ''}
+                        <div class="form-group">
+                            <label for="lead-interest">Interest Category</label>
+                            <input id="lead-interest" value="${escapeAttr(interest)}" placeholder="e.g., SaaS, FinTech, HealthTech" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-notes">Notes</label>
+                            <textarea id="lead-notes" rows="3" placeholder="Additional notes...">${escapeHtml(notes)}</textarea>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="lead-email-opt-in" ${emailOptIn ? 'checked' : ''} />
+                            <label for="lead-email-opt-in" style="margin: 0;">Email opt-in (receives nurture emails)</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-sm btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button class="btn-sm btn-primary" onclick="saveLead(${id || 'null'})">${id ? 'Save changes' : 'Add lead'}</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').appendChild(modal);
+
+            if (id && !data) {
+                fetchWithAuth(`/api/v1/admin/leads/${id}`).then(r => r.json()).then(leadData => {
+                    document.getElementById('lead-email').value = leadData.email || '';
+                    document.getElementById('lead-name').value = leadData.name || '';
+                    document.getElementById('lead-company').value = leadData.company || '';
+                    document.getElementById('lead-phone').value = leadData.phone || '';
+                    document.getElementById('lead-source').value = leadData.source || 'organic';
+                    document.getElementById('lead-status').value = leadData.status || 'new';
+                    document.getElementById('lead-interest').value = leadData.interest_category || '';
+                    document.getElementById('lead-notes').value = leadData.notes || '';
+                    document.getElementById('lead-email-opt-in').checked = leadData.email_opt_in !== false;
+                });
+            }
+        }
+
+        async function saveLead(id) {
+            const payload = {
+                email: document.getElementById('lead-email').value.trim(),
+                name: document.getElementById('lead-name').value.trim() || null,
+                company: document.getElementById('lead-company').value.trim() || null,
+                phone: document.getElementById('lead-phone').value.trim() || null,
+                source: document.getElementById('lead-source').value,
+                interest_category: document.getElementById('lead-interest').value.trim() || null,
+                notes: document.getElementById('lead-notes').value.trim() || null,
+                email_opt_in: document.getElementById('lead-email-opt-in').checked,
+            };
+
+            if (id) {
+                payload.status = document.getElementById('lead-status').value;
+            }
+
+            if (!payload.email) {
+                showToast('Email is required', 'error');
+                return;
+            }
+
+            try {
+                if (id) {
+                    await fetchWithAuth(`/api/v1/admin/leads/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('Lead updated', 'success');
+                } else {
+                    await fetchWithAuth('/api/v1/admin/leads/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('Lead added', 'success');
+                }
+                closeModal();
+                loadLeads();
+                loadLeadStats();
+            } catch (error) {
+                showToast('Failed to save lead', 'error');
+            }
+        }
+
+        async function deleteLead(id) {
+            if (!confirm('Delete this lead?')) return;
+            try {
+                await fetchWithAuth(`/api/v1/admin/leads/${id}`, { method: 'DELETE' });
+                showToast('Lead deleted', 'success');
+                loadLeads();
+                loadLeadStats();
+            } catch (error) {
+                showToast('Failed to delete lead', 'error');
+            }
+        }
+
+        async function sendNurtureEmail(id) {
+            try {
+                const response = await fetchWithAuth(`/api/v1/admin/leads/${id}/send-nurture-email`, { method: 'POST' });
+                const result = await response.json();
+                showToast(result.message || 'Nurture email sent', 'success');
+                loadLeads();
+            } catch (error) {
+                showToast('Failed to send nurture email', 'error');
+            }
+        }
+
+        async function bulkNurtureLeads() {
+            if (!confirm('Send nurture emails to all eligible leads (status=nurturing, opted in, not at step 3)?')) return;
+            try {
+                const response = await fetchWithAuth('/api/v1/admin/leads/bulk-nurture', { method: 'POST' });
+                const result = await response.json();
+                showToast(`${result.sent_count} nurture emails sent`, 'success');
+                loadLeads();
+                loadLeadStats();
+            } catch (error) {
+                showToast('Failed to send bulk nurture emails', 'error');
             }
         }
 

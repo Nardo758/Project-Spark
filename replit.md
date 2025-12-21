@@ -35,7 +35,43 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 *   **Payments & Transactions:** Integrates Stripe for payment processing, subscription management, and pay-per-unlock features. It includes a `SuccessFeeAgreement` infrastructure with milestone tracking and payout splitting for expert services.
 *   **Opportunity Analysis:** AI generates opportunity scores, market size estimates, competition levels, and business model suggestions, which are displayed on opportunity cards and detailed pages. Content gating is enforced server-side based on user subscription tiers or unlock status.
 
-## Recent Changes (December 20, 2024)
+## Recent Changes (December 21, 2024)
+
+**Home Page Hero Section Improvements:**
+- Redesigned CTA buttons row with three clickable buttons: "Validate Your Idea", "Identify a Location", "Watch Demo"
+- Fixed button click blocking issue by adding `pointer-events-none` to gradient overlay and `relative z-10` to content container
+- Buttons now link to Consultant Studio (`/build/reports`) and About page (`/about`)
+- Shrunk buttons and stats by ~10% for more compact layout
+- Stats row (Validated Ideas, Market Opportunity, Global Markets) moved closer to buttons
+- Featured opportunity card with clickable link to opportunity detail page
+- "176+ Validated Opportunities" badge links to Discover page
+- Responsive button layout: wraps on mobile, single row on desktop
+
+**Branding & Navigation Updates:**
+- Added slogan "The Opportunity Intelligence Platform" below all OppGrid logos (Navbar and Footer)
+- Slogan uses compact 9px font size for clean appearance
+- Centered navigation tabs in Navbar (Discover, Consultant Studio, Leads, Join Network, API, Pricing)
+- Navbar layout: Logo (left) | Centered Nav Tabs | Sign In/Get Started (right)
+- Consistent branding across all pages via shared Navbar component
+
+**Report Tracking System:**
+- New `generated_reports` database table to track Consultant Report Studio usage
+- Report types: Feasibility Study, Market Analysis, Strategic Assessment, Progress Report
+- Report statuses: pending, generating, completed, failed
+- Tracks: user_id, opportunity_id, report_type, confidence_score, generation_time_ms, tokens_used
+- API endpoints: POST /api/v1/reports/ (create), GET /api/v1/reports/ (list), GET /api/v1/reports/my-stats (user stats), GET /api/v1/reports/stats (admin stats)
+- Frontend Report Studio now records report generation with real-time stats display
+- User's recent reports shown in sidebar with confidence scores and timestamps
+
+## Previous Changes (December 20, 2024)
+
+**DeepSeek Roadmap Implementation (Phases 4-6):**
+- Updated navigation: Discover | Consultant Studio | Leads | Join Network | API | Pricing
+- AI Orchestrator service (`backend/app/services/ai_orchestrator.py`) routes tasks between DeepSeek (platform/validation) and Claude (creative/research)
+- Content Rewriter service (`backend/app/services/content_rewriter.py`) with 5-stage pipeline for transforming raw scraped content
+- Leads Marketplace page (`/leads`) with search, filters, quality scores, pricing cards, and lead categories
+- Network Hub page (`/network`) with 4 tabs: Experts, Investors, Partners, Lenders - all populated with sample data
+- API Platform developer portal (`/developers` with `/api` alias) with endpoint documentation, pricing tiers, and code examples
 
 **Navigation Bar Restructuring (Brain AI Architecture):**
 - New navigation structure: [Logo] Discover | Build | Manage | [Project Switcher] | [User]
@@ -66,6 +102,22 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 - Real-Time Validation Metrics grid
 - AI-generated Executive Summary with confidence score
 - Quick Actions sidebar: Business Plan Generator, Financial Models, Pitch Deck Assistant
+
+**Admin Lead Management System:**
+- New Lead model with status pipeline: new → contacted → qualified → nurturing → converted/lost
+- Lead sources tracking: organic, referral, paid_ads, social, partner, direct, other
+- Admin leads router with full CRUD endpoints at `/api/v1/admin/leads/`
+- Lead stats dashboard showing total, new, qualified, and conversion rate
+- Lead management UI in admin.html with search, filtering, and status badges
+- Email opt-in tracking per lead with sequence step tracking
+
+**Email Notification & Automation (Resend Integration):**
+- Email service using Resend API via Replit connector
+- Welcome emails sent automatically when new leads are created
+- 3-step nurture email sequence for lead engagement
+- Status update emails when lead status changes
+- Manual and bulk nurture email triggers from admin panel
+- Email template system with professional HTML formatting
 
 **Previous Payment & Access Control Enhancements:**
 - Deep Dive add-on ($49): Schema updated with can_buy_deep_dive and deep_dive_price fields

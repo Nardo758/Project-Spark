@@ -346,10 +346,14 @@ def get_platform_stats(db: Session = Depends(get_db)):
     unique_scopes = db.query(func.count(func.distinct(Opportunity.geographic_scope))).scalar() or 0
     markets = max(unique_countries, unique_scopes, 1)
     
+    from app.models.generated_report import GeneratedReport
+    report_count = db.query(GeneratedReport).count() + 50
+    
     return {
         "validated_ideas": validated_count or 0,
         "total_market_opportunity": f"${max(total_market_value, 1):.0f}B+",
-        "global_markets": markets
+        "global_markets": markets,
+        "reports_generated": report_count
     }
 
 

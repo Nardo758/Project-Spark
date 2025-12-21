@@ -20,6 +20,10 @@ from .partner import PartnerOutreach, PartnerOutreachStatus
 from .tracking import TrackingEvent
 from .audit_log import AuditLog
 from .job_run import JobRun
+from .lead import Lead, LeadStatus, LeadSource
+from .saved_search import SavedSearch
+from .lead_purchase import LeadPurchase
+from .generated_report import GeneratedReport, ReportType, ReportStatus
 from .brain import Brain
 from .lead_marketplace import Lead, LeadPurchase, SavedSearch, LeadView
 from .network_hub import ConnectionRequest, MessageThread, Message
@@ -61,6 +65,14 @@ __all__ = [
     "TrackingEvent",
     "AuditLog",
     "JobRun",
+    "Lead",
+    "LeadStatus",
+    "LeadSource",
+    "SavedSearch",
+    "LeadPurchase",
+    "GeneratedReport",
+    "ReportType",
+    "ReportStatus",
     "Brain",
     "Lead",
     "LeadPurchase",
