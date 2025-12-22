@@ -111,7 +111,7 @@ const sampleLenders = [
 ]
 
 export default function Network() {
-  const { isAuthenticated, token } = useAuthStore()
+  const { isAuthenticated } = useAuthStore()
   const [activeTab, setActiveTab] = useState('experts')
   const [searchQuery, setSearchQuery] = useState('')
   const [experts, setExperts] = useState<Expert[]>([])
