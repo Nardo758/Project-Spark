@@ -130,6 +130,22 @@ async def process_pending_sources(
     return result
 
 
+@router.post("/opportunities/process")
+async def process_opportunities(
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    """
+    Process pending scraped sources into opportunities using Claude AI.
+    This analyzes raw data, identifies valid opportunities, and rewrites content professionally.
+    """
+    from app.services.opportunity_processor import get_opportunity_processor
+    
+    processor = get_opportunity_processor(db)
+    result = await processor.process_pending_sources(limit=limit)
+    return result
+
+
 @router.get("/sources/pending")
 async def get_pending_sources(
     limit: int = 100,
@@ -280,6 +296,11 @@ async def receive_apify_webhook(
                 stats["errors"] += 1
         
         logger.info(f"Apify import complete: {stats}")
+        
+        if stats["accepted"] > 0:
+            stats["auto_processing"] = "queued"
+            stats["message"] = f"Processing {min(stats['accepted'], 20)} items in background"
+        
         return {
             "status": "success",
             "dataset_id": dataset_id,
