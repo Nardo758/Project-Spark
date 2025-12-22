@@ -1,7 +1,38 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Component, ReactNode } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class MapErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="w-full h-[500px] bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="text-center p-6">
+            <div className="text-4xl mb-4">🗺️</div>
+            <p className="text-gray-600 mb-2">Map temporarily unavailable</p>
+            <p className="text-sm text-gray-500">The results are displayed below</p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -197,81 +228,83 @@ export default function ConsultantMap({ mapData, city, isLoading, onBoundsChange
         </div>
       </div>
       
-      <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-        <MapContainer
-          center={center}
-          zoom={zoom}
-          style={{ height: '500px', width: '100%' }}
-          scrollWheelZoom={true}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          <MapController center={center} zoom={zoom} />
-          
-          {layerState.pins && mapData?.layers?.pins?.data?.map((pin) => (
-            <Marker 
-              key={`pin-${pin.id}`} 
-              position={[pin.lat, pin.lng]}
-              icon={pin.source === 'yelp' ? redIcon : businessIcon}
-            >
-              <Popup>
-                <div className="min-w-[200px]">
-                  <h3 className="font-semibold text-gray-900">{pin.name}</h3>
-                  {pin.rating && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-yellow-500">★</span>
-                      <span>{pin.rating}</span>
-                      {pin.reviews && <span className="text-gray-500">({pin.reviews} reviews)</span>}
-                    </div>
-                  )}
-                  <div className="mt-2 text-xs text-gray-500 capitalize">
-                    Source: {pin.source?.replace('_', ' ')}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-          
-          {layerState.heatmap && mapData?.layers?.heatmap?.data && (
-            <HeatmapLayer points={mapData.layers.heatmap.data} />
-          )}
-          
-          {layerState.polygons && mapData?.layers?.polygons?.data?.map((geojson, idx) => {
-            if (geojson?.geometry?.type === 'Polygon') {
-              const positions = geojson.geometry.coordinates[0].map(
-                (coord: number[]) => [coord[1], coord[0]] as [number, number]
-              );
-              return (
-                <Polygon
-                  key={`poly-${idx}`}
-                  positions={positions}
-                  pathOptions={{
-                    fillColor: '#9C27B0',
-                    fillOpacity: 0.2,
-                    color: '#7B1FA2',
-                    weight: 2,
-                  }}
-                >
-                  {geojson.properties && (
-                    <Popup>
-                      <div>
-                        <h3 className="font-semibold">{geojson.properties.neighborhood || 'Neighborhood'}</h3>
-                        {geojson.properties.post_density && (
-                          <p className="text-sm">Activity: {geojson.properties.post_density} posts</p>
-                        )}
+      <MapErrorBoundary>
+        <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+          <MapContainer
+            center={center}
+            zoom={zoom}
+            style={{ height: '500px', width: '100%' }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            
+            <MapController center={center} zoom={zoom} />
+            
+            {layerState.pins && mapData?.layers?.pins?.data?.map((pin) => (
+              <Marker 
+                key={`pin-${pin.id}`} 
+                position={[pin.lat, pin.lng]}
+                icon={pin.source === 'yelp' ? redIcon : businessIcon}
+              >
+                <Popup>
+                  <div className="min-w-[200px]">
+                    <h3 className="font-semibold text-gray-900">{pin.name}</h3>
+                    {pin.rating && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-yellow-500">★</span>
+                        <span>{pin.rating}</span>
+                        {pin.reviews && <span className="text-gray-500">({pin.reviews} reviews)</span>}
                       </div>
-                    </Popup>
-                  )}
-                </Polygon>
-              );
-            }
-            return null;
-          })}
-        </MapContainer>
-      </div>
+                    )}
+                    <div className="mt-2 text-xs text-gray-500 capitalize">
+                      Source: {pin.source?.replace('_', ' ')}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+            
+            {layerState.heatmap && mapData?.layers?.heatmap?.data && (
+              <HeatmapLayer points={mapData.layers.heatmap.data} />
+            )}
+            
+            {layerState.polygons && mapData?.layers?.polygons?.data?.map((geojson, idx) => {
+              if (geojson?.geometry?.type === 'Polygon') {
+                const positions = geojson.geometry.coordinates[0].map(
+                  (coord: number[]) => [coord[1], coord[0]] as [number, number]
+                );
+                return (
+                  <Polygon
+                    key={`poly-${idx}`}
+                    positions={positions}
+                    pathOptions={{
+                      fillColor: '#9C27B0',
+                      fillOpacity: 0.2,
+                      color: '#7B1FA2',
+                      weight: 2,
+                    }}
+                  >
+                    {geojson.properties && (
+                      <Popup>
+                        <div>
+                          <h3 className="font-semibold">{geojson.properties.neighborhood || 'Neighborhood'}</h3>
+                          {geojson.properties.post_density && (
+                            <p className="text-sm">Activity: {geojson.properties.post_density} posts</p>
+                          )}
+                        </div>
+                      </Popup>
+                    )}
+                  </Polygon>
+                );
+              }
+              return null;
+            })}
+          </MapContainer>
+        </div>
+      </MapErrorBoundary>
       
       {!mapData?.totalFeatures && !isLoading && (
         <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
