@@ -349,9 +349,15 @@ def get_platform_stats(db: Session = Depends(get_db)):
     from app.models.generated_report import GeneratedReport
     report_count = db.query(GeneratedReport).count() + 50
     
+    market_value = max(total_market_value, 1)
+    if market_value >= 1000:
+        market_display = f"${market_value / 1000:.1f}T+"
+    else:
+        market_display = f"${market_value:.0f}B+"
+    
     return {
         "validated_ideas": validated_count or 0,
-        "total_market_opportunity": f"${max(total_market_value, 1):.0f}B+",
+        "total_market_opportunity": market_display,
         "global_markets": markets,
         "reports_generated": report_count
     }
