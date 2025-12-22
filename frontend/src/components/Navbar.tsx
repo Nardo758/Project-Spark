@@ -163,7 +163,7 @@ export default function Navbar() {
     }
 
     if (paidMember) {
-      return [
+      const links: NavLink[] = [
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Discover', path: '/discover' },
         { name: 'Services', path: '/services' },
@@ -174,9 +174,11 @@ export default function Navbar() {
         { name: 'Analytics', path: '/analytics' },
         { name: 'API', path: '/developers' },
       ]
+      if (user?.is_admin) links.push({ name: 'Admin', path: '/admin/data-sources' })
+      return links
     }
 
-    return [
+    const links: NavLink[] = [
       { name: 'Dashboard', path: '/dashboard' },
       { name: 'Discover', path: '/discover' },
       { name: 'Services', path: '/services' },
@@ -186,7 +188,9 @@ export default function Navbar() {
       { name: 'Learn', path: '/learn' },
       { name: 'Account', path: '/account' },
     ]
-  }, [isAuthenticated, paidMember])
+    if (user?.is_admin) links.push({ name: 'Admin', path: '/admin/data-sources' })
+    return links
+  }, [isAuthenticated, paidMember, user?.is_admin])
 
   const navItems: NavItem[] = useMemo(() => {
     return isAuthenticated ? authNavItems : guestNavItems
@@ -407,6 +411,15 @@ export default function Navbar() {
                       <Link to="/brain" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setUserMenuOpen(false)}>
                         Brain
                       </Link>
+                      {user?.is_admin ? (
+                        <Link
+                          to="/admin/data-sources"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          Admin
+                        </Link>
+                      ) : null}
                       <div className="my-1 border-t border-gray-100" />
                       <button
                         type="button"
