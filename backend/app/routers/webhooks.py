@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Header, HTTPException, Depends
+from fastapi import APIRouter, Request, Header, HTTPException, Depends, BackgroundTasks
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -220,9 +220,46 @@ async def get_calendar_data(
     }
 
 
+async def _background_process_opportunities(limit: int = 50):
+    """Background task to process newly imported scraped sources."""
+    import asyncio
+    import traceback
+    from app.db.database import SessionLocal
+    from app.services.opportunity_processor import OpportunityProcessor
+    
+    await asyncio.sleep(2)
+    
+    db = None
+    try:
+        db = SessionLocal()
+        processor = OpportunityProcessor(db)
+        
+        total_processed = 0
+        total_created = 0
+        
+        while total_processed < limit:
+            batch_limit = min(20, limit - total_processed)
+            result = await processor.process_pending_sources(limit=batch_limit)
+            
+            if result.get("processed", 0) == 0:
+                break
+                
+            total_processed += result.get("processed", 0)
+            total_created += result.get("opportunities_created", 0)
+            logger.info(f"Background processing: {total_processed} processed, {total_created} created")
+        
+        logger.info(f"Background processing complete: {total_processed} total processed, {total_created} opportunities created")
+    except Exception as e:
+        logger.error(f"Background processing error: {e}\n{traceback.format_exc()}")
+    finally:
+        if db:
+            db.close()
+
+
 @apify_router.post("/apify")
 async def receive_apify_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """
@@ -298,8 +335,9 @@ async def receive_apify_webhook(
         logger.info(f"Apify import complete: {stats}")
         
         if stats["accepted"] > 0:
-            stats["auto_processing"] = "queued"
-            stats["message"] = f"Processing {min(stats['accepted'], 20)} items in background"
+            background_tasks.add_task(_background_process_opportunities, limit=min(stats["accepted"], 100))
+            stats["auto_processing"] = "started"
+            stats["message"] = f"Processing up to {min(stats['accepted'], 100)} items in background"
         
         return {
             "status": "success",
