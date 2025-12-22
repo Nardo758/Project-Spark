@@ -37,6 +37,45 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 21, 2024)
 
+**Interactive Mapping System & Webhook Data Ingestion Pipeline:**
+- Implemented comprehensive webhook-driven data ingestion for 6 external sources:
+  - Google Maps, Yelp (business pins)
+  - Reddit, Twitter (problem heatmap)
+  - Nextdoor (neighborhood polygons)
+  - Custom sources
+- New database tables: scraped_sources, geographic_features, map_layers, user_map_sessions
+- **Webhook Gateway** with HMAC-SHA256 authentication and 4-stage validation pipeline:
+  - Signature verification, schema validation, deduplication, rate limiting
+- **Geographic Extractor** service converts location data to standardized GeoJSON format
+- **Map Data Engine** manages map layers and serves structured mapData to frontend
+- Interactive **ConsultantMap** component with Leaflet.js featuring:
+  - Business Pins layer (Google Maps/Yelp data)
+  - Problem Heatmap layer (Reddit/Twitter social signals)
+  - Neighborhood Polygons layer (Nextdoor boundaries)
+  - Layer toggle controls with feature counts
+- API endpoints: /api/v1/webhooks/{source}, /api/v1/map/layers, /api/v1/map/data/city/{city}
+- Map integrated into Consultant Studio "Identify Location" path
+- 30-day spatial caching for location analysis results
+
+**Enhanced Consultant Studio System (Three-Path Architecture):**
+- Implemented comprehensive three-path validation system based on DeepSeek architecture
+- **Path 1 - Validate Idea:** Online vs Physical decision engine with dual-AI analysis
+  - DeepSeek pattern analysis for similar opportunities
+  - Claude viability reports with SWOT analysis
+  - Online/Physical/Hybrid recommendation with confidence scores
+- **Path 2 - Search Ideas:** Database exploration with trend detection
+  - DeepSeek-powered trend detection from opportunity patterns
+  - Claude synthesis for actionable insights
+  - Real-time trend strength indicators
+- **Path 3 - Identify Location:** Geographic intelligence for site selection
+  - 4 business subtypes: Specific Business, Retail, Multifamily, Hospitality
+  - 30-day location analysis caching
+  - Site recommendations with priority levels
+- New database tables: consultant_activity, detected_trends, trend_opportunity_mapping, location_analysis_cache
+- New API endpoints: /api/v1/consultant/validate-idea, /api/v1/consultant/search-ideas, /api/v1/consultant/identify-location
+- Frontend enhanced with tabbed interface for three paths
+- ConsultantStudioService coordinates DeepSeek and Claude AI pipelines
+
 **Home Page Hero Section Improvements:**
 - Redesigned CTA buttons row with three clickable buttons: "Validate Your Idea", "Identify a Location", "Watch Demo"
 - Fixed button click blocking issue by adding `pointer-events-none` to gradient overlay and `relative z-10` to content container

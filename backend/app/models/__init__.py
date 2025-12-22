@@ -24,10 +24,15 @@ from .lead import Lead, LeadStatus, LeadSource
 from .saved_search import SavedSearch
 from .lead_purchase import LeadPurchase
 from .generated_report import GeneratedReport, ReportType, ReportStatus
-from .brain import Brain
-from .lead_marketplace import Lead, LeadPurchase, SavedSearch, LeadView
-from .network_hub import ConnectionRequest, MessageThread, Message
-from .api_key import APIKey
+from .consultant_activity import ConsultantActivity, ConsultantPath
+from .detected_trend import DetectedTrend
+from .trend_opportunity_mapping import TrendOpportunityMapping
+from .location_analysis_cache import LocationAnalysisCache, BusinessType
+from .scraped_source import ScrapedSource, SourceType
+from .geographic_feature import GeographicFeature, FeatureType
+from .map_layer import MapLayer, LayerType
+from .user_map_session import UserMapSession
+from .rate_limit import RateLimitCounter
 
 __all__ = [
     "User",
@@ -73,13 +78,18 @@ __all__ = [
     "GeneratedReport",
     "ReportType",
     "ReportStatus",
-    "Brain",
-    "Lead",
-    "LeadPurchase",
-    "SavedSearch",
-    "LeadView",
-    "ConnectionRequest",
-    "MessageThread",
-    "Message",
-    "APIKey",
+    "ConsultantActivity",
+    "ConsultantPath",
+    "DetectedTrend",
+    "TrendOpportunityMapping",
+    "LocationAnalysisCache",
+    "BusinessType",
+    "ScrapedSource",
+    "SourceType",
+    "GeographicFeature",
+    "FeatureType",
+    "MapLayer",
+    "LayerType",
+    "UserMapSession",
+    "RateLimitCounter",
 ]

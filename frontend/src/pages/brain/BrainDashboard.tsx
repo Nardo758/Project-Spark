@@ -1,12 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   Brain, Upload, MessageCircle, Settings, Zap, FileText, 
   TrendingUp, Clock, Star, ChevronRight, Plus
 } from 'lucide-react'
-import { useBrainStore } from '../../stores/brainStore'
-import { useAuthStore } from '../../stores/authStore'
-import { upsertBrain } from '../../services/brainApi'
 
 const knowledgeSources = [
   { name: 'Business_plan.pdf', size: '2.1MB', date: 'Feb 10', type: 'pdf' },
@@ -20,28 +17,7 @@ const recentChats = [
 ]
 
 export default function BrainDashboard() {
-  const brainName = useBrainStore((s) => s.brainName)
-  const focusTags = useBrainStore((s) => s.focusTags)
-  const matchScore = useBrainStore((s) => s.matchScore)
-  const knowledgeItems = useBrainStore((s) => s.knowledgeItems)
-  const tokensUsed = useBrainStore((s) => s.tokensUsed)
-  const estimatedCostUsd = useBrainStore((s) => s.estimatedCostUsd)
-  const lastTrainedAt = useBrainStore((s) => s.lastTrainedAt)
-  const hydrateFromServer = useBrainStore((s) => s.hydrateFromServer)
-  const noteLearning = useBrainStore((s) => s.noteLearning)
-  const { token } = useAuthStore()
-
-  const [creating, setCreating] = useState(false)
-  const [draftName, setDraftName] = useState('EcoPack Ventures')
-  const [draftFocus, setDraftFocus] = useState('Sustainability Tech')
-
-  const lastTrainedLabel = useMemo(() => {
-    if (!lastTrainedAt) return 'Not trained yet'
-    const mins = Math.max(1, Math.floor((Date.now() - lastTrainedAt) / 60000))
-    if (mins < 60) return `${mins} min ago`
-    const hrs = Math.floor(mins / 60)
-    return `${hrs}h ago`
-  }, [lastTrainedAt])
+  const [knowledgeScore] = useState(78)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -51,35 +27,17 @@ export default function BrainDashboard() {
             <Brain className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{brainName ? `🧠 ${brainName}` : 'DeepSeek Brain'}</h1>
-            <p className="text-gray-600">
-              {brainName
-                ? `DeepSeek Match: ${matchScore}% • Knowledge: ${knowledgeItems} items • ${tokensUsed.toLocaleString()} tokens • ~${estimatedCostUsd.toFixed(2)}`
-                : 'Create your DeepSeek Brain to start learning from your actions and uploads.'}
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">My AI Co-founder</h1>
+            <p className="text-gray-600">Basic Plan • Storage: 2.4/10GB</p>
           </div>
         </div>
         <div className="mt-4 md:mt-0 flex gap-3">
           <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium text-gray-700">
             <Settings className="w-5 h-5" />
           </button>
-          {brainName ? (
-            <button
-              type="button"
-              onClick={() => noteLearning('Quick training is server-driven (coming next).', 0)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
-            >
-              Quick Train
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
-            >
-              Create DeepSeek Brain
-            </button>
-          )}
+          <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+            Upgrade Brain
+          </button>
         </div>
       </div>
 
@@ -90,44 +48,27 @@ export default function BrainDashboard() {
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Match Score</span>
-                  <span className="font-semibold text-purple-700">{matchScore}%</span>
+                  <span className="text-gray-600">Knowledge Score</span>
+                  <span className="font-semibold text-purple-700">{knowledgeScore}%</span>
                 </div>
                 <div className="h-3 bg-purple-100 rounded-full w-64">
                   <div 
                     className="h-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"
-                    style={{ width: `${matchScore}%` }}
+                    style={{ width: `${knowledgeScore}%` }}
                   ></div>
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mt-2">Last trained: {lastTrainedLabel}</p>
+            <p className="text-sm text-gray-500 mt-2">Last trained: 2 hours ago</p>
           </div>
           <div className="mt-4 md:mt-0">
-            <button
-              type="button"
-              onClick={() => noteLearning('Daily training is server-driven (coming next).', 0)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center gap-2"
-            >
+            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center gap-2">
               <Zap className="w-5 h-5" />
               Daily Training Ready
             </button>
           </div>
         </div>
       </div>
-
-      {brainName && (
-        <div className="mb-8 bg-white border border-gray-200 rounded-2xl p-5">
-          <div className="text-sm text-gray-600">Focus</div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(focusTags.length ? focusTags : ['SaaS', 'Healthcare']).map((t) => (
-              <span key={t} className="px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm font-medium">
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Link
@@ -260,72 +201,6 @@ export default function BrainDashboard() {
           </Link>
         </div>
       </div>
-
-      {creating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-xl">
-            <div className="p-5 border-b border-gray-200 flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-500">Create your Brain</div>
-                <div className="text-lg font-semibold text-gray-900">Brain Profile Setup</div>
-              </div>
-              <button onClick={() => setCreating(false)} className="px-3 py-2 text-gray-600 hover:text-gray-900">
-                ✕
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Brain name</label>
-                <input
-                  value={draftName}
-                  onChange={(e) => setDraftName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="EcoPack Ventures"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Primary focus</label>
-                <input
-                  value={draftFocus}
-                  onChange={(e) => setDraftFocus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Sustainability Tech"
-                />
-                <div className="mt-2 text-xs text-gray-500">Tip: DeepSeek supports large context; the more you teach your brain now, the smarter it becomes faster.</div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCreating(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const name = draftName.trim() || 'My Brain'
-                    const focus = draftFocus.trim()
-                    if (!token) return
-                    upsertBrain(String(token), { name, focus_tags: focus ? [focus] : [] })
-                      .then((b) => {
-                        hydrateFromServer(b)
-                        noteLearning('DeepSeek Brain created.', 0)
-                        setCreating(false)
-                      })
-                      .catch((e) => {
-                        noteLearning(e instanceof Error ? e.message : 'Failed to create brain', 0)
-                      })
-                  }}
-                  className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-medium"
-                >
-                  Create Brain
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

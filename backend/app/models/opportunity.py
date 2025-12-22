@@ -26,6 +26,8 @@ class Opportunity(Base):
     country = Column(String(100), nullable=True)  # Country name or code
     region = Column(String(100), nullable=True)  # State/Province/Region
     city = Column(String(100), nullable=True)  # City name
+    latitude = Column(Float, nullable=True)  # GPS latitude
+    longitude = Column(Float, nullable=True)  # GPS longitude
 
     # Completion Tracking
     completion_status = Column(String(50), default="open")  # open, in_progress, solved, abandoned
