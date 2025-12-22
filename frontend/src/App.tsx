@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import Layout from './components/Layout'
 import RequireAuth from './components/RequireAuth'
+import RequireAdmin from './components/RequireAdmin'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Discover from './pages/Discover'
@@ -30,6 +31,7 @@ import Saved from './pages/Saved'
 import OpportunityDetail from './pages/OpportunityDetail'
 import ReportStudio from './pages/build/ReportStudio'
 import ApiPortal from './pages/ApiPortal'
+import AdminDataSources from './pages/admin/DataSources'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -92,6 +94,14 @@ function App() {
         <Route path="build/business-plan" element={<ReportStudio />} />
         <Route path="build/financials" element={<ReportStudio />} />
         <Route path="build/pitch-deck" element={<ReportStudio />} />
+        <Route
+          path="admin/data-sources"
+          element={
+            <RequireAdmin>
+              <AdminDataSources />
+            </RequireAdmin>
+          }
+        />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="*" element={<Navigate to="/" replace />} />

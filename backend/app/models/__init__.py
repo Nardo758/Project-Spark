@@ -33,6 +33,7 @@ from .geographic_feature import GeographicFeature, FeatureType
 from .map_layer import MapLayer, LayerType
 from .user_map_session import UserMapSession
 from .rate_limit import RateLimitCounter
+from .data_source_config import DataSourceConfig
 
 __all__ = [
     "User",
@@ -92,4 +93,5 @@ __all__ = [
     "LayerType",
     "UserMapSession",
     "RateLimitCounter",
+    "DataSourceConfig",
 ]

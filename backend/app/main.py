@@ -9,6 +9,7 @@ from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.security import SecurityHeadersMiddleware
 from app.routers import (
     admin,
+    admin_data_sources,
     agreements,
     ai_analysis,
     ai_chat,
@@ -89,6 +90,7 @@ app.include_router(two_factor.router, prefix=f"{settings.API_V1_PREFIX}/2fa", ta
 app.include_router(oauth.router, prefix=f"{settings.API_V1_PREFIX}/oauth", tags=["OAuth"])
 app.include_router(notifications.router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_PREFIX}/admin", tags=["Admin"])
+app.include_router(admin_data_sources.router, prefix=f"{settings.API_V1_PREFIX}/admin", tags=["Admin Data Sources"])
 app.include_router(moderation.router, prefix=f"{settings.API_V1_PREFIX}/moderation", tags=["Moderation"])
 app.include_router(subscriptions.router, prefix=f"{settings.API_V1_PREFIX}/subscriptions", tags=["Subscriptions"])
 app.include_router(social.router, prefix=f"{settings.API_V1_PREFIX}/social", tags=["Social Sharing"])

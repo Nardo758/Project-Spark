@@ -5,9 +5,11 @@ import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.scraped_source import ScrapedSource, SourceType
 from app.models.rate_limit import RateLimitCounter
+from app.models.data_source_config import DataSourceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,7 @@ class WebhookGateway:
         self.db = db
         self.is_dev_mode = os.getenv("WEBHOOK_DEV_MODE", "0") == "1"
         self.webhook_secret = os.getenv("WEBHOOK_SECRET")
+        self._source_config_cache: Dict[str, Optional[DataSourceConfig]] = {}
         
         if not self.webhook_secret:
             if self.is_dev_mode:
@@ -67,6 +70,40 @@ class WebhookGateway:
                     "Set WEBHOOK_DEV_MODE=1 for development testing without signatures."
                 )
 
+    def _get_source_config(self, source: str) -> Optional[DataSourceConfig]:
+        """
+        Best-effort fetch of admin-managed source configuration.
+
+        If migrations haven't run yet (table missing), this returns None and the
+        gateway falls back to env-based behavior.
+        """
+        if source in self._source_config_cache:
+            return self._source_config_cache[source]
+        try:
+            cfg = self.db.query(DataSourceConfig).filter(DataSourceConfig.source == source).first()
+        except SQLAlchemyError:
+            cfg = None
+        except Exception:
+            cfg = None
+        self._source_config_cache[source] = cfg
+        return cfg
+
+    def _is_source_enabled(self, source: str) -> bool:
+        cfg = self._get_source_config(source)
+        return True if cfg is None else bool(cfg.is_enabled)
+
+    def _get_rate_limit_per_minute(self, source: str) -> int:
+        cfg = self._get_source_config(source)
+        if cfg is not None and cfg.rate_limit_per_minute:
+            return int(cfg.rate_limit_per_minute)
+        return int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+
+    def _get_hmac_secret(self, source: str) -> str:
+        cfg = self._get_source_config(source)
+        if cfg is not None and cfg.hmac_secret:
+            return str(cfg.hmac_secret)
+        return os.getenv(f"WEBHOOK_SECRET_{source.upper()}", self.webhook_secret or "")
+
     def verify_hmac_signature(
         self, 
         payload: bytes, 
@@ -77,7 +114,9 @@ class WebhookGateway:
         if not signature:
             return False
         
-        source_secret = os.getenv(f"WEBHOOK_SECRET_{source.upper()}", self.webhook_secret)
+        source_secret = self._get_hmac_secret(source)
+        if not source_secret:
+            return False
         expected_signature = hmac.new(
             source_secret.encode(),
             payload,
@@ -137,6 +176,9 @@ class WebhookGateway:
         if source not in self.SUPPORTED_SOURCES:
             raise WebhookValidationError(f"Unsupported source: {source}")
 
+        if not self._is_source_enabled(source):
+            raise WebhookValidationError(f"Source disabled: {source}")
+
         if not skip_hmac and not self.verify_hmac_signature(payload, signature or "", source):
             logger.warning(f"HMAC verification failed for source: {source}")
             raise WebhookValidationError("Invalid signature")
@@ -156,7 +198,7 @@ class WebhookGateway:
         
         now = datetime.utcnow()
         window_start = now.replace(second=0, microsecond=0)
-        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests = self._get_rate_limit_per_minute(source)
 
         ensure_counter_sql = text("""
             INSERT INTO rate_limit_counters (source, window_start, count, max_requests, created_at)
@@ -272,6 +314,12 @@ class WebhookGateway:
                 "Batch processing requires pre_authenticated=True in production mode. "
                 "HMAC must be verified at the router level before calling process_batch."
             )
+
+        if source not in self.SUPPORTED_SOURCES:
+            raise WebhookValidationError(f"Unsupported source: {source}")
+
+        if not self._is_source_enabled(source):
+            raise WebhookValidationError(f"Source disabled: {source}")
         
         results = {
             "accepted": 0,
@@ -286,10 +334,6 @@ class WebhookGateway:
         
         valid_items = []
         for item in items:
-            if source not in self.SUPPORTED_SOURCES:
-                results["errors"] += 1
-                results["items"].append({"status": "error", "message": f"Unsupported source: {source}"})
-                continue
                 
             if not self.validate_schema(source, item):
                 required = self.REQUIRED_FIELDS.get(source, [])
@@ -311,7 +355,7 @@ class WebhookGateway:
         
         now = datetime.utcnow()
         window_start = now.replace(second=0, microsecond=0)
-        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests = self._get_rate_limit_per_minute(source)
         
         ensure_counter_sql = text("""
             INSERT INTO rate_limit_counters (source, window_start, count, max_requests, created_at)
@@ -446,7 +490,7 @@ class WebhookGateway:
         """
         from sqlalchemy import text
         
-        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests = self._get_rate_limit_per_minute(source)
         now = datetime.utcnow()
         window_start = now.replace(second=0, microsecond=0)
         
@@ -479,7 +523,7 @@ class WebhookGateway:
         """
         from sqlalchemy import text
         
-        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests = self._get_rate_limit_per_minute(source)
         now = datetime.utcnow()
         window_start = now.replace(second=0, microsecond=0)
         
@@ -510,7 +554,7 @@ class WebhookGateway:
         """
         from sqlalchemy import text
         
-        max_requests = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests = self._get_rate_limit_per_minute(source)
         now = datetime.utcnow()
         window_start = now.replace(second=0, microsecond=0)
         
@@ -562,7 +606,7 @@ class WebhookGateway:
         
         Configure via WEBHOOK_RATE_LIMIT environment variable (default: 100/minute).
         """
-        max_requests_per_window = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests_per_window = self._get_rate_limit_per_minute(source)
         window_start = datetime.utcnow() - timedelta(seconds=60)
         
         recent_count = self.db.query(ScrapedSource).filter(
@@ -597,7 +641,7 @@ class WebhookGateway:
         from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
         
-        max_requests_per_window = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests_per_window = self._get_rate_limit_per_minute(source)
         
         now = datetime.utcnow()
         window_start = now.replace(second=0, microsecond=0)
@@ -646,7 +690,7 @@ class WebhookGateway:
         from sqlalchemy import text
         from sqlalchemy.exc import IntegrityError
         
-        max_requests_per_window = int(os.getenv("WEBHOOK_RATE_LIMIT", "100"))
+        max_requests_per_window = self._get_rate_limit_per_minute(source)
         
         now = datetime.utcnow()
         window_start = now.replace(second=0, microsecond=0)

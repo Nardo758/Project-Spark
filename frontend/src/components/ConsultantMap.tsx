@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, Component, ReactNode } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap } from 'react-leaflet';
+import { useEffect, useRef, useState, Component, ReactNode } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -34,12 +34,32 @@ class MapErrorBoundary extends Component<{ children: ReactNode; fallback?: React
   }
 }
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
+
+type GeoJsonPolygonFeature = {
+  type?: 'Feature';
+  geometry?: {
+    type?: string;
+    coordinates?: number[][][];
+  };
+  properties?: {
+    neighborhood?: string;
+    post_density?: number;
+    [key: string]: unknown;
+  };
+};
+
+export type MapBounds = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
 
 interface Pin {
   id: number;
@@ -74,7 +94,7 @@ interface MapData {
   layers: {
     pins: { data: Pin[]; count: number };
     heatmap: { data: HeatmapPoint[]; count: number };
-    polygons: { data: any[]; count: number };
+    polygons: { data: GeoJsonPolygonFeature[]; count: number };
   };
   totalFeatures: number;
 }
@@ -89,7 +109,7 @@ interface ConsultantMapProps {
   mapData: MapData | null;
   city?: string;
   isLoading?: boolean;
-  onBoundsChange?: (bounds: any) => void;
+  onBoundsChange?: (bounds: MapBounds) => void;
 }
 
 const businessIcon = new L.Icon({
@@ -123,9 +143,25 @@ function MapController({ center, zoom }: { center: [number, number]; zoom: numbe
   return null;
 }
 
+function BoundsReporter({ onBoundsChange }: { onBoundsChange?: (b: MapBounds) => void }) {
+  useMapEvents({
+    moveend: (e) => {
+      if (!onBoundsChange) return;
+      const bounds = e.target.getBounds();
+      onBoundsChange({
+        north: bounds.getNorth(),
+        south: bounds.getSouth(),
+        east: bounds.getEast(),
+        west: bounds.getWest(),
+      });
+    },
+  });
+  return null;
+}
+
 function HeatmapLayer({ points }: { points: HeatmapPoint[] }) {
   const map = useMap();
-  const heatLayerRef = useRef<any>(null);
+  const heatLayerRef = useRef<L.Layer | null>(null);
   
   useEffect(() => {
     if (typeof window !== 'undefined' && points.length > 0) {
@@ -135,11 +171,15 @@ function HeatmapLayer({ points }: { points: HeatmapPoint[] }) {
         }
         
         const heatData = points.map(p => [p.lat, p.lng, p.intensity]);
-        heatLayerRef.current = (L as any).heatLayer(heatData, {
+        const heatLayerFactory = (L as unknown as {
+          heatLayer?: (data: Array<[number, number, number]>, options: Record<string, unknown>) => L.Layer;
+        }).heatLayer;
+        if (!heatLayerFactory) return;
+        heatLayerRef.current = heatLayerFactory(heatData as Array<[number, number, number]>, {
           radius: 25,
           blur: 15,
           maxZoom: 17,
-          gradient: { 0.4: 'blue', 0.6: 'yellow', 1: 'red' }
+          gradient: { 0.4: 'blue', 0.6: 'yellow', 1: 'red' },
         }).addTo(map);
       });
     }
@@ -242,6 +282,7 @@ export default function ConsultantMap({ mapData, city, isLoading, onBoundsChange
             />
             
             <MapController center={center} zoom={zoom} />
+            <BoundsReporter onBoundsChange={onBoundsChange} />
             
             {layerState.pins && mapData?.layers?.pins?.data?.map((pin) => (
               <Marker 
@@ -272,10 +313,8 @@ export default function ConsultantMap({ mapData, city, isLoading, onBoundsChange
             )}
             
             {layerState.polygons && mapData?.layers?.polygons?.data?.map((geojson, idx) => {
-              if (geojson?.geometry?.type === 'Polygon') {
-                const positions = geojson.geometry.coordinates[0].map(
-                  (coord: number[]) => [coord[1], coord[0]] as [number, number]
-                );
+              if (geojson?.geometry?.type === 'Polygon' && geojson.geometry.coordinates?.[0]) {
+                const positions = geojson.geometry.coordinates[0].map((coord) => [coord[1], coord[0]] as [number, number]);
                 return (
                   <Polygon
                     key={`poly-${idx}`}
