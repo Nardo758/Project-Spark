@@ -208,6 +208,8 @@ class MapDataEngine:
         layers: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Get map data for a specific city"""
+        from app.models.opportunity import Opportunity
+        
         query = self.db.query(GeographicFeature).filter(
             GeographicFeature.city.ilike(f"%{city}%")
         )
@@ -216,8 +218,18 @@ class MapDataEngine:
             query = query.filter(GeographicFeature.state.ilike(f"%{state}%"))
 
         features = query.limit(2000).all()
+        
+        opp_query = self.db.query(Opportunity).filter(
+            Opportunity.latitude.isnot(None),
+            Opportunity.longitude.isnot(None),
+            or_(
+                Opportunity.city.ilike(f"%{city}%"),
+                Opportunity.geographic_scope.ilike(f"%{city}%"),
+            )
+        )
+        opportunities = opp_query.limit(500).all()
 
-        if not features:
+        if not features and not opportunities:
             return {
                 "city": city,
                 "state": state,
@@ -229,16 +241,39 @@ class MapDataEngine:
         lats = [f.latitude for f in features if f.latitude]
         lngs = [f.longitude for f in features if f.longitude]
         
+        opp_lats = [o.latitude for o in opportunities if o.latitude]
+        opp_lngs = [o.longitude for o in opportunities if o.longitude]
+        
+        all_lats = lats + opp_lats
+        all_lngs = lngs + opp_lngs
+        
         bounds = {
-            "north": max(lats) if lats else 0,
-            "south": min(lats) if lats else 0,
-            "east": max(lngs) if lngs else 0,
-            "west": min(lngs) if lngs else 0,
+            "north": max(all_lats) if all_lats else 0,
+            "south": min(all_lats) if all_lats else 0,
+            "east": max(all_lngs) if all_lngs else 0,
+            "west": min(all_lngs) if all_lngs else 0,
+        }
+        
+        center = {
+            "lat": (bounds["north"] + bounds["south"]) / 2 if all_lats else 0,
+            "lng": (bounds["east"] + bounds["west"]) / 2 if all_lngs else 0,
         }
 
         pins = []
         heatmap_points = []
         polygons = []
+        
+        for opp in opportunities:
+            pins.append({
+                "id": opp.id + 100000,
+                "lat": opp.latitude,
+                "lng": opp.longitude,
+                "name": opp.title[:50] + "..." if len(opp.title) > 50 else opp.title,
+                "rating": opp.ai_opportunity_score / 20 if opp.ai_opportunity_score else None,
+                "reviews": opp.validation_count,
+                "source": "opportunity",
+                "popup": f"<b>{opp.title}</b><br/>{opp.ai_market_size_estimate or ''}<br/>Score: {opp.ai_opportunity_score or 'N/A'}",
+            })
 
         for feature in features:
             props = feature.properties or {}
@@ -272,16 +307,13 @@ class MapDataEngine:
             "city": city,
             "state": state,
             "bounds": bounds,
-            "center": {
-                "lat": (bounds["north"] + bounds["south"]) / 2,
-                "lng": (bounds["east"] + bounds["west"]) / 2,
-            },
+            "center": center,
             "layers": {
                 "pins": {"type": "pins", "data": pins, "count": len(pins)},
                 "heatmap": {"type": "heatmap", "data": heatmap_points, "count": len(heatmap_points)},
                 "polygons": {"type": "polygons", "data": polygons, "count": len(polygons)},
             },
-            "totalFeatures": len(features),
+            "totalFeatures": len(features) + len(opportunities),
             "timestamp": datetime.utcnow().isoformat(),
         }
 
