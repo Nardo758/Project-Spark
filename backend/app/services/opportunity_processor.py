@@ -1,7 +1,8 @@
 import os
 import json
 import logging
-from typing import Dict, Any, List, Optional
+import asyncio
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 from sqlalchemy.orm import Session
 from anthropic import Anthropic
@@ -10,6 +11,8 @@ from app.models.scraped_source import ScrapedSource
 from app.models.opportunity import Opportunity
 
 logger = logging.getLogger(__name__)
+
+MAX_CONCURRENT_CLAUDE_CALLS = 5
 
 AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
 AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
@@ -34,24 +37,97 @@ class OpportunityProcessor:
             return {"processed": 0, "opportunities_created": 0, "skipped": 0}
 
         stats = {"processed": 0, "opportunities_created": 0, "skipped": 0, "errors": 0}
-
-        for source in sources:
-            try:
-                result = await self._process_single_source(source)
-                stats["processed"] += 1
-                if result.get("opportunity_created"):
-                    stats["opportunities_created"] += 1
-                elif result.get("skipped"):
-                    stats["skipped"] += 1
-            except Exception as e:
-                logger.error(f"Error processing source {source.id}: {e}")
+        
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_CLAUDE_CALLS)
+        
+        async def process_with_semaphore(source: ScrapedSource) -> Tuple[ScrapedSource, Dict[str, Any]]:
+            async with semaphore:
+                try:
+                    raw_data = source.raw_data or {}
+                    raw_text = self._extract_text_from_raw_data(raw_data, source.source_type)
+                    
+                    if not raw_text or len(raw_text) < 20:
+                        return source, {"skipped": True, "reason": "insufficient_content"}
+                    
+                    existing = self.db.query(Opportunity).filter(
+                        Opportunity.source_id == source.external_id
+                    ).first()
+                    if existing:
+                        return source, {"skipped": True, "reason": "duplicate"}
+                    
+                    analysis = await self._analyze_with_claude(raw_text, source.source_type, raw_data)
+                    return source, {"analysis": analysis, "raw_data": raw_data}
+                except Exception as e:
+                    logger.error(f"Error analyzing source {source.id}: {e}")
+                    return source, {"error": str(e)}
+        
+        results = await asyncio.gather(*[process_with_semaphore(s) for s in sources])
+        
+        for source, result in results:
+            stats["processed"] += 1
+            
+            if result.get("error"):
                 source.processed = -1
-                source.error_message = str(e)[:500]
+                source.error_message = result["error"][:500]
                 stats["errors"] += 1
+            elif result.get("skipped"):
+                source.processed = 1
+                source.processed_at = datetime.utcnow()
+                stats["skipped"] += 1
+            else:
+                analysis = result.get("analysis", {})
+                raw_data = result.get("raw_data", {})
+                
+                if not analysis.get("is_valid_opportunity", False):
+                    source.processed = 1
+                    source.processed_at = datetime.utcnow()
+                    stats["skipped"] += 1
+                else:
+                    opportunity = self._create_opportunity_from_analysis(source, analysis, raw_data)
+                    self.db.add(opportunity)
+                    source.processed = 1
+                    source.processed_at = datetime.utcnow()
+                    stats["opportunities_created"] += 1
 
         self.db.commit()
         logger.info(f"Opportunity processing complete: {stats}")
         return stats
+    
+    def _create_opportunity_from_analysis(self, source: ScrapedSource, analysis: Dict, raw_data: Dict) -> Opportunity:
+        lat = raw_data.get("latitude") or raw_data.get("lat")
+        lng = raw_data.get("longitude") or raw_data.get("lng") or raw_data.get("lon")
+        
+        return Opportunity(
+            title=analysis.get("professional_title", "Untitled Opportunity")[:500],
+            description=analysis.get("professional_description", "")[:5000],
+            category=analysis.get("category", "General")[:100],
+            subcategory=analysis.get("subcategory"),
+            severity=analysis.get("severity", 3),
+            market_size=analysis.get("market_size"),
+            geographic_scope=analysis.get("geographic_scope", "online"),
+            country=analysis.get("country"),
+            region=analysis.get("region"),
+            city=analysis.get("city"),
+            latitude=float(lat) if lat else None,
+            longitude=float(lng) if lng else None,
+            feasibility_score=analysis.get("feasibility_score"),
+            source_id=source.external_id,
+            source_url=raw_data.get("url") or raw_data.get("link"),
+            source_platform=source.source_type,
+            ai_analyzed=True,
+            ai_analyzed_at=datetime.utcnow(),
+            ai_opportunity_score=analysis.get("opportunity_score"),
+            ai_summary=analysis.get("one_line_summary", "")[:500],
+            ai_market_size_estimate=analysis.get("market_size_estimate"),
+            ai_competition_level=analysis.get("competition_level"),
+            ai_urgency_level=analysis.get("urgency_level"),
+            ai_target_audience=analysis.get("target_audience"),
+            ai_pain_intensity=analysis.get("pain_intensity"),
+            ai_business_model_suggestions=json.dumps(analysis.get("business_models", [])),
+            ai_key_risks=json.dumps(analysis.get("key_risks", [])),
+            ai_next_steps=json.dumps(analysis.get("next_steps", [])),
+            ai_problem_statement=analysis.get("problem_statement"),
+        )
 
     async def _process_single_source(self, source: ScrapedSource) -> Dict[str, Any]:
         raw_data = source.raw_data or {}
@@ -141,9 +217,7 @@ class OpportunityProcessor:
         else:
             return str(raw_data.get("text") or raw_data.get("content") or raw_data.get("title", ""))
 
-    async def _analyze_with_claude(self, raw_text: str, source_type: str) -> Dict[str, Any]:
-        import asyncio
-        
+    async def _analyze_with_claude(self, raw_text: str, source_type: str, raw_data: Dict = None) -> Dict[str, Any]:
         if not self.client:
             logger.warning("Claude client not available, using fallback analysis")
             return self._fallback_analysis(raw_text, source_type)
