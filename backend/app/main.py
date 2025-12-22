@@ -6,8 +6,6 @@ from app.middleware.security import SecurityHeadersMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 import logging
 import os
-from app.middleware.security import SecurityHeadersMiddleware
-from app.middleware.rate_limit import RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
