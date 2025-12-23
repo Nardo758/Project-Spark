@@ -111,10 +111,13 @@ async def get_map_data_city_simple(
 
 
 @router.get("/statistics")
-async def get_map_statistics(db: Session = Depends(get_db)):
+async def get_map_statistics(
+    top_cities_limit: int = Query(200, ge=1, le=5000),
+    db: Session = Depends(get_db),
+):
     """Get statistics about geographic features"""
     engine = MapDataEngine(db)
-    return engine.get_layer_statistics()
+    return engine.get_layer_statistics(top_cities_limit=top_cities_limit)
 
 
 @router.post("/session")

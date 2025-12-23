@@ -373,8 +373,13 @@ class MapDataEngine:
             for s in sessions
         ]
 
-    def get_layer_statistics(self) -> Dict[str, Any]:
-        """Get statistics about geographic features by layer"""
+    def get_layer_statistics(self, top_cities_limit: int = 200) -> Dict[str, Any]:
+        """Get statistics about geographic features by layer.
+
+        Args:
+            top_cities_limit: Max number of cities to return in `top_cities`.
+                Use a larger value if the UI needs a full preloaded list.
+        """
         from sqlalchemy import func
         
         stats = {}
@@ -396,7 +401,7 @@ class MapDataEngine:
             GeographicFeature.city.isnot(None)
         ).group_by(GeographicFeature.city).order_by(
             func.count(GeographicFeature.id).desc()
-        ).limit(10).all()
+        ).limit(max(1, int(top_cities_limit or 200))).all()
         
         stats["top_cities"] = [{"city": c, "count": n} for c, n in cities]
         
