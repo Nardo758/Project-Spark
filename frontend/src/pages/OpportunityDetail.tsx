@@ -508,7 +508,7 @@ export default function OpportunityDetail() {
 
           {/* Geographic Market Selector */}
           <div className="mb-8">
-            <h3 className="font-bold text-stone-900 mb-3">Geographic Market</h3>
+            <h3 className="text-lg font-bold text-stone-900 mb-4">Geographic Market</h3>
             <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
               {regions.map((region) => (
                 <button
@@ -544,34 +544,34 @@ export default function OpportunityDetail() {
 
           {/* Quick Validation Metrics */}
           <div className="mb-8">
-            <h3 className="font-bold text-stone-900 mb-3">Quick Validation Metrics</h3>
+            <h3 className="text-lg font-bold text-stone-900 mb-4">Quick Validation Metrics</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg border-2 border-stone-200 p-4">
-                <div className="text-sm text-stone-500 mb-1">Urgency</div>
-                <div className={`text-2xl font-bold ${urgency === 'High' ? 'text-orange-600' : urgency === 'Critical' ? 'text-red-600' : 'text-stone-900'}`}>
+              <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 text-center">
+                <div className="text-xs text-stone-500 uppercase tracking-wide mb-2">Urgency</div>
+                <div className={`text-xl font-bold ${urgency === 'High' ? 'text-orange-600' : urgency === 'Critical' ? 'text-red-600' : 'text-stone-900'}`}>
                   {urgency}
                 </div>
               </div>
-              <div className="bg-white rounded-lg border-2 border-stone-200 p-4">
-                <div className="text-sm text-stone-500 mb-1">Competition</div>
-                <div className={`text-2xl font-bold ${competition === 'Low' ? 'text-emerald-600' : competition === 'High' ? 'text-red-600' : 'text-stone-900'}`}>
+              <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 text-center">
+                <div className="text-xs text-stone-500 uppercase tracking-wide mb-2">Competition</div>
+                <div className={`text-xl font-bold ${competition === 'Low' ? 'text-emerald-600' : competition === 'High' ? 'text-red-600' : 'text-stone-900'}`}>
                   {competition}
                 </div>
               </div>
-              <div className="bg-white rounded-lg border-2 border-stone-200 p-4">
-                <div className="text-sm text-stone-500 mb-1">Target Audience</div>
-                <div className="text-lg font-bold text-stone-900 truncate">{opp.ai_target_audience ? capitalize(opp.ai_target_audience) : 'Consumers'}</div>
+              <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 text-center">
+                <div className="text-xs text-stone-500 uppercase tracking-wide mb-2">Target Audience</div>
+                <div className="text-xl font-bold text-stone-900 truncate">{opp.ai_target_audience ? capitalize(opp.ai_target_audience) : 'Consumers'}</div>
               </div>
-              <div className="bg-white rounded-lg border-2 border-stone-200 p-4">
-                <div className="text-sm text-stone-500 mb-1">Feasibility</div>
-                <div className="text-2xl font-bold text-violet-600">{Math.round(score)}%</div>
+              <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 text-center">
+                <div className="text-xs text-stone-500 uppercase tracking-wide mb-2">Feasibility</div>
+                <div className="text-xl font-bold text-violet-600">{Math.round(score)}%</div>
               </div>
             </div>
           </div>
 
           {/* Pain Points - Empathize */}
           <div className="mb-8">
-            <h3 className="font-bold text-stone-900 mb-3">Top Pain Points</h3>
+            <h3 className="text-lg font-bold text-stone-900 mb-4">Top Pain Points</h3>
             <div className="space-y-3">
               {painPoints.map((point, idx) => (
                 <div 
