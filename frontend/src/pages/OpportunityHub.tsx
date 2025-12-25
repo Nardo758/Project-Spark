@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, BarChart3, Briefcase, CheckCircle, CheckCircle2, ChevronDown, ChevronRight, Clock, 
-  Lightbulb, Loader2, MapPin, MessageSquare, 
+  Lightbulb, Loader2, MapPin, MessageSquare, PanelLeftClose, PanelLeftOpen,
   PenLine, Plus, Rocket, Search, Send, Sparkles, 
-  Target, Trash2, TrendingUp, Users, Zap
+  Target, Trash2, TrendingUp, Users, X, Zap
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 
@@ -133,6 +133,7 @@ export default function OpportunityHub() {
   const [newNoteContent, setNewNoteContent] = useState('')
   const [aiMessage, setAiMessage] = useState('')
   const [validationPath, setValidationPath] = useState<'platform' | 'new_idea' | 'locations' | null>(null)
+  const [workspacePanelOpen, setWorkspacePanelOpen] = useState(false)
 
   const opportunityQuery = useQuery({
     queryKey: ['opportunity', opportunityId, isAuthenticated, token?.slice(-8)],
@@ -196,7 +197,7 @@ export default function OpportunityHub() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace-check', opportunityId] })
-      setActiveTab('workspace')
+      setWorkspacePanelOpen(true)
     },
   })
 
@@ -466,18 +467,23 @@ export default function OpportunityHub() {
                 if (!hasWorkspace) {
                   createWorkspaceMutation.mutate()
                 } else {
-                  setActiveTab('workspace')
+                  setWorkspacePanelOpen(true)
                 }
               }}
               disabled={createWorkspaceMutation.isPending}
-              className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'workspace' 
+              className={`flex-1 px-6 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                workspacePanelOpen 
                   ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50' 
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
               }`}
             >
-              <Briefcase className="w-4 h-4 inline mr-2" />
+              <Briefcase className="w-4 h-4" />
               {hasWorkspace ? 'Workspace' : (createWorkspaceMutation.isPending ? 'Creating...' : 'Start Working')}
+              {hasWorkspace && (
+                <span className="ml-1">
+                  {workspacePanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+                </span>
+              )}
             </button>
           </div>
 
@@ -614,20 +620,20 @@ export default function OpportunityHub() {
                       <h3 className="font-semibold text-stone-900">Ready to start?</h3>
                     </div>
                     <p className="text-sm text-stone-600 mb-4">
-                      Switch to the Workspace tab to track your progress, take notes, and work with the AI assistant.
+                      Open the workspace panel to track your progress, take notes, and work with the AI assistant.
                     </p>
                     <button
                       onClick={() => {
                         if (!hasWorkspace) {
                           createWorkspaceMutation.mutate()
                         } else {
-                          setActiveTab('workspace')
+                          setWorkspacePanelOpen(true)
                         }
                       }}
                       disabled={createWorkspaceMutation.isPending}
                       className="w-full py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50"
                     >
-                      {hasWorkspace ? 'Go to Workspace' : 'Start Working on This'}
+                      {hasWorkspace ? 'Open Workspace' : 'Start Working on This'}
                     </button>
                   </div>
                 </div>
@@ -635,14 +641,30 @@ export default function OpportunityHub() {
             </div>
           )}
 
-          {activeTab === 'workspace' && workspace && (
-            <div className="p-6">
-              <div className="grid lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-1 space-y-4">
-                  <div className="bg-white rounded-lg border border-stone-200 p-4">
+          {workspacePanelOpen && workspace && (
+            <>
+              <div 
+                className="fixed inset-0 bg-black/30 z-40 transition-opacity"
+                onClick={() => setWorkspacePanelOpen(false)}
+              />
+              <div className="fixed left-0 top-0 h-full w-[480px] max-w-[90vw] bg-white shadow-xl z-50 overflow-y-auto transition-transform">
+                <div className="sticky top-0 bg-white border-b border-stone-200 p-4 flex items-center justify-between z-10">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-violet-600" />
+                    <span className="font-semibold text-stone-900">Workspace</span>
+                  </div>
+                  <button 
+                    onClick={() => setWorkspacePanelOpen(false)}
+                    className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-stone-500" />
+                  </button>
+                </div>
+                
+                <div className="p-4 space-y-4">
+                  <div className="bg-stone-50 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <Briefcase className="w-5 h-5 text-violet-600" />
-                      <span className="font-semibold text-stone-900">Workspace</span>
+                      <span className="text-sm text-stone-600">Status:</span>
                     </div>
                     <div className="relative">
                       <select 
@@ -730,7 +752,7 @@ export default function OpportunityHub() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-3">
+                <div className="p-4">
                   {workspace.status === 'researching' && !validationPath && (
                     <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
                       <h3 className="text-lg font-semibold text-stone-900 mb-2">Step 1: Validate Opportunity</h3>
@@ -1282,13 +1304,7 @@ export default function OpportunityHub() {
                   )}
                 </div>
               </div>
-            </div>
-          )}
-
-          {activeTab === 'workspace' && !workspace && workspaceCheckQuery.isLoading && (
-            <div className="p-12 text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-violet-600 mx-auto" />
-            </div>
+            </>
           )}
         </div>
       </div>
