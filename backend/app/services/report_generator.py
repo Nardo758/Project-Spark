@@ -8,7 +8,7 @@ Generates tiered opportunity reports:
 """
 import os
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 
 from app.models.opportunity import Opportunity
@@ -99,6 +99,8 @@ class ReportGenerator:
         risks = opp.ai_key_risks or ["Market timing", "Competition"]
         
         target_customer_section = self._build_target_customer_section(opp, demographics)
+        geographic_heat_section = self._build_geographic_heat_section(opp)
+        signal_quality_section = self._build_signal_quality_section(opp)
         
         html_content = f"""
 <div class="report-layer1">
@@ -164,6 +166,10 @@ class ReportGenerator:
     </section>
     
     {target_customer_section}
+    
+    {geographic_heat_section}
+    
+    {signal_quality_section}
     
     <section class="validation-signals">
         <h2>Validation Signals</h2>
@@ -330,6 +336,134 @@ class ReportGenerator:
                 max_group = label
         
         return max_group or "Adults 25-54"
+    
+    def _get_top_cities_by_category(self, category: str, limit: int = 5) -> List[Dict]:
+        """Get top cities by problem density for a given category."""
+        from sqlalchemy import func
+        
+        results = self.db.query(
+            Opportunity.city,
+            Opportunity.region,
+            func.count(Opportunity.id).label('problem_count'),
+            func.avg(Opportunity.severity).label('avg_severity'),
+            func.avg(Opportunity.ai_opportunity_score).label('avg_score')
+        ).filter(
+            Opportunity.category == category,
+            Opportunity.city.isnot(None),
+            Opportunity.city != ''
+        ).group_by(
+            Opportunity.city,
+            Opportunity.region
+        ).order_by(
+            func.count(Opportunity.id).desc()
+        ).limit(limit).all()
+        
+        cities = []
+        for r in results:
+            cities.append({
+                "city": r.city,
+                "region": r.region,
+                "problem_count": r.problem_count,
+                "avg_severity": round(float(r.avg_severity or 0), 1),
+                "avg_score": round(float(r.avg_score or 70), 0),
+            })
+        return cities
+    
+    def _build_signal_quality_section(self, opp: Opportunity) -> str:
+        """Build Signal Quality Breakdown section showing data quality metrics."""
+        validation_count = opp.validation_count or 0
+        severity = opp.severity or 5
+        score = opp.ai_opportunity_score or (severity * 20)
+        
+        signal_strength = "Strong" if validation_count >= 10 else "Moderate" if validation_count >= 5 else "Emerging"
+        strength_class = "strong" if validation_count >= 10 else "moderate" if validation_count >= 5 else "emerging"
+        
+        freshness = "Fresh" if hasattr(opp, 'created_at') and opp.created_at else "Recent"
+        freshness_class = "fresh"
+        
+        confidence_level = "High" if score >= 80 else "Medium" if score >= 60 else "Low"
+        confidence_class = "high" if score >= 80 else "medium" if score >= 60 else "low"
+        
+        source_types = []
+        if opp.source_type:
+            source_types.append(opp.source_type)
+        else:
+            source_types = ["Market Analysis", "Consumer Feedback"]
+        
+        sources_html = "".join(f'<span class="source-tag">{s}</span>' for s in source_types[:3])
+        
+        return f"""
+    <section class="signal-quality">
+        <h2>Signal Quality Breakdown</h2>
+        <div class="quality-grid">
+            <div class="quality-card {strength_class}">
+                <span class="label">Signal Strength</span>
+                <span class="value">{signal_strength}</span>
+                <span class="detail">{validation_count} validations</span>
+            </div>
+            <div class="quality-card {freshness_class}">
+                <span class="label">Data Freshness</span>
+                <span class="value">{freshness}</span>
+                <span class="detail">Regularly updated</span>
+            </div>
+            <div class="quality-card {confidence_class}">
+                <span class="label">Confidence Level</span>
+                <span class="value">{confidence_level}</span>
+                <span class="detail">Score: {int(score)}/100</span>
+            </div>
+        </div>
+        <div class="source-breakdown">
+            <span class="label">Data Sources:</span>
+            {sources_html}
+        </div>
+    </section>
+"""
+    
+    def _build_geographic_heat_section(self, opp: Opportunity) -> str:
+        """Build Geographic Heat section showing top cities by problem density."""
+        top_cities = self._get_top_cities_by_category(opp.category)
+        
+        if not top_cities:
+            return """
+    <section class="geographic-heat">
+        <h2>Geographic Hotspots</h2>
+        <p class="placeholder-note">Geographic data is being analyzed. Check back soon for insights on where this problem is most prevalent.</p>
+    </section>
+"""
+        
+        city_rows = ""
+        for i, city in enumerate(top_cities, 1):
+            city_name = f"{city['city']}, {city['region']}" if city['region'] else city['city']
+            heat_class = "hot" if city['avg_severity'] >= 7 else "warm" if city['avg_severity'] >= 5 else "cool"
+            city_rows += f"""
+            <tr class="{heat_class}">
+                <td class="rank">#{i}</td>
+                <td class="city">{city_name}</td>
+                <td class="count">{city['problem_count']} signals</td>
+                <td class="severity">{city['avg_severity']}/10</td>
+                <td class="score">{int(city['avg_score'])}</td>
+            </tr>"""
+        
+        return f"""
+    <section class="geographic-heat">
+        <h2>Geographic Hotspots</h2>
+        <p class="section-intro">Top 5 cities where this problem category is most prevalent.</p>
+        <table class="heat-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Location</th>
+                    <th>Problem Signals</th>
+                    <th>Avg Severity</th>
+                    <th>Opp Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {city_rows}
+            </tbody>
+        </table>
+    </section>
+"""
     
     def generate_layer2_report(self, opportunity: Opportunity, user: User, demographics: Optional[Dict] = None) -> GeneratedReport:
         """Generate Layer 2: Deep Dive Analysis report."""
