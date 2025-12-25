@@ -395,7 +395,12 @@ export default function OpportunityDetail() {
                 ) : null}
               </div>
               <h1 className="text-3xl font-bold text-stone-900 mb-3">{opp.title}</h1>
-              <p className="text-stone-600 text-lg leading-relaxed">{opp.description?.replace(/\*\*/g, '').split('\n')[0]}</p>
+              <p className="text-stone-600 text-lg leading-relaxed">
+                {(() => {
+                  const desc = opp.description?.replace(/\*\*/g, '').split('\n').filter(l => l.trim() && !l.includes('Market Opportunity Overview'))[0]
+                  return desc || opp.ai_summary?.replace(/\*\*/g, '') || 'Analysis pending...'
+                })()}
+              </p>
             </div>
             
             <div className="flex flex-col items-end gap-3">
@@ -477,7 +482,12 @@ export default function OpportunityDetail() {
             <h2 className="text-xl font-bold text-stone-900">Problem Statement</h2>
           </div>
           <p className="text-stone-700 text-lg leading-relaxed">
-            {opp.ai_problem_statement || opp.ai_summary || opp.description?.split('\n')[0] || 'No problem statement available.'}
+            {(() => {
+              if (opp.ai_problem_statement) return opp.ai_problem_statement
+              if (opp.ai_summary) return opp.ai_summary.replace(/\*\*/g, '')
+              const desc = opp.description?.replace(/\*\*/g, '').split('\n').filter(l => l.trim() && !l.includes('Market Opportunity Overview'))[0]
+              return desc || 'No problem statement available.'
+            })()}
           </p>
         </div>
 
