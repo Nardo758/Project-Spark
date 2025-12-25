@@ -43,6 +43,10 @@ from .workspace import (
     WorkspaceChatMessage, WorkspaceStatus, TaskPriority
 )
 from .copilot import GlobalChatMessage, CopilotSuggestion
+from .census_demographics import (
+    CensusPopulationEstimate, CensusMigrationFlow, MarketGrowthTrajectory,
+    ServiceAreaBoundary, GrowthCategory
+)
 
 __all__ = [
     "User",
@@ -128,4 +132,9 @@ __all__ = [
     "TaskPriority",
     "GlobalChatMessage",
     "CopilotSuggestion",
+    "CensusPopulationEstimate",
+    "CensusMigrationFlow",
+    "MarketGrowthTrajectory",
+    "ServiceAreaBoundary",
+    "GrowthCategory",
 ]
