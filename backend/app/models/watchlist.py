@@ -107,7 +107,7 @@ class WatchlistItem(Base):
     opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False)
     collection_id = Column(Integer, ForeignKey("user_collections.id", ondelete="SET NULL"), nullable=True, index=True)
     
-    lifecycle_state = Column(SAEnum(LifecycleState), default=LifecycleState.SAVED, nullable=False, index=True)
+    lifecycle_state = Column(SAEnum(LifecycleState, values_callable=lambda x: [e.value for e in x]), default=LifecycleState.SAVED, nullable=False, index=True)
     state_changed_at = Column(DateTime(timezone=True), server_default=func.now())
     paused_reason = Column(String(255), nullable=True)
     archived_reason = Column(String(255), nullable=True)
