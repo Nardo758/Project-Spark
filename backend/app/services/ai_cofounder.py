@@ -1,0 +1,289 @@
+"""
+AI Co-Founder Service
+Stage-aware conversational AI assistant that guides users through their opportunity journey.
+Uses Replit's AI Integrations for Anthropic-compatible API access.
+"""
+
+import os
+from anthropic import Anthropic
+
+AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
+AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
+
+client = Anthropic(
+    api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
+    base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL
+)
+
+STAGE_PROMPTS = {
+    "researching": """You are an AI Co-Founder helping a user in the RESEARCH stage of their business opportunity.
+
+Your role is to help them:
+- Analyze market data and identify trends
+- Map out competitors and their strengths/weaknesses
+- Find gaps in the market they can exploit
+- Understand the target customer profile
+- Estimate market size and growth potential
+
+Be encouraging but realistic. Ask probing questions to help them think deeper about the opportunity.
+Provide specific, actionable insights based on the opportunity details provided.""",
+
+    "validating": """You are an AI Co-Founder helping a user in the VALIDATION stage of their business opportunity.
+
+Your role is to help them:
+- Design customer interviews and surveys
+- Interpret feedback and identify patterns
+- Distinguish between nice-to-have and must-have features
+- Identify early adopter segments
+- Build a minimum viable test strategy
+- Assess demand signals and willingness to pay
+
+Help them avoid confirmation bias. Challenge their assumptions constructively.
+Guide them to find real evidence of customer demand.""",
+
+    "planning": """You are an AI Co-Founder helping a user in the PLANNING stage of their business opportunity.
+
+Your role is to help them:
+- Choose the right business model (subscription, marketplace, SaaS, services, etc.)
+- Create revenue projections and financial models
+- Define their go-to-market strategy
+- Identify key metrics and milestones
+- Plan resource requirements (team, budget, timeline)
+- Prepare investor-ready materials
+
+Help them create a comprehensive business plan they can share with experts, investors, and lenders.
+Be thorough and professional - this plan needs to convince stakeholders.""",
+
+    "building": """You are an AI Co-Founder helping a user in the BUILD stage of their business opportunity.
+
+Your role is to help them:
+- Create an execution roadmap with clear milestones
+- Recommend the right tools for their needs:
+  * Design: Figma, Canva, Framer
+  * Development: Replit, Vercel, Supabase, Firebase
+  * Talent: Upwork, Toptal, Contra, Fiverr
+  * No-Code: Bubble, Webflow, Zapier, Airtable
+  * Marketing: Mailchimp, Buffer, Hootsuite
+  * Project Management: Notion, Trello, Linear
+- Help them prioritize what to build first (MVP scope)
+- Connect them with the right experts for execution
+- Manage budget and timeline expectations
+
+Focus on practical execution. Help them move from plan to reality efficiently.
+Recommend specific tools based on their budget, technical ability, and timeline.""",
+
+    "launched": """You are an AI Co-Founder helping a user who has LAUNCHED their business opportunity.
+
+Your role is to help them:
+
+**Business Formation:**
+- Guide LLC vs S-Corp vs Sole Proprietorship decision
+- Explain state-specific registration steps
+- Walk through EIN registration process
+- Recommend business bank accounts
+- Explain operating agreement basics
+
+**Legal & Compliance:**
+- Identify required business licenses
+- Recommend appropriate insurance
+- Guide Terms of Service / Privacy Policy creation
+- Explain trademark and IP basics
+
+**Financial Setup:**
+- Recommend accounting software (QuickBooks, Wave, Xero)
+- Guide payment processing setup (Stripe, Square, PayPal)
+- Explain tax obligations and quarterly estimates
+- Set up basic bookkeeping practices
+
+**Growth & Scaling:**
+- Identify key metrics to track
+- Plan for first hires
+- Explore funding options for growth
+- Optimize operations
+
+Help them transition from a project to a real, legally established business.
+Be practical and specific to their situation."""
+}
+
+TOOL_RECOMMENDATIONS = {
+    "design": [
+        {"name": "Figma", "url": "https://figma.com", "description": "Collaborative design tool for UI/UX", "price": "Free - $15/mo", "best_for": "Professional design, team collaboration"},
+        {"name": "Canva", "url": "https://canva.com", "description": "Easy graphic design for non-designers", "price": "Free - $13/mo", "best_for": "Marketing materials, social media"},
+        {"name": "Framer", "url": "https://framer.com", "description": "Design to production websites", "price": "Free - $20/mo", "best_for": "Landing pages, marketing sites"},
+    ],
+    "development": [
+        {"name": "Replit", "url": "https://replit.com", "description": "AI-powered development platform", "price": "Free - $25/mo", "best_for": "Full-stack apps, rapid prototyping"},
+        {"name": "Vercel", "url": "https://vercel.com", "description": "Frontend deployment platform", "price": "Free - $20/mo", "best_for": "Next.js, React apps"},
+        {"name": "Supabase", "url": "https://supabase.com", "description": "Open source Firebase alternative", "price": "Free - $25/mo", "best_for": "Database, auth, real-time"},
+        {"name": "Firebase", "url": "https://firebase.google.com", "description": "Google's app development platform", "price": "Pay as you go", "best_for": "Mobile apps, real-time features"},
+    ],
+    "talent": [
+        {"name": "Upwork", "url": "https://upwork.com", "description": "Large freelancer marketplace", "price": "Commission-based", "best_for": "Budget-friendly, variety of skills"},
+        {"name": "Toptal", "url": "https://toptal.com", "description": "Top 3% of freelancers", "price": "Premium rates", "best_for": "High-quality, vetted talent"},
+        {"name": "Contra", "url": "https://contra.com", "description": "Commission-free freelancing", "price": "No fees", "best_for": "Direct relationships, portfolios"},
+        {"name": "Fiverr", "url": "https://fiverr.com", "description": "Quick, affordable gigs", "price": "Starting at $5", "best_for": "Small tasks, quick turnaround"},
+    ],
+    "nocode": [
+        {"name": "Bubble", "url": "https://bubble.io", "description": "Full-featured no-code web apps", "price": "Free - $32/mo", "best_for": "Complex web applications"},
+        {"name": "Webflow", "url": "https://webflow.com", "description": "Visual website builder", "price": "Free - $24/mo", "best_for": "Marketing sites, CMS"},
+        {"name": "Zapier", "url": "https://zapier.com", "description": "Automate workflows between apps", "price": "Free - $20/mo", "best_for": "Integrations, automation"},
+        {"name": "Airtable", "url": "https://airtable.com", "description": "Spreadsheet-database hybrid", "price": "Free - $20/mo", "best_for": "Data management, simple apps"},
+    ],
+    "marketing": [
+        {"name": "Mailchimp", "url": "https://mailchimp.com", "description": "Email marketing platform", "price": "Free - $13/mo", "best_for": "Email campaigns, newsletters"},
+        {"name": "Buffer", "url": "https://buffer.com", "description": "Social media scheduling", "price": "Free - $6/mo", "best_for": "Social media management"},
+        {"name": "SEMrush", "url": "https://semrush.com", "description": "SEO and marketing toolkit", "price": "$120/mo+", "best_for": "SEO, competitor analysis"},
+    ],
+    "project": [
+        {"name": "Notion", "url": "https://notion.so", "description": "All-in-one workspace", "price": "Free - $10/mo", "best_for": "Docs, wikis, project management"},
+        {"name": "Linear", "url": "https://linear.app", "description": "Modern issue tracking", "price": "Free - $8/mo", "best_for": "Software development teams"},
+        {"name": "Trello", "url": "https://trello.com", "description": "Visual kanban boards", "price": "Free - $10/mo", "best_for": "Simple task management"},
+    ],
+    "financial": [
+        {"name": "QuickBooks", "url": "https://quickbooks.intuit.com", "description": "Small business accounting", "price": "$30/mo+", "best_for": "Full accounting, invoicing"},
+        {"name": "Wave", "url": "https://waveapps.com", "description": "Free accounting software", "price": "Free", "best_for": "Freelancers, small businesses"},
+        {"name": "Stripe", "url": "https://stripe.com", "description": "Payment processing", "price": "2.9% + 30¢/txn", "best_for": "Online payments, subscriptions"},
+        {"name": "Mercury", "url": "https://mercury.com", "description": "Startup banking", "price": "Free", "best_for": "Business bank account, startups"},
+    ],
+}
+
+BUSINESS_FORMATION_GUIDE = {
+    "llc": {
+        "name": "Limited Liability Company (LLC)",
+        "best_for": "Most small businesses, flexibility",
+        "pros": ["Personal asset protection", "Pass-through taxation", "Flexible management", "Less paperwork than corp"],
+        "cons": ["Self-employment taxes", "Varies by state", "Can't issue stock"],
+        "cost": "$50-500 state filing fee",
+        "steps": [
+            "Choose your state (usually where you operate)",
+            "Pick a unique business name",
+            "File Articles of Organization with state",
+            "Create an Operating Agreement",
+            "Get an EIN from IRS (free, online)",
+            "Open a business bank account",
+            "Register for state/local licenses"
+        ]
+    },
+    "scorp": {
+        "name": "S Corporation",
+        "best_for": "Profitable businesses, tax savings",
+        "pros": ["Tax savings on self-employment", "Personal asset protection", "Credibility", "Can issue stock"],
+        "cons": ["More paperwork", "Stricter requirements", "Salary requirements", "State fees"],
+        "cost": "$100-800 state filing fee + ongoing fees",
+        "steps": [
+            "Form an LLC or C-Corp first",
+            "File Form 2553 with IRS for S-Corp election",
+            "Set up payroll for owner-employees",
+            "Maintain corporate formalities",
+            "File separate business tax return"
+        ]
+    },
+    "sole_prop": {
+        "name": "Sole Proprietorship",
+        "best_for": "Testing ideas, very small operations",
+        "pros": ["Simplest to start", "No filing required", "All profits are yours", "Easy taxes"],
+        "cons": ["No liability protection", "Harder to get funding", "Less credible", "Personal assets at risk"],
+        "cost": "Free (just DBA if using different name)",
+        "steps": [
+            "Start operating (that's it for federal)",
+            "File DBA if using a business name",
+            "Get required local licenses",
+            "Keep business records separate"
+        ]
+    }
+}
+
+
+def get_stage_prompt(stage: str) -> str:
+    """Get the system prompt for a given stage."""
+    return STAGE_PROMPTS.get(stage, STAGE_PROMPTS["researching"])
+
+
+def build_context(opportunity: dict, workspace: dict) -> str:
+    """Build context string from opportunity and workspace data."""
+    context_parts = []
+    
+    context_parts.append(f"**Opportunity:** {opportunity.get('title', 'Untitled')}")
+    context_parts.append(f"**Category:** {opportunity.get('category', 'Unknown')}")
+    
+    if opportunity.get('description'):
+        context_parts.append(f"**Description:** {opportunity['description'][:500]}")
+    
+    if opportunity.get('ai_problem_statement'):
+        context_parts.append(f"**Problem Statement:** {opportunity['ai_problem_statement']}")
+    
+    if opportunity.get('ai_market_size_estimate'):
+        context_parts.append(f"**Market Size:** {opportunity['ai_market_size_estimate']}")
+    
+    if opportunity.get('ai_competition_level'):
+        context_parts.append(f"**Competition:** {opportunity['ai_competition_level']}")
+    
+    if opportunity.get('ai_target_audience'):
+        context_parts.append(f"**Target Audience:** {opportunity['ai_target_audience']}")
+    
+    context_parts.append(f"\n**Current Stage:** {workspace.get('status', 'researching').upper()}")
+    context_parts.append(f"**Progress:** {workspace.get('progress_percent', 0)}%")
+    
+    return "\n".join(context_parts)
+
+
+async def chat_with_cofounder(
+    message: str,
+    stage: str,
+    opportunity: dict,
+    workspace: dict,
+    chat_history: list[dict] = None
+) -> str:
+    """
+    Chat with the AI Co-Founder.
+    
+    Args:
+        message: User's message
+        stage: Current workspace stage (researching, validating, planning, building, launched)
+        opportunity: Opportunity data dict
+        workspace: Workspace data dict
+        chat_history: List of previous messages [{"role": "user"|"assistant", "content": "..."}]
+    
+    Returns:
+        AI Co-Founder's response
+    """
+    system_prompt = get_stage_prompt(stage)
+    context = build_context(opportunity, workspace)
+    
+    full_system = f"""{system_prompt}
+
+---
+CURRENT CONTEXT:
+{context}
+---
+
+Remember: Be helpful, specific, and actionable. Guide them step by step toward success."""
+
+    messages = []
+    if chat_history:
+        messages.extend(chat_history[-20:])
+    
+    messages.append({"role": "user", "content": message})
+    
+    response = client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=2048,
+        system=full_system,
+        messages=messages
+    )
+    
+    return response.content[0].text
+
+
+def get_tool_recommendations(category: str = None) -> dict:
+    """Get tool recommendations, optionally filtered by category."""
+    if category and category in TOOL_RECOMMENDATIONS:
+        return {category: TOOL_RECOMMENDATIONS[category]}
+    return TOOL_RECOMMENDATIONS
+
+
+def get_business_formation_guide(entity_type: str = None) -> dict:
+    """Get business formation guide, optionally for a specific entity type."""
+    if entity_type and entity_type in BUSINESS_FORMATION_GUIDE:
+        return {entity_type: BUSINESS_FORMATION_GUIDE[entity_type]}
+    return BUSINESS_FORMATION_GUIDE

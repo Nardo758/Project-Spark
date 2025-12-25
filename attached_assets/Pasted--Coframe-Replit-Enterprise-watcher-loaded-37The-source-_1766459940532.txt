@@ -1,0 +1,285 @@
+[Coframe] Replit Enterprise watcher loaded
+37The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+37The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+37The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+/~:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+/~:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+/~:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+305b901c3fa22455.js:2 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+305b901c3fa22455.js:2 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+305b901c3fa22455.js:2 [LaunchDarkly] LaunchDarkly client initialized
+/~:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+/~:1 Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <a.Interactive2-module__IAGpQq__shades Interactive2-module__IAGpQq__root Interactive2-module__IAGpQq__transition Interactive2-module__IAGpQq__focus Interactive2-module__IAGpQq__disabled _sdz_text _sdz_hoverable-2 _sdz_pressable-3 Interactive2-module__IAGpQq__borderRadius Menu-module__ERNyJa__item#react-aria2532601912-:r1c:>
+Ancestor with aria-hidden: <div> <div aria-hidden=​"true" data-popper-reference-hidden=​"false" data-popper-escaped=​"false" data-popper-placement=​"right-start" style=​"position:​ absolute;​ inset:​ 0px auto auto 0px;​ z-index:​ 1001;​ transform:​ translate(238px, 150px)​;​">​…​</div>​Understand this warning
+83Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+ed1e693c96a75807.js:2 Unrecognized feature: 'ambient-light-sensor'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'battery'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'execution-while-not-rendered'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'execution-while-out-of-viewport'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'layout-animations'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'legacy-image-formats'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'navigation-override'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'oversized-images'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'publickey-credentials'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'speaker-selection'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'unoptimized-images'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'unsized-media'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Unrecognized feature: 'pointer-lock'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Allow attribute will take precedence over 'allowfullscreen'.
+z @ ed1e693c96a75807.js:2Understand this warning
+ed1e693c96a75807.js:2 Allow attribute will take precedence over 'allowpaymentrequest'.
+z @ ed1e693c96a75807.js:2Understand this warning
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'battery'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar4d%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+6OppGrid:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 [Coframe] Mutation callback infinite loop protection triggered, disconnecting mutation observer Object
+(anonymous) @ 305b901c3fa22455.js:2Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/consultant/stats:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/?page_size=5:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+auth.js:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+api.js:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+config.js:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/stats:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/tracking/events?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/tracking/summary?days=7:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/dashboard:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/stats:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/dashboard:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/patterns:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/jobs:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/patterns:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/job-runs?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/audit-logs?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/tracking/summary?days=7:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/tracking/events?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/dashboard:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=reddit:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=reddit:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=google_maps:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=google_maps:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=twitter:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=twitter:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=google_maps:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=google_maps:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/dashboard:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=google_maps:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/moderation/reports?status_filter=pending&limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/leads/?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/leads/stats:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/partners?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/admin/subscriptions?limit=50:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/dashboard:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=google_maps:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/dashboard:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/sources:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/scrapes?limit=50&source_type=google_maps:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/runs?limit=20:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/actors:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/status:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/runs?limit=20:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/actors:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/status:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/status:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/actors:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/runs?limit=20:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/actors:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/status:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/runs?limit=20:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/status:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/actors:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/runs?limit=20:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/actors:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/actors:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/api/v1/command-center/apify/schedules:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/users/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/users/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://john.example.co/&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://john.example.co&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://john.example.com&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://john.example.com/&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/users/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+14WebGL: CONTEXT_LOST_WEBGL: loseContext: context lostUnderstand this warning
+3305b901c3fa22455.js:2 webglcontextlost event received
+305b901c3fa22455.js:2 webglcontextrestored event received
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+288WebGL: INVALID_OPERATION: delete: object does not belong to this contextUnderstand this warning
+2305b901c3fa22455.js:2 webglcontextrestored event received
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/users/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/users/me:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+3305b901c3fa22455.js:2 webglcontextlost event received
+3305b901c3fa22455.js:2 webglcontextrestored event received
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+3305b901c3fa22455.js:2 webglcontextlost event received
+3305b901c3fa22455.js:2 webglcontextrestored event received
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev:3002/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+logs.browser-intake-us5-datadoghq.com/api/v2/logs?ddsource=browser&ddtags=sdk_version%3A4.46.0%2Capi%3Afetch%2Cenv%3Aproduction%2Cservice%3Awebsite%2Cversion%3A15c193bb&dd-api-key=pub31a5047a3a4692afb84a423db984dc57&dd-evp-origin-version=4.46.0&dd-evp-origin=browser&dd-request-id=d5f7e51c-ba6f-47ed-95d7-ccf90cbaef2c:1  Failed to load resource: net::ERR_CONNECTION_RESETUnderstand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+3305b901c3fa22455.js:2 webglcontextlost event received
+3305b901c3fa22455.js:2 webglcontextrestored event received
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+Grammarly-check.js:1 [Violation] Permissions policy violation: unload is not allowed in this document.
+(anonymous) @ Grammarly-check.js:1Understand this error
+t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.de/&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.de&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.dev&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.dev/&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.dev.ad&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.dev.ad/&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.dev.admin.ht/&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://.replit.dev.admin.ht&size=32:1  Failed to load resource: the server responded with a status of 404 ()Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 WARN: A component changed from uncontrolled to controlled.
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error

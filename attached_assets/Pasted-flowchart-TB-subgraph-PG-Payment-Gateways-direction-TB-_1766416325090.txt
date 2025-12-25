@@ -1,0 +1,93 @@
+flowchart TB
+    subgraph PG[Payment Gateways]
+        direction TB
+        STRIPE[Stripe Primary Gateway]
+        PAYPAL[PayPal Optional]
+        APPLE[Apple Pay via Stripe]
+        GOOGLE[Google Pay via Stripe]
+    end
+
+    subgraph PT[Payment Types]
+        direction TB
+        SUB[Subscription Payments]
+        PPU[Pay-Per-Unlock]
+        MICRO[Micro Payments Expert Tasks]
+        PROJECT[Project Payments]
+        VALIDATION[Idea Validation]
+        DEEPDIVE[Deep Dive Add-on]
+        FASTPASS[Fast Pass]
+        SUCCESS[Success Fee Escrow]
+    end
+
+    subgraph SI[Stripe Integration Points]
+        direction TB
+        CHECKOUT[Stripe Checkout Session]
+        INTENT[Payment Intent]
+        WEBHOOK[Webhook Handler]
+        PORTAL[Customer Portal]
+        CONNECT[Stripe Connect For Experts]
+    end
+
+    subgraph BS[Backend Services]
+        direction TB
+        STRIPE_SERVICE[StripeService]
+        PAYMENT_API[/api/v1/payments]
+        SUB_API[/api/v1/subscriptions]
+        WEBHOOK_API[/api/v1/webhook/stripe]
+    end
+
+    subgraph DB[Database]
+        direction TB
+        TRANSACTIONS[(transactions table)]
+        SUBSCRIPTIONS[(subscriptions table)]
+        UNLOCKED[(unlocked_opportunities)]
+        WEBHOOK_EVENTS[(stripe_webhook_events)]
+    end
+
+    %% Primary Gateway Connections
+    STRIPE --> CHECKOUT
+    STRIPE --> INTENT
+    STRIPE --> WEBHOOK
+    STRIPE --> PORTAL
+    STRIPE --> CONNECT
+
+    %% Payment Type Routing
+    SUB --> CHECKOUT
+    PPU --> INTENT
+    MICRO --> INTENT
+    PROJECT --> INTENT
+    VALIDATION --> INTENT
+    DEEPDIVE --> INTENT
+    FASTPASS --> INTENT
+    SUCCESS --> INTENT
+
+    %% Alternative Payment Methods
+    PAYPAL -.->|Optional| INTENT
+    APPLE --> CHECKOUT
+    GOOGLE --> CHECKOUT
+
+    %% Backend Integration
+    CHECKOUT --> STRIPE_SERVICE
+    INTENT --> STRIPE_SERVICE
+    WEBHOOK --> WEBHOOK_API
+    PORTAL --> SUB_API
+
+    STRIPE_SERVICE --> PAYMENT_API
+    STRIPE_SERVICE --> SUB_API
+
+    %% Database Persistence
+    PAYMENT_API --> TRANSACTIONS
+    SUB_API --> SUBSCRIPTIONS
+    SUB_API --> UNLOCKED
+    WEBHOOK_API --> WEBHOOK_EVENTS
+
+    %% Styling
+    classDef primary fill:#635BFF,color:#fff
+    classDef secondary fill:#00D4FF,color:#000
+    classDef optional fill:#FFC439,color:#000
+    classDef database fill:#4CAF50,color:#fff
+
+    class STRIPE primary
+    class CHECKOUT,INTENT,WEBHOOK,PORTAL,CONNECT secondary
+    class PAYPAL,APPLE,GOOGLE optional
+    class TRANSACTIONS,SUBSCRIPTIONS,UNLOCKED,WEBHOOK_EVENTS database

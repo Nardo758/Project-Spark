@@ -26,6 +26,8 @@ class Opportunity(Base):
     country = Column(String(100), nullable=True)  # Country name or code
     region = Column(String(100), nullable=True)  # State/Province/Region
     city = Column(String(100), nullable=True)  # City name
+    latitude = Column(Float, nullable=True)  # GPS latitude
+    longitude = Column(Float, nullable=True)  # GPS longitude
 
     # Completion Tracking
     completion_status = Column(String(50), default="open")  # open, in_progress, solved, abandoned
@@ -77,3 +79,5 @@ class Opportunity(Base):
     author = relationship("User", back_populates="opportunities")
     validations = relationship("Validation", back_populates="opportunity", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="opportunity", cascade="all, delete-orphan")
+    generated_reports = relationship("GeneratedReport", back_populates="opportunity")
+    workspaces = relationship("UserWorkspace", back_populates="opportunity")

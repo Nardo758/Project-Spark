@@ -20,10 +20,27 @@ from .partner import PartnerOutreach, PartnerOutreachStatus
 from .tracking import TrackingEvent
 from .audit_log import AuditLog
 from .job_run import JobRun
+from .lead import Lead, LeadStatus, LeadSource
+from .saved_search import SavedSearch
+from .lead_purchase import LeadPurchase
+from .generated_report import GeneratedReport, ReportType, ReportStatus
+from .consultant_activity import ConsultantActivity, ConsultantPath
+from .detected_trend import DetectedTrend
+from .trend_opportunity_mapping import TrendOpportunityMapping
+from .location_analysis_cache import LocationAnalysisCache, BusinessType
+from .scraped_source import ScrapedSource, SourceType
+from .geographic_feature import GeographicFeature, FeatureType
+from .map_layer import MapLayer, LayerType
+from .user_map_session import UserMapSession
+from .rate_limit import RateLimitCounter
+from .data_source import DataSource, DataSourceStatus, ValidationPattern, SystemMetric, ScrapeJob
+from .google_scraping import (
+    LocationCatalog, KeywordGroup, GoogleScrapeJob, GoogleMapsBusiness, GoogleSearchCache,
+    LocationType, MatchType, JobStatus, ScheduleType
+)
 from .workspace import (
-    Collection, Tag, SavedOpportunity, SavedOpportunityTag,
-    UserWorkspace, WorkspaceTask, WorkspaceNote, WorkspaceDocument,
-    WorkspaceChatMessage, WorkspaceStatus, TaskPriority
+    UserWorkspace, WorkspaceNote, WorkspaceTask, WorkspaceDocument,
+    WorkspaceStatus, TaskPriority
 )
 
 __all__ = [
@@ -62,15 +79,46 @@ __all__ = [
     "TrackingEvent",
     "AuditLog",
     "JobRun",
-    "Collection",
-    "Tag",
-    "SavedOpportunity",
-    "SavedOpportunityTag",
+    "Lead",
+    "LeadStatus",
+    "LeadSource",
+    "SavedSearch",
+    "LeadPurchase",
+    "GeneratedReport",
+    "ReportType",
+    "ReportStatus",
+    "ConsultantActivity",
+    "ConsultantPath",
+    "DetectedTrend",
+    "TrendOpportunityMapping",
+    "LocationAnalysisCache",
+    "BusinessType",
+    "ScrapedSource",
+    "SourceType",
+    "GeographicFeature",
+    "FeatureType",
+    "MapLayer",
+    "LayerType",
+    "UserMapSession",
+    "RateLimitCounter",
+    "DataSource",
+    "DataSourceStatus",
+    "ValidationPattern",
+    "SystemMetric",
+    "ScrapeJob",
+    "LocationCatalog",
+    "KeywordGroup",
+    "GoogleScrapeJob",
+    "GoogleMapsBusiness",
+    "GoogleSearchCache",
+    "LocationType",
+    "MatchType",
+    "JobStatus",
+    "ScheduleType",
     "UserWorkspace",
-    "WorkspaceTask",
     "WorkspaceNote",
+    "WorkspaceTask",
     "WorkspaceDocument",
-    "WorkspaceChatMessage",
     "WorkspaceStatus",
     "TaskPriority",
 ]

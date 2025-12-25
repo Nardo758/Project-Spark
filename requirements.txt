@@ -89,3 +89,5 @@ requests
 sqlalchemy
 stripe
 uvicorn
+apify-client
+google-search-results

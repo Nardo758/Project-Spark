@@ -33,3 +33,10 @@ class ConfirmPaymentResponse(BaseModel):
     status: str
     transaction_id: Optional[int] = None
 
+
+class CreateDeepDivePaymentRequest(BaseModel):
+    opportunity_id: int = Field(..., ge=1)
+
+
+class CreateFastPassPaymentRequest(BaseModel):
+    opportunity_id: int = Field(..., ge=1)

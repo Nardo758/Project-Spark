@@ -1,0 +1,30 @@
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2Understand this warning
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+9a61c298-38e2-4278-b5f3-d9b0b81c28c0-00-22ajo62h9oqi7.spock.replit.dev/api/v1/reports/my-stats:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+305b901c3fa22455.js:2 If you do not provide a visible label, you must specify an aria-label or aria-labelledby attribute for accessibility
+(anonymous) @ 305b901c3fa22455.js:2
+n @ 42976e1ae94c6231.js:2
+y @ 32bb6e0aabeb8690.js:2
+E @ 32bb6e0aabeb8690.js:2
+(anonymous) @ 2a0781079eb8d180.js:2
+r @ 42976e1ae94c6231.js:2
+am @ ed1e693c96a75807.js:2
+us @ ed1e693c96a75807.js:2
+o @ ed1e693c96a75807.js:2
+iV @ ed1e693c96a75807.js:2
+iU @ ed1e693c96a75807.js:2
+i_ @ ed1e693c96a75807.js:2
+C @ ed1e693c96a75807.js:2
+M @ ed1e693c96a75807.js:2Understand this warning
+injected.js:37 Locations API response: Array(50)
+injected.js:37 renderLocationsList called with 50 locations
+injected.js:37 Filtered to 0 main locations (city/metro/neighborhood)
+injected.js:37 Locations API response: Array(50)
+injected.js:37 renderLocationsList called with 50 locations
+injected.js:37 Filtered to 0 main locations (city/metro/neighborhood)

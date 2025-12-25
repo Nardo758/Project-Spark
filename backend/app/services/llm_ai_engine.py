@@ -60,6 +60,15 @@ def get_anthropic_client():
         api_key = os.getenv("ANTHROPIC_API_KEY")
     
     if not api_key:
+        api_key = os.getenv("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
+    
+    if not api_key:
+        api_key = os.getenv("CLAUDE_API_KEY")
+    
+    if not api_key:
+        api_key = os.getenv("CLAUDE_API")
+    
+    if not api_key:
         return None
     
     try:
@@ -83,7 +92,7 @@ class LLMAIEngineService:
     
     def __init__(self):
         self.model = "claude-sonnet-4-20250514"
-        self.fast_model = "claude-haiku-4-5-20250514"
+        self.fast_model = "claude-3-5-haiku-20241022"
     
     def _get_success_patterns_context(self, db: Session, opportunity_type: str = None, limit: int = 5) -> str:
         """Get relevant success patterns for context."""
@@ -369,6 +378,49 @@ Respond only with valid JSON."""
         except Exception as e:
             logger.error(f"LLM validation failed, using heuristic: {e}")
             return heuristic_result
+
+
+    async def generate_response(self, prompt: str, model: str = "deepseek") -> Dict[str, Any]:
+        """
+        Generate a response from the AI model.
+        
+        Args:
+            prompt: The prompt to send to the model
+            model: Which model to use ("deepseek" or "claude")
+        
+        Returns:
+            Dictionary with the response
+        """
+        client = get_anthropic_client()
+        if not client:
+            logger.warning("No AI client available, returning empty response")
+            return {"error": "AI service not available", "response": None}
+        
+        try:
+            model_id = self.fast_model if model == "deepseek" else self.model
+            
+            response = client.messages.create(
+                model=model_id,
+                max_tokens=1500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = response.content[0].text.strip()
+            
+            if response_text.startswith("```"):
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+            
+            try:
+                parsed = json.loads(response_text)
+                return {"response": parsed, "raw": response_text}
+            except json.JSONDecodeError:
+                return {"response": response_text, "raw": response_text}
+                
+        except Exception as e:
+            logger.error(f"AI generation failed: {e}")
+            return {"error": str(e), "response": None}
 
 
 llm_ai_engine_service = LLMAIEngineService()

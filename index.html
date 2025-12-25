@@ -1888,14 +1888,15 @@
                 showLoggedOutUI();
             }
             
-            loadDynamicContent();
+            startLandingRealtime();
         });
 
         async function loadDynamicContent() {
             try {
+                const baseURL = (window.api && api.baseURL) ? api.baseURL : (window.API_BASE_URL || '/api/v1');
                 const [topOppsResponse, statsResponse] = await Promise.all([
-                    fetch('/api/v1/ai-analysis/top-opportunities?limit=1'),
-                    fetch('/api/v1/ai-analysis/stats')
+                    fetch(`${baseURL}/ai-analysis/top-opportunities?limit=1`),
+                    fetch(`${baseURL}/ai-analysis/stats`)
                 ]);
 
                 if (topOppsResponse.ok) {
@@ -1912,6 +1913,73 @@
             } catch (error) {
                 console.log('Using fallback static content');
             }
+        }
+
+        // Real-time landing page updates (SSE) with polling fallback
+        const landingRealtime = {
+            es: null,
+            pollId: null,
+            started: false,
+        };
+
+        function startLandingRealtime() {
+            if (landingRealtime.started) return;
+            landingRealtime.started = true;
+
+            const baseURL = (window.api && api.baseURL) ? api.baseURL : (window.API_BASE_URL || '/api/v1');
+            const streamURL = `${baseURL}/ai-analysis/stream?limit=1&interval=10`;
+
+            function startPollingFallback() {
+                if (landingRealtime.pollId) return;
+                landingRealtime.pollId = setInterval(() => {
+                    loadDynamicContent();
+                }, 30000);
+            }
+
+            // Initial paint (in case stream takes a moment)
+            loadDynamicContent();
+
+            if (!('EventSource' in window)) {
+                startPollingFallback();
+                return;
+            }
+
+            try {
+                landingRealtime.es = new EventSource(streamURL);
+            } catch (e) {
+                startPollingFallback();
+                return;
+            }
+
+            landingRealtime.es.addEventListener('update', (evt) => {
+                try {
+                    const payload = JSON.parse(evt.data || '{}');
+                    if (payload && payload.stats) updateStats(payload.stats);
+                    if (payload && payload.top_opportunities && payload.top_opportunities.length > 0) {
+                        updateHeroCard(payload.top_opportunities[0]);
+                    }
+                } catch (e) {
+                    // ignore malformed messages
+                }
+            });
+
+            landingRealtime.es.addEventListener('ping', () => {
+                // keepalive event (no-op)
+            });
+
+            landingRealtime.es.onerror = () => {
+                // If the connection is closed, fall back to polling
+                if (!landingRealtime.es) return;
+                if (landingRealtime.es.readyState === 2) {
+                    try { landingRealtime.es.close(); } catch (e) {}
+                    landingRealtime.es = null;
+                    startPollingFallback();
+                }
+            };
+
+            window.addEventListener('beforeunload', () => {
+                try { landingRealtime.es && landingRealtime.es.close(); } catch (e) {}
+            });
         }
 
         function updateHeroCard(opp) {

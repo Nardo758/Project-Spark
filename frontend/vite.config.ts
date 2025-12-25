@@ -17,17 +17,55 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
+    // Use 5000 by default to align with the system diagrams and Replit routing.
+    // (You can override with `npm run dev -- --port <port>`.)
     port: 5000,
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
-      '/auth': {
+      '/auth/login': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/auth/callback': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/auth/logout': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/auth/status': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/auth/debug': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
       '/__repl_auth_callback': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/callback': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/docs': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/openapi.json': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/redoc': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },

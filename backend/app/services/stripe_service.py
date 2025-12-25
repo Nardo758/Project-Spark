@@ -113,6 +113,8 @@ class StripeService:
 
     # Pay-per-unlock pricing
     PAY_PER_UNLOCK_PRICE = 1500  # $15.00 in cents
+    FAST_PASS_PRICE = 9900  # $99.00 in cents (Business HOT fast-pass)
+    DEEP_DIVE_PRICE = 4900  # $49.00 in cents (Layer 2 add-on for Pro tier)
 
     # Subscription tier limits (updated per pricing strategy)
     TIER_LIMITS = {
@@ -395,7 +397,8 @@ class StripeService:
         user_id: int
     ):
         """
-        Create a Stripe PaymentIntent for pay-per-unlock ($15)
+        Create a Stripe PaymentIntent for one-time unlock.
+        Default is pay-per-unlock ($15). Callers may override amount/type.
         """
         client = get_stripe_client()
         return client.PaymentIntent.create(
@@ -408,6 +411,31 @@ class StripeService:
                 "user_id": str(user_id)
             },
             automatic_payment_methods={"enabled": True}
+        )
+
+    @staticmethod
+    def create_payment_intent_for_one_time_unlock(
+        customer_id: str,
+        opportunity_id: int,
+        user_id: int,
+        *,
+        amount_cents: int,
+        unlock_type: str,
+    ):
+        """
+        Create a PaymentIntent for one-time access grants (pay-per-unlock / fast-pass).
+        """
+        client = get_stripe_client()
+        return client.PaymentIntent.create(
+            amount=int(amount_cents),
+            currency="usd",
+            customer=customer_id,
+            metadata={
+                "type": unlock_type,
+                "opportunity_id": str(opportunity_id),
+                "user_id": str(user_id),
+            },
+            automatic_payment_methods={"enabled": True},
         )
 
     @staticmethod

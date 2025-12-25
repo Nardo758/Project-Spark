@@ -442,6 +442,32 @@
             color: var(--red-600);
         }
 
+        /* Lead statuses */
+        .badge-new {
+            background: var(--blue-100);
+            color: var(--blue-600);
+        }
+
+        .badge-qualified {
+            background: var(--green-100);
+            color: var(--green-600);
+        }
+
+        .badge-nurturing {
+            background: var(--violet-100);
+            color: var(--violet-700);
+        }
+
+        .badge-converted {
+            background: var(--green-100);
+            color: var(--green-600);
+        }
+
+        .badge-lost {
+            background: var(--red-100);
+            color: var(--red-600);
+        }
+
         .action-btns {
             display: flex;
             gap: 8px;
@@ -730,6 +756,14 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#leads" data-section="leads">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Leads
+                    </a>
+                </li>
+                <li>
                     <a href="#reports" data-section="reports">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         Reports
@@ -739,6 +773,22 @@
                     <a href="#scraper" data-section="scraper">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
                         Scraper Data
+                    </a>
+                </li>
+                <li>
+                    <a href="#command-center" data-section="command-center">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                        </svg>
+                        Command Center
+                    </a>
+                </li>
+                <li>
+                    <a href="#google-scraping" data-section="google-scraping">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Google Scraping
                     </a>
                 </li>
             </ul>
@@ -1044,6 +1094,69 @@
                 </div>
             </section>
 
+            <section id="section-leads" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Lead Management</h1>
+                    <p>Manage potential customers and lead nurturing campaigns</p>
+                </div>
+
+                <div class="stats-grid" id="leads-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Leads</div>
+                        <div class="stat-value" id="leads-total">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">New</div>
+                        <div class="stat-value" id="leads-new">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Qualified</div>
+                        <div class="stat-value" id="leads-qualified">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Conversion Rate</div>
+                        <div class="stat-value" id="leads-conversion">--%</div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Leads Pipeline</h2>
+                        <div class="section-actions">
+                            <input type="text" class="search-input" id="lead-search" placeholder="Search leads...">
+                            <select class="filter-select" id="lead-status-filter">
+                                <option value="">All statuses</option>
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="qualified">Qualified</option>
+                                <option value="nurturing">Nurturing</option>
+                                <option value="converted">Converted</option>
+                                <option value="lost">Lost</option>
+                            </select>
+                            <button class="btn-sm btn-success" onclick="bulkNurtureLeads()">Send Nurture Emails</button>
+                            <button class="btn-sm btn-primary" onclick="showLeadModal()">Add Lead</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                                <th>Sequence</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leads-table-body">
+                            <tr><td colspan="8" class="loading">Loading leads...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section id="section-reports" class="hidden">
                 <div class="page-header">
                     <h1 class="spektral">Content Reports</h1>
@@ -1083,7 +1196,20 @@
             <section id="section-scraper" class="hidden">
                 <div class="page-header">
                     <h1 class="spektral">Scraper Data Import</h1>
-                    <p>Upload and analyze Reddit scraper data to discover business opportunities</p>
+                    <p>Upload and analyze scraper data to discover business opportunities</p>
+                </div>
+
+                <!-- Webhook Calendar -->
+                <div class="content-section" style="margin-bottom: 24px;">
+                    <div class="section-header">
+                        <h2>Data Import Calendar</h2>
+                        <div class="section-actions">
+                            <button class="btn-sm btn-primary" onclick="loadWebhookCalendar()">Refresh</button>
+                        </div>
+                    </div>
+                    <div id="webhook-calendar-container">
+                        <div style="padding: 40px; text-align: center; color: var(--stone-400);">Loading calendar...</div>
+                    </div>
                 </div>
 
                 <div class="content-section">
@@ -1139,6 +1265,571 @@
                             <tbody id="scraper-table-body">
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-command-center" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Command Center</h1>
+                    <p>Centralized management for data sources, validation patterns, and pipeline monitoring</p>
+                </div>
+
+                <!-- Command Center Stats -->
+                <div class="stats-grid" id="cc-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Active Sources</div>
+                        <div class="stat-value" id="cc-active-sources">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Scraped (24h)</div>
+                        <div class="stat-value" id="cc-scraped-24h">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Opportunities (24h)</div>
+                        <div class="stat-value" id="cc-opps-24h">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Processing</div>
+                        <div class="stat-value" id="cc-pending">--</div>
+                    </div>
+                </div>
+
+                <!-- Command Center Tabs -->
+                <div class="content-section" style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--stone-200); padding-bottom: 12px;">
+                        <button class="btn-sm btn-primary cc-tab-btn active" data-cc-tab="sources">Data Sources</button>
+                        <button class="btn-sm cc-tab-btn" data-cc-tab="patterns">Validation Patterns</button>
+                        <button class="btn-sm cc-tab-btn" data-cc-tab="jobs">Jobs & Queue</button>
+                        <button class="btn-sm cc-tab-btn" data-cc-tab="pipeline">Pipeline Stats</button>
+                        <button class="btn-sm cc-tab-btn" data-cc-tab="apify">Apify Scrapers</button>
+                        <button class="btn-sm cc-tab-btn" data-cc-tab="serpapi">SerpAPI</button>
+                    </div>
+
+                    <!-- Sources Tab -->
+                    <div id="cc-tab-sources" class="cc-tab-content">
+                        <div class="section-header">
+                            <h2>Data Sources</h2>
+                            <div class="section-actions">
+                                <button class="btn-sm btn-primary" onclick="seedDefaultSources()">Seed Defaults</button>
+                                <button class="btn-sm" onclick="showAddSourceModal()">+ Add Source</button>
+                                <button class="btn-sm" onclick="loadCommandCenterSources()">Refresh</button>
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Weight</th>
+                                    <th>Total Scrapes</th>
+                                    <th>Valid Opps</th>
+                                    <th>Last Scraped</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cc-sources-table-body">
+                                <tr><td colspan="8" class="loading">Loading sources...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Patterns Tab -->
+                    <div id="cc-tab-patterns" class="cc-tab-content hidden">
+                        <div class="section-header">
+                            <h2>Validation Patterns</h2>
+                            <div class="section-actions">
+                                <select class="filter-select" id="cc-pattern-category-filter">
+                                    <option value="">All Categories</option>
+                                </select>
+                                <button class="btn-sm" onclick="showAddPatternModal()">+ Add Pattern</button>
+                                <button class="btn-sm" onclick="loadCommandCenterPatterns()">Refresh</button>
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Pattern Name</th>
+                                    <th>Category</th>
+                                    <th>Confidence</th>
+                                    <th>Validation Level</th>
+                                    <th>Hits</th>
+                                    <th>False Positives</th>
+                                    <th>Last Match</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cc-patterns-table-body">
+                                <tr><td colspan="9" class="loading">Loading patterns...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Jobs Tab -->
+                    <div id="cc-tab-jobs" class="cc-tab-content hidden">
+                        <div class="section-header">
+                            <h2>Scrape Jobs</h2>
+                            <div class="section-actions">
+                                <select class="filter-select" id="cc-job-status-filter">
+                                    <option value="">All Statuses</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="running">Running</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                                <button class="btn-sm btn-primary" onclick="showCreateJobModal()">+ Create Job</button>
+                                <button class="btn-sm" onclick="loadCommandCenterJobs()">Refresh</button>
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Source</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Processed</th>
+                                    <th>Accepted</th>
+                                    <th>Rejected</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cc-jobs-table-body">
+                                <tr><td colspan="9" class="loading">Loading jobs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pipeline Stats Tab -->
+                    <div id="cc-tab-pipeline" class="cc-tab-content hidden">
+                        <div class="section-header">
+                            <h2>Pipeline Statistics</h2>
+                            <div class="section-actions">
+                                <button class="btn-sm" onclick="loadCommandCenterPipeline()">Refresh</button>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+                            <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                                <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700);">Source Performance</h3>
+                                <div id="cc-source-performance">
+                                    <div style="color: var(--stone-400);">Loading...</div>
+                                </div>
+                            </div>
+                            <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                                <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700);">Category Breakdown</h3>
+                                <div id="cc-category-breakdown">
+                                    <div style="color: var(--stone-400);">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 24px; background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                            <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700);">Hourly Processing (Last 24h)</h3>
+                            <div id="cc-hourly-stats" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <div style="color: var(--stone-400);">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Apify Scrapers Tab -->
+                    <div id="cc-tab-apify" class="cc-tab-content hidden">
+                        <div class="section-header">
+                            <h2>Apify Scrapers</h2>
+                            <div class="section-actions">
+                                <button class="btn-sm" onclick="loadApifyActors()">Refresh Actors</button>
+                                <button class="btn-sm" onclick="loadApifySchedules()">Refresh Schedules</button>
+                                <button class="btn-sm" onclick="loadApifyRuns()">Refresh Runs</button>
+                            </div>
+                        </div>
+                        
+                        <div id="apify-status" style="margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; background: var(--stone-100);">
+                            <span style="color: var(--stone-500);">Checking Apify connection...</span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                                <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700); display: flex; justify-content: space-between; align-items: center;">
+                                    Actors
+                                    <span id="apify-actors-count" style="font-size: 12px; color: var(--stone-400);"></span>
+                                </h3>
+                                <div id="apify-actors-list" style="max-height: 300px; overflow-y: auto;">
+                                    <div style="color: var(--stone-400);">Loading actors...</div>
+                                </div>
+                            </div>
+                            <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                                <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700); display: flex; justify-content: space-between; align-items: center;">
+                                    Schedules
+                                    <span id="apify-schedules-count" style="font-size: 12px; color: var(--stone-400);"></span>
+                                </h3>
+                                <div id="apify-schedules-list" style="max-height: 300px; overflow-y: auto;">
+                                    <div style="color: var(--stone-400);">Loading schedules...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Import Apify Run -->
+                        <div style="background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                            <h3 style="margin-bottom: 12px; font-size: 16px; color: #065f46; font-weight: 600;">Import Apify Run Results</h3>
+                            <p style="font-size: 13px; color: #374151; margin-bottom: 16px;">Import places and reviews from a completed Apify Google Maps run into OppGrid.</p>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div>
+                                    <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Apify Run ID</label>
+                                    <input type="text" id="apify-import-run-id" placeholder="e.g., rkLYPw2q2Sbt6S8wT" style="padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%; box-sizing: border-box;">
+                                </div>
+                                <button onclick="importApifyRun()" style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">Import to OppGrid</button>
+                            </div>
+                            <div id="apify-import-status" style="margin-top: 12px; display: none;"></div>
+                        </div>
+
+                        <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                            <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700); display: flex; justify-content: space-between; align-items: center;">
+                                Recent Runs
+                                <span id="apify-runs-count" style="font-size: 12px; color: var(--stone-400);"></span>
+                            </h3>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Actor</th>
+                                        <th>Status</th>
+                                        <th>Started</th>
+                                        <th>Duration</th>
+                                        <th>Items</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="apify-runs-table-body">
+                                    <tr><td colspan="6" class="loading">Loading runs...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SerpAPI Tab -->
+                    <div id="cc-tab-serpapi" class="cc-tab-content hidden">
+                        <div class="section-header">
+                            <h2>SerpAPI - Google Search & Maps Reviews</h2>
+                            <div class="section-actions">
+                                <button class="btn-sm" onclick="loadSerpAPIStatus()">Refresh Status</button>
+                            </div>
+                        </div>
+                        
+                        <div id="serpapi-status" style="padding: 12px; border-radius: 8px; margin-bottom: 20px; background: var(--stone-100);">
+                            Checking SerpAPI connection...
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <!-- Google Search -->
+                            <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                                <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700);">Google Search</h3>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <input type="text" id="serpapi-search-query" placeholder="Search query..." style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px;">
+                                    <input type="text" id="serpapi-search-location" placeholder="Location (optional, e.g., Austin, TX)" style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px;">
+                                    <button class="btn-sm btn-primary" onclick="runSerpAPIGoogleSearch()">Search Google</button>
+                                </div>
+                            </div>
+
+                            <!-- Google Maps Search -->
+                            <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                                <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700);">Google Maps Search</h3>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <input type="text" id="serpapi-maps-query" placeholder="Business type (e.g., coffee shops)" style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px;">
+                                    <input type="text" id="serpapi-maps-location" placeholder="Location (e.g., Austin, TX)" style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px;">
+                                    <button class="btn-sm btn-primary" onclick="runSerpAPIMapsSearch()">Search Maps</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Places with Reviews -->
+                        <div style="background: var(--stone-50); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700);">Search Places & Get Reviews</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr auto auto auto; gap: 12px; align-items: end;">
+                                <div>
+                                    <label style="font-size: 12px; color: var(--stone-500);">Business Type</label>
+                                    <input type="text" id="serpapi-places-query" placeholder="e.g., restaurants, dentists" style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px; width: 100%;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; color: var(--stone-500);">Location</label>
+                                    <input type="text" id="serpapi-places-location" placeholder="e.g., Austin, TX" style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px; width: 100%;">
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; color: var(--stone-500);">Max Places</label>
+                                    <select id="serpapi-places-max" style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px;">
+                                        <option value="3">3</option>
+                                        <option value="5" selected>5</option>
+                                        <option value="10">10</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 12px; color: var(--stone-500);">Reviews/Place</label>
+                                    <select id="serpapi-places-reviews" style="padding: 10px; border: 1px solid var(--stone-300); border-radius: 8px;">
+                                        <option value="5">5</option>
+                                        <option value="10" selected>10</option>
+                                        <option value="20">20</option>
+                                    </select>
+                                </div>
+                                <button class="btn-sm btn-primary" onclick="runSerpAPIPlacesWithReviews()">Search & Get Reviews</button>
+                            </div>
+                        </div>
+
+                        <!-- Results Display -->
+                        <div style="background: var(--stone-50); border-radius: 12px; padding: 20px;">
+                            <h3 style="margin-bottom: 16px; font-size: 16px; color: var(--stone-700); display: flex; justify-content: space-between; align-items: center;">
+                                Results
+                                <span id="serpapi-results-count" style="font-size: 12px; color: var(--stone-400);"></span>
+                            </h3>
+                            <div id="serpapi-results" style="max-height: 500px; overflow-y: auto;">
+                                <div style="color: var(--stone-400); text-align: center; padding: 40px;">Run a search to see results</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Scrapes -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Scrapes</h2>
+                        <div class="section-actions">
+                            <select class="filter-select" id="cc-scrape-source-filter">
+                                <option value="">All Sources</option>
+                                <option value="reddit">Reddit</option>
+                                <option value="google_maps">Google Maps</option>
+                                <option value="yelp">Yelp</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="nextdoor">Nextdoor</option>
+                            </select>
+                            <select class="filter-select" id="cc-scrape-processed-filter">
+                                <option value="">All</option>
+                                <option value="true">Processed</option>
+                                <option value="false">Pending</option>
+                            </select>
+                            <button class="btn-sm" onclick="loadCommandCenterScrapes()">Refresh</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>External ID</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th>Received</th>
+                                <th>Preview</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cc-scrapes-table-body">
+                            <tr><td colspan="6" class="loading">Loading scrapes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Google Scraping Section -->
+            <section id="section-google-scraping" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Google Scraping Framework</h1>
+                    <p>Location-based keyword scraping using SerpAPI</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid" id="gs-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Locations</div>
+                        <div class="stat-value" id="gs-stat-locations">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Keyword Groups</div>
+                        <div class="stat-value" id="gs-stat-keywords">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Jobs</div>
+                        <div class="stat-value" id="gs-stat-jobs">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Cached Businesses</div>
+                        <div class="stat-value" id="gs-stat-businesses">--</div>
+                    </div>
+                </div>
+
+                <!-- Dual Column Layout -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+                    <!-- Left Column: Locations -->
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2>Locations</h2>
+                            <div class="section-actions">
+                                <input type="text" id="gs-location-search" placeholder="Search locations..." class="filter-input" style="width: 150px;">
+                                <button class="btn-sm btn-success" onclick="seedLocations()">Seed All</button>
+                                <button class="btn-sm" onclick="showAddLocationModal()">+ Add</button>
+                            </div>
+                        </div>
+                        <div id="gs-locations-list" style="max-height: 400px; overflow-y: auto;">
+                            <div class="loading">Loading locations...</div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Keywords -->
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2>Keyword Groups</h2>
+                            <div class="section-actions">
+                                <input type="text" id="gs-keyword-search" placeholder="Search keywords..." class="filter-input" style="width: 150px;">
+                                <button class="btn-sm" onclick="showAddKeywordGroupModal()">+ Add</button>
+                            </div>
+                        </div>
+                        <div id="gs-keywords-list" style="max-height: 400px; overflow-y: auto;">
+                            <div class="loading">Loading keyword groups...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Configuration Panel -->
+                <div class="content-section" style="margin-top: 24px;">
+                    <div class="section-header">
+                        <h2>Create Scraping Job</h2>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 16px;">
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 4px;">Location</label>
+                            <select id="gs-job-location" class="filter-select" style="width: 100%;" onchange="onCityChange()">
+                                <option value="">Select location...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 4px;">Zip Code Coverage</label>
+                            <select id="gs-job-zip-mode" class="filter-select" style="width: 100%;" onchange="onZipModeChange()">
+                                <option value="all_zips" selected>All Zip Codes</option>
+                                <option value="city_only">City Only (no zips)</option>
+                                <option value="specific_zips">Specific Zips...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 4px;">Keyword Group</label>
+                            <select id="gs-job-keywords" class="filter-select" style="width: 100%;">
+                                <option value="">Select keywords...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 4px;">Source Type</label>
+                            <select id="gs-job-source" class="filter-select" style="width: 100%;">
+                                <option value="google_maps_reviews">Google Maps Reviews</option>
+                                <option value="google_search">Google Search</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="gs-zip-selector" style="display: none; padding: 0 16px 16px;">
+                        <label style="display: block; font-weight: 500; margin-bottom: 8px;">Select Zip Codes <span id="gs-zip-count" style="color: #888; font-weight: 400;">(0 available)</span></label>
+                        <div id="gs-zip-list" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 120px; overflow-y: auto; background: #1a1a1a; padding: 12px; border-radius: 8px;">
+                            <span style="color: #666;">Select a city first</span>
+                        </div>
+                        <div style="margin-top: 8px; display: flex; gap: 8px;">
+                            <button class="btn-sm" onclick="selectAllZips()">Select All</button>
+                            <button class="btn-sm" onclick="deselectAllZips()">Deselect All</button>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 0 16px 16px;">
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 4px;">Depth per Location</label>
+                            <select id="gs-job-depth" class="filter-select" style="width: 100%;">
+                                <option value="20">20 results</option>
+                                <option value="50" selected>50 results</option>
+                                <option value="100">100 results</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; margin-bottom: 4px;">Job Name</label>
+                            <input type="text" id="gs-job-name" placeholder="e.g., 'Austin Parking Issues'" class="filter-input" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div style="padding: 0 16px 16px;">
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: 11px; color: #888; text-transform: uppercase;">Single Location</span>
+                                <button class="btn-primary" onclick="createAndRunJob()">Run Selected</button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: 11px; color: #888; text-transform: uppercase;">With Zip Codes</span>
+                                <button class="btn-secondary" onclick="runWithZipCoverage()" style="background: #1a1a1a; border: 1px solid #333;">Run + Zips</button>
+                            </div>
+                            <div style="border-left: 1px solid #333; height: 40px; margin: 0 8px;"></div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: 11px; color: #22c55e; text-transform: uppercase; font-weight: 600;">Batch Run</span>
+                                <button class="btn-secondary" onclick="runAllCities()" style="background: #166534; border: 1px solid #22c55e; color: #fff;">Run All Cities</button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: 11px; color: #3b82f6; text-transform: uppercase; font-weight: 600;">All Keywords</span>
+                                <button class="btn-secondary" onclick="runAllKeywords()" style="background: #1e3a8a; border: 1px solid #3b82f6; color: #fff;">Run All Keywords</button>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <span style="font-size: 11px; color: #dc2626; text-transform: uppercase; font-weight: 600;">Full Sweep</span>
+                                <button class="btn-secondary" onclick="runFullSweep()" style="background: #7f1d1d; border: 1px solid #dc2626; color: #fff;">Run All Cities × All Keywords</button>
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 12px; color: #666;">
+                            Tip: "Full Sweep" runs ALL keyword groups across ALL cities - use with caution as this creates many jobs.
+                        </div>
+                    </div>
+                    <div id="gs-batch-progress" style="display: none; padding: 0 16px 16px;">
+                        <div style="background: #1a1a1a; border-radius: 8px; padding: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span id="gs-batch-status">Processing...</span>
+                                <span id="gs-batch-count">0/0</span>
+                            </div>
+                            <div style="background: #333; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div id="gs-batch-bar" style="background: #22c55e; height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="gs-batch-log" style="margin-top: 12px; max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 12px; color: #888;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jobs History -->
+                <div class="content-section" style="margin-top: 24px;">
+                    <div class="section-header">
+                        <h2>Recent Jobs</h2>
+                        <div class="section-actions">
+                            <select class="filter-select" id="gs-job-status-filter">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="running">Running</option>
+                                <option value="completed">Completed</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                            <button class="btn-sm" onclick="loadGoogleScrapingJobs()">Refresh</button>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Location</th>
+                                <th>Keywords</th>
+                                <th>Status</th>
+                                <th>Results</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gs-jobs-table-body">
+                            <tr><td colspan="8" class="loading">Loading jobs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Results Panel -->
+                <div class="content-section" style="margin-top: 24px; display: none;" id="gs-results-panel">
+                    <div class="section-header">
+                        <h2>Job Results</h2>
+                        <div class="section-actions">
+                            <button class="btn-sm" onclick="closeResultsPanel()">Close</button>
+                            <button class="btn-sm" onclick="exportJobResults()">Export CSV</button>
+                        </div>
+                    </div>
+                    <div id="gs-results-content" style="max-height: 500px; overflow-y: auto; padding: 16px;">
                     </div>
                 </div>
             </section>
@@ -1228,8 +1919,11 @@
                 case 'opportunities': loadOpportunities(); break;
                 case 'subscriptions': loadSubscriptions(); break;
                 case 'partners': loadPartners(); break;
+                case 'leads': loadLeads(); loadLeadStats(); break;
                 case 'reports': loadReports(); break;
-                case 'scraper': break;
+                case 'scraper': loadWebhookCalendar(); break;
+                case 'command-center': loadCommandCenter(); break;
+                case 'google-scraping': loadGoogleScraping(); break;
             }
         }
 
@@ -1884,6 +2578,241 @@
             }
         }
 
+        async function loadLeadStats() {
+            try {
+                const response = await fetchWithAuth('/api/v1/admin/leads/stats');
+                const stats = await response.json();
+                document.getElementById('leads-total').textContent = stats.total;
+                document.getElementById('leads-new').textContent = stats.new;
+                document.getElementById('leads-qualified').textContent = stats.qualified;
+                document.getElementById('leads-conversion').textContent = stats.conversion_rate + '%';
+            } catch (error) {
+                console.error('Failed to load lead stats:', error);
+            }
+        }
+
+        async function loadLeads() {
+            const search = document.getElementById('lead-search').value;
+            const statusFilter = document.getElementById('lead-status-filter').value;
+            const tbody = document.getElementById('leads-table-body');
+            
+            try {
+                let url = '/api/v1/admin/leads/?limit=50';
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (statusFilter) url += `&status_filter=${statusFilter}`;
+
+                const response = await fetchWithAuth(url);
+                const data = await response.json();
+                const leads = data.items || [];
+
+                if (leads.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No leads found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = leads.map(lead => `
+                    <tr>
+                        <td>${escapeHtml(lead.email)}</td>
+                        <td>${escapeHtml(lead.name || '-')}</td>
+                        <td>${escapeHtml(lead.company || '-')}</td>
+                        <td><span class="badge badge-${lead.status}">${lead.status}</span></td>
+                        <td>${lead.source}</td>
+                        <td>Step ${lead.email_sequence_step}/3</td>
+                        <td>${formatDate(lead.created_at)}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-sm btn-secondary" onclick="showLeadModal(${lead.id})">Edit</button>
+                                <button class="btn-sm btn-primary" onclick="sendNurtureEmail(${lead.id})" ${lead.email_sequence_step >= 3 || !lead.email_opt_in ? 'disabled' : ''}>Nurture</button>
+                                <button class="btn-sm btn-danger" onclick="deleteLead(${lead.id})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load leads:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load leads</td></tr>';
+            }
+        }
+
+        function showLeadModal(id = null, data = null) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            
+            const email = data?.email || '';
+            const name = data?.name || '';
+            const company = data?.company || '';
+            const phone = data?.phone || '';
+            const source = data?.source || 'organic';
+            const status = data?.status || 'new';
+            const interest = data?.interest_category || '';
+            const notes = data?.notes || '';
+            const emailOptIn = data?.email_opt_in !== false;
+
+            modal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <h3>${id ? 'Edit Lead' : 'Add Lead'}</h3>
+                        <button class="modal-close" onclick="closeModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="lead-email">Email *</label>
+                            <input id="lead-email" value="${escapeAttr(email)}" type="email" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-name">Name</label>
+                            <input id="lead-name" value="${escapeAttr(name)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-company">Company</label>
+                            <input id="lead-company" value="${escapeAttr(company)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-phone">Phone</label>
+                            <input id="lead-phone" value="${escapeAttr(phone)}" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-source">Source</label>
+                            <select id="lead-source">
+                                <option value="organic" ${source === 'organic' ? 'selected' : ''}>Organic</option>
+                                <option value="referral" ${source === 'referral' ? 'selected' : ''}>Referral</option>
+                                <option value="paid_ads" ${source === 'paid_ads' ? 'selected' : ''}>Paid Ads</option>
+                                <option value="social" ${source === 'social' ? 'selected' : ''}>Social</option>
+                                <option value="partner" ${source === 'partner' ? 'selected' : ''}>Partner</option>
+                                <option value="direct" ${source === 'direct' ? 'selected' : ''}>Direct</option>
+                                <option value="other" ${source === 'other' ? 'selected' : ''}>Other</option>
+                            </select>
+                        </div>
+                        ${id ? `
+                        <div class="form-group">
+                            <label for="lead-status">Status</label>
+                            <select id="lead-status">
+                                <option value="new" ${status === 'new' ? 'selected' : ''}>New</option>
+                                <option value="contacted" ${status === 'contacted' ? 'selected' : ''}>Contacted</option>
+                                <option value="qualified" ${status === 'qualified' ? 'selected' : ''}>Qualified</option>
+                                <option value="nurturing" ${status === 'nurturing' ? 'selected' : ''}>Nurturing</option>
+                                <option value="converted" ${status === 'converted' ? 'selected' : ''}>Converted</option>
+                                <option value="lost" ${status === 'lost' ? 'selected' : ''}>Lost</option>
+                            </select>
+                        </div>
+                        ` : ''}
+                        <div class="form-group">
+                            <label for="lead-interest">Interest Category</label>
+                            <input id="lead-interest" value="${escapeAttr(interest)}" placeholder="e.g., SaaS, FinTech, HealthTech" />
+                        </div>
+                        <div class="form-group">
+                            <label for="lead-notes">Notes</label>
+                            <textarea id="lead-notes" rows="3" placeholder="Additional notes...">${escapeHtml(notes)}</textarea>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="lead-email-opt-in" ${emailOptIn ? 'checked' : ''} />
+                            <label for="lead-email-opt-in" style="margin: 0;">Email opt-in (receives nurture emails)</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-sm btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button class="btn-sm btn-primary" onclick="saveLead(${id || 'null'})">${id ? 'Save changes' : 'Add lead'}</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-container').appendChild(modal);
+
+            if (id && !data) {
+                fetchWithAuth(`/api/v1/admin/leads/${id}`).then(r => r.json()).then(leadData => {
+                    document.getElementById('lead-email').value = leadData.email || '';
+                    document.getElementById('lead-name').value = leadData.name || '';
+                    document.getElementById('lead-company').value = leadData.company || '';
+                    document.getElementById('lead-phone').value = leadData.phone || '';
+                    document.getElementById('lead-source').value = leadData.source || 'organic';
+                    document.getElementById('lead-status').value = leadData.status || 'new';
+                    document.getElementById('lead-interest').value = leadData.interest_category || '';
+                    document.getElementById('lead-notes').value = leadData.notes || '';
+                    document.getElementById('lead-email-opt-in').checked = leadData.email_opt_in !== false;
+                });
+            }
+        }
+
+        async function saveLead(id) {
+            const payload = {
+                email: document.getElementById('lead-email').value.trim(),
+                name: document.getElementById('lead-name').value.trim() || null,
+                company: document.getElementById('lead-company').value.trim() || null,
+                phone: document.getElementById('lead-phone').value.trim() || null,
+                source: document.getElementById('lead-source').value,
+                interest_category: document.getElementById('lead-interest').value.trim() || null,
+                notes: document.getElementById('lead-notes').value.trim() || null,
+                email_opt_in: document.getElementById('lead-email-opt-in').checked,
+            };
+
+            if (id) {
+                payload.status = document.getElementById('lead-status').value;
+            }
+
+            if (!payload.email) {
+                showToast('Email is required', 'error');
+                return;
+            }
+
+            try {
+                if (id) {
+                    await fetchWithAuth(`/api/v1/admin/leads/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('Lead updated', 'success');
+                } else {
+                    await fetchWithAuth('/api/v1/admin/leads/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showToast('Lead added', 'success');
+                }
+                closeModal();
+                loadLeads();
+                loadLeadStats();
+            } catch (error) {
+                showToast('Failed to save lead', 'error');
+            }
+        }
+
+        async function deleteLead(id) {
+            if (!confirm('Delete this lead?')) return;
+            try {
+                await fetchWithAuth(`/api/v1/admin/leads/${id}`, { method: 'DELETE' });
+                showToast('Lead deleted', 'success');
+                loadLeads();
+                loadLeadStats();
+            } catch (error) {
+                showToast('Failed to delete lead', 'error');
+            }
+        }
+
+        async function sendNurtureEmail(id) {
+            try {
+                const response = await fetchWithAuth(`/api/v1/admin/leads/${id}/send-nurture-email`, { method: 'POST' });
+                const result = await response.json();
+                showToast(result.message || 'Nurture email sent', 'success');
+                loadLeads();
+            } catch (error) {
+                showToast('Failed to send nurture email', 'error');
+            }
+        }
+
+        async function bulkNurtureLeads() {
+            if (!confirm('Send nurture emails to all eligible leads (status=nurturing, opted in, not at step 3)?')) return;
+            try {
+                const response = await fetchWithAuth('/api/v1/admin/leads/bulk-nurture', { method: 'POST' });
+                const result = await response.json();
+                showToast(`${result.sent_count} nurture emails sent`, 'success');
+                loadLeads();
+                loadLeadStats();
+            } catch (error) {
+                showToast('Failed to send bulk nurture emails', 'error');
+            }
+        }
+
         async function resolveReport(reportId) {
             try {
                 await fetchWithAuth(`/api/v1/moderation/reports/${reportId}/resolve`, {
@@ -1916,9 +2845,9 @@
             document.getElementById('modal-container').innerHTML = '';
         }
 
-        async function fetchWithAuth(url, options = {}) {
+        async function fetchWithAuth(url, options = {}, throwOnError = true) {
             const token = OppGridAuth.getAccessToken();
-            const response = await fetch(`${API_BASE_URL}${url}`, {
+            const response = await fetch(url, {
                 ...options,
                 headers: {
                     ...options.headers,
@@ -1926,7 +2855,7 @@
                 }
             });
             
-            if (!response.ok) {
+            if (!response.ok && throwOnError) {
                 throw new Error(`HTTP ${response.status}`);
             }
             
@@ -1980,6 +2909,144 @@
             };
         }
 
+
+        const SOURCE_COLORS = {
+            twitter: { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6', text: '#60a5fa' },
+            reddit: { bg: 'rgba(249, 115, 22, 0.2)', border: '#f97316', text: '#fb923c' },
+            google_maps: { bg: 'rgba(34, 197, 94, 0.2)', border: '#22c55e', text: '#4ade80' },
+            yelp: { bg: 'rgba(239, 68, 68, 0.2)', border: '#ef4444', text: '#f87171' },
+            craigslist: { bg: 'rgba(168, 85, 247, 0.2)', border: '#a855f7', text: '#c084fc' },
+            custom: { bg: 'rgba(156, 163, 175, 0.2)', border: '#9ca3af', text: '#d1d5db' },
+            nextdoor: { bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981', text: '#34d399' },
+            linkedin: { bg: 'rgba(59, 130, 246, 0.2)', border: '#0077b5', text: '#0ea5e9' },
+            angel_list: { bg: 'rgba(0, 0, 0, 0.2)', border: '#333', text: '#a1a1aa' },
+            crunchbase: { bg: 'rgba(39, 95, 255, 0.2)', border: '#275fff', text: '#60a5fa' },
+            facebook: { bg: 'rgba(24, 119, 242, 0.2)', border: '#1877f2', text: '#3b82f6' },
+            instagram: { bg: 'rgba(225, 48, 108, 0.2)', border: '#e1306c', text: '#f472b6' },
+            youtube: { bg: 'rgba(255, 0, 0, 0.2)', border: '#ff0000', text: '#f87171' },
+            tiktok: { bg: 'rgba(0, 0, 0, 0.2)', border: '#000', text: '#a1a1aa' },
+            glassdoor: { bg: 'rgba(12, 170, 65, 0.2)', border: '#0caa41', text: '#4ade80' },
+            indeed: { bg: 'rgba(0, 63, 153, 0.2)', border: '#003f99', text: '#60a5fa' },
+            apify: { bg: 'rgba(0, 148, 133, 0.2)', border: '#009485', text: '#2dd4bf' },
+        };
+
+        function getSourceColor(source) {
+            return SOURCE_COLORS[source] || SOURCE_COLORS.custom;
+        }
+
+        async function loadWebhookCalendar() {
+            const container = document.getElementById('webhook-calendar-container');
+            
+            try {
+                const response = await fetch('/api/v1/webhooks/calendar?days=30');
+                if (!response.ok) throw new Error('Failed to fetch calendar data');
+                const data = await response.json();
+                
+                const days = [];
+                const today = new Date();
+                for (let i = 29; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    days.push({
+                        date: dateStr,
+                        dayOfWeek: date.getDay(),
+                        dayOfMonth: date.getDate(),
+                        month: date.toLocaleDateString('en-US', { month: 'short' }),
+                        isToday: i === 0,
+                    });
+                }
+
+                let sourceBadgesHtml = data.sources.map(source => {
+                    const colors = getSourceColor(source);
+                    const count = data.source_totals[source] || 0;
+                    return `<div style="padding: 6px 12px; border-radius: 20px; background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text}; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                        <span style="text-transform: capitalize;">${source.replace('_', ' ')}</span>
+                        <span style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 10px; font-size: 11px;">${count.toLocaleString()}</span>
+                    </div>`;
+                }).join('');
+
+                let calendarHtml = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="color: #fff; margin: 0;">Last 30 Days</h3>
+                            <p style="color: var(--stone-400); font-size: 13px; margin-top: 4px;">Data imports by source</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 28px; font-weight: 700; color: #fff;">${data.total_items.toLocaleString()}</div>
+                            <div style="font-size: 12px; color: var(--stone-400);">Total Items</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">${sourceBadgesHtml}</div>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px;">
+                        ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div style="text-align: center; font-size: 11px; color: var(--stone-500); padding: 4px;">${d}</div>`).join('')}
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                `;
+
+                if (days[0].dayOfWeek > 0) {
+                    for (let i = 0; i < days[0].dayOfWeek; i++) {
+                        calendarHtml += `<div style="height: 80px;"></div>`;
+                    }
+                }
+
+                days.forEach(day => {
+                    const dayData = data.calendar[day.date] || {};
+                    const hasData = Object.keys(dayData).length > 0;
+                    const totalCount = Object.values(dayData).reduce((sum, count) => sum + count, 0);
+                    
+                    let barsHtml = Object.entries(dayData).slice(0, 4).map(([source, count]) => {
+                        const colors = getSourceColor(source);
+                        return `<div style="width: 100%; height: 4px; border-radius: 2px; background: ${colors.bg}; border: 1px solid ${colors.border};" title="${source}: ${count}"></div>`;
+                    }).join('');
+
+                    calendarHtml += `
+                        <div style="height: 80px; padding: 6px; border-radius: 8px; border: 1px solid ${day.isToday ? '#3b82f6' : 'var(--stone-700)'}; background: ${hasData ? 'rgba(255,255,255,0.03)' : 'transparent'}; ${day.isToday ? 'background: rgba(59,130,246,0.1);' : ''} cursor: pointer;" onclick="showDayDetails('${day.date}', ${JSON.stringify(dayData).replace(/"/g, '&quot;')})">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <span style="font-size: 11px; font-weight: 500; color: ${day.isToday ? '#60a5fa' : 'var(--stone-400)'};">
+                                    ${day.dayOfMonth === 1 ? day.month + ' ' + day.dayOfMonth : day.dayOfMonth}
+                                </span>
+                                ${totalCount > 0 ? `<span style="font-size: 11px; font-weight: 700; color: #fff; background: var(--stone-700); padding: 2px 6px; border-radius: 4px;">${totalCount}</span>` : ''}
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 6px;">${barsHtml}</div>
+                        </div>
+                    `;
+                });
+
+                calendarHtml += '</div><div id="day-details-container"></div>';
+                container.innerHTML = calendarHtml;
+                
+            } catch (error) {
+                container.innerHTML = `<div style="padding: 40px; text-align: center; color: #ef4444;">Error: ${error.message}</div>`;
+            }
+        }
+
+        function showDayDetails(dateStr, dayData) {
+            const container = document.getElementById('day-details-container');
+            if (!dayData || Object.keys(dayData).length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const date = new Date(dateStr + 'T00:00:00');
+            const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            let cardsHtml = Object.entries(dayData).map(([source, count]) => {
+                const colors = getSourceColor(source);
+                return `<div style="padding: 16px; border-radius: 8px; background: ${colors.bg}; border: 1px solid ${colors.border};">
+                    <p style="font-size: 13px; text-transform: capitalize; color: ${colors.text}; margin: 0;">${source.replace('_', ' ')}</p>
+                    <p style="font-size: 28px; font-weight: 700; color: #fff; margin: 8px 0 4px;">${count.toLocaleString()}</p>
+                    <p style="font-size: 11px; color: var(--stone-400); margin: 0;">items imported</p>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div style="margin-top: 16px; padding: 16px; background: var(--stone-800); border-radius: 8px; border: 1px solid var(--stone-700);">
+                    <h3 style="color: #fff; margin: 0 0 12px;">${formattedDate}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">${cardsHtml}</div>
+                </div>
+            `;
+        }
 
         async function analyzeScraperData() {
             const fileInput = document.getElementById('scraper-file');
@@ -2050,6 +3117,1965 @@
             localStorage.removeItem('token');
             window.location.href = 'signin.html';
         }
+
+        // ===== COMMAND CENTER FUNCTIONS =====
+        
+        function setupCommandCenterTabs() {
+            const tabBtns = document.querySelectorAll('.cc-tab-btn');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => b.classList.remove('active', 'btn-primary'));
+                    btn.classList.add('active', 'btn-primary');
+                    
+                    document.querySelectorAll('.cc-tab-content').forEach(c => c.classList.add('hidden'));
+                    document.getElementById(`cc-tab-${btn.dataset.ccTab}`).classList.remove('hidden');
+                    
+                    // Load data for the selected tab
+                    const tab = btn.dataset.ccTab;
+                    switch(tab) {
+                        case 'sources': loadCommandCenterSources(); break;
+                        case 'patterns': loadCommandCenterPatterns(); break;
+                        case 'jobs': loadCommandCenterJobs(); break;
+                        case 'pipeline': 
+                            loadCommandCenterPipeline(); 
+                            loadCommandCenterScrapes();
+                            break;
+                        case 'apify':
+                            loadApifyStatus();
+                            loadApifyActors();
+                            loadApifySchedules();
+                            loadApifyRuns();
+                            break;
+                        case 'serpapi':
+                            loadSerpAPIStatus();
+                            break;
+                    }
+                });
+            });
+        }
+
+        async function loadCommandCenter() {
+            setupCommandCenterTabs();
+            setupCommandCenterFilters();
+            await loadCommandCenterDashboard();
+            await loadCommandCenterSources();
+            await loadCommandCenterScrapes();
+        }
+        
+        function setupCommandCenterFilters() {
+            document.getElementById('cc-pattern-category-filter')?.addEventListener('change', () => loadCommandCenterPatterns());
+            document.getElementById('cc-job-status-filter')?.addEventListener('change', () => loadCommandCenterJobs());
+            document.getElementById('cc-scrape-source-filter')?.addEventListener('change', () => loadCommandCenterScrapes());
+            document.getElementById('cc-scrape-processed-filter')?.addEventListener('change', () => loadCommandCenterScrapes());
+        }
+
+        async function loadCommandCenterDashboard() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/dashboard`);
+                if (!response.ok) throw new Error('Failed to load dashboard');
+                const data = await response.json();
+                
+                document.getElementById('cc-active-sources').textContent = data.sources?.active || 0;
+                document.getElementById('cc-scraped-24h').textContent = data.scraping?.last_24h || 0;
+                document.getElementById('cc-opps-24h').textContent = data.opportunities?.last_24h || 0;
+                document.getElementById('cc-pending').textContent = data.scraping?.pending || 0;
+            } catch (error) {
+                console.error('Error loading CC dashboard:', error);
+            }
+        }
+
+        async function loadCommandCenterSources() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/sources`);
+                if (!response.ok) throw new Error('Failed to load sources');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('cc-sources-table-body');
+                if (!data.sources || data.sources.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--stone-400);">No data sources configured. Click "Seed Defaults" to add default sources.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.sources.map(source => `
+                    <tr>
+                        <td><strong>${source.name}</strong></td>
+                        <td><span class="badge">${source.source_type}</span></td>
+                        <td>${getStatusBadge(source.status, source.is_active)}</td>
+                        <td>${source.base_weight}</td>
+                        <td>${source.total_scrapes || 0}</td>
+                        <td>${source.valid_opportunities || 0}</td>
+                        <td>${source.last_scraped_at ? formatDate(source.last_scraped_at) : 'Never'}</td>
+                        <td>
+                            <button class="btn-sm" onclick="toggleSource(${source.id})">${source.is_active ? 'Disable' : 'Enable'}</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading sources:', error);
+                document.getElementById('cc-sources-table-body').innerHTML = '<tr><td colspan="8" class="error">Error loading sources</td></tr>';
+            }
+        }
+
+        async function loadCommandCenterPatterns() {
+            try {
+                const category = document.getElementById('cc-pattern-category-filter').value;
+                const url = category 
+                    ? `${API_BASE_URL}/command-center/patterns?category=${category}`
+                    : `${API_BASE_URL}/command-center/patterns`;
+                    
+                const response = await fetchWithAuth(url);
+                if (!response.ok) throw new Error('Failed to load patterns');
+                const data = await response.json();
+                
+                // Populate category filter
+                const filter = document.getElementById('cc-pattern-category-filter');
+                if (data.categories && filter.options.length <= 1) {
+                    data.categories.forEach(cat => {
+                        const option = document.createElement('option');
+                        option.value = cat;
+                        option.textContent = cat;
+                        filter.appendChild(option);
+                    });
+                }
+                
+                const tbody = document.getElementById('cc-patterns-table-body');
+                if (!data.patterns || data.patterns.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--stone-400);">No patterns defined. Click "+ Add Pattern" to create one.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.patterns.map(p => `
+                    <tr>
+                        <td><strong>${p.name}</strong></td>
+                        <td><span class="badge">${p.category}</span></td>
+                        <td>${(p.confidence * 100).toFixed(0)}%</td>
+                        <td>${getValidationLevelBadge(p.validation_level)}</td>
+                        <td>${p.hit_count || 0}</td>
+                        <td>${p.false_positive_count || 0}</td>
+                        <td>${p.last_matched_at ? formatDate(p.last_matched_at) : 'Never'}</td>
+                        <td>${p.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-muted">Inactive</span>'}</td>
+                        <td>
+                            <button class="btn-sm" onclick="editPattern(${p.id})">Edit</button>
+                            <button class="btn-sm btn-danger" onclick="deletePattern(${p.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading patterns:', error);
+                document.getElementById('cc-patterns-table-body').innerHTML = '<tr><td colspan="9" class="error">Error loading patterns</td></tr>';
+            }
+        }
+
+        async function loadCommandCenterJobs() {
+            try {
+                const status = document.getElementById('cc-job-status-filter').value;
+                const url = status 
+                    ? `${API_BASE_URL}/command-center/jobs?status=${status}`
+                    : `${API_BASE_URL}/command-center/jobs`;
+                    
+                const response = await fetchWithAuth(url);
+                if (!response.ok) throw new Error('Failed to load jobs');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('cc-jobs-table-body');
+                if (!data.jobs || data.jobs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--stone-400);">No jobs found.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.jobs.map(job => `
+                    <tr>
+                        <td>${job.id}</td>
+                        <td>${job.source_name}</td>
+                        <td><span class="badge">${job.job_type}</span></td>
+                        <td>${getJobStatusBadge(job.status)}</td>
+                        <td>${job.items_processed || 0}</td>
+                        <td>${job.items_accepted || 0}</td>
+                        <td>${job.items_rejected || 0}</td>
+                        <td>${job.created_at ? formatDate(job.created_at) : '-'}</td>
+                        <td>
+                            ${job.status === 'failed' ? `<button class="btn-sm" onclick="retryJob(${job.id})">Retry</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+                document.getElementById('cc-jobs-table-body').innerHTML = '<tr><td colspan="9" class="error">Error loading jobs</td></tr>';
+            }
+        }
+
+        async function loadCommandCenterPipeline() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/pipeline-stats`);
+                if (!response.ok) throw new Error('Failed to load pipeline stats');
+                const data = await response.json();
+                
+                // Source performance
+                const sourcePerf = document.getElementById('cc-source-performance');
+                if (data.source_performance && data.source_performance.length > 0) {
+                    sourcePerf.innerHTML = data.source_performance.map(sp => `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--stone-200);">
+                            <span style="font-weight: 500;">${sp.source_type}</span>
+                            <span>
+                                <span style="color: var(--stone-500);">${sp.total} total</span> | 
+                                <span style="color: var(--green-600);">${sp.success_rate}% success</span>
+                            </span>
+                        </div>
+                    `).join('');
+                } else {
+                    sourcePerf.innerHTML = '<div style="color: var(--stone-400);">No source data available</div>';
+                }
+                
+                // Category breakdown
+                const catBreak = document.getElementById('cc-category-breakdown');
+                if (data.category_breakdown && data.category_breakdown.length > 0) {
+                    catBreak.innerHTML = data.category_breakdown.map(cat => `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--stone-200);">
+                            <span>${cat.category || 'Uncategorized'}</span>
+                            <span style="font-weight: 600;">${cat.count}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    catBreak.innerHTML = '<div style="color: var(--stone-400);">No category data available</div>';
+                }
+                
+                // Hourly stats
+                const hourlyStats = document.getElementById('cc-hourly-stats');
+                if (data.hourly_stats && data.hourly_stats.length > 0) {
+                    hourlyStats.innerHTML = data.hourly_stats.slice(-12).map(h => `
+                        <div style="background: var(--white); border: 1px solid var(--stone-200); border-radius: 8px; padding: 12px; min-width: 100px; text-align: center;">
+                            <div style="font-size: 11px; color: var(--stone-400); margin-bottom: 4px;">${h.hour.split(' ')[1] || h.hour}</div>
+                            <div style="font-size: 16px; font-weight: 600;">${h.received}</div>
+                            <div style="font-size: 11px; color: var(--green-600);">${h.opportunities} opps</div>
+                        </div>
+                    `).join('');
+                } else {
+                    hourlyStats.innerHTML = '<div style="color: var(--stone-400);">No hourly data available</div>';
+                }
+            } catch (error) {
+                console.error('Error loading pipeline stats:', error);
+            }
+        }
+
+        async function loadCommandCenterScrapes() {
+            try {
+                const sourceType = document.getElementById('cc-scrape-source-filter').value;
+                const processed = document.getElementById('cc-scrape-processed-filter').value;
+                
+                let url = `${API_BASE_URL}/command-center/scrapes?limit=50`;
+                if (sourceType) url += `&source_type=${sourceType}`;
+                if (processed) url += `&processed=${processed}`;
+                
+                const response = await fetchWithAuth(url);
+                if (!response.ok) throw new Error('Failed to load scrapes');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('cc-scrapes-table-body');
+                if (!data.scrapes || data.scrapes.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--stone-400);">No scrapes found.</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.scrapes.map(s => `
+                    <tr>
+                        <td>${s.id}</td>
+                        <td><code style="font-size: 11px;">${s.external_id || '-'}</code></td>
+                        <td><span class="badge">${s.source_type}</span></td>
+                        <td>${s.processed ? '<span class="badge badge-success">Processed</span>' : '<span class="badge badge-warning">Pending</span>'}</td>
+                        <td>${s.received_at ? formatDate(s.received_at) : '-'}</td>
+                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--stone-500);">${s.raw_data_preview || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading scrapes:', error);
+                document.getElementById('cc-scrapes-table-body').innerHTML = '<tr><td colspan="6" class="error">Error loading scrapes</td></tr>';
+            }
+        }
+
+        async function seedDefaultSources() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/seed-default-sources`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Failed to seed sources');
+                const data = await response.json();
+                showToast(data.message, 'success');
+                await loadCommandCenterSources();
+            } catch (error) {
+                console.error('Error seeding sources:', error);
+                showToast('Failed to seed default sources', 'error');
+            }
+        }
+
+        async function toggleSource(sourceId) {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/sources/${sourceId}/toggle`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Failed to toggle source');
+                await loadCommandCenterSources();
+                showToast('Source updated', 'success');
+            } catch (error) {
+                console.error('Error toggling source:', error);
+                showToast('Failed to update source', 'error');
+            }
+        }
+
+        async function retryJob(jobId) {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/jobs/${jobId}/retry`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Failed to retry job');
+                await loadCommandCenterJobs();
+                showToast('Job queued for retry', 'success');
+            } catch (error) {
+                console.error('Error retrying job:', error);
+                showToast('Failed to retry job', 'error');
+            }
+        }
+
+        async function deletePattern(patternId) {
+            if (!confirm('Are you sure you want to delete this pattern?')) return;
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/patterns/${patternId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error('Failed to delete pattern');
+                await loadCommandCenterPatterns();
+                showToast('Pattern deleted', 'success');
+            } catch (error) {
+                console.error('Error deleting pattern:', error);
+                showToast('Failed to delete pattern', 'error');
+            }
+        }
+
+        function getStatusBadge(status, isActive) {
+            if (!isActive) return '<span class="badge badge-muted">Disabled</span>';
+            switch (status) {
+                case 'active': return '<span class="badge badge-success">Active</span>';
+                case 'paused': return '<span class="badge badge-warning">Paused</span>';
+                case 'error': return '<span class="badge badge-danger">Error</span>';
+                default: return '<span class="badge">' + status + '</span>';
+            }
+        }
+
+        function getValidationLevelBadge(level) {
+            switch (level) {
+                case 'goldmine': return '<span class="badge" style="background: #fef3c7; color: #92400e;">Goldmine</span>';
+                case 'validated': return '<span class="badge badge-success">Validated</span>';
+                case 'weak_signal': return '<span class="badge badge-warning">Weak Signal</span>';
+                default: return '<span class="badge">' + level + '</span>';
+            }
+        }
+
+        function getJobStatusBadge(status) {
+            switch (status) {
+                case 'completed': return '<span class="badge badge-success">Completed</span>';
+                case 'running': return '<span class="badge" style="background: #dbeafe; color: #1e40af;">Running</span>';
+                case 'pending': return '<span class="badge badge-warning">Pending</span>';
+                case 'failed': return '<span class="badge badge-danger">Failed</span>';
+                default: return '<span class="badge">' + status + '</span>';
+            }
+        }
+
+        function showAddSourceModal() {
+            showToast('Add Source modal - coming soon', 'info');
+        }
+
+        function showAddPatternModal() {
+            showToast('Add Pattern modal - coming soon', 'info');
+        }
+
+        function showCreateJobModal() {
+            showToast('Create Job modal - coming soon', 'info');
+        }
+
+        function editPattern(patternId) {
+            showToast('Edit Pattern modal - coming soon', 'info');
+        }
+
+        // ===== APIFY FUNCTIONS =====
+
+        async function loadApifyStatus() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/status`);
+                const data = await response.json();
+                const statusEl = document.getElementById('apify-status');
+                
+                if (data.configured) {
+                    statusEl.innerHTML = '<span style="color: var(--green-600);">✓ Apify connected</span>';
+                    statusEl.style.background = 'var(--green-50)';
+                } else {
+                    statusEl.innerHTML = '<span style="color: var(--red-600);">✗ Apify not configured - Add APIFY_API_TOKEN to secrets</span>';
+                    statusEl.style.background = 'var(--red-50)';
+                }
+            } catch (error) {
+                console.error('Error checking Apify status:', error);
+                document.getElementById('apify-status').innerHTML = '<span style="color: var(--red-600);">Error checking Apify connection</span>';
+            }
+        }
+
+        async function loadApifyActors() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/actors`);
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to load actors');
+                }
+                const data = await response.json();
+                
+                document.getElementById('apify-actors-count').textContent = `${data.count} actors`;
+                
+                const listEl = document.getElementById('apify-actors-list');
+                if (!data.actors || data.actors.length === 0) {
+                    listEl.innerHTML = '<div style="color: var(--stone-400);">No actors found</div>';
+                    return;
+                }
+                
+                listEl.innerHTML = data.actors.map(actor => `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--stone-200); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${actor.name || actor.id}</strong>
+                            <div style="font-size: 12px; color: var(--stone-500);">${actor.username || ''}/${actor.name || ''}</div>
+                        </div>
+                        <button class="btn-sm btn-primary" onclick="runApifyActor('${actor.id}')">Run</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading Apify actors:', error);
+                document.getElementById('apify-actors-list').innerHTML = `<div style="color: var(--red-500);">${error.message}</div>`;
+            }
+        }
+
+        async function loadApifySchedules() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/schedules`);
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to load schedules');
+                }
+                const data = await response.json();
+                
+                document.getElementById('apify-schedules-count').textContent = `${data.count} schedules`;
+                
+                const listEl = document.getElementById('apify-schedules-list');
+                if (!data.schedules || data.schedules.length === 0) {
+                    listEl.innerHTML = '<div style="color: var(--stone-400);">No schedules configured</div>';
+                    return;
+                }
+                
+                listEl.innerHTML = data.schedules.map(schedule => `
+                    <div style="padding: 10px; border-bottom: 1px solid var(--stone-200);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>${schedule.name}</strong>
+                            ${schedule.isEnabled ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-muted">Disabled</span>'}
+                        </div>
+                        <div style="font-size: 12px; color: var(--stone-500); margin-top: 4px;">
+                            <code>${schedule.cronExpression}</code> • ${schedule.timezone || 'UTC'}
+                        </div>
+                        <div style="margin-top: 8px; display: flex; gap: 4px;">
+                            <button class="btn-sm" onclick="toggleApifySchedule('${schedule.id}', ${!schedule.isEnabled})">${schedule.isEnabled ? 'Disable' : 'Enable'}</button>
+                            <button class="btn-sm btn-danger" onclick="deleteApifySchedule('${schedule.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading Apify schedules:', error);
+                document.getElementById('apify-schedules-list').innerHTML = `<div style="color: var(--red-500);">${error.message}</div>`;
+            }
+        }
+
+        async function loadApifyRuns() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/runs?limit=20`);
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to load runs');
+                }
+                const data = await response.json();
+                
+                document.getElementById('apify-runs-count').textContent = `${data.count} runs`;
+                
+                const tbody = document.getElementById('apify-runs-table-body');
+                if (!data.runs || data.runs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--stone-400);">No runs found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.runs.map(run => {
+                    const duration = run.finishedAt && run.startedAt 
+                        ? Math.round((new Date(run.finishedAt) - new Date(run.startedAt)) / 1000) + 's'
+                        : (run.startedAt ? 'Running...' : '-');
+                    
+                    return `
+                        <tr>
+                            <td>${run.actId || run.actorId || 'Unknown'}</td>
+                            <td>${getApifyRunStatusBadge(run.status)}</td>
+                            <td>${run.startedAt ? formatDate(run.startedAt) : '-'}</td>
+                            <td>${duration}</td>
+                            <td>${run.stats?.requestsFinished || run.stats?.itemCount || '-'}</td>
+                            <td>
+                                ${run.status === 'RUNNING' ? `<button class="btn-sm btn-danger" onclick="abortApifyRun('${run.id}')">Abort</button>` : ''}
+                                ${run.defaultDatasetId ? `<button class="btn-sm" onclick="viewApifyDataset('${run.id}')">View Data</button>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading Apify runs:', error);
+                document.getElementById('apify-runs-table-body').innerHTML = `<tr><td colspan="6" class="error">${error.message}</td></tr>`;
+            }
+        }
+
+        function getApifyRunStatusBadge(status) {
+            switch (status) {
+                case 'SUCCEEDED': return '<span class="badge badge-success">Succeeded</span>';
+                case 'RUNNING': return '<span class="badge" style="background: #dbeafe; color: #1e40af;">Running</span>';
+                case 'READY': return '<span class="badge badge-warning">Ready</span>';
+                case 'FAILED': return '<span class="badge badge-danger">Failed</span>';
+                case 'ABORTED': return '<span class="badge badge-muted">Aborted</span>';
+                case 'TIMED-OUT': return '<span class="badge badge-danger">Timed Out</span>';
+                default: return `<span class="badge">${status}</span>`;
+            }
+        }
+
+        async function runApifyActor(actorId) {
+            if (!confirm('Start this actor now?')) return;
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/actors/${actorId}/run`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Failed to start actor');
+                }
+                showToast('Actor started successfully', 'success');
+                loadApifyRuns();
+            } catch (error) {
+                console.error('Error running actor:', error);
+                showToast(error.message || 'Failed to start actor', 'error');
+            }
+        }
+
+        async function abortApifyRun(runId) {
+            if (!confirm('Abort this run?')) return;
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/runs/${runId}/abort`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('Failed to abort run');
+                showToast('Run aborted', 'success');
+                loadApifyRuns();
+            } catch (error) {
+                console.error('Error aborting run:', error);
+                showToast('Failed to abort run', 'error');
+            }
+        }
+
+        async function importApifyRun() {
+            const runId = document.getElementById('apify-import-run-id').value.trim();
+            if (!runId) {
+                showToast('Please enter a Run ID', 'error');
+                return;
+            }
+            
+            const statusEl = document.getElementById('apify-import-status');
+            statusEl.style.display = 'block';
+            statusEl.innerHTML = '<span style="color: var(--amber-600);">Importing... This may take a minute for large datasets.</span>';
+            
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/runs/${runId}/import`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Import failed');
+                }
+                
+                if (result.status === 'imported') {
+                    statusEl.innerHTML = `
+                        <div style="color: var(--emerald-600); font-weight: 500;">
+                            Import successful!
+                        </div>
+                        <div style="color: var(--stone-600); font-size: 13px; margin-top: 8px;">
+                            <strong>${result.places_imported}</strong> businesses and 
+                            <strong>${result.reviews_imported}</strong> reviews imported to OppGrid.
+                        </div>
+                    `;
+                    showToast(`Imported ${result.places_imported} places and ${result.reviews_imported} reviews`, 'success');
+                    document.getElementById('apify-import-run-id').value = '';
+                } else {
+                    statusEl.innerHTML = `<span style="color: var(--amber-600);">Run status: ${result.status}. ${result.message || 'Cannot import yet.'}</span>`;
+                }
+            } catch (error) {
+                console.error('Import error:', error);
+                statusEl.innerHTML = `<span style="color: var(--red-600);">Error: ${error.message}</span>`;
+                showToast('Import failed: ' + error.message, 'error');
+            }
+        }
+
+        async function toggleApifySchedule(scheduleId, enable) {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/schedules/${scheduleId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_enabled: enable })
+                });
+                if (!response.ok) throw new Error('Failed to update schedule');
+                showToast('Schedule updated', 'success');
+                loadApifySchedules();
+            } catch (error) {
+                console.error('Error updating schedule:', error);
+                showToast('Failed to update schedule', 'error');
+            }
+        }
+
+        async function deleteApifySchedule(scheduleId) {
+            if (!confirm('Delete this schedule?')) return;
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/schedules/${scheduleId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error('Failed to delete schedule');
+                showToast('Schedule deleted', 'success');
+                loadApifySchedules();
+            } catch (error) {
+                console.error('Error deleting schedule:', error);
+                showToast('Failed to delete schedule', 'error');
+            }
+        }
+
+        async function viewApifyDataset(runId) {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/apify/runs/${runId}/dataset?limit=50`);
+                if (!response.ok) throw new Error('Failed to load dataset');
+                const data = await response.json();
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 24px; border-radius: 12px; max-width: 80vw; max-height: 80vh; overflow: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3>Dataset Items (${data.count})</h3>
+                            <button onclick="this.closest('.modal-overlay')?.remove(); document.querySelector('[style*=\\'position: fixed\\']')?.remove();" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                        </div>
+                        <pre style="background: var(--stone-100); padding: 16px; border-radius: 8px; max-height: 60vh; overflow: auto; font-size: 12px;">${JSON.stringify(data.items, null, 2)}</pre>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } catch (error) {
+                console.error('Error loading dataset:', error);
+                showToast('Failed to load dataset', 'error');
+            }
+        }
+
+        // ===== END APIFY FUNCTIONS =====
+
+        // ===== SERPAPI FUNCTIONS =====
+
+        async function loadSerpAPIStatus() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/serpapi/status`);
+                const data = await response.json();
+                const statusEl = document.getElementById('serpapi-status');
+                
+                if (data.configured && !data.error) {
+                    statusEl.innerHTML = `
+                        <span style="color: var(--green-600);">✓ SerpAPI connected</span>
+                        <span style="margin-left: 20px; color: var(--stone-600);">
+                            Plan: <strong>${data.plan || 'N/A'}</strong> | 
+                            Used: <strong>${data.this_month_usage || 0}</strong>/${data.searches_per_month || 0} | 
+                            Remaining: <strong>${data.remaining || 0}</strong>
+                        </span>
+                    `;
+                    statusEl.style.background = 'var(--green-50)';
+                } else if (data.configured) {
+                    statusEl.innerHTML = `<span style="color: var(--yellow-600);">⚠ SerpAPI configured but ${data.error || 'unable to fetch account info'}</span>`;
+                    statusEl.style.background = 'var(--yellow-50)';
+                } else {
+                    statusEl.innerHTML = '<span style="color: var(--red-600);">✗ SerpAPI not configured - Add SERPAPI_KEY to secrets</span>';
+                    statusEl.style.background = 'var(--red-50)';
+                }
+            } catch (error) {
+                console.error('Error checking SerpAPI status:', error);
+                document.getElementById('serpapi-status').innerHTML = '<span style="color: var(--red-600);">Error checking SerpAPI connection</span>';
+            }
+        }
+
+        async function runSerpAPIGoogleSearch() {
+            const query = document.getElementById('serpapi-search-query').value.trim();
+            const location = document.getElementById('serpapi-search-location').value.trim();
+            
+            if (!query) {
+                showToast('Please enter a search query', 'error');
+                return;
+            }
+            
+            document.getElementById('serpapi-results').innerHTML = '<div style="text-align: center; padding: 40px;">Searching...</div>';
+            
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/serpapi/google-search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, location: location || null })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Search failed');
+                }
+                
+                const data = await response.json();
+                displaySerpAPISearchResults(data);
+            } catch (error) {
+                console.error('SerpAPI search error:', error);
+                document.getElementById('serpapi-results').innerHTML = `<div style="color: var(--red-500); padding: 20px;">${error.message}</div>`;
+                showToast(error.message || 'Search failed', 'error');
+            }
+        }
+
+        async function runSerpAPIMapsSearch() {
+            const query = document.getElementById('serpapi-maps-query').value.trim();
+            const location = document.getElementById('serpapi-maps-location').value.trim();
+            
+            if (!query) {
+                showToast('Please enter a search query', 'error');
+                return;
+            }
+            
+            document.getElementById('serpapi-results').innerHTML = '<div style="text-align: center; padding: 40px;">Searching Google Maps...</div>';
+            
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/serpapi/google-maps`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, location: location || null })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Search failed');
+                }
+                
+                const data = await response.json();
+                displaySerpAPIMapsResults(data);
+            } catch (error) {
+                console.error('SerpAPI Maps search error:', error);
+                document.getElementById('serpapi-results').innerHTML = `<div style="color: var(--red-500); padding: 20px;">${error.message}</div>`;
+                showToast(error.message || 'Search failed', 'error');
+            }
+        }
+
+        async function runSerpAPIPlacesWithReviews() {
+            const query = document.getElementById('serpapi-places-query').value.trim();
+            const location = document.getElementById('serpapi-places-location').value.trim();
+            const maxPlaces = parseInt(document.getElementById('serpapi-places-max').value);
+            const reviewsPerPlace = parseInt(document.getElementById('serpapi-places-reviews').value);
+            
+            if (!query) {
+                showToast('Please enter a business type', 'error');
+                return;
+            }
+            
+            document.getElementById('serpapi-results').innerHTML = '<div style="text-align: center; padding: 40px;">Searching places and fetching reviews... This may take a moment.</div>';
+            
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/command-center/serpapi/places-with-reviews`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        query, 
+                        location: location || null,
+                        max_places: maxPlaces,
+                        reviews_per_place: reviewsPerPlace
+                    })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Search failed');
+                }
+                
+                const data = await response.json();
+                displaySerpAPIPlacesWithReviews(data);
+            } catch (error) {
+                console.error('SerpAPI places search error:', error);
+                document.getElementById('serpapi-results').innerHTML = `<div style="color: var(--red-500); padding: 20px;">${error.message}</div>`;
+                showToast(error.message || 'Search failed', 'error');
+            }
+        }
+
+        function displaySerpAPISearchResults(data) {
+            const resultsEl = document.getElementById('serpapi-results');
+            const countEl = document.getElementById('serpapi-results-count');
+            
+            const organicResults = data.organic_results || [];
+            countEl.textContent = `${organicResults.length} results`;
+            
+            if (organicResults.length === 0) {
+                resultsEl.innerHTML = '<div style="color: var(--stone-400); text-align: center; padding: 40px;">No results found</div>';
+                return;
+            }
+            
+            resultsEl.innerHTML = organicResults.map((result, i) => `
+                <div style="padding: 16px; border-bottom: 1px solid var(--stone-200);">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <a href="${result.link}" target="_blank" style="font-weight: 600; color: var(--primary); text-decoration: none;">
+                                ${i + 1}. ${result.title}
+                            </a>
+                            <div style="font-size: 12px; color: var(--green-600); margin-top: 4px;">${result.displayed_link || result.link}</div>
+                            <div style="font-size: 14px; color: var(--stone-600); margin-top: 8px;">${result.snippet || ''}</div>
+                        </div>
+                        ${result.position ? `<span class="badge">#${result.position}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displaySerpAPIMapsResults(data) {
+            const resultsEl = document.getElementById('serpapi-results');
+            const countEl = document.getElementById('serpapi-results-count');
+            
+            const localResults = data.local_results || [];
+            countEl.textContent = `${localResults.length} places`;
+            
+            if (localResults.length === 0) {
+                resultsEl.innerHTML = '<div style="color: var(--stone-400); text-align: center; padding: 40px;">No places found</div>';
+                return;
+            }
+            
+            resultsEl.innerHTML = localResults.map(place => `
+                <div style="padding: 16px; border-bottom: 1px solid var(--stone-200);">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--stone-800);">${place.title}</div>
+                            <div style="font-size: 12px; color: var(--stone-500); margin-top: 4px;">${place.address || ''}</div>
+                            <div style="font-size: 14px; margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap;">
+                                ${place.rating ? `<span>⭐ ${place.rating} (${place.reviews || 0} reviews)</span>` : ''}
+                                ${place.type ? `<span class="badge">${place.type}</span>` : ''}
+                                ${place.phone ? `<span>📞 ${place.phone}</span>` : ''}
+                            </div>
+                            ${place.data_id ? `<div style="font-size: 11px; color: var(--stone-400); margin-top: 8px;">Data ID: ${place.data_id}</div>` : ''}
+                        </div>
+                        ${place.thumbnail ? `<img src="${place.thumbnail}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-left: 16px;">` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displaySerpAPIPlacesWithReviews(data) {
+            const resultsEl = document.getElementById('serpapi-results');
+            const countEl = document.getElementById('serpapi-results-count');
+            
+            const places = data.places || [];
+            const totalReviews = places.reduce((acc, p) => acc + (p.reviews?.length || 0), 0);
+            countEl.textContent = `${places.length} places, ${totalReviews} reviews`;
+            
+            if (places.length === 0) {
+                resultsEl.innerHTML = '<div style="color: var(--stone-400); text-align: center; padding: 40px;">No places found</div>';
+                return;
+            }
+            
+            resultsEl.innerHTML = places.map(place => `
+                <div style="padding: 20px; border-bottom: 2px solid var(--stone-300); margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 18px; color: var(--stone-800);">${place.title}</div>
+                            <div style="font-size: 13px; color: var(--stone-500); margin-top: 4px;">${place.address || ''}</div>
+                            <div style="margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                                ${place.rating ? `<span style="font-weight: 600;">⭐ ${place.rating}</span>` : ''}
+                                ${place.reviews_count ? `<span>(${place.reviews_count} total reviews)</span>` : ''}
+                                ${place.type ? `<span class="badge">${place.type}</span>` : ''}
+                                ${place.phone ? `<span>📞 ${place.phone}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${place.reviews && place.reviews.length > 0 ? `
+                        <div style="background: white; border-radius: 8px; padding: 12px;">
+                            <div style="font-weight: 600; margin-bottom: 12px; color: var(--stone-700);">Recent Reviews (${place.reviews.length})</div>
+                            ${place.reviews.map(review => `
+                                <div style="padding: 12px; border-bottom: 1px solid var(--stone-100); font-size: 14px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <span style="font-weight: 500;">${review.user?.name || 'Anonymous'}</span>
+                                        <span style="display: flex; gap: 8px; align-items: center;">
+                                            <span style="color: var(--yellow-600);">${'★'.repeat(review.rating || 0)}${'☆'.repeat(5 - (review.rating || 0))}</span>
+                                            <span style="color: var(--stone-400); font-size: 12px;">${review.date || review.iso_date || ''}</span>
+                                        </span>
+                                    </div>
+                                    <div style="color: var(--stone-600);">${review.snippet || review.text || 'No text'}</div>
+                                    ${review.response ? `
+                                        <div style="margin-top: 8px; padding: 8px; background: var(--stone-50); border-radius: 4px; font-size: 13px;">
+                                            <strong>Owner Response:</strong> ${review.response.snippet || ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<div style="color: var(--stone-400); font-size: 14px;">No reviews fetched</div>'}
+                </div>
+            `).join('');
+        }
+
+        // ===== END SERPAPI FUNCTIONS =====
+
+        // ===== END COMMAND CENTER FUNCTIONS =====
+
+        // ===== GOOGLE SCRAPING FUNCTIONS =====
+        let gsLocations = [];
+        let gsKeywordGroups = [];
+        let gsSelectedJobId = null;
+
+        async function loadGoogleScraping() {
+            await Promise.all([
+                loadGoogleScrapingStats(),
+                loadGoogleScrapingLocations(),
+                loadGoogleScrapingKeywords(),
+                loadGoogleScrapingJobs()
+            ]);
+            populateJobDropdowns();
+        }
+
+        async function loadGoogleScrapingStats() {
+            try {
+                const response = await fetchWithAuth('/api/v1/google-scraping/stats');
+                const stats = await response.json();
+                document.getElementById('gs-stat-locations').textContent = stats.total_locations || 0;
+                document.getElementById('gs-stat-keywords').textContent = stats.total_keyword_groups || 0;
+                document.getElementById('gs-stat-jobs').textContent = stats.total_jobs || 0;
+                document.getElementById('gs-stat-businesses').textContent = stats.cached_businesses || 0;
+            } catch (error) {
+                console.error('Failed to load Google Scraping stats:', error);
+            }
+        }
+
+        async function loadGoogleScrapingLocations() {
+            const search = document.getElementById('gs-location-search')?.value || '';
+            try {
+                const response = await fetchWithAuth(`/api/v1/google-scraping/locations?search=${encodeURIComponent(search)}`, {}, false);
+                if (!response.ok) {
+                    console.error('Failed to load locations:', response.status);
+                    return; // Keep existing data on error
+                }
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    gsLocations = data;
+                    renderLocationsList(gsLocations);
+                }
+            } catch (error) {
+                console.error('Failed to load locations:', error);
+                // Don't clear existing data on error
+            }
+        }
+
+        function renderLocationsList(locations) {
+            const container = document.getElementById('gs-locations-list');
+            // Filter out zip codes - they are children of cities, not main locations
+            const mainLocations = locations.filter(loc => {
+                const type = (loc.location_type || '').toLowerCase();
+                return type === 'city' || type === 'metro' || type === 'neighborhood';
+            });
+            if (!mainLocations.length) {
+                container.innerHTML = '<div style="padding: 16px; color: var(--stone-500);">No locations found. Click + Add to create one.</div>';
+                return;
+            }
+            container.innerHTML = mainLocations.map(loc => `
+                <div class="list-item" style="padding: 12px; border-bottom: 1px solid var(--stone-100); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 500;">${loc.name}</div>
+                        <div style="font-size: 12px; color: var(--stone-500);">
+                            ${loc.location_type} | ${loc.scraped_count || 0} scrapes
+                            ${loc.last_scraped_at ? ` | Last: ${new Date(loc.last_scraped_at).toLocaleDateString()}` : ''}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-sm" onclick="deleteLocation(${loc.id})" title="Delete">×</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadGoogleScrapingKeywords() {
+            const search = document.getElementById('gs-keyword-search')?.value || '';
+            try {
+                const response = await fetchWithAuth(`/api/v1/google-scraping/keyword-groups?search=${encodeURIComponent(search)}`);
+                gsKeywordGroups = await response.json();
+                renderKeywordsList(gsKeywordGroups);
+            } catch (error) {
+                console.error('Failed to load keyword groups:', error);
+                document.getElementById('gs-keywords-list').innerHTML = '<div class="error">Failed to load keyword groups</div>';
+            }
+        }
+
+        function renderKeywordsList(groups) {
+            const container = document.getElementById('gs-keywords-list');
+            if (!groups.length) {
+                container.innerHTML = '<div style="padding: 16px; color: var(--stone-500);">No keyword groups found. Click + Add to create one.</div>';
+                return;
+            }
+            container.innerHTML = groups.map(g => `
+                <div class="list-item" style="padding: 12px; border-bottom: 1px solid var(--stone-100);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 500;">${g.name}</div>
+                            <div style="font-size: 12px; color: var(--stone-500);">
+                                ${g.category || 'Uncategorized'} | ${g.keywords?.length || 0} keywords | ${g.total_searches || 0} searches
+                            </div>
+                        </div>
+                        <button class="btn-sm" onclick="deleteKeywordGroup(${g.id})" title="Delete">×</button>
+                    </div>
+                    <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
+                        ${(g.keywords || []).slice(0, 5).map(k => `<span class="badge" style="font-size: 11px;">${k}</span>`).join('')}
+                        ${g.keywords?.length > 5 ? `<span style="font-size: 11px; color: var(--stone-400);">+${g.keywords.length - 5} more</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateJobDropdowns() {
+            const locationSelect = document.getElementById('gs-job-location');
+            const keywordsSelect = document.getElementById('gs-job-keywords');
+            
+            // Show city, metro, neighborhood - but NOT zip codes (those are children of cities)
+            const mainLocations = gsLocations.filter(l => {
+                const type = (l.location_type || '').toLowerCase();
+                return type === 'city' || type === 'metro' || type === 'neighborhood';
+            });
+            locationSelect.innerHTML = '<option value="">Select location...</option>' + 
+                mainLocations.map(l => {
+                    const typeLabel = l.location_type ? ` (${l.location_type})` : '';
+                    return `<option value="${l.id}" data-type="${l.location_type || ''}">${l.name}${typeLabel}</option>`;
+                }).join('');
+            
+            keywordsSelect.innerHTML = '<option value="">Select keywords...</option>' + 
+                gsKeywordGroups.map(g => `<option value="${g.id}">${g.name} (${g.keywords?.length || 0})</option>`).join('');
+        }
+
+        let gsCurrentCityZips = [];
+        let gsSelectedZips = new Set();
+
+        async function onCityChange() {
+            const locationSelect = document.getElementById('gs-job-location');
+            const locationId = locationSelect.value;
+            const selectedOption = locationSelect.options[locationSelect.selectedIndex];
+            const locationType = selectedOption?.dataset?.type || '';
+            
+            gsCurrentCityZips = [];
+            gsSelectedZips.clear();
+            
+            // Only show zip options for cities
+            const zipModeSelect = document.getElementById('gs-job-zip-mode');
+            const zipCoverageBtn = document.querySelector('[onclick="runWithZipCoverage()"]');
+            
+            if (locationType === 'city' && locationId) {
+                zipModeSelect.disabled = false;
+                zipCoverageBtn.disabled = false;
+                zipCoverageBtn.style.opacity = '1';
+                
+                try {
+                    const response = await fetchWithAuth(`/api/v1/google-scraping/locations/${locationId}/children`);
+                    gsCurrentCityZips = await response.json();
+                    document.getElementById('gs-zip-count').textContent = `(${gsCurrentCityZips.length} available)`;
+                    
+                    gsCurrentCityZips.forEach(z => gsSelectedZips.add(z.id));
+                    renderZipList();
+                } catch (error) {
+                    console.error('Failed to load zip codes:', error);
+                    document.getElementById('gs-zip-list').innerHTML = '<span style="color: #ef4444;">Failed to load zip codes</span>';
+                }
+            } else {
+                // Non-city location - disable zip options
+                zipModeSelect.disabled = true;
+                zipModeSelect.value = 'city_only';
+                zipCoverageBtn.disabled = true;
+                zipCoverageBtn.style.opacity = '0.5';
+                document.getElementById('gs-zip-selector').style.display = 'none';
+                document.getElementById('gs-zip-count').textContent = '(cities only)';
+                document.getElementById('gs-zip-list').innerHTML = '<span style="color: #666;">Zip coverage only available for city locations</span>';
+            }
+        }
+
+        function onZipModeChange() {
+            const mode = document.getElementById('gs-job-zip-mode').value;
+            document.getElementById('gs-zip-selector').style.display = mode === 'specific_zips' ? 'block' : 'none';
+        }
+
+        function renderZipList() {
+            const container = document.getElementById('gs-zip-list');
+            if (!gsCurrentCityZips.length) {
+                container.innerHTML = '<span style="color: #666;">No zip codes for this city</span>';
+                return;
+            }
+            container.innerHTML = gsCurrentCityZips.map(z => {
+                const isSelected = gsSelectedZips.has(z.id);
+                const zipCode = z.extra_data?.zip || z.name.split(' - ')[0];
+                return `<label style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: ${isSelected ? '#22c55e22' : '#222'}; border: 1px solid ${isSelected ? '#22c55e' : '#333'}; border-radius: 6px; cursor: pointer;">
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleZip(${z.id})" style="margin: 0;">
+                    <span style="font-size: 13px;">${zipCode}</span>
+                </label>`;
+            }).join('');
+        }
+
+        function toggleZip(zipId) {
+            if (gsSelectedZips.has(zipId)) {
+                gsSelectedZips.delete(zipId);
+            } else {
+                gsSelectedZips.add(zipId);
+            }
+            renderZipList();
+        }
+
+        function selectAllZips() {
+            gsCurrentCityZips.forEach(z => gsSelectedZips.add(z.id));
+            renderZipList();
+        }
+
+        function deselectAllZips() {
+            gsSelectedZips.clear();
+            renderZipList();
+        }
+
+        async function runWithZipCoverage() {
+            const cityId = document.getElementById('gs-job-location').value;
+            const keywordGroupId = document.getElementById('gs-job-keywords').value;
+            const sourceType = document.getElementById('gs-job-source').value;
+            const depth = parseInt(document.getElementById('gs-job-depth').value);
+            const zipMode = document.getElementById('gs-job-zip-mode').value;
+            const baseName = document.getElementById('gs-job-name').value.trim();
+
+            if (!keywordGroupId) {
+                showToast('Please select a keyword group', 'error');
+                return;
+            }
+            if (!cityId) {
+                showToast('Please select a city', 'error');
+                return;
+            }
+
+            const keywordGroup = gsKeywordGroups.find(kg => kg.id == keywordGroupId);
+            const keywordName = keywordGroup?.name || 'Keywords';
+            const city = gsLocations.find(l => l.id == cityId);
+            const cityName = city?.name || 'City';
+
+            let locationsToScrape = [];
+
+            if (zipMode === 'city_only') {
+                locationsToScrape = [{ id: parseInt(cityId), name: cityName }];
+            } else if (zipMode === 'all_zips') {
+                if (gsCurrentCityZips.length === 0) {
+                    await onCityChange();
+                }
+                if (gsCurrentCityZips.length === 0) {
+                    locationsToScrape = [{ id: parseInt(cityId), name: cityName }];
+                } else {
+                    locationsToScrape = gsCurrentCityZips.map(z => ({ id: z.id, name: z.name }));
+                }
+            } else {
+                locationsToScrape = gsCurrentCityZips.filter(z => gsSelectedZips.has(z.id)).map(z => ({ id: z.id, name: z.name }));
+                if (locationsToScrape.length === 0) {
+                    showToast('Please select at least one zip code', 'error');
+                    return;
+                }
+            }
+
+            if (!confirm(`This will create and run ${locationsToScrape.length} job(s) for "${keywordName}". Continue?`)) {
+                return;
+            }
+
+            const progressDiv = document.getElementById('gs-batch-progress');
+            const statusEl = document.getElementById('gs-batch-status');
+            const countEl = document.getElementById('gs-batch-count');
+            const barEl = document.getElementById('gs-batch-bar');
+            const logEl = document.getElementById('gs-batch-log');
+
+            progressDiv.style.display = 'block';
+            logEl.innerHTML = '';
+            barEl.style.background = '#22c55e';
+            let completed = 0;
+            let failed = 0;
+            let totalFound = 0;
+
+            const addLog = (msg, type = 'info') => {
+                const color = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#888';
+                logEl.innerHTML += `<div style="color: ${color};">${new Date().toLocaleTimeString()}: ${msg}</div>`;
+                logEl.scrollTop = logEl.scrollHeight;
+            };
+
+            for (let i = 0; i < locationsToScrape.length; i++) {
+                const location = locationsToScrape[i];
+                const jobName = baseName || `${location.name} - ${keywordName}`;
+
+                statusEl.textContent = `Processing: ${location.name}`;
+                countEl.textContent = `${i + 1}/${locationsToScrape.length}`;
+                barEl.style.width = `${((i) / locationsToScrape.length) * 100}%`;
+
+                addLog(`Creating job: ${location.name}`);
+
+                try {
+                    const createResponse = await fetchWithAuth('/api/v1/google-scraping/jobs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: locationsToScrape.length > 1 ? `${location.name} - ${keywordName}` : jobName,
+                            location_id: location.id,
+                            keyword_group_id: parseInt(keywordGroupId),
+                            source_type: sourceType,
+                            depth
+                        })
+                    });
+
+                    if (!createResponse.ok) throw new Error('Failed to create job');
+                    const { job_id } = await createResponse.json();
+
+                    addLog(`Running job for ${location.name}...`);
+
+                    const runResponse = await fetchWithAuth(`/api/v1/google-scraping/jobs/${job_id}/run`, {
+                        method: 'POST'
+                    });
+
+                    if (!runResponse.ok) {
+                        const error = await runResponse.json();
+                        throw new Error(error.detail || 'Job execution failed');
+                    }
+
+                    const result = await runResponse.json();
+                    totalFound += result.total_found || 0;
+                    completed++;
+                    addLog(`Completed ${location.name}: ${result.total_found || 0} results`, 'success');
+                } catch (error) {
+                    failed++;
+                    addLog(`Failed ${location.name}: ${error.message}`, 'error');
+                }
+
+                barEl.style.width = `${((i + 1) / locationsToScrape.length) * 100}%`;
+            }
+
+            statusEl.textContent = `Done! ${completed} completed, ${failed} failed`;
+            countEl.textContent = `Total results: ${totalFound}`;
+            barEl.style.width = '100%';
+            barEl.style.background = failed > 0 ? '#f59e0b' : '#22c55e';
+
+            showToast(`Batch complete: ${completed} jobs, ${totalFound} total results`, 'success');
+            loadGoogleScrapingStats();
+            loadGoogleScrapingJobs();
+        }
+
+        async function loadGoogleScrapingJobs() {
+            const status = document.getElementById('gs-job-status-filter')?.value || '';
+            try {
+                const response = await fetchWithAuth(`/api/v1/google-scraping/jobs?status=${encodeURIComponent(status)}`);
+                const jobs = await response.json();
+                renderJobsTable(jobs);
+            } catch (error) {
+                console.error('Failed to load jobs:', error);
+                document.getElementById('gs-jobs-table-body').innerHTML = '<tr><td colspan="8" class="error">Failed to load jobs</td></tr>';
+            }
+        }
+
+        let gsAutoRefreshInterval = null;
+
+        function renderJobsTable(jobs) {
+            const tbody = document.getElementById('gs-jobs-table-body');
+            if (!jobs.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--stone-500);">No jobs found</td></tr>';
+                return;
+            }
+
+            const hasRunningJobs = jobs.some(j => j.status === 'running');
+            if (hasRunningJobs && !gsAutoRefreshInterval) {
+                gsAutoRefreshInterval = setInterval(() => {
+                    loadGoogleScrapingJobs();
+                    loadGoogleScrapingStats();
+                }, 3000);
+            } else if (!hasRunningJobs && gsAutoRefreshInterval) {
+                clearInterval(gsAutoRefreshInterval);
+                gsAutoRefreshInterval = null;
+            }
+
+            tbody.innerHTML = jobs.map(j => `
+                <tr>
+                    <td>${j.name}</td>
+                    <td><span class="badge">${j.source_type === 'google_maps_reviews' ? 'Maps Reviews' : 'Google Search'}</span></td>
+                    <td>${j.location_name || '-'}</td>
+                    <td>${j.keyword_group_name || '-'}</td>
+                    <td><span class="badge ${j.status === 'completed' ? 'badge-success' : j.status === 'failed' ? 'badge-error' : j.status === 'running' ? 'badge-warning' : ''}">${j.status}${j.status === 'running' ? ' ⟳' : ''}</span></td>
+                    <td>${j.total_found || 0}</td>
+                    <td>${j.created_at ? new Date(j.created_at).toLocaleString() : '-'}</td>
+                    <td>
+                        ${j.status === 'completed' || j.status === 'failed' ? `<button class="btn-sm" onclick="viewJobResults(${j.id})">View</button>` : ''}
+                        ${j.status === 'running' ? `<span style="color: var(--amber-500); font-size: 12px;">Running...</span>` : ''}
+                        ${j.status === 'pending' ? `<button class="btn-sm" onclick="runJob(${j.id})">Run</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function createAndRunJob() {
+            const locationId = document.getElementById('gs-job-location').value;
+            const keywordGroupId = document.getElementById('gs-job-keywords').value;
+            const sourceType = document.getElementById('gs-job-source').value;
+            const depth = parseInt(document.getElementById('gs-job-depth').value);
+            const name = document.getElementById('gs-job-name').value.trim();
+
+            if (!name) {
+                showToast('Please enter a job name', 'error');
+                return;
+            }
+            if (!locationId && !keywordGroupId) {
+                showToast('Please select at least a location or keyword group', 'error');
+                return;
+            }
+
+            try {
+                const createResponse = await fetchWithAuth('/api/v1/google-scraping/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        location_id: locationId ? parseInt(locationId) : null,
+                        keyword_group_id: keywordGroupId ? parseInt(keywordGroupId) : null,
+                        source_type: sourceType,
+                        depth
+                    })
+                });
+
+                if (!createResponse.ok) throw new Error('Failed to create job');
+                const { job_id } = await createResponse.json();
+
+                showToast('Job created, running...', 'success');
+                document.getElementById('gs-job-name').value = '';
+
+                const runResponse = await fetchWithAuth(`/api/v1/google-scraping/jobs/${job_id}/run`, {
+                    method: 'POST'
+                });
+
+                if (!runResponse.ok) {
+                    const error = await runResponse.json();
+                    throw new Error(error.detail || 'Job execution failed');
+                }
+
+                const result = await runResponse.json();
+                showToast(`Job completed! Found ${result.total_found || 0} results`, 'success');
+                loadGoogleScrapingStats();
+                loadGoogleScrapingJobs();
+            } catch (error) {
+                showToast('Job error: ' + error.message, 'error');
+                loadGoogleScrapingJobs();
+            }
+        }
+
+        async function runJob(jobId) {
+            try {
+                showToast('Running job...', 'success');
+                const response = await fetchWithAuth(`/api/v1/google-scraping/jobs/${jobId}/run`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to run job');
+                }
+                const result = await response.json();
+                showToast(`Job completed! Found ${result.total_found || 0} results`, 'success');
+                loadGoogleScrapingJobs();
+            } catch (error) {
+                showToast('Run error: ' + error.message, 'error');
+                loadGoogleScrapingJobs();
+            }
+        }
+
+        async function runAllCities() {
+            const keywordGroupId = document.getElementById('gs-job-keywords').value;
+            const sourceType = document.getElementById('gs-job-source').value;
+            const depth = parseInt(document.getElementById('gs-job-depth').value);
+
+            if (!keywordGroupId) {
+                showToast('Please select a keyword group first', 'error');
+                return;
+            }
+
+            const cityLocations = gsLocations.filter(loc => loc.location_type === 'city');
+            if (cityLocations.length === 0) {
+                showToast('No city locations found', 'error');
+                return;
+            }
+
+            const keywordGroup = gsKeywordGroups.find(kg => kg.id == keywordGroupId);
+            const keywordName = keywordGroup?.name || 'Keywords';
+
+            if (!confirm(`This will create and run ${cityLocations.length} jobs for all cities with "${keywordName}". Continue?`)) {
+                return;
+            }
+
+            const progressDiv = document.getElementById('gs-batch-progress');
+            const statusEl = document.getElementById('gs-batch-status');
+            const countEl = document.getElementById('gs-batch-count');
+            const barEl = document.getElementById('gs-batch-bar');
+            const logEl = document.getElementById('gs-batch-log');
+
+            progressDiv.style.display = 'block';
+            logEl.innerHTML = '';
+            let completed = 0;
+            let failed = 0;
+            let totalFound = 0;
+
+            const addLog = (msg, type = 'info') => {
+                const color = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#888';
+                logEl.innerHTML += `<div style="color: ${color};">${new Date().toLocaleTimeString()}: ${msg}</div>`;
+                logEl.scrollTop = logEl.scrollHeight;
+            };
+
+            for (let i = 0; i < cityLocations.length; i++) {
+                const location = cityLocations[i];
+                const jobName = `${location.name} - ${keywordName}`;
+
+                statusEl.textContent = `Processing: ${location.name}`;
+                countEl.textContent = `${i + 1}/${cityLocations.length}`;
+                barEl.style.width = `${((i) / cityLocations.length) * 100}%`;
+
+                addLog(`Creating job: ${jobName}`);
+
+                try {
+                    const createResponse = await fetchWithAuth('/api/v1/google-scraping/jobs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: jobName,
+                            location_id: location.id,
+                            keyword_group_id: parseInt(keywordGroupId),
+                            source_type: sourceType,
+                            depth
+                        })
+                    });
+
+                    if (!createResponse.ok) throw new Error('Failed to create job');
+                    const { job_id } = await createResponse.json();
+
+                    addLog(`Running job for ${location.name}...`);
+
+                    const runResponse = await fetchWithAuth(`/api/v1/google-scraping/jobs/${job_id}/run`, {
+                        method: 'POST'
+                    });
+
+                    if (!runResponse.ok) {
+                        const error = await runResponse.json();
+                        throw new Error(error.detail || 'Job execution failed');
+                    }
+
+                    const result = await runResponse.json();
+                    totalFound += result.total_found || 0;
+                    completed++;
+                    addLog(`Completed ${location.name}: ${result.total_found || 0} results`, 'success');
+                } catch (error) {
+                    failed++;
+                    addLog(`Failed ${location.name}: ${error.message}`, 'error');
+                }
+
+                barEl.style.width = `${((i + 1) / cityLocations.length) * 100}%`;
+            }
+
+            statusEl.textContent = `Done! ${completed} completed, ${failed} failed`;
+            countEl.textContent = `Total results: ${totalFound}`;
+            barEl.style.width = '100%';
+            barEl.style.background = failed > 0 ? '#f59e0b' : '#22c55e';
+
+            showToast(`Batch complete: ${completed} jobs, ${totalFound} total results`, 'success');
+            loadGoogleScrapingStats();
+            loadGoogleScrapingJobs();
+        }
+
+        async function runAllKeywords() {
+            const locationId = document.getElementById('gs-job-location').value;
+            const sourceType = document.getElementById('gs-job-source').value;
+            const depth = parseInt(document.getElementById('gs-job-depth').value);
+
+            if (!locationId) {
+                showToast('Please select a location first', 'error');
+                return;
+            }
+
+            if (gsKeywordGroups.length === 0) {
+                showToast('No keyword groups found', 'error');
+                return;
+            }
+
+            const location = gsLocations.find(loc => loc.id == locationId);
+            const locationName = location?.name || 'Selected Location';
+
+            if (!confirm(`This will create and run ${gsKeywordGroups.length} jobs for "${locationName}" with ALL keyword groups. Continue?`)) {
+                return;
+            }
+
+            const progressDiv = document.getElementById('gs-batch-progress');
+            const statusEl = document.getElementById('gs-batch-status');
+            const countEl = document.getElementById('gs-batch-count');
+            const barEl = document.getElementById('gs-batch-bar');
+            const logEl = document.getElementById('gs-batch-log');
+
+            progressDiv.style.display = 'block';
+            logEl.innerHTML = '';
+            barEl.style.background = '#3b82f6';
+            let completed = 0;
+            let failed = 0;
+            let totalFound = 0;
+
+            const addLog = (msg, type = 'info') => {
+                const color = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#888';
+                logEl.innerHTML += `<div style="color: ${color};">${new Date().toLocaleTimeString()}: ${msg}</div>`;
+                logEl.scrollTop = logEl.scrollHeight;
+            };
+
+            for (let i = 0; i < gsKeywordGroups.length; i++) {
+                const keywordGroup = gsKeywordGroups[i];
+                const jobName = `${locationName} - ${keywordGroup.name}`;
+
+                statusEl.textContent = `Processing: ${keywordGroup.name}`;
+                countEl.textContent = `${i + 1}/${gsKeywordGroups.length}`;
+                barEl.style.width = `${((i) / gsKeywordGroups.length) * 100}%`;
+
+                addLog(`Creating job: ${jobName}`);
+
+                try {
+                    const createResponse = await fetchWithAuth('/api/v1/google-scraping/jobs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: jobName,
+                            location_id: parseInt(locationId),
+                            keyword_group_id: keywordGroup.id,
+                            source_type: sourceType,
+                            depth
+                        })
+                    });
+
+                    if (!createResponse.ok) throw new Error('Failed to create job');
+                    const { job_id } = await createResponse.json();
+
+                    addLog(`Running job for ${keywordGroup.name}...`);
+
+                    const runResponse = await fetchWithAuth(`/api/v1/google-scraping/jobs/${job_id}/run`, {
+                        method: 'POST'
+                    });
+
+                    if (!runResponse.ok) {
+                        const error = await runResponse.json();
+                        throw new Error(error.detail || 'Job execution failed');
+                    }
+
+                    const result = await runResponse.json();
+                    totalFound += result.total_found || 0;
+                    completed++;
+                    addLog(`Completed ${keywordGroup.name}: ${result.total_found || 0} results`, 'success');
+                } catch (error) {
+                    failed++;
+                    addLog(`Failed ${keywordGroup.name}: ${error.message}`, 'error');
+                }
+
+                barEl.style.width = `${((i + 1) / gsKeywordGroups.length) * 100}%`;
+            }
+
+            statusEl.textContent = `Done! ${completed} completed, ${failed} failed`;
+            countEl.textContent = `Total results: ${totalFound}`;
+            barEl.style.width = '100%';
+            barEl.style.background = failed > 0 ? '#f59e0b' : '#22c55e';
+
+            showToast(`Batch complete: ${completed} jobs, ${totalFound} total results`, 'success');
+            loadGoogleScrapingStats();
+            loadGoogleScrapingJobs();
+        }
+
+        async function runFullSweep() {
+            const sourceType = document.getElementById('gs-job-source').value;
+            const depth = parseInt(document.getElementById('gs-job-depth').value);
+
+            const cityLocations = gsLocations.filter(loc => loc.location_type === 'city');
+            if (cityLocations.length === 0) {
+                showToast('No city locations found', 'error');
+                return;
+            }
+
+            if (gsKeywordGroups.length === 0) {
+                showToast('No keyword groups found', 'error');
+                return;
+            }
+
+            const totalJobs = cityLocations.length * gsKeywordGroups.length;
+            if (!confirm(`This will create and run ${totalJobs} jobs (${cityLocations.length} cities × ${gsKeywordGroups.length} keyword groups) with depth ${depth}.\n\nThis may take a while and use API credits. Continue?`)) {
+                return;
+            }
+
+            const progressDiv = document.getElementById('gs-batch-progress');
+            const statusEl = document.getElementById('gs-batch-status');
+            const countEl = document.getElementById('gs-batch-count');
+            const barEl = document.getElementById('gs-batch-bar');
+            const logEl = document.getElementById('gs-batch-log');
+
+            progressDiv.style.display = 'block';
+            logEl.innerHTML = '';
+            barEl.style.background = '#dc2626';
+            let completed = 0;
+            let failed = 0;
+            let totalFound = 0;
+            let current = 0;
+
+            const addLog = (msg, type = 'info') => {
+                const color = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#888';
+                logEl.innerHTML += `<div style="color: ${color};">${new Date().toLocaleTimeString()}: ${msg}</div>`;
+                logEl.scrollTop = logEl.scrollHeight;
+            };
+
+            addLog(`Starting full sweep: ${cityLocations.length} cities × ${gsKeywordGroups.length} keywords = ${totalJobs} jobs`);
+
+            for (let c = 0; c < cityLocations.length; c++) {
+                const location = cityLocations[c];
+                addLog(`--- City ${c + 1}/${cityLocations.length}: ${location.name} ---`);
+
+                for (let k = 0; k < gsKeywordGroups.length; k++) {
+                    const keywordGroup = gsKeywordGroups[k];
+                    const jobName = `${location.name} - ${keywordGroup.name}`;
+                    current++;
+
+                    statusEl.textContent = `${location.name} - ${keywordGroup.name}`;
+                    countEl.textContent = `${current}/${totalJobs}`;
+                    barEl.style.width = `${((current - 1) / totalJobs) * 100}%`;
+
+                    try {
+                        const createResponse = await fetchWithAuth('/api/v1/google-scraping/jobs', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: jobName,
+                                location_id: location.id,
+                                keyword_group_id: keywordGroup.id,
+                                source_type: sourceType,
+                                depth
+                            })
+                        });
+
+                        if (!createResponse.ok) throw new Error('Failed to create job');
+                        const { job_id } = await createResponse.json();
+
+                        const runResponse = await fetchWithAuth(`/api/v1/google-scraping/jobs/${job_id}/run`, {
+                            method: 'POST'
+                        });
+
+                        if (!runResponse.ok) {
+                            const error = await runResponse.json();
+                            throw new Error(error.detail || 'Job execution failed');
+                        }
+
+                        const result = await runResponse.json();
+                        totalFound += result.total_found || 0;
+                        completed++;
+                        addLog(`${keywordGroup.name}: ${result.total_found || 0} results`, 'success');
+                    } catch (error) {
+                        failed++;
+                        addLog(`${keywordGroup.name}: ${error.message}`, 'error');
+                    }
+
+                    barEl.style.width = `${(current / totalJobs) * 100}%`;
+                }
+            }
+
+            statusEl.textContent = `Done! ${completed} completed, ${failed} failed`;
+            countEl.textContent = `Total results: ${totalFound}`;
+            barEl.style.width = '100%';
+            barEl.style.background = failed > 0 ? '#f59e0b' : '#22c55e';
+
+            showToast(`Full sweep complete: ${completed}/${totalJobs} jobs, ${totalFound} total results`, 'success');
+            loadGoogleScrapingStats();
+            loadGoogleScrapingJobs();
+        }
+
+        async function viewJobResults(jobId) {
+            console.log('viewJobResults called with jobId:', jobId);
+            try {
+                const response = await fetchWithAuth(`/api/v1/google-scraping/jobs/${jobId}`);
+                console.log('Response status:', response.status);
+                const job = await response.json();
+                console.log('Job data:', job);
+                gsSelectedJobId = jobId;
+                
+                const panel = document.getElementById('gs-results-panel');
+                const content = document.getElementById('gs-results-content');
+                
+                if (!panel) {
+                    console.error('gs-results-panel not found!');
+                    showToast('Results panel not found', 'error');
+                    return;
+                }
+                
+                panel.style.display = 'block';
+                panel.scrollIntoView({ behavior: 'smooth' });
+                
+                if (!job.results || job.results.length === 0) {
+                    content.innerHTML = '<div style="color: var(--stone-500);">No results found for this job.</div>';
+                    return;
+                }
+
+                if (job.source_type === 'google_maps_reviews') {
+                    content.innerHTML = job.results.map(r => `
+                        <div style="background: var(--stone-50); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                            <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">
+                                ${r.place?.title || r.place?.name || 'Unknown Place'}
+                            </div>
+                            <div style="font-size: 13px; color: var(--stone-500); margin-bottom: 12px;">
+                                ${r.place?.address || ''} | Keyword: "${r.keyword}"
+                            </div>
+                            ${r.reviews && r.reviews.length > 0 ? `
+                                <div style="font-size: 12px; font-weight: 500; margin-bottom: 8px;">Reviews (${r.reviews.length}):</div>
+                                ${r.reviews.slice(0, 3).map(rev => `
+                                    <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 13px;">
+                                        <div style="color: var(--amber-500);">${'★'.repeat(rev.rating || 0)}</div>
+                                        <div style="color: var(--stone-600);">${rev.snippet || rev.text || 'No text'}</div>
+                                    </div>
+                                `).join('')}
+                                ${r.reviews.length > 3 ? `<div style="color: var(--stone-400); font-size: 12px;">+${r.reviews.length - 3} more reviews</div>` : ''}
+                            ` : '<div style="color: var(--stone-400); font-size: 13px;">No reviews</div>'}
+                        </div>
+                    `).join('');
+                } else {
+                    content.innerHTML = job.results.map(r => `
+                        <div style="background: var(--stone-50); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Keyword: "${r.keyword}"</div>
+                            ${r.results?.slice(0, 5).map(res => `
+                                <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
+                                    <a href="${res.link}" target="_blank" style="font-weight: 500; color: var(--blue-600);">${res.title}</a>
+                                    <div style="font-size: 13px; color: var(--stone-600);">${res.snippet || ''}</div>
+                                </div>
+                            `).join('') || '<div style="color: var(--stone-400);">No results</div>'}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showToast('Failed to load results: ' + error.message, 'error');
+            }
+        }
+
+        function closeResultsPanel() {
+            document.getElementById('gs-results-panel').style.display = 'none';
+            gsSelectedJobId = null;
+        }
+
+        function exportJobResults() {
+            showToast('Export feature coming soon', 'info');
+        }
+
+        function showAddLocationModal() {
+            const modal = document.getElementById('modal-container');
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3>Add Location</h3>
+                            <button class="modal-close" onclick="closeModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Location Name *</label>
+                                <input type="text" id="new-loc-name" placeholder="e.g., Austin, TX" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select id="new-loc-type" class="form-select">
+                                    <option value="city">City</option>
+                                    <option value="neighborhood">Neighborhood</option>
+                                    <option value="zip_code">ZIP Code</option>
+                                    <option value="business_district">Business District</option>
+                                </select>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label>Latitude</label>
+                                    <input type="number" step="any" id="new-loc-lat" placeholder="30.2672" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Longitude</label>
+                                    <input type="number" step="any" id="new-loc-lng" placeholder="-97.7431" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Search Radius (km)</label>
+                                <input type="number" id="new-loc-radius" value="5" class="form-input">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button class="btn-primary" onclick="saveNewLocation()">Add Location</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveNewLocation() {
+            const name = document.getElementById('new-loc-name').value.trim();
+            const locationType = document.getElementById('new-loc-type').value;
+            const lat = document.getElementById('new-loc-lat').value;
+            const lng = document.getElementById('new-loc-lng').value;
+            const radius = document.getElementById('new-loc-radius').value;
+
+            if (!name) {
+                showToast('Location name is required', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetchWithAuth('/api/v1/google-scraping/locations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        location_type: locationType,
+                        latitude: lat ? parseFloat(lat) : null,
+                        longitude: lng ? parseFloat(lng) : null,
+                        radius_km: radius ? parseFloat(radius) : 5
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to create location');
+                showToast('Location added successfully', 'success');
+                closeModal();
+                loadGoogleScrapingLocations();
+                populateJobDropdowns();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteLocation(id) {
+            if (!confirm('Delete this location?')) return;
+            try {
+                const response = await fetchWithAuth(`/api/v1/google-scraping/locations/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Failed to delete');
+                showToast('Location deleted', 'success');
+                loadGoogleScrapingLocations();
+                populateJobDropdowns();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function seedLocations() {
+            if (!confirm('This will add all major US cities and neighborhoods from the keyword matrix. Continue?')) return;
+            try {
+                const response = await fetchWithAuth('/api/v1/google-scraping/locations/seed', { method: 'POST' });
+                if (!response.ok) throw new Error('Failed to seed locations');
+                const result = await response.json();
+                showToast(`Added ${result.added} locations (${result.skipped} already existed)`, 'success');
+                loadGoogleScrapingLocations();
+                populateJobDropdowns();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showAddKeywordGroupModal() {
+            const modal = document.getElementById('modal-container');
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3>Add Keyword Group</h3>
+                            <button class="modal-close" onclick="closeModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Group Name *</label>
+                                <input type="text" id="new-kw-name" placeholder="e.g., Parking Pain Points" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <input type="text" id="new-kw-category" placeholder="e.g., Transportation" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Keywords * (one per line)</label>
+                                <textarea id="new-kw-keywords" rows="6" placeholder="parking is terrible&#10;can't find parking&#10;parking too expensive" class="form-textarea" style="width: 100%;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Match Type</label>
+                                <select id="new-kw-match" class="form-select">
+                                    <option value="phrase">Phrase Match</option>
+                                    <option value="exact">Exact Match</option>
+                                    <option value="broad">Broad Match</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button class="btn-primary" onclick="saveNewKeywordGroup()">Add Group</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveNewKeywordGroup() {
+            const name = document.getElementById('new-kw-name').value.trim();
+            const category = document.getElementById('new-kw-category').value.trim();
+            const keywordsText = document.getElementById('new-kw-keywords').value;
+            const matchType = document.getElementById('new-kw-match').value;
+
+            const keywords = keywordsText.split('\n').map(k => k.trim()).filter(k => k);
+
+            if (!name) {
+                showToast('Group name is required', 'error');
+                return;
+            }
+            if (keywords.length === 0) {
+                showToast('At least one keyword is required', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetchWithAuth('/api/v1/google-scraping/keyword-groups', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        category: category || null,
+                        keywords,
+                        match_type: matchType
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to create keyword group');
+                showToast('Keyword group added successfully', 'success');
+                closeModal();
+                loadGoogleScrapingKeywords();
+                populateJobDropdowns();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteKeywordGroup(id) {
+            if (!confirm('Delete this keyword group?')) return;
+            try {
+                const response = await fetchWithAuth(`/api/v1/google-scraping/keyword-groups/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Failed to delete');
+                showToast('Keyword group deleted', 'success');
+                loadGoogleScrapingKeywords();
+                populateJobDropdowns();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Event listeners for Google Scraping
+        document.getElementById('gs-location-search')?.addEventListener('input', debounce(() => loadGoogleScrapingLocations(), 300));
+        document.getElementById('gs-keyword-search')?.addEventListener('input', debounce(() => loadGoogleScrapingKeywords(), 300));
+        document.getElementById('gs-job-status-filter')?.addEventListener('change', () => loadGoogleScrapingJobs());
+
+        // ===== END GOOGLE SCRAPING FUNCTIONS =====
 
         init();
     </script>

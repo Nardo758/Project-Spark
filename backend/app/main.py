@@ -1,13 +1,59 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
-from app.routers import auth, opportunities, validations, comments, users, analytics, watchlist, two_factor, oauth, notifications, admin, moderation, subscriptions, social, follows, websocket_router, ai_chat, webhook, ai_analysis, idea_engine, scraper, replit_auth, magic_link, profiles, experts, ai_engine, payments, stripe_webhook, agreements, milestones, idea_validations, workhub
-from app.middleware.security import SecurityHeadersMiddleware
-from app.middleware.rate_limit import RateLimitMiddleware
 import logging
 import os
-from app.middleware.security import SecurityHeadersMiddleware
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
 from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.security import SecurityHeadersMiddleware
+from app.routers import (
+    admin,
+    agreements,
+    ai_analysis,
+    ai_chat,
+    ai_cofounder,
+    ai_engine,
+    analytics,
+    auth,
+    command_center,
+    comments,
+    consultant,
+    contact,
+    experts,
+    follows,
+    generated_reports,
+    google_scraping,
+    idea_engine,
+    idea_validations,
+    leads,
+    leads_marketplace,
+    linkedin,
+    magic_link,
+    map_data,
+    maps,
+    milestones,
+    moderation,
+    notifications,
+    oauth,
+    opportunities,
+    payments,
+    profiles,
+    quick_actions,
+    replit_auth,
+    scraper,
+    social,
+    stripe_webhook,
+    subscriptions,
+    two_factor,
+    users,
+    validations,
+    watchlist,
+    webhook,
+    webhooks,
+    websocket_router,
+    workspaces,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +119,21 @@ app.include_router(replit_auth.router, prefix="/auth", tags=["Replit Auth"])
 # Mount callback at root level for standard Replit Auth callback path
 app.include_router(replit_auth.router, prefix="", tags=["Replit Auth Callback"])
 app.include_router(magic_link.router, prefix=f"{settings.API_V1_PREFIX}/magic-link", tags=["Magic Link Auth"])
-app.include_router(workhub.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Workhub"])
+app.include_router(contact.router, prefix=f"{settings.API_V1_PREFIX}/contact", tags=["Contact"])
+app.include_router(leads.router, prefix=f"{settings.API_V1_PREFIX}/admin/leads", tags=["Admin Leads"])
+app.include_router(leads_marketplace.router, prefix=f"{settings.API_V1_PREFIX}/marketplace/leads", tags=["Leads Marketplace"])
+app.include_router(generated_reports.router, prefix=f"{settings.API_V1_PREFIX}/reports", tags=["Generated Reports"])
+app.include_router(consultant.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Consultant Studio"])
+app.include_router(quick_actions.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Quick Actions"])
+app.include_router(webhooks.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Data Webhooks"])
+app.include_router(webhooks.apify_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Apify Webhook"])
+app.include_router(map_data.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Map Data"])
+app.include_router(maps.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Maps"])
+app.include_router(linkedin.router, prefix=f"{settings.API_V1_PREFIX}/auth/linkedin", tags=["LinkedIn OAuth"])
+app.include_router(command_center.router, prefix=f"{settings.API_V1_PREFIX}/command-center", tags=["Command Center"])
+app.include_router(google_scraping.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Google Scraping"])
+app.include_router(workspaces.router, prefix=f"{settings.API_V1_PREFIX}/workspaces", tags=["Workspaces"])
+app.include_router(ai_cofounder.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Co-Founder"])
 
 
 @app.get("/")

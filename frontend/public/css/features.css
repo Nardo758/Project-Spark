@@ -1,0 +1,388 @@
+/* OppGrid UI Styles for New Features */
+
+/* Feasibility Badges */
+.feasibility-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.feasibility-badge .score {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.feasibility-high {
+    background: #E8F4F0;
+    color: #1E5245;
+}
+
+.feasibility-medium {
+    background: #F5F3EE;
+    color: #6B5E4A;
+}
+
+.feasibility-low {
+    background: #F5EAEA;
+    color: #7A4A4A;
+}
+
+.feasibility-very-low {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+/* Geographic Badges */
+.geo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: #F1F5F9;
+    color: #475569;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Opportunity Cards */
+.opportunity-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.opportunity-card:hover {
+    border-color: #D97757;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 12px;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    flex: 1;
+}
+
+.card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.card-meta span {
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.category {
+    background: #F3F4F6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.validation-count {
+    color: #475569;
+    font-weight: 600;
+}
+
+.growth {
+    color: #475569;
+    font-weight: 600;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #E5E7EB;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+/* Duplicate Warning Modal */
+.duplicate-warning-modal .modal-content {
+    max-width: 600px;
+}
+
+.duplicates-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 20px 0;
+}
+
+.duplicate-item {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.duplicate-item:hover {
+    background: #F1F5F9;
+}
+
+.duplicate-item h4 {
+    margin: 0 0 8px 0;
+    color: #334155;
+}
+
+.duplicate-item p {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #475569;
+}
+
+/* Filters */
+.filters-container {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.filters-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* Top Feasible List */
+#top-feasible-container {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.feasible-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border-bottom: 1px solid #E5E7EB;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.feasible-item:hover {
+    background: #F9FAFB;
+}
+
+.feasible-item:last-child {
+    border-bottom: none;
+}
+
+.feasible-item .rank {
+    font-size: 24px;
+    font-weight: 700;
+    color: #9CA3AF;
+    min-width: 40px;
+}
+
+.feasible-item .content {
+    flex: 1;
+}
+
+.feasible-item h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: #111827;
+}
+
+.feasible-item p {
+    margin: 0;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+/* Geographic Distribution */
+.distribution-chart {
+    margin: 16px 0;
+}
+
+.distribution-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.distribution-item .label {
+    min-width: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.bar-container {
+    flex: 1;
+    height: 24px;
+    background: #F3F4F6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    background: #475569;
+    transition: width 0.3s;
+}
+
+.distribution-item .count {
+    min-width: 80px;
+    text-align: right;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.top-countries {
+    margin-top: 16px;
+}
+
+.country-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.country-item:last-child {
+    border-bottom: none;
+}
+
+/* Completion Stats */
+.completion-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.stat-card {
+    background: #334155;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.completion-breakdown {
+    margin: 24px 0;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.status-label {
+    text-transform: capitalize;
+    font-weight: 500;
+}
+
+.recently-solved {
+    margin-top: 24px;
+}
+
+.solved-item {
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.solved-item:hover {
+    background: #F1F5F9;
+}
+
+.solved-item .title {
+    font-weight: 600;
+    color: #1E293B;
+    margin-bottom: 4px;
+}
+
+.solved-item .solver {
+    font-size: 13px;
+    color: #475569;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filters-row {
+        flex-direction: column;
+    }
+
+    .filter-group {
+        min-width: 100%;
+    }
+
+    .card-header {
+        flex-direction: column;
+    }
+
+    .feasibility-badge {
+        margin-top: 8px;
+    }
+}

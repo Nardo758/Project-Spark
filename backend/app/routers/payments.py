@@ -12,8 +12,13 @@ from app.schemas.payment import (
     CreatePaymentIntentResponse,
     ConfirmPaymentRequest,
     ConfirmPaymentResponse,
+    CreateDeepDivePaymentRequest,
+    CreateFastPassPaymentRequest,
 )
-from app.services.stripe_service import get_stripe_client
+from app.services.stripe_service import get_stripe_client, StripeService
+from app.models.opportunity import Opportunity
+from app.models.subscription import UnlockedOpportunity, SubscriptionTier
+from app.services.usage_service import usage_service
 from app.services.audit import log_event
 
 
@@ -177,3 +182,150 @@ def confirm_payment(
 
     return ConfirmPaymentResponse(success=intent.status == "succeeded", status=intent.status, transaction_id=tx.id if tx else None)
 
+
+@router.post("/deep-dive", response_model=CreatePaymentIntentResponse)
+def create_deep_dive_payment_intent(
+    payload: CreateDeepDivePaymentRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Create a payment intent for Deep Dive ($49) - Layer 2 access add-on.
+    Only available for Pro tier users who have already unlocked the opportunity.
+    """
+    # Check user tier
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    user_tier = subscription.tier if isinstance(subscription.tier, SubscriptionTier) else SubscriptionTier(subscription.tier)
+    
+    if user_tier not in [SubscriptionTier.PRO]:
+        raise HTTPException(status_code=403, detail="Deep Dive is only available for Builder (Pro) tier subscribers")
+    
+    # Check opportunity exists and user has base access
+    opportunity = db.query(Opportunity).filter(Opportunity.id == payload.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    # Check if already has Deep Dive
+    existing_unlock = db.query(UnlockedOpportunity).filter(
+        UnlockedOpportunity.user_id == current_user.id,
+        UnlockedOpportunity.opportunity_id == payload.opportunity_id
+    ).first()
+    
+    if existing_unlock and existing_unlock.has_deep_dive:
+        raise HTTPException(status_code=400, detail="You already have Deep Dive access for this opportunity")
+    
+    # Create transaction
+    tx = Transaction(
+        user_id=current_user.id,
+        opportunity_id=payload.opportunity_id,
+        type=TransactionType.MICRO_PAYMENT,
+        status=TransactionStatus.PENDING,
+        currency="usd",
+        amount_cents=StripeService.DEEP_DIVE_PRICE,
+        metadata_json=json.dumps({"purpose": "deep_dive", "opportunity_id": payload.opportunity_id}),
+    )
+    db.add(tx)
+    db.commit()
+    db.refresh(tx)
+    
+    intent = _create_payment_intent_or_503(
+        amount=StripeService.DEEP_DIVE_PRICE,
+        currency="usd",
+        metadata={
+            "type": "deep_dive",
+            "transaction_id": str(tx.id),
+            "user_id": str(current_user.id),
+            "opportunity_id": str(payload.opportunity_id),
+            "purpose": "deep_dive",
+        },
+        automatic_payment_methods={"enabled": True},
+    )
+    
+    tx.stripe_payment_intent_id = intent.id
+    db.commit()
+    
+    log_event(
+        db,
+        action="payments.deep_dive.intent_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="transaction",
+        resource_id=tx.id,
+        metadata={"payment_intent_id": intent.id, "opportunity_id": payload.opportunity_id},
+    )
+    
+    return CreatePaymentIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, transaction_id=tx.id)
+
+
+@router.post("/fast-pass", response_model=CreatePaymentIntentResponse)
+def create_fast_pass_payment_intent(
+    payload: CreateFastPassPaymentRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Create a payment intent for Fast Pass ($99) - HOT opportunity early access.
+    Only available for Scaler (Business) tier users for opportunities 0-7 days old.
+    """
+    # Check user tier
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    user_tier = subscription.tier if isinstance(subscription.tier, SubscriptionTier) else SubscriptionTier(subscription.tier)
+    
+    if user_tier not in [SubscriptionTier.BUSINESS]:
+        raise HTTPException(status_code=403, detail="Fast Pass is only available for Scaler (Business) tier subscribers")
+    
+    # Check opportunity exists
+    opportunity = db.query(Opportunity).filter(Opportunity.id == payload.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    # Check if already unlocked
+    is_unlocked = usage_service.is_opportunity_unlocked(current_user, payload.opportunity_id, db)
+    if is_unlocked:
+        raise HTTPException(status_code=400, detail="You already have access to this opportunity")
+    
+    # Create transaction
+    tx = Transaction(
+        user_id=current_user.id,
+        opportunity_id=payload.opportunity_id,
+        type=TransactionType.MICRO_PAYMENT,
+        status=TransactionStatus.PENDING,
+        currency="usd",
+        amount_cents=StripeService.FAST_PASS_PRICE,
+        metadata_json=json.dumps({"purpose": "fast_pass", "opportunity_id": payload.opportunity_id}),
+    )
+    db.add(tx)
+    db.commit()
+    db.refresh(tx)
+    
+    intent = _create_payment_intent_or_503(
+        amount=StripeService.FAST_PASS_PRICE,
+        currency="usd",
+        metadata={
+            "type": "fast_pass",
+            "transaction_id": str(tx.id),
+            "user_id": str(current_user.id),
+            "opportunity_id": str(payload.opportunity_id),
+            "purpose": "fast_pass",
+        },
+        automatic_payment_methods={"enabled": True},
+    )
+    
+    tx.stripe_payment_intent_id = intent.id
+    db.commit()
+    
+    log_event(
+        db,
+        action="payments.fast_pass.intent_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="transaction",
+        resource_id=tx.id,
+        metadata={"payment_intent_id": intent.id, "opportunity_id": payload.opportunity_id},
+    )
+    
+    return CreatePaymentIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, transaction_id=tx.id)

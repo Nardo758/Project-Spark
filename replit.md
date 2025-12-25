@@ -1,7 +1,7 @@
 # OppGrid - Opportunity Intelligence Platform
 
 ## Overview
-OppGrid is an AI-powered opportunity intelligence platform designed to help users discover, validate, and act on business opportunities. It provides a structured approach to identifying market frictions, generating and validating business ideas, and connecting users with experts and resources. The platform aims to be an "AI Startup Factory" by offering a full lifecycle from idea generation to expert-led execution, leveraging AI for analysis, matching, and monetization. Key capabilities include AI-driven opportunity analysis, expert marketplaces, subscription-based content gating, and pay-per-unlock features, all designed to foster innovation and entrepreneurial success.
+OppGrid is an AI-powered opportunity intelligence platform designed to help users discover, validate, and act on business opportunities. It provides a structured approach from identifying market frictions to connecting users with experts and resources. The platform aims to be an "AI Startup Factory," offering AI-driven analysis, expert marketplaces, subscription-based content gating, and pay-per-unlock features to foster innovation and entrepreneurial success.
 
 ## User Preferences
 I want iterative development, with a focus on delivering core features quickly and refining them based on feedback. Prioritize modular and reusable code. I prefer clear, concise explanations and direct answers. Ask before making major architectural changes or introducing new external dependencies. Do not make changes to the `replit.nix` file.
@@ -14,48 +14,84 @@ OppGrid utilizes a modern hybrid architecture:
 - **State Management:** Zustand for client-side state
 - **Routing:** React Router v6
 
-The frontend proxies requests to the backend via Vite's dev server:
-- `/api/*` → Backend API endpoints
-- `/auth/*` → Replit Auth endpoints
-- `/__repl_auth_callback` → OAuth callback
+The frontend proxies `/api/*` requests to the backend via Vite's dev server configuration.
 
 **Key Architectural Decisions & Features:**
-*   **Monetization & Access Control:** Implements a tiered subscription model (Pro, Business, Enterprise) with time-decay access control for opportunities (Hot, Fresh, Validated, Archive). A pay-per-unlock mechanism for archived opportunities is also integrated.
-*   **AI Engine:** Integrates with LLMs (e.g., Claude-Haiku, Claude-Sonnet) for AI-powered idea generation, comprehensive idea validation, expert matching, and detailed opportunity analysis (scoring, market size, competition, business models).
-*   **Authentication:** Multiple auth methods supported:
-    - **Replit OIDC:** Primary SSO with PKCE flow, database-backed sessions, short-lived cookie token handoff
-    - **Magic Link:** Passwordless email auth via Resend, 15-minute expiry, auto-creates accounts
-    - **Email/Password:** Traditional login with bcrypt hashing
-    - **Social OAuth:** Google, GitHub, LinkedIn (placeholders ready for implementation)
-    - React routes: `/auth/callback` (Replit), `/auth/magic` (email link verification)
-*   **User Interface:** Features a professional design with a black/dark stone primary accent and complementary semantic colors for badges (e.g., Red for HOT, Green for VALIDATED). The UI includes a deep dive console with dark mode, keyboard shortcuts, message actions, and export capabilities.
-*   **Admin Panel:** A comprehensive `admin.html` provides tools for user management, subscription control, opportunity moderation, and platform statistics.
-*   **Automated Data Pipeline:** A daily scheduler (`backend/scheduler.py`) automates data scraping (via Apify), import, and AI analysis to keep opportunity data fresh.
-*   **Payments & Transactions:** Integrates Stripe for payment processing, subscription management, and pay-per-unlock features. It includes a `SuccessFeeAgreement` infrastructure with milestone tracking and payout splitting for expert services.
-*   **Opportunity Analysis:** AI generates opportunity scores, market size estimates, competition levels, and business model suggestions, which are displayed on opportunity cards and detailed pages. Content gating is enforced server-side based on user subscription tiers or unlock status.
-
-## Recent Changes (December 19, 2024)
-
-**DeepSeek Transformation - Navigation & User Flows:**
-- Updated navigation with conditional display based on auth state:
-  - Guest users: Home, Browse Ideas, Idea Engine, Pricing, Sign In/Get Started
-  - Logged-in users (9 items): Dashboard, Discover, Builder (dropdown), Leads, Content, Network, Funding, Tools, Learn
-- Builder dropdown contains: Idea Engine, AI Expert Match, AI Roadmap, Expert Marketplace
-- New users redirected to Profile Onboarding after signup before accessing dashboard
-- Added success-fee/revenue-share infrastructure with transaction record creation
-- Payout splitting: 70% expert, 20% escrow (30-day hold), 10% platform
-
-**Personalized Dashboard (dashboard.html):**
-- Welcome Bar with AI Match Score and daily opportunity digest
-- Quick Actions grid (6 buttons): Find Opportunity, Validate Idea, Generate Leads, Create Business Plan, Find Co-founder, Check Funding
-- AI-curated Opportunity Feed with match scores and HOT/FRESH/VALIDATED status badges
-- Progress Trackers: Active projects, lead generation stats, content sales metrics
-- AI Recommendations: Personalized co-pilot suggestions based on user profile
-- Trending in Network: Community activity feed with success stories
+*   **Monetization & Access Control:** Implements a tiered subscription model (Pro, Business, Enterprise) with time-decay access control for opportunities (HOT, FRESH, VALIDATED, ARCHIVE). Content gating is enforced server-side, with options for one-time purchases (pay-per-unlock, Deep Dive add-on, Fast Pass).
+*   **AI Engine:** Integrates with LLMs (e.g., Claude-Haiku, Claude-Sonnet) for AI-powered idea generation, comprehensive idea validation, expert matching, and detailed opportunity analysis (scoring, market size, competition, business models). An AI Orchestrator service routes tasks between different LLMs for specific functionalities.
+*   **Authentication:** Uses Replit's OIDC patterns for secure, database-backed user authentication supporting various providers and PKCE flow. Includes LinkedIn OAuth integration for the professional network join flow (experts, investors, partners, lenders) with secure exchange-code pattern. New users are redirected to Profile Onboarding after signup.
+*   **User Interface:** Features a professional design with a black/dark stone primary accent. Includes a deep dive console with dark mode, keyboard shortcuts, and export capabilities. Navigation structures are dynamic based on user authentication status.
+*   **Admin Panel:** A comprehensive `admin.html` provides tools for user management, subscription control, opportunity moderation, and platform statistics, including lead management and email automation triggers.
+*   **Automated Data Pipeline:** A daily scheduler automates data scraping, import, and AI analysis to keep opportunity data fresh. Includes a webhook-driven data ingestion pipeline for external sources like Google Maps, Yelp, Reddit, Twitter, and Nextdoor, with a webhook gateway for validation.
+*   **Signal-to-Opportunity Algorithm:** An 8-stage processing pipeline converts raw scraped signals into validated business opportunities:
+    - Pattern matching using 700+ keyword patterns across categories (restaurants, apartments, childcare, healthcare, home services)
+    - Signal clustering by location and category
+    - Validation scoring with 7-criteria weighted scorecard
+    - Market size estimation based on population and category penetration
+    - Confidence tiers (GOLDMINE, VALIDATED, WEAK_SIGNAL, NOISE)
+*   **Data Lifecycle Management:** Complete signal traceability and processing tracking:
+    - `scraped_data.processed` flag prevents re-processing of analyzed signals
+    - `scraped_data.processing_batch_id` groups signals by processing run
+    - `opportunity_signals` link table connects opportunities to their source signals
+    - Database indexes for efficient time-based pattern queries
+    - All data retained indefinitely for historical pattern discovery
+*   **Payments & Transactions:** Integrates Stripe for payment processing, subscription management, and pay-per-unlock features. It includes a `SuccessFeeAgreement` infrastructure with milestone tracking and payout splitting for expert services (70% expert, 20% escrow, 10% platform).
+*   **Opportunity Analysis & Reporting:** AI generates opportunity scores, market size estimates, and business model suggestions. A Consultant Studio provides a three-path validation system (Validate Idea, Search Ideas, Identify Location) leveraging AI for analysis and report generation. A report tracking system logs usage and status of generated reports.
+*   **Design Thinking Report Framework:** The Opportunity Detail page follows a tiered structure based on the Design Thinking process:
+    - **Tier 1: Problem Detail (FREE)** - Empathize + Define: Geographic market selector, quick validation metrics (urgency, competition, target audience, feasibility), pain points with severity badges, problem statement summary
+    - **Tier 2: Research Dashboard (PRO - $99/mo)** - Ideate: Tabbed interface (Market Validation, Geographic, Problem Analysis, Sizing, Solutions), demand signals, competitive landscape, solution pathways with business model suggestions
+    - **Tier 3: Deep Dive + AI (BUSINESS - $499/mo)** - Prototype + Test: Progress sidebar with section tracking, execution playbook with numbered steps, AI co-pilot chat interface, export/share actions, connect with expert CTA
+*   **Interactive Mapping System:** Features a ConsultantMap component with Leaflet.js, displaying business pins, problem heatmaps, and neighborhood polygons, integrated into the Consultant Studio.
+*   **Unified Opportunity Hub:** Paid users access `/opportunity/:id/hub` which combines Research and Workspace capabilities in a single interface:
+    - Visual journey timeline: Research → Validate → Plan → Build → Launch (auto-updates with workspace status)
+    - Research tab: AI validation, market signals, demand indicators, and top expert recommendations
+    - Workspace tab: Task management, notes, documents, and AI Co-Founder chat
+    - Stage-specific guidance panels that adapt content based on current workspace status
+    - Automatic workspace creation when accessing the Hub for the first time
+    - Free users continue using Consultant Studio and separate opportunity detail pages
+*   **AI Co-Founder:** Conversational AI assistant integrated into the Opportunity Hub that provides stage-aware guidance:
+    - **Researching Stage:** Market analysis, competitor mapping, gap identification
+    - **Validating Stage:** Customer interview templates, demand signal interpretation, validation evidence
+    - **Planning Stage:** Business model design, revenue projections, go-to-market strategy, investor-ready materials
+    - **Building Stage:** Execution roadmap, tool recommendations (Replit, Figma, Upwork, etc.), resource allocation
+    - **Launched Stage:** Business formation guidance (LLC vs S-Corp), legal compliance, financial setup, growth strategies
+    - Chat history persists per workspace for continuity
+    - Uses Replit AI Integrations (Claude) - no API key required
+*   **Tool Recommendations Engine:** Curated database of execution tools organized by category:
+    - Design: Figma, Canva, Framer
+    - Development: Replit, Vercel, Supabase, Firebase
+    - Talent: Upwork, Toptal, Contra, Fiverr
+    - No-Code: Bubble, Webflow, Zapier, Airtable
+    - Marketing: Mailchimp, Buffer, SEMrush
+    - Project Management: Notion, Linear, Trello
+    - Financial: QuickBooks, Wave, Stripe, Mercury
+*   **Business Formation Guide:** Comprehensive guidance for launching a real business:
+    - Entity type comparison (LLC, S-Corp, Sole Proprietorship)
+    - Step-by-step formation instructions
+    - EIN registration, business banking, operating agreements
+    - Legal compliance, insurance, licenses
+    - Tax obligations and bookkeeping setup
+*   **Leads Marketplace & Network Hub:** Dedicated pages for a leads marketplace with search/filters and a network hub connecting users with experts, investors, partners, and lenders.
+*   **Expert Recommendation Engine:** Intelligent matching system that recommends experts for each opportunity using a weighted scoring algorithm:
+    - Category alignment (35%): Matches opportunity category with expert specializations
+    - Skill overlap (30%): Compares required skills with expert capabilities
+    - Success metrics (20%): Weighs expert success rate and completed projects
+    - Availability (10%): Prioritizes currently available experts
+    - Rating (5%): Considers average rating and review count
+    - API endpoint: GET /opportunities/{id}/experts returns top matched experts with scores and match reasons
+    - Integrated into Tier 2 (PRO preview with 3 experts) and Tier 3 (BUSINESS full collaboration with top expert)
+*   **Email Automation:** Utilizes an email service for transactional emails, welcome sequences for leads, and status updates, with a template system for professional formatting.
 
 ## External Dependencies
 *   **PostgreSQL:** Managed database provided by Replit.
 *   **Stripe:** Payment gateway for subscriptions, pay-per-unlock, and expert service transactions. Integrated via Replit connector.
-*   **Resend:** Email service for transactional emails (e.g., password resets, notifications). Integrated via Replit connector.
-*   **Apify:** Web scraping platform used for daily automated data collection (e.g., from Reddit).
-*   **OpenAI/Anthropic (LLMs):** Integrated for AI capabilities like idea generation, validation, opportunity analysis, and expert matching. Specific models like Claude-Haiku and Claude-Sonnet are used.
+*   **Resend:** Email service for transactional emails and automation. Integrated via Replit connector.
+*   **Apify:** Web scraping platform used for daily automated data collection. Managed via Command Center Apify tab. Data is imported into the `scraped_data` table which stores business listings and reviews from Google Maps scrapes.
+*   **SerpAPI:** Google Search and Google Maps Reviews API integration for location-based business intelligence. Enables searching Google, finding businesses on Google Maps, and fetching place reviews. Managed via Command Center SerpAPI tab. Includes a comprehensive **Google Scraping Framework** with:
+    - **Location Catalog:** Database of target locations (cities, metro areas, neighborhoods) with lat/lng coordinates
+    - **Keyword Groups:** Organized keyword collections by category (Transportation, Food & Dining, Service Quality, Business Opportunities, Technology)
+    - **Scrape Jobs:** Configurable jobs that combine locations + keywords with depth settings and scheduling options
+    - **Admin Panel Google Scraping Tab:** Dual-column UI for managing locations and keywords, creating jobs, and viewing results
+    - **Database Models:** LocationCatalog, KeywordGroup, GoogleScrapeJob, GoogleMapsBusiness, GoogleSearchCache
+*   **OpenAI/Anthropic (LLMs):** Integrated for various AI capabilities, including specific models like Claude-Haiku and Claude-Sonnet.
+*   **LinkedIn OAuth:** Integrated for professional network authentication, enabling users to join as experts, investors, partners, or lenders using their LinkedIn credentials.

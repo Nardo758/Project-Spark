@@ -79,7 +79,9 @@ class UsageRecord(Base):
 class UnlockMethod(str, enum.Enum):
     """How the opportunity was unlocked"""
     SUBSCRIPTION = "subscription"  # Auto-unlocked by subscription tier
-    PAY_PER_UNLOCK = "pay_per_unlock"  # Paid $15 one-time
+    PAY_PER_UNLOCK = "pay_per_unlock"  # Paid $15 one-time (Archive Layer 1)
+    FAST_PASS = "fast_pass"  # Paid $99 one-time (HOT 0-7 days access)
+    DEEP_DIVE = "deep_dive"  # Paid $49 one-time (Layer 2 add-on for Pro tier)
 
 
 class UnlockedOpportunity(Base):
@@ -93,6 +95,11 @@ class UnlockedOpportunity(Base):
     unlock_method = Column(Enum(UnlockMethod), default=UnlockMethod.SUBSCRIPTION, nullable=False)
     amount_paid = Column(Integer, default=0)  # Amount in cents (for pay-per-unlock)
     stripe_payment_intent_id = Column(String(255), nullable=True)
+
+    # Deep Dive (Layer 2) access - separate from base unlock
+    has_deep_dive = Column(Boolean, default=False)  # Paid $49 for Layer 2 access
+    deep_dive_payment_intent_id = Column(String(255), nullable=True)
+    deep_dive_unlocked_at = Column(DateTime(timezone=True), nullable=True)
 
     # Timestamp
     unlocked_at = Column(DateTime(timezone=True), server_default=func.now())
