@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { 
-  ArrowLeft, BarChart3, Briefcase, CheckCircle2, ChevronRight, Clock, 
+  ArrowLeft, BarChart3, Briefcase, Check, CheckCircle2, ChevronDown, ChevronRight, Clock, 
   Download, FileText, Lightbulb, Loader2, MapPin, MessageSquare, 
   PenLine, Plus, Rocket, Search, Send, Share2, Sparkles, 
   Target, Trash2, TrendingUp, Users, Zap
