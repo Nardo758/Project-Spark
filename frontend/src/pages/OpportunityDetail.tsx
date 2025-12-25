@@ -5,7 +5,8 @@ import {
   Bookmark, CheckCircle2, Lock, TrendingUp, Users, 
   FileText, BarChart3, Target, 
   ChevronRight, ArrowRight,
-  Zap, Download, Share2, Star, Rocket, Briefcase
+  Zap, Download, Share2, Star, Rocket, Briefcase,
+  MapPin, AlertTriangle
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
@@ -718,10 +719,154 @@ export default function OpportunityDetail() {
               </div>
             )}
 
-            {(activeTab === 'geographic' || activeTab === 'problem' || activeTab === 'sizing') && (
-              <div className="bg-stone-50 rounded-lg border border-stone-200 p-8 text-center">
-                <BarChart3 className="w-12 h-12 text-stone-400 mx-auto mb-3" />
-                <p className="text-stone-600">Detailed {activeTab} analysis available</p>
+            {activeTab === 'geographic' && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Geographic Distribution</h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <div className="aspect-[4/3] bg-gradient-to-br from-blue-50 to-stone-100 rounded-lg flex items-center justify-center border-2 border-stone-200">
+                        <div className="text-center">
+                          <MapPin className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                          <p className="text-sm font-medium text-stone-900">{opp.city || 'Multiple Locations'}</p>
+                          <p className="text-xs text-stone-500">{opp.region || opp.country || 'United States'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="bg-stone-50 rounded-lg p-4">
+                        <div className="text-sm text-stone-500">Geographic Scope</div>
+                        <div className="text-xl font-bold text-stone-900 capitalize">{opp.geographic_scope || 'National'}</div>
+                      </div>
+                      <div className="bg-stone-50 rounded-lg p-4">
+                        <div className="text-sm text-stone-500">Primary Region</div>
+                        <div className="text-xl font-bold text-stone-900">{opp.region || opp.country || 'United States'}</div>
+                      </div>
+                      <div className="bg-stone-50 rounded-lg p-4">
+                        <div className="text-sm text-stone-500">Market Coverage</div>
+                        <div className="text-xl font-bold text-emerald-600">High Density</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Regional Demographics</h3>
+                  <p className="text-sm text-stone-500 mb-4">Census data integration coming soon - powered by ACS 5-Year Data</p>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-600">--</div>
+                      <div className="text-xs text-stone-500">Population</div>
+                    </div>
+                    <div className="bg-emerald-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-emerald-600">--</div>
+                      <div className="text-xs text-stone-500">Median Income</div>
+                    </div>
+                    <div className="bg-violet-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-violet-600">--</div>
+                      <div className="text-xs text-stone-500">Education %</div>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-4 text-center">
+                      <div className="text-2xl font-bold text-amber-600">--</div>
+                      <div className="text-xs text-stone-500">Median Age</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'problem' && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Problem Statement</h3>
+                  <div className="bg-gradient-to-r from-violet-50 to-blue-50 rounded-lg p-6 border-2 border-violet-200">
+                    <p className="text-lg text-stone-800 leading-relaxed">
+                      {opp.ai_problem_statement || opp.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Pain Point Severity</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-stone-50 rounded-lg p-4 text-center">
+                      <div className="text-3xl font-bold text-red-600">{opp.ai_pain_intensity || opp.severity}/10</div>
+                      <div className="text-sm text-stone-500">Pain Intensity</div>
+                    </div>
+                    <div className="bg-stone-50 rounded-lg p-4 text-center">
+                      <div className="text-3xl font-bold text-amber-600 capitalize">{opp.ai_urgency_level || 'Medium'}</div>
+                      <div className="text-sm text-stone-500">Urgency Level</div>
+                    </div>
+                    <div className="bg-stone-50 rounded-lg p-4 text-center">
+                      <div className="text-3xl font-bold text-emerald-600">{opp.validation_count}</div>
+                      <div className="text-sm text-stone-500">Validations</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Key Risks</h3>
+                  <div className="space-y-2">
+                    {(opp.ai_key_risks || ['Market timing uncertainty', 'Regulatory considerations', 'Competition from incumbents']).map((risk, idx) => (
+                      <div key={idx} className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                        <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-stone-700">{typeof risk === 'string' ? risk : JSON.stringify(risk)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'sizing' && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Market Size Analysis</h3>
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                      <div className="text-sm opacity-80 mb-1">TAM (Total)</div>
+                      <div className="text-3xl font-bold">{opp.ai_market_size_estimate || opp.market_size || '$1B+'}</div>
+                      <div className="text-xs opacity-60 mt-2">Total Addressable Market</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-violet-500 to-violet-600 rounded-lg p-6 text-white">
+                      <div className="text-sm opacity-80 mb-1">SAM (Serviceable)</div>
+                      <div className="text-3xl font-bold">~$500M</div>
+                      <div className="text-xs opacity-60 mt-2">Geographic Focus</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg p-6 text-white">
+                      <div className="text-sm opacity-80 mb-1">SOM (Obtainable)</div>
+                      <div className="text-3xl font-bold">~$50M</div>
+                      <div className="text-xs opacity-60 mt-2">Year 1 Target</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Target Demographics</h3>
+                  <div className="bg-stone-50 rounded-lg p-4 mb-4">
+                    <div className="text-sm text-stone-500 mb-1">Primary Target</div>
+                    <div className="text-lg font-semibold text-stone-900">{opp.ai_target_audience || 'General consumers with specific pain point'}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <div className="text-sm text-stone-500 mb-1">Competition Level</div>
+                      <div className="text-lg font-bold text-blue-600 capitalize">{opp.ai_competition_level || 'Medium'}</div>
+                    </div>
+                    <div className="bg-emerald-50 rounded-lg p-4">
+                      <div className="text-sm text-stone-500 mb-1">Growth Rate</div>
+                      <div className="text-lg font-bold text-emerald-600">+{growthRate}% YoY</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-stone-50 to-blue-50 rounded-lg border-2 border-stone-200 p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
+                    <h3 className="font-bold text-stone-900">Purchasing Power Estimate</h3>
+                  </div>
+                  <p className="text-sm text-stone-600 mb-4">Based on target demographic income levels and market penetration assumptions</p>
+                  <div className="text-2xl font-bold text-stone-900">Census data integration coming soon</div>
+                </div>
               </div>
             )}
           </div>

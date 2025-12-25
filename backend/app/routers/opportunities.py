@@ -470,6 +470,26 @@ def get_opportunity_experts(
     }
 
 
+def get_state_fips(state_name: str) -> Optional[str]:
+    """Convert state name to FIPS code."""
+    state_fips_map = {
+        "Alabama": "01", "Alaska": "02", "Arizona": "04", "Arkansas": "05",
+        "California": "06", "Colorado": "08", "Connecticut": "09", "Delaware": "10",
+        "Florida": "12", "Georgia": "13", "Hawaii": "15", "Idaho": "16",
+        "Illinois": "17", "Indiana": "18", "Iowa": "19", "Kansas": "20",
+        "Kentucky": "21", "Louisiana": "22", "Maine": "23", "Maryland": "24",
+        "Massachusetts": "25", "Michigan": "26", "Minnesota": "27", "Mississippi": "28",
+        "Missouri": "29", "Montana": "30", "Nebraska": "31", "Nevada": "32",
+        "New Hampshire": "33", "New Jersey": "34", "New Mexico": "35", "New York": "36",
+        "North Carolina": "37", "North Dakota": "38", "Ohio": "39", "Oklahoma": "40",
+        "Oregon": "41", "Pennsylvania": "42", "Rhode Island": "44", "South Carolina": "45",
+        "South Dakota": "46", "Tennessee": "47", "Texas": "48", "Utah": "49",
+        "Vermont": "50", "Virginia": "51", "Washington": "53", "West Virginia": "54",
+        "Wisconsin": "55", "Wyoming": "56", "District of Columbia": "11"
+    }
+    return state_fips_map.get(state_name)
+
+
 @router.get("/{opportunity_id}/demographics")
 async def get_opportunity_demographics(
     opportunity_id: int,
@@ -492,11 +512,15 @@ async def get_opportunity_demographics(
     from app.services.google_trends_service import google_trends_service
     from datetime import datetime, timedelta
     
-    # Check user tier (Business+ required)
+    # Check user tier (Business+ required) - normalize tier value
     user_tier = getattr(current_user, 'tier', 'free')
-    allowed_tiers = [SubscriptionTier.BUSINESS.value, SubscriptionTier.ENTERPRISE.value, 'business', 'enterprise']
+    if hasattr(user_tier, 'value'):
+        user_tier = user_tier.value
+    user_tier_lower = str(user_tier).lower() if user_tier else 'free'
     
-    if user_tier not in allowed_tiers and not current_user.is_admin:
+    allowed_tiers = ['business', 'enterprise']
+    
+    if user_tier_lower not in allowed_tiers and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Demographics data requires Business tier or higher"
@@ -569,23 +593,3 @@ async def get_opportunity_demographics(
         "census_configured": census_service.is_configured,
         "trends_configured": google_trends_service.is_configured
     }
-
-
-def get_state_fips(state_name: str) -> Optional[str]:
-    """Convert state name to FIPS code."""
-    state_fips_map = {
-        "Alabama": "01", "Alaska": "02", "Arizona": "04", "Arkansas": "05",
-        "California": "06", "Colorado": "08", "Connecticut": "09", "Delaware": "10",
-        "Florida": "12", "Georgia": "13", "Hawaii": "15", "Idaho": "16",
-        "Illinois": "17", "Indiana": "18", "Iowa": "19", "Kansas": "20",
-        "Kentucky": "21", "Louisiana": "22", "Maine": "23", "Maryland": "24",
-        "Massachusetts": "25", "Michigan": "26", "Minnesota": "27", "Mississippi": "28",
-        "Missouri": "29", "Montana": "30", "Nebraska": "31", "Nevada": "32",
-        "New Hampshire": "33", "New Jersey": "34", "New Mexico": "35", "New York": "36",
-        "North Carolina": "37", "North Dakota": "38", "Ohio": "39", "Oklahoma": "40",
-        "Oregon": "41", "Pennsylvania": "42", "Rhode Island": "44", "South Carolina": "45",
-        "South Dakota": "46", "Tennessee": "47", "Texas": "48", "Utah": "49",
-        "Vermont": "50", "Virginia": "51", "Washington": "53", "West Virginia": "54",
-        "Wisconsin": "55", "Wyoming": "56", "District of Columbia": "11"
-    }
-    return state_fips_map.get(state_name)
