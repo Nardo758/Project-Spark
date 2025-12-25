@@ -391,7 +391,11 @@ export default function Discover() {
                 
                 {/* Description */}
                 <p className="text-stone-600 text-sm mb-4 line-clamp-2">
-                  {opp.description?.replace(/\*\*/g, '').split('\n')[0] || opp.ai_summary?.replace(/\*\*/g, '').split('\n')[0] || 'Analysis pending...'}
+                  {(() => {
+                    const desc = opp.description?.replace(/\*\*/g, '').split('\n').filter(l => l.trim() && !l.includes('Market Opportunity Overview'))[0]
+                    const summary = opp.ai_summary?.replace(/\*\*/g, '')
+                    return desc || summary || 'Analysis pending...'
+                  })()}
                 </p>
 
                 {/* Stats Grid */}
