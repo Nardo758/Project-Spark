@@ -50,10 +50,15 @@ type OpportunityList = {
 function formatMarketSize(size?: string | null): string {
   if (!size) return '~$50M'
   const cleaned = size.replace(/\s/g, '')
+  let value = cleaned
   if (cleaned.includes('-')) {
-    const parts = cleaned.split('-')
-    const first = parts[0].replace(/[^0-9.BMK$]/gi, '')
-    return `~${first}`
+    value = cleaned.split('-')[0]
+  }
+  const match = value.match(/\$?([\d.]+)([BMK])?/i)
+  if (match) {
+    const num = Math.round(parseFloat(match[1]))
+    const suffix = match[2]?.toUpperCase() || 'M'
+    return `~$${num}${suffix}`
   }
   return size.startsWith('~') ? size : `~${size}`
 }
