@@ -83,6 +83,35 @@ type RecommendedExpert = {
   match_reason: string
 }
 
+type DemographicsData = {
+  opportunity_id: number
+  demographics: {
+    population?: number
+    median_income?: number
+    median_age?: number
+    total_households?: number
+    poverty_count?: number
+    unemployment_count?: number
+    home_value?: number
+    median_rent?: number
+    bachelors_degree_holders?: number
+    commute_public_transit?: number
+    source?: string
+    fetched_at?: string
+  } | null
+  search_trends: {
+    keyword?: string
+    interest_over_time?: number[]
+    related_queries?: string[]
+    trending_topics?: string[]
+  } | null
+  enhanced_score: number | null
+  original_score: number | null
+  fetched_at: string | null
+  census_configured: boolean
+  trends_configured: boolean
+}
+
 function fmtCents(cents?: number | null) {
   if (!cents) return null
   return `$${(cents / 100).toFixed(0)}`
@@ -160,6 +189,27 @@ export default function OpportunityDetail() {
     },
   })
 
+  const userTierFromQuery = user?.tier?.toLowerCase() || 'free'
+  const isBusinessTier = userTierFromQuery === 'business' || userTierFromQuery === 'enterprise'
+
+  const demographicsQuery = useQuery({
+    queryKey: ['demographics', opportunityId],
+    enabled: isAuthenticated && Boolean(token) && Number.isFinite(opportunityId) && isBusinessTier,
+    queryFn: async (): Promise<DemographicsData> => {
+      const res = await fetch(`/api/v1/opportunities/${opportunityId}/demographics`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.detail || 'Failed to load demographics')
+      }
+      return (await res.json()) as DemographicsData
+    },
+    staleTime: 30 * 60 * 1000,
+  })
+
+  const demographics = demographicsQuery.data?.demographics
+  const searchTrends = demographicsQuery.data?.search_trends
 
   const myValidation = useMemo(() => {
     const uid = user?.id
@@ -752,25 +802,92 @@ export default function OpportunityDetail() {
 
                 <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
                   <h3 className="text-lg font-bold text-stone-900 mb-4">Regional Demographics</h3>
-                  <p className="text-sm text-stone-500 mb-4">Census data integration coming soon - powered by ACS 5-Year Data</p>
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="bg-blue-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-600">--</div>
-                      <div className="text-xs text-stone-500">Population</div>
+                  {!isBusinessTier ? (
+                    <div className="bg-stone-50 rounded-lg p-4 text-center">
+                      <Lock className="w-6 h-6 text-stone-400 mx-auto mb-2" />
+                      <p className="text-sm text-stone-600 mb-2">Census data requires Business tier</p>
+                      <Link to="/pricing" className="text-violet-600 font-medium text-sm hover:underline">
+                        Upgrade to Business
+                      </Link>
                     </div>
-                    <div className="bg-emerald-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-emerald-600">--</div>
-                      <div className="text-xs text-stone-500">Median Income</div>
+                  ) : demographicsQuery.isLoading ? (
+                    <div className="grid grid-cols-4 gap-4">
+                      {[1,2,3,4].map(i => (
+                        <div key={i} className="bg-stone-50 rounded-lg p-4 text-center animate-pulse">
+                          <div className="h-8 bg-stone-200 rounded mb-2"></div>
+                          <div className="h-3 bg-stone-200 rounded w-16 mx-auto"></div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="bg-violet-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-violet-600">--</div>
-                      <div className="text-xs text-stone-500">Education %</div>
+                  ) : demographics ? (
+                    <>
+                      <p className="text-xs text-stone-500 mb-4">Census ACS 5-Year Data • {demographics.source || 'US Census Bureau'}</p>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="bg-blue-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {demographics.population ? (demographics.population >= 1000000 
+                              ? `${(demographics.population / 1000000).toFixed(1)}M`
+                              : demographics.population >= 1000 
+                                ? `${(demographics.population / 1000).toFixed(0)}K`
+                                : demographics.population.toLocaleString()) : '--'}
+                          </div>
+                          <div className="text-xs text-stone-500">Population</div>
+                        </div>
+                        <div className="bg-emerald-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-emerald-600">
+                            {demographics.median_income ? `$${(demographics.median_income / 1000).toFixed(0)}K` : '--'}
+                          </div>
+                          <div className="text-xs text-stone-500">Median Income</div>
+                        </div>
+                        <div className="bg-violet-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-violet-600">
+                            {demographics.bachelors_degree_holders && demographics.population 
+                              ? `${((demographics.bachelors_degree_holders / demographics.population) * 100).toFixed(0)}%` 
+                              : '--'}
+                          </div>
+                          <div className="text-xs text-stone-500">College Educated</div>
+                        </div>
+                        <div className="bg-amber-50 rounded-lg p-4 text-center">
+                          <div className="text-2xl font-bold text-amber-600">
+                            {demographics.median_age ? demographics.median_age.toFixed(0) : '--'}
+                          </div>
+                          <div className="text-xs text-stone-500">Median Age</div>
+                        </div>
+                      </div>
+                      {demographics.total_households && (
+                        <div className="mt-4 grid grid-cols-3 gap-4">
+                          <div className="bg-stone-50 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-stone-700">
+                              {demographics.total_households >= 1000 
+                                ? `${(demographics.total_households / 1000).toFixed(0)}K` 
+                                : demographics.total_households.toLocaleString()}
+                            </div>
+                            <div className="text-xs text-stone-500">Households</div>
+                          </div>
+                          <div className="bg-stone-50 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-stone-700">
+                              {demographics.home_value ? `$${(demographics.home_value / 1000).toFixed(0)}K` : '--'}
+                            </div>
+                            <div className="text-xs text-stone-500">Home Value</div>
+                          </div>
+                          <div className="bg-stone-50 rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-stone-700">
+                              {demographics.median_rent ? `$${demographics.median_rent.toLocaleString()}` : '--'}
+                            </div>
+                            <div className="text-xs text-stone-500">Median Rent</div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="bg-amber-50 rounded-lg p-4 text-center border border-amber-200">
+                      <p className="text-sm text-amber-700">
+                        {demographicsQuery.data?.census_configured 
+                          ? 'No demographic data available for this location yet'
+                          : 'Census API not configured - contact admin to enable demographics'}
+                      </p>
                     </div>
-                    <div className="bg-amber-50 rounded-lg p-4 text-center">
-                      <div className="text-2xl font-bold text-amber-600">--</div>
-                      <div className="text-xs text-stone-500">Median Age</div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
@@ -865,7 +982,37 @@ export default function OpportunityDetail() {
                     <h3 className="font-bold text-stone-900">Purchasing Power Estimate</h3>
                   </div>
                   <p className="text-sm text-stone-600 mb-4">Based on target demographic income levels and market penetration assumptions</p>
-                  <div className="text-2xl font-bold text-stone-900">Census data integration coming soon</div>
+                  {!isBusinessTier ? (
+                    <div className="flex items-center gap-2 text-stone-500">
+                      <Lock className="w-4 h-4" />
+                      <span className="text-sm">Upgrade to Business for Census-powered estimates</span>
+                    </div>
+                  ) : demographicsQuery.isLoading ? (
+                    <div className="h-8 bg-stone-200 rounded w-48 animate-pulse"></div>
+                  ) : demographics?.median_income && demographics?.total_households ? (
+                    <div className="space-y-2">
+                      <div className="text-2xl font-bold text-stone-900">
+                        ${((demographics.median_income * demographics.total_households) / 1000000000).toFixed(1)}B Total Purchasing Power
+                      </div>
+                      <div className="text-sm text-stone-600">
+                        Based on {demographics.total_households.toLocaleString()} households × ${demographics.median_income.toLocaleString()} median income
+                      </div>
+                      {demographicsQuery.data?.enhanced_score && demographicsQuery.data.original_score && (
+                        <div className="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <div className="text-sm font-medium text-emerald-700">
+                            Demographics-Enhanced Score: {demographicsQuery.data.enhanced_score.toFixed(0)} 
+                            <span className="text-stone-500 ml-1">(base: {demographicsQuery.data.original_score})</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-stone-500 text-sm">
+                      {demographicsQuery.data?.census_configured 
+                        ? 'Demographic data not yet available for this location'
+                        : 'Census API integration pending'}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

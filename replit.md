@@ -47,6 +47,16 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 2024)
 
+### Census & Demographics Integration (December 25, 2024)
+*   **Database Schema:** Added `demographics` and `search_trends` JSONB columns to opportunities table with `demographics_fetched_at` timestamp
+*   **CensusDataService:** Backend service for Census Bureau ACS 5-Year API with 16 demographic variables (population, income, age, education, unemployment, housing, commute)
+*   **GoogleTrendsService:** Backend service for DMA-level search demand data via SerpAPI
+*   **Demographics Endpoint:** `/api/opportunities/{id}/demographics` with Business+ tier gating, returns combined Census + Trends data
+*   **Enhanced Signal Scoring:** Algorithm applies demographic multipliers (population, income, underserved bonus) to base opportunity scores
+*   **Research Dashboard Tabs:** Geographic Insights, Problem Analysis, Market Sizing tabs in OpportunityDetail.tsx
+*   **State FIPS Mapping:** Utility function for Census API geographic queries
+*   **Key Census Variables:** B01003 (population), B19013 (median income), B01002 (age), B11001 (households), B17001 (poverty), B23025 (unemployment), B25077 (home value), B25064 (rent), B15003 (education)
+
 ### Opportunity Detail Page Enhancements
 *   **Time-Based Access Controls:** Header now displays freshness badges (HOT, WARM, MATURE, ARCHIVE) and unlock timing ("Unlocks for your tier in X days" or "Unlocked")
 *   **Problem Statement Section:** Moved to standalone section above Problem Detail with violet theme
