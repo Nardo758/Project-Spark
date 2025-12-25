@@ -180,8 +180,7 @@ export default function Projects() {
                     </span>
                   </div>
 
-                  <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <span className="text-sm text-violet-600 font-medium group-hover:text-violet-700">Open Work Hub</span>
+                  <div className="pt-3 border-t border-stone-100 flex items-center justify-end">
                     <ChevronRight className="w-4 h-4 text-violet-600 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </Link>

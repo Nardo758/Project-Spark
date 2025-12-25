@@ -318,8 +318,8 @@ export default function Discover() {
           <div className="grid md:grid-cols-2 gap-6">
           {filteredOpportunities.map((opp) => {
             const freshness = getFreshnessLabel(opp.created_at)
-            const score = opp.feasibility_score || Math.floor(Math.random() * 20) + 70
-            const growthRate = opp.growth_rate || Math.floor(Math.random() * 30) + 5
+            const score = opp.feasibility_score || (70 + (opp.id % 20))
+            const growthRate = opp.growth_rate || (5 + (opp.id % 25))
             const marketSize = opp.ai_market_size_estimate || opp.market_size || '$50M'
             const competition = opp.ai_competition_level || 'Medium'
             const validations = opp.validation_count || 0

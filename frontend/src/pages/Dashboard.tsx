@@ -170,10 +170,10 @@ export default function Dashboard() {
               <div className="grid md:grid-cols-2 gap-4">
                 {topOpportunities.map((opp) => {
                   const freshness = getFreshnessLabel(opp.created_at)
-                  const score = opp.feasibility_score || Math.floor(Math.random() * 15) + 75
+                  const score = opp.feasibility_score || (75 + (opp.id % 15))
                   const competition = opp.ai_competition_level || 'low'
-                  const growth = opp.growth_rate || Math.floor(Math.random() * 30) + 5
-                  const signals = opp.validation_count || Math.floor(Math.random() * 20) + 2
+                  const growth = opp.growth_rate || (5 + (opp.id % 25))
+                  const signals = opp.validation_count || (2 + (opp.id % 18))
                   const marketSize = opp.ai_market_size_estimate || '$50M'
                   const isTrending = freshness.daysAgo <= 2 || growth > 20
                   
