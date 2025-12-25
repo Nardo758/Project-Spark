@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { Search, Target, Clock, TrendingUp } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, Target, Clock, TrendingUp, Bookmark } from 'lucide-react'
+import { useAuthStore } from '../stores/authStore'
+import SaveToWorkhubModal from '../components/SaveToWorkhubModal'
 
 const mockOpportunities = [
   { id: 1, title: 'Healthcare SaaS Platform', match: 94, status: 'HOT', category: 'Healthcare', marketSize: '$15B', competition: 'Medium', timeToMarket: '6 months' },
@@ -16,6 +19,10 @@ export default function Discover() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
+  const [saveModalOpen, setSaveModalOpen] = useState(false)
+  const [selectedOpp, setSelectedOpp] = useState<{ id: number; title: string } | null>(null)
+  const { isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
 
   const filteredOpportunities = mockOpportunities.filter(opp => {
     const matchesSearch = opp.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -23,6 +30,15 @@ export default function Discover() {
     const matchesStatus = selectedStatus === 'All' || opp.status === selectedStatus
     return matchesSearch && matchesCategory && matchesStatus
   })
+
+  const handleSaveClick = (opp: { id: number; title: string }) => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+    setSelectedOpp(opp)
+    setSaveModalOpen(true)
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -103,9 +119,18 @@ export default function Discover() {
                   <Target className="w-5 h-5 text-green-600" />
                   <span className="text-lg font-bold text-green-700">{opp.match}% Match</span>
                 </div>
-                <button className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium">
-                  View Details
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleSaveClick(opp)}
+                    className="p-2 text-stone-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                    title="Save to Workhub"
+                  >
+                    <Bookmark className="w-5 h-5" />
+                  </button>
+                  <button className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium">
+                    View Details
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -116,6 +141,15 @@ export default function Discover() {
         <div className="text-center py-12">
           <p className="text-gray-500">No opportunities found matching your criteria.</p>
         </div>
+      )}
+
+      {selectedOpp && (
+        <SaveToWorkhubModal
+          opportunityId={selectedOpp.id}
+          opportunityTitle={selectedOpp.title}
+          isOpen={saveModalOpen}
+          onClose={() => setSaveModalOpen(false)}
+        />
       )}
     </div>
   )
