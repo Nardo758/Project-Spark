@@ -670,7 +670,7 @@ export default function OpportunityDetail() {
             {activeTab === 'validation' && (
               <>
                 <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
-                  <h3 className="font-bold text-stone-900 mb-4">Demand Signals</h3>
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Demand Signals</h3>
                   <div className="grid grid-cols-3 gap-6">
                     <div>
                       <div className="text-sm text-stone-500">Search Volume</div>
@@ -688,7 +688,7 @@ export default function OpportunityDetail() {
                 </div>
 
                 <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
-                  <h3 className="font-bold text-stone-900 mb-4">Competitive Landscape</h3>
+                  <h3 className="text-lg font-bold text-stone-900 mb-4">Competitive Landscape</h3>
                   <div className="space-y-3">
                     {(opp.ai_competitive_advantages || ['Market leader gap exists', 'Fragmented competitor landscape', 'No dominant solution']).map((comp, idx) => (
                       <div key={idx} className="bg-stone-50 rounded-lg p-4">
@@ -703,7 +703,7 @@ export default function OpportunityDetail() {
 
             {activeTab === 'solutions' && (
               <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
-                <h3 className="font-bold text-stone-900 mb-4">Solution Pathways</h3>
+                <h3 className="text-lg font-bold text-stone-900 mb-4">Solution Pathways</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   {(opp.ai_business_model_suggestions || ['SaaS Platform', 'Marketplace Model', 'On-Demand Service', 'Subscription Box']).map((model, idx) => (
                     <div key={idx} className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-lg p-4 border-2 border-violet-100">
@@ -803,16 +803,16 @@ export default function OpportunityDetail() {
           </div>
         </div>
 
-        {/* CTA: Start Working in WorkHub */}
+        {/* CTA: Deep Dive WorkHub */}
         <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-8 mb-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Rocket className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Start Working on This</h2>
-                <p className="text-violet-100">Start working on this in our WorkHub with AI-powered planning, task management, and expert collaboration.</p>
+                <h2 className="text-2xl font-bold mb-1">Ready to Deep Dive?</h2>
+                <p className="text-violet-100">Take action in our WorkHub with AI-powered planning, task management, and expert collaboration.</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
