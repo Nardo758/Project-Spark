@@ -374,24 +374,26 @@ class CensusDataService:
         self, 
         state_fips: str = None, 
         county_fips: str = None, 
-        year: int = 2024
+        year: int = 2023
     ) -> Optional[List[Dict[str, Any]]]:
         """
-        Fetch Population Estimates data for population and migration components.
+        Fetch Population Estimates data using the PEP charv endpoint.
+        
+        The Census PEP API changed structure - now uses /pep/charv with YEAR parameter.
         
         Args:
             state_fips: 2-digit state FIPS code (optional, returns all states if None)
             county_fips: 3-digit county FIPS code (optional)
-            year: Data year (default: 2024)
+            year: Data year (default: 2023 - latest stable vintage)
         
         Returns:
-            List of dictionaries with population and migration data
+            List of dictionaries with population data
         """
         if not self.is_configured:
             logger.warning("Census API key not configured")
             return None
         
-        variables = "POP,DENSITY,BIRTHS,DEATHS,NATURALINC,DOMESTICMIG,INTERNATIONALMIG,NETMIG,NAME"
+        variables = "NAME,POP"
         
         if county_fips and state_fips:
             geo = f"for=county:{county_fips}&in=state:{state_fips}"
@@ -400,14 +402,27 @@ class CensusDataService:
         else:
             geo = "for=county:*"
         
-        url = f"{self.BASE_URL}/{year}/pep/population?get={variables}&{geo}&key={self.api_key}"
+        vintage = 2023
+        url = f"{self.BASE_URL}/{vintage}/pep/charv?get={variables}&{geo}&YEAR={year}&key={self.api_key}"
         
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=60.0, follow_redirects=False) as client:
                 response = await client.get(url)
                 
-                if response.status_code == 204:
-                    logger.info(f"No population estimates data found")
+                if response.status_code == 302:
+                    location = response.headers.get("location", "")
+                    if "invalid_key" in location:
+                        logger.error("Census API key is invalid or not yet activated")
+                        return None
+                    logger.warning(f"Redirect to: {location}")
+                    return None
+                
+                if response.status_code == 204 or response.status_code == 404:
+                    logger.info(f"No population estimates data found for year {year}")
+                    return None
+                
+                if response.status_code == 400:
+                    logger.warning(f"Bad request for PEP data - may be unsupported geography or year")
                     return None
                 
                 response.raise_for_status()
@@ -459,17 +474,19 @@ class CensusDataService:
         self, 
         state_fips: str, 
         county_fips: str, 
-        start_year: int = 2019, 
-        end_year: int = 2024
+        start_year: int = 2020, 
+        end_year: int = 2023
     ) -> Optional[List[Dict[str, Any]]]:
         """
         Fetch historical population data for growth trend analysis.
         
+        Uses Census PEP 2023 vintage which covers 2020-2023.
+        
         Args:
             state_fips: 2-digit state FIPS code
             county_fips: 3-digit county FIPS code
-            start_year: First year to fetch (default: 2019)
-            end_year: Last year to fetch (default: 2024)
+            start_year: First year to fetch (default: 2020)
+            end_year: Last year to fetch (default: 2023)
         
         Returns:
             List of yearly population data with growth rates
@@ -626,7 +643,7 @@ class CensusDataService:
         if not self.is_configured:
             return None
         
-        current = await self.fetch_population_estimates(state_fips, county_fips, 2024)
+        current = await self.fetch_population_estimates(state_fips, county_fips, 2023)
         history = await self.fetch_population_history(state_fips, county_fips)
         migration = await self.fetch_migration_flows(state_fips, county_fips)
         

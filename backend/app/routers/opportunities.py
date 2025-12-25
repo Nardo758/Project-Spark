@@ -425,7 +425,7 @@ async def get_batch_access_info(
             UserWorkspace.opportunity_id == opp_id
         ).scalar() or 0
             
-        ent = get_opportunity_entitlements(opportunity, current_user, db)
+        ent = get_opportunity_entitlements(db, opportunity, current_user)
         result[opp_id] = {
             "age_days": ent.age_days,
             "days_until_unlock": ent.days_until_unlock,
