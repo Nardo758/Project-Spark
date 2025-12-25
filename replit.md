@@ -64,5 +64,16 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 *   Removed Trending/Low Competition badges from detail header, replaced with access status
 *   Standardized fallback chain: description → ai_summary → "Analysis pending..."
 
+### Quick Validation Metrics (December 2024)
+*   **Title Case Formatting:** `titleCase()` function capitalizes each word (e.g., "small businesses" → "Small Businesses")
+*   **Consistent Card Sizing:** All metrics use `text-xl` with centered text and `bg-stone-50` backgrounds
+*   **Optimized Grid Layout:** `[1fr_1fr_1.5fr_0.75fr]` - wider Target Audience, narrower Feasibility
+*   **Consistent Section Headers:** All subsections use `text-lg font-bold mb-4` styling
+
+### Access Control Updates (December 2024)
+*   **Unified Access Logic:** Both header and "Ready to Deep Dive?" CTA sections use same time-decay access control
+*   **Access Priority:** `is_accessible` → Pay-per-unlock → Days until unlock → Upgrade prompt
+*   **CTA Text Updated:** "Ready to Deep Dive?" with contextual buttons based on user access state
+
 ## Future Features (To Circle Back)
 *   **Personal AI Knowledge Base (Brain Dashboard):** Transform the "My AI Co-founder" section (`/brain`) into a personal knowledge repository where users can upload their own data (resume, skills, industry experience, past business plans, preferences). This data would be used to personalize AI Co-Founder responses across all opportunities the user works on. Features to build: document upload/storage, knowledge processing/indexing, AI context injection, user preference settings, daily training questions.
