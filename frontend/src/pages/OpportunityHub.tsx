@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { 
-  ArrowLeft, BarChart3, Briefcase, Check, CheckCircle2, ChevronDown, ChevronRight, Clock, 
-  Download, FileText, Lightbulb, Loader2, MapPin, MessageSquare, 
-  PenLine, Plus, Rocket, Search, Send, Share2, Sparkles, 
+  ArrowLeft, BarChart3, Briefcase, CheckCircle2, ChevronDown, ChevronRight, Clock, 
+  Lightbulb, Loader2, MessageSquare, 
+  PenLine, Plus, Rocket, Search, Send, Sparkles, 
   Target, Trash2, TrendingUp, Users, Zap
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
@@ -121,15 +121,9 @@ const priorityColors: Record<TaskPriority, string> = {
   urgent: 'bg-red-100 text-red-700',
 }
 
-function fmtCents(cents?: number | null) {
-  if (!cents) return null
-  return `$${(cents / 100).toFixed(0)}`
-}
-
 export default function OpportunityHub() {
   const { id } = useParams()
   const opportunityId = Number(id)
-  const navigate = useNavigate()
   const { token, isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
 
@@ -390,19 +384,6 @@ export default function OpportunityHub() {
                 <h1 className="text-xl font-bold text-stone-900 mb-2">{opp.title}</h1>
                 <p className="text-stone-600 text-sm">{opp.description}</p>
               </div>
-              {hasWorkspace && workspace && (
-                <select 
-                  value={workspace.status}
-                  onChange={(e) => updateStatusMutation.mutate(e.target.value as WorkspaceStatus)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium border-0 cursor-pointer ${
-                    statusOptions.find(s => s.value === workspace.status)?.color || 'bg-stone-100'
-                  }`}
-                >
-                  {statusOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              )}
             </div>
           </div>
 
@@ -412,16 +393,26 @@ export default function OpportunityHub() {
                 const Icon = stage.icon
                 const isActive = hasWorkspace && idx <= currentStageIndex
                 const isCurrent = hasWorkspace && stage.key === workspace?.status
+                const canClick = hasWorkspace
                 return (
                   <div key={stage.key} className="flex items-center">
-                    <div className={`flex flex-col items-center ${idx > 0 ? 'ml-4' : ''}`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                    <button
+                      onClick={() => {
+                        if (canClick) {
+                          updateStatusMutation.mutate(stage.key as WorkspaceStatus)
+                          setActiveTab('workspace')
+                        }
+                      }}
+                      disabled={!canClick}
+                      className={`flex flex-col items-center ${idx > 0 ? 'ml-4' : ''} ${canClick ? 'cursor-pointer' : 'cursor-default'} group`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                         isCurrent 
                           ? 'bg-violet-600 text-white' 
                           : isActive 
                             ? 'bg-emerald-100 text-emerald-600' 
                             : 'bg-stone-100 text-stone-400'
-                      }`}>
+                      } ${canClick ? 'group-hover:ring-2 group-hover:ring-violet-300 group-hover:ring-offset-2' : ''}`}>
                         <Icon className="w-5 h-5" />
                       </div>
                       <span className={`text-xs mt-1 font-medium ${
@@ -429,7 +420,7 @@ export default function OpportunityHub() {
                       }`}>
                         {stage.label}
                       </span>
-                    </div>
+                    </button>
                     {idx < journeyStages.length - 1 && (
                       <div className={`w-8 h-0.5 ml-4 ${isActive ? 'bg-emerald-300' : 'bg-stone-200'}`} />
                     )}
@@ -1044,11 +1035,11 @@ export default function OpportunityHub() {
                         <div className="grid grid-cols-2 gap-3 text-xs">
                           <div className="flex items-center gap-2 text-stone-600">
                             <BarChart3 className="w-4 h-4 text-violet-500" />
-                            <span>{opportunity?.validations || 0} validated signals</span>
+                            <span>{(opp as Record<string, unknown>)?.validations || 0} validated signals</span>
                           </div>
                           <div className="flex items-center gap-2 text-stone-600">
                             <TrendingUp className="w-4 h-4 text-emerald-500" />
-                            <span>{opportunity?.market_size || 'Unknown'} market</span>
+                            <span>{opp?.market_size || 'Unknown'} market</span>
                           </div>
                         </div>
                       </div>
@@ -1075,7 +1066,7 @@ export default function OpportunityHub() {
                           <div className="space-y-2 text-xs text-blue-800">
                             <div className="flex justify-between">
                               <span>Total Addressable Market (TAM)</span>
-                              <span className="font-medium">{opportunity?.market_size || 'Analyzing...'}</span>
+                              <span className="font-medium">{opp?.market_size || 'Analyzing...'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Growth Rate</span>
@@ -1091,7 +1082,7 @@ export default function OpportunityHub() {
                           <div className="space-y-2 text-xs text-amber-800">
                             <div className="flex justify-between">
                               <span>Competition Level</span>
-                              <span className="font-medium">{opportunity?.competition || 'Medium'}</span>
+                              <span className="font-medium">{(opp as Record<string, unknown>)?.competition || 'Medium'}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Market Gaps</span>
