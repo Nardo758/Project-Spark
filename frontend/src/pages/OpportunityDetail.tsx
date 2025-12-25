@@ -468,6 +468,19 @@ export default function OpportunityDetail() {
           </div>
         </div>
 
+        {/* Problem Statement Section */}
+        <div className="bg-violet-50 rounded-xl border-2 border-violet-200 p-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-stone-900">Problem Statement</h2>
+          </div>
+          <p className="text-stone-700 text-lg leading-relaxed">
+            {opp.ai_problem_statement || opp.ai_summary || opp.description?.split('\n')[0] || 'No problem statement available.'}
+          </p>
+        </div>
+
         {/* TIER 1: Problem Detail (FREE) - Empathize + Define */}
         <div className="bg-white rounded-xl border-2 border-emerald-200 p-8 mb-6">
           <div className="flex items-center gap-3 mb-6">
@@ -568,16 +581,6 @@ export default function OpportunityDetail() {
             </div>
           </div>
 
-          {/* Problem Statement - Define */}
-          <div className="bg-violet-50 rounded-lg border-2 border-violet-200 p-6">
-            <h3 className="font-bold text-stone-900 mb-2 flex items-center gap-2">
-              <Target className="w-5 h-5 text-violet-600" />
-              Problem Statement
-            </h3>
-            <p className="text-stone-700 leading-relaxed">
-              {opp.ai_problem_statement || opp.ai_summary || opp.description?.split('\n')[0] || 'No problem statement available.'}
-            </p>
-          </div>
         </div>
 
         {/* TIER 2: Research Dashboard (PRO) - Ideate */}
