@@ -45,5 +45,24 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 *   **OpenAI/Anthropic (LLMs):** Integrated for various AI capabilities (e.g., Claude-Haiku, Claude-Sonnet).
 *   **LinkedIn OAuth:** Integrated for professional network authentication.
 
+## Recent Changes (December 2024)
+
+### Opportunity Detail Page Enhancements
+*   **Time-Based Access Controls:** Header now displays freshness badges (HOT, WARM, MATURE, ARCHIVE) and unlock timing ("Unlocks for your tier in X days" or "Unlocked")
+*   **Problem Statement Section:** Moved to standalone section above Problem Detail with violet theme
+*   **CTA Updates:** All WorkHub buttons now say "Deep Dive WorkHub" with proper auth guards for pay-per-unlock
+*   **Payment Integration:** Pay-per-unlock buttons appear for eligible users with Stripe integration
+
+### Opportunity Card Improvements
+*   **Consistent Scores:** All cards use deterministic fallback formula `(70 + opp.id % 20)` for scores
+*   **Market Size Rounding:** Displays rounded values with ~ prefix (e.g., ~$132M instead of $131.5M)
+*   **Description Display:** Cards skip "Market Opportunity Overview" header and show actual analysis content
+*   **Unlock Status Badges:** Cards show "Unlocks in Xd" or "Unlocked" based on tier access
+
+### UI Cleanup
+*   Removed "Open Hub" redundant text from clickable cards
+*   Removed Trending/Low Competition badges from detail header, replaced with access status
+*   Standardized fallback chain: description → ai_summary → "Analysis pending..."
+
 ## Future Features (To Circle Back)
 *   **Personal AI Knowledge Base (Brain Dashboard):** Transform the "My AI Co-founder" section (`/brain`) into a personal knowledge repository where users can upload their own data (resume, skills, industry experience, past business plans, preferences). This data would be used to personalize AI Co-Founder responses across all opportunities the user works on. Features to build: document upload/storage, knowledge processing/indexing, AI context injection, user preference settings, daily training questions.
