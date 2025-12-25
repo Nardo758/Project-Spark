@@ -57,3 +57,9 @@ class User(Base):
     subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
     usage_records = relationship("UsageRecord", back_populates="user", cascade="all, delete-orphan")
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    
+    # Workhub relationships
+    collections = relationship("Collection", back_populates="user", cascade="all, delete-orphan")
+    tags = relationship("Tag", back_populates="user", cascade="all, delete-orphan")
+    saved_opportunities = relationship("SavedOpportunity", back_populates="user", cascade="all, delete-orphan")
+    workspaces = relationship("UserWorkspace", back_populates="user", cascade="all, delete-orphan")

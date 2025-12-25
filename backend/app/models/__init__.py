@@ -20,6 +20,11 @@ from .partner import PartnerOutreach, PartnerOutreachStatus
 from .tracking import TrackingEvent
 from .audit_log import AuditLog
 from .job_run import JobRun
+from .workspace import (
+    Collection, Tag, SavedOpportunity, SavedOpportunityTag,
+    UserWorkspace, WorkspaceTask, WorkspaceNote, WorkspaceDocument,
+    WorkspaceChatMessage, WorkspaceStatus, TaskPriority
+)
 
 __all__ = [
     "User",
@@ -57,4 +62,15 @@ __all__ = [
     "TrackingEvent",
     "AuditLog",
     "JobRun",
+    "Collection",
+    "Tag",
+    "SavedOpportunity",
+    "SavedOpportunityTag",
+    "UserWorkspace",
+    "WorkspaceTask",
+    "WorkspaceNote",
+    "WorkspaceDocument",
+    "WorkspaceChatMessage",
+    "WorkspaceStatus",
+    "TaskPriority",
 ]
