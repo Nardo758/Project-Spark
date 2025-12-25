@@ -392,20 +392,14 @@ export default function OpportunityHub() {
                 const Icon = stage.icon
                 const currentIdx = hasWorkspace ? workflowStages.findIndex(s => s.key === workspace?.status) : -1
                 const isCompleted = hasWorkspace && idx < currentIdx
-                const isCurrent = hasWorkspace && stage.key === workspace?.status
+                const isCurrent = activeTab === stage.key
                 
                 return (
                   <div key={stage.key} className="flex items-center">
                     <button
                       onClick={() => {
-                        if (!hasWorkspace) {
-                          createWorkspaceMutation.mutate()
-                        } else {
-                          updateStatusMutation.mutate(stage.key)
-                          setActiveTab(stage.key)
-                        }
+                        setActiveTab(stage.key)
                       }}
-                      disabled={createWorkspaceMutation.isPending}
                       className={`flex flex-col items-center ${idx > 0 ? 'ml-4' : ''} cursor-pointer group`}
                     >
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
