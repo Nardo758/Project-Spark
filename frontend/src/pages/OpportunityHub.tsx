@@ -781,139 +781,617 @@ export default function OpportunityHub() {
             )}
 
             <div className="flex-1 p-6">
-              <div className="grid lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="bg-stone-50 rounded-lg p-5">
-                    <h3 className="font-semibold text-stone-900 mb-3 flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5 text-amber-500" />
-                      AI Analysis
-                    </h3>
-                    {opp.ai_analyzed ? (
+              {/* VALIDATE STEP */}
+              {activeTab === 'researching' && (
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-100">
+                    <h2 className="text-xl font-bold text-stone-900 mb-2 flex items-center gap-2">
+                      <CheckCircle className="w-6 h-6 text-emerald-600" />
+                      Validate Your Opportunity
+                    </h2>
+                    <p className="text-stone-600 mb-6">Confirm this opportunity is worth pursuing with data-driven validation.</p>
+                    
+                    <div className="grid md:grid-cols-3 gap-4 mb-6">
+                      <button 
+                        onClick={() => setValidationPath('platform')}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${validationPath === 'platform' ? 'border-emerald-500 bg-emerald-50' : 'border-stone-200 bg-white hover:border-emerald-300'}`}
+                      >
+                        <CheckCircle className="w-8 h-8 text-emerald-600 mb-2" />
+                        <h3 className="font-semibold text-stone-900 mb-1">Platform Data</h3>
+                        <p className="text-xs text-stone-500">Use existing platform signals and community validation</p>
+                      </button>
+                      <button 
+                        onClick={() => setValidationPath('new_idea')}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${validationPath === 'new_idea' ? 'border-blue-500 bg-blue-50' : 'border-stone-200 bg-white hover:border-blue-300'}`}
+                      >
+                        <Lightbulb className="w-8 h-8 text-blue-600 mb-2" />
+                        <h3 className="font-semibold text-stone-900 mb-1">New Idea</h3>
+                        <p className="text-xs text-stone-500">Research and validate your own unique concept</p>
+                      </button>
+                      <button 
+                        onClick={() => setValidationPath('locations')}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${validationPath === 'locations' ? 'border-amber-500 bg-amber-50' : 'border-stone-200 bg-white hover:border-amber-300'}`}
+                      >
+                        <MapPin className="w-8 h-8 text-amber-600 mb-2" />
+                        <h3 className="font-semibold text-stone-900 mb-1">Location Analysis</h3>
+                        <p className="text-xs text-stone-500">Find optimal geographic markets for this opportunity</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-blue-500" />
+                        Validation Metrics
+                      </h3>
                       <div className="space-y-4">
-                        {opp.ai_problem_statement && (
-                          <div>
-                            <h4 className="text-sm font-medium text-stone-700 mb-1">Problem Statement</h4>
-                            <p className="text-sm text-stone-600">{opp.ai_problem_statement}</p>
+                        <div className="flex items-center justify-between p-3 bg-stone-50 rounded-lg">
+                          <span className="text-sm text-stone-600">Community Interest</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-2 bg-stone-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500" style={{ width: `${Math.min(opp.validation_count * 10, 100)}%` }} />
+                            </div>
+                            <span className="text-sm font-semibold text-stone-900">{opp.validation_count}</span>
                           </div>
-                        )}
-                        <div className="grid grid-cols-2 gap-4">
-                          {opp.ai_market_size_estimate && (
-                            <div className="bg-white rounded-lg p-3 border border-stone-200">
-                              <p className="text-xs text-stone-500 mb-1">Market Size</p>
-                              <p className="font-semibold text-stone-900">{opp.ai_market_size_estimate}</p>
-                            </div>
-                          )}
-                          {opp.ai_competition_level && (
-                            <div className="bg-white rounded-lg p-3 border border-stone-200">
-                              <p className="text-xs text-stone-500 mb-1">Competition</p>
-                              <p className="font-semibold text-stone-900">{opp.ai_competition_level}</p>
-                            </div>
-                          )}
-                          {opp.ai_target_audience && (
-                            <div className="bg-white rounded-lg p-3 border border-stone-200">
-                              <p className="text-xs text-stone-500 mb-1">Target Audience</p>
-                              <p className="font-semibold text-stone-900">{opp.ai_target_audience}</p>
-                            </div>
-                          )}
-                          {opp.ai_urgency_level && (
-                            <div className="bg-white rounded-lg p-3 border border-stone-200">
-                              <p className="text-xs text-stone-500 mb-1">Urgency</p>
-                              <p className="font-semibold text-stone-900">{opp.ai_urgency_level}</p>
-                            </div>
-                          )}
                         </div>
-                        {opp.ai_business_model_suggestions && opp.ai_business_model_suggestions.length > 0 && (
+                        <div className="flex items-center justify-between p-3 bg-stone-50 rounded-lg">
+                          <span className="text-sm text-stone-600">Problem Severity</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-2 bg-stone-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-500" style={{ width: `${opp.severity * 10}%` }} />
+                            </div>
+                            <span className="text-sm font-semibold text-stone-900">{opp.severity}/10</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-stone-50 rounded-lg">
+                          <span className="text-sm text-stone-600">Feasibility Score</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-2 bg-stone-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-violet-500" style={{ width: `${opp.feasibility_score || 0}%` }} />
+                            </div>
+                            <span className="text-sm font-semibold text-stone-900">{opp.feasibility_score || 'N/A'}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        Quick Validation Checklist
+                      </h3>
+                      <div className="space-y-3">
+                        {[
+                          { label: 'Problem is clearly defined', done: !!opp.ai_problem_statement },
+                          { label: 'Target audience identified', done: !!opp.ai_target_audience },
+                          { label: 'Market size estimated', done: !!opp.ai_market_size_estimate },
+                          { label: 'Competition level assessed', done: !!opp.ai_competition_level },
+                          { label: 'AI analysis completed', done: !!opp.ai_analyzed },
+                        ].map((item, i) => (
+                          <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${item.done ? 'bg-emerald-50' : 'bg-stone-50'}`}>
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500 text-white' : 'border-2 border-stone-300'}`}>
+                              {item.done && <CheckCircle2 className="w-3 h-3" />}
+                            </div>
+                            <span className={`text-sm ${item.done ? 'text-emerald-700' : 'text-stone-600'}`}>{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {opp.ai_analyzed && (
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-violet-500" />
+                        AI Validation Summary
+                      </h3>
+                      {opp.ai_problem_statement && (
+                        <p className="text-stone-600 mb-4">{opp.ai_problem_statement}</p>
+                      )}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 bg-blue-50 rounded-lg text-center">
+                          <p className="text-xs text-blue-600 mb-1">Market Size</p>
+                          <p className="font-semibold text-stone-900 text-sm">{opp.ai_market_size_estimate || 'TBD'}</p>
+                        </div>
+                        <div className="p-3 bg-amber-50 rounded-lg text-center">
+                          <p className="text-xs text-amber-600 mb-1">Competition</p>
+                          <p className="font-semibold text-stone-900 text-sm">{opp.ai_competition_level || 'TBD'}</p>
+                        </div>
+                        <div className="p-3 bg-emerald-50 rounded-lg text-center">
+                          <p className="text-xs text-emerald-600 mb-1">Target Audience</p>
+                          <p className="font-semibold text-stone-900 text-sm">{opp.ai_target_audience || 'TBD'}</p>
+                        </div>
+                        <div className="p-3 bg-violet-50 rounded-lg text-center">
+                          <p className="text-xs text-violet-600 mb-1">Urgency</p>
+                          <p className="font-semibold text-stone-900 text-sm">{opp.ai_urgency_level || 'TBD'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setActiveTab('validating')}
+                      className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
+                    >
+                      Continue to Research
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* RESEARCH STEP */}
+              {activeTab === 'validating' && (
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                    <h2 className="text-xl font-bold text-stone-900 mb-2 flex items-center gap-2">
+                      <Search className="w-6 h-6 text-blue-600" />
+                      Market Research
+                    </h2>
+                    <p className="text-stone-600">Deep dive into market dynamics, competition, and customer segments.</p>
+                  </div>
+
+                  <div className="grid lg:grid-cols-3 gap-6">
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-emerald-500" />
+                        TAM / SAM / SOM
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100">
+                          <p className="text-xs text-emerald-600 font-medium mb-1">Total Addressable Market</p>
+                          <p className="text-2xl font-bold text-stone-900">{opp.ai_market_size_estimate || '$--'}</p>
+                          <p className="text-xs text-stone-500 mt-1">Everyone who could use this solution</p>
+                        </div>
+                        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                          <p className="text-xs text-blue-600 font-medium mb-1">Serviceable Addressable Market</p>
+                          <p className="text-xl font-bold text-stone-900">Est. 20-30% of TAM</p>
+                          <p className="text-xs text-stone-500 mt-1">Reachable with your business model</p>
+                        </div>
+                        <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-lg border border-violet-100">
+                          <p className="text-xs text-violet-600 font-medium mb-1">Serviceable Obtainable Market</p>
+                          <p className="text-xl font-bold text-stone-900">Est. 5-10% of SAM</p>
+                          <p className="text-xs text-stone-500 mt-1">Realistic first-year target</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-violet-500" />
+                        Customer Segments
+                      </h3>
+                      <div className="space-y-3">
+                        {[
+                          { segment: 'Early Adopters', desc: 'Tech-savvy innovators', pct: 15 },
+                          { segment: 'Small Businesses', desc: 'Resource-constrained teams', pct: 35 },
+                          { segment: 'Enterprise', desc: 'Large organizations', pct: 25 },
+                          { segment: 'Consumers', desc: 'Individual end-users', pct: 25 },
+                        ].map((seg, i) => (
+                          <div key={i} className="p-3 bg-stone-50 rounded-lg">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-stone-900">{seg.segment}</span>
+                              <span className="text-xs text-violet-600 font-medium">{seg.pct}%</span>
+                            </div>
+                            <p className="text-xs text-stone-500">{seg.desc}</p>
+                            <div className="mt-2 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-violet-500" style={{ width: `${seg.pct}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-amber-500" />
+                        Competitive Landscape
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                          <p className="text-xs text-amber-600 font-medium mb-1">Competition Level</p>
+                          <p className="text-lg font-bold text-stone-900">{opp.ai_competition_level || 'Unknown'}</p>
+                        </div>
+                        {opp.ai_competitive_advantages && opp.ai_competitive_advantages.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-medium text-stone-700 mb-2">Business Model Ideas</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {opp.ai_business_model_suggestions.map((model, i) => (
-                                <span key={i} className="text-xs px-3 py-1.5 bg-violet-100 text-violet-700 rounded-full">
-                                  {model}
-                                </span>
+                            <p className="text-xs text-stone-500 mb-2">Potential Advantages:</p>
+                            <div className="space-y-2">
+                              {opp.ai_competitive_advantages.map((adv, i) => (
+                                <div key={i} className="flex items-start gap-2 p-2 bg-emerald-50 rounded-lg">
+                                  <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                                  <span className="text-xs text-stone-700">{adv}</span>
+                                </div>
                               ))}
                             </div>
                           </div>
                         )}
-                        {opp.ai_next_steps && opp.ai_next_steps.length > 0 && (
+                        {opp.ai_key_risks && opp.ai_key_risks.length > 0 && (
                           <div>
-                            <h4 className="text-sm font-medium text-stone-700 mb-2">Suggested Next Steps</h4>
-                            <ul className="space-y-1">
-                              {opp.ai_next_steps.map((step, i) => (
-                                <li key={i} className="flex items-start gap-2 text-sm text-stone-600">
-                                  <ChevronRight className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
-                                  {step}
+                            <p className="text-xs text-stone-500 mb-2">Key Risks:</p>
+                            <div className="space-y-2">
+                              {opp.ai_key_risks.map((risk, i) => (
+                                <div key={i} className="flex items-start gap-2 p-2 bg-red-50 rounded-lg">
+                                  <X className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                  <span className="text-xs text-stone-700">{risk}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-blue-500" />
+                        Market Trends & Signals
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-4 bg-stone-50 rounded-lg">
+                          <p className="text-2xl font-bold text-stone-900">{opp.validation_count}</p>
+                          <p className="text-xs text-stone-500 mt-1">Validations</p>
+                        </div>
+                        <div className="text-center p-4 bg-stone-50 rounded-lg">
+                          <p className="text-2xl font-bold text-emerald-600">{opp.growth_rate ? `+${opp.growth_rate}%` : '--'}</p>
+                          <p className="text-xs text-stone-500 mt-1">Growth</p>
+                        </div>
+                        <div className="text-center p-4 bg-stone-50 rounded-lg">
+                          <p className="text-2xl font-bold text-blue-600">{opp.geographic_scope || 'Global'}</p>
+                          <p className="text-xs text-stone-500 mt-1">Scope</p>
+                        </div>
+                        <div className="text-center p-4 bg-stone-50 rounded-lg">
+                          <p className="text-2xl font-bold text-violet-600">{opp.severity}/10</p>
+                          <p className="text-xs text-stone-500 mt-1">Pain</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-violet-500" />
+                        Recommended Experts
+                      </h3>
+                      {experts.length > 0 ? (
+                        <div className="space-y-3">
+                          {experts.slice(0, 3).map((expert) => (
+                            <div key={expert.id} className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-medium">
+                                {expert.name.charAt(0)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-stone-900 truncate">{expert.name}</p>
+                                <p className="text-xs text-stone-500 truncate">{expert.headline}</p>
+                              </div>
+                              <span className="text-xs font-medium text-emerald-600">{expert.match_score}%</span>
+                            </div>
+                          ))}
+                          <Link to="/network/experts" className="block text-center text-sm text-violet-600 font-medium hover:text-violet-700 mt-2">
+                            View all experts
+                          </Link>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-stone-500 p-4 bg-stone-50 rounded-lg text-center">No expert matches found yet.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setActiveTab('researching')}
+                      className="px-6 py-3 bg-stone-100 text-stone-700 rounded-lg font-medium hover:bg-stone-200 flex items-center gap-2"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                      Back to Validate
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('planning')}
+                      className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
+                    >
+                      Continue to Plan
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* PLAN STEP */}
+              {activeTab === 'planning' && (
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                    <h2 className="text-xl font-bold text-stone-900 mb-2 flex items-center gap-2">
+                      <Target className="w-6 h-6 text-purple-600" />
+                      Business Planning
+                    </h2>
+                    <p className="text-stone-600">Create your strategy, business model, and go-to-market plan.</p>
+                  </div>
+
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <Briefcase className="w-5 h-5 text-purple-500" />
+                        Business Model Canvas
+                      </h3>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { title: 'Value Prop', desc: 'Core offering' },
+                          { title: 'Customers', desc: opp.ai_target_audience || 'Define segments' },
+                          { title: 'Channels', desc: 'Distribution' },
+                          { title: 'Revenue', desc: 'Pricing model' },
+                          { title: 'Resources', desc: 'Key assets' },
+                          { title: 'Activities', desc: 'Core operations' },
+                          { title: 'Partners', desc: 'Key alliances' },
+                          { title: 'Costs', desc: 'Major expenses' },
+                          { title: 'Advantage', desc: 'Unique edge' },
+                        ].map((item, i) => (
+                          <div key={i} className="p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 cursor-pointer transition-colors">
+                            <p className="text-xs font-medium text-purple-700">{item.title}</p>
+                            <p className="text-xs text-stone-500 mt-1 truncate">{item.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <Lightbulb className="w-5 h-5 text-amber-500" />
+                        Business Model Ideas
+                      </h3>
+                      {opp.ai_business_model_suggestions && opp.ai_business_model_suggestions.length > 0 ? (
+                        <div className="space-y-3">
+                          {opp.ai_business_model_suggestions.map((model, i) => (
+                            <div key={i} className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-100">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 font-bold">
+                                  {i + 1}
+                                </div>
+                                <span className="text-sm font-medium text-stone-900">{model}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-stone-500 p-4 bg-stone-50 rounded-lg">Complete AI analysis to get business model suggestions.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-stone-200 p-5">
+                    <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                      <Rocket className="w-5 h-5 text-violet-500" />
+                      Go-to-Market Strategy
+                    </h3>
+                    <div className="grid md:grid-cols-4 gap-4">
+                      <div className="p-4 bg-violet-50 rounded-lg border border-violet-100">
+                        <p className="text-xs text-violet-600 font-medium mb-2">Phase 1: Discovery</p>
+                        <ul className="space-y-1">
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-violet-400" /> Customer interviews
+                          </li>
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-violet-400" /> Problem validation
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                        <p className="text-xs text-blue-600 font-medium mb-2">Phase 2: MVP</p>
+                        <ul className="space-y-1">
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-blue-400" /> Core features
+                          </li>
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-blue-400" /> Beta testers
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <p className="text-xs text-emerald-600 font-medium mb-2">Phase 3: Launch</p>
+                        <ul className="space-y-1">
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-emerald-400" /> Marketing push
+                          </li>
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-emerald-400" /> Public release
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                        <p className="text-xs text-amber-600 font-medium mb-2">Phase 4: Scale</p>
+                        <ul className="space-y-1">
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-amber-400" /> Team growth
+                          </li>
+                          <li className="text-xs text-stone-600 flex items-center gap-1">
+                            <ChevronRight className="w-3 h-3 text-amber-400" /> Market expansion
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-stone-200 p-5">
+                    <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-blue-500" />
+                      Financial Projections
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-stone-50 rounded-lg">
+                        <p className="text-xs text-stone-500 mb-1">Year 1 Target</p>
+                        <p className="text-2xl font-bold text-stone-900">$50K - $100K</p>
+                        <p className="text-xs text-emerald-600 mt-1">MVP + Early Adopters</p>
+                      </div>
+                      <div className="p-4 bg-stone-50 rounded-lg">
+                        <p className="text-xs text-stone-500 mb-1">Year 2 Target</p>
+                        <p className="text-2xl font-bold text-stone-900">$250K - $500K</p>
+                        <p className="text-xs text-blue-600 mt-1">Product-Market Fit</p>
+                      </div>
+                      <div className="p-4 bg-stone-50 rounded-lg">
+                        <p className="text-xs text-stone-500 mb-1">Year 3 Target</p>
+                        <p className="text-2xl font-bold text-stone-900">$1M+</p>
+                        <p className="text-xs text-violet-600 mt-1">Scale & Expansion</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setActiveTab('validating')}
+                      className="px-6 py-3 bg-stone-100 text-stone-700 rounded-lg font-medium hover:bg-stone-200 flex items-center gap-2"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                      Back to Research
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('building')}
+                      className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
+                    >
+                      Continue to Execute
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* EXECUTE STEP */}
+              {activeTab === 'building' && (
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
+                    <h2 className="text-xl font-bold text-stone-900 mb-2 flex items-center gap-2">
+                      <Zap className="w-6 h-6 text-amber-600" />
+                      Execute Your Plan
+                    </h2>
+                    <p className="text-stone-600">Build your MVP, validate with customers, and launch to market.</p>
+                  </div>
+
+                  <div className="grid lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <Rocket className="w-5 h-5 text-amber-500" />
+                        MVP Development Roadmap
+                      </h3>
+                      <div className="space-y-4">
+                        {[
+                          { phase: 'Week 1-2', title: 'Core Features', tasks: ['Define MVP scope', 'Set up tech stack', 'Build core functionality'], status: 'current' },
+                          { phase: 'Week 3-4', title: 'User Experience', tasks: ['Design UI/UX', 'Implement feedback', 'Polish interface'], status: 'upcoming' },
+                          { phase: 'Week 5-6', title: 'Beta Testing', tasks: ['Recruit beta users', 'Gather feedback', 'Iterate on product'], status: 'upcoming' },
+                          { phase: 'Week 7-8', title: 'Launch Prep', tasks: ['Final testing', 'Marketing setup', 'Public launch'], status: 'upcoming' },
+                        ].map((milestone, i) => (
+                          <div key={i} className={`p-4 rounded-lg border ${milestone.status === 'current' ? 'bg-amber-50 border-amber-200' : 'bg-stone-50 border-stone-200'}`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3">
+                                <span className={`text-xs font-medium px-2 py-1 rounded ${milestone.status === 'current' ? 'bg-amber-200 text-amber-800' : 'bg-stone-200 text-stone-600'}`}>
+                                  {milestone.phase}
+                                </span>
+                                <span className="font-medium text-stone-900">{milestone.title}</span>
+                              </div>
+                              {milestone.status === 'current' && (
+                                <span className="text-xs text-amber-600 font-medium">In Progress</span>
+                              )}
+                            </div>
+                            <ul className="space-y-1 ml-16">
+                              {milestone.tasks.map((task, j) => (
+                                <li key={j} className="text-sm text-stone-600 flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-stone-400" />
+                                  {task}
                                 </li>
                               ))}
                             </ul>
                           </div>
-                        )}
+                        ))}
                       </div>
-                    ) : (
-                      <p className="text-sm text-stone-500">AI analysis not yet available for this opportunity.</p>
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="bg-stone-50 rounded-lg p-5">
-                    <h3 className="font-semibold text-stone-900 mb-3 flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-blue-500" />
-                      Market Signals
-                    </h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center p-3 bg-white rounded-lg border border-stone-200">
-                        <p className="text-2xl font-bold text-stone-900">{opp.validation_count}</p>
-                        <p className="text-xs text-stone-500">Validations</p>
+                    <div className="space-y-6">
+                      <div className="bg-white rounded-xl border border-stone-200 p-5">
+                        <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                          <Users className="w-5 h-5 text-emerald-500" />
+                          Customer Validation
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="p-3 bg-emerald-50 rounded-lg">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm text-stone-700">Interviews Completed</span>
+                              <span className="text-sm font-bold text-emerald-600">0/10</span>
+                            </div>
+                            <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500" style={{ width: '0%' }} />
+                            </div>
+                          </div>
+                          <div className="p-3 bg-blue-50 rounded-lg">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm text-stone-700">Beta Signups</span>
+                              <span className="text-sm font-bold text-blue-600">0/50</span>
+                            </div>
+                            <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500" style={{ width: '0%' }} />
+                            </div>
+                          </div>
+                          <div className="p-3 bg-violet-50 rounded-lg">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm text-stone-700">Pre-orders</span>
+                              <span className="text-sm font-bold text-violet-600">$0</span>
+                            </div>
+                            <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+                              <div className="h-full bg-violet-500" style={{ width: '0%' }} />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-center p-3 bg-white rounded-lg border border-stone-200">
-                        <p className="text-2xl font-bold text-stone-900">{opp.market_size || 'TBD'}</p>
-                        <p className="text-xs text-stone-500">Market Size</p>
-                      </div>
-                      <div className="text-center p-3 bg-white rounded-lg border border-stone-200">
-                        <p className="text-2xl font-bold text-emerald-600">
-                          {opp.growth_rate ? `+${opp.growth_rate}%` : 'TBD'}
-                        </p>
-                        <p className="text-xs text-stone-500">Growth Rate</p>
+
+                      <div className="bg-white rounded-xl border border-stone-200 p-5">
+                        <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                          <CheckCircle2 className="w-5 h-5 text-violet-500" />
+                          Launch Checklist
+                        </h3>
+                        <div className="space-y-2">
+                          {[
+                            'MVP feature complete',
+                            'Landing page live',
+                            'Payment integration',
+                            'Email list built',
+                            'Social media setup',
+                            'Launch announcement',
+                          ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
+                              <div className="w-4 h-4 rounded border-2 border-stone-300" />
+                              <span className="text-sm text-stone-600">{item}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-6">
-                  <div className="bg-stone-50 rounded-lg p-5">
-                    <h3 className="font-semibold text-stone-900 mb-3 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-violet-500" />
-                      Top Experts
-                    </h3>
-                    {experts.length > 0 ? (
-                      <div className="space-y-3">
-                        {experts.map((expert) => (
-                          <div key={expert.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-stone-200">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-medium">
-                              {expert.name.charAt(0)}
+                  {opp.ai_next_steps && opp.ai_next_steps.length > 0 && (
+                    <div className="bg-white rounded-xl border border-stone-200 p-5">
+                      <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-violet-500" />
+                        AI Recommended Next Steps
+                      </h3>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {opp.ai_next_steps.map((step, i) => (
+                          <div key={i} className="flex items-start gap-3 p-3 bg-violet-50 rounded-lg border border-violet-100">
+                            <div className="w-6 h-6 bg-violet-200 rounded-full flex items-center justify-center text-violet-700 text-xs font-bold flex-shrink-0">
+                              {i + 1}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-stone-900 truncate">{expert.name}</p>
-                              <p className="text-xs text-stone-500 truncate">{expert.headline}</p>
-                            </div>
-                            <span className="text-xs font-medium text-emerald-600">{expert.match_score}%</span>
+                            <span className="text-sm text-stone-700">{step}</span>
                           </div>
                         ))}
-                        <Link to="/network/experts" className="block text-center text-sm text-violet-600 font-medium hover:text-violet-700">
-                          View all experts
-                        </Link>
                       </div>
-                    ) : (
-                      <p className="text-sm text-stone-500">No expert matches found yet.</p>
-                    )}
-                  </div>
-
-                  <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-5 border border-violet-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="w-5 h-5 text-violet-600" />
-                      <h3 className="font-semibold text-stone-900">Ready to start?</h3>
                     </div>
-                    <p className="text-sm text-stone-600 mb-4">
-                      Open the workspace panel to track your progress, take notes, and work with the AI assistant.
-                    </p>
+                  )}
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setActiveTab('planning')}
+                      className="px-6 py-3 bg-stone-100 text-stone-700 rounded-lg font-medium hover:bg-stone-200 flex items-center gap-2"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                      Back to Plan
+                    </button>
                     <button
                       onClick={() => {
                         if (!hasWorkspace) {
@@ -923,13 +1401,14 @@ export default function OpportunityHub() {
                         }
                       }}
                       disabled={createWorkspaceMutation.isPending}
-                      className="w-full py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50"
+                      className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 flex items-center gap-2"
                     >
-                      {hasWorkspace ? 'Open Workspace' : 'Start Working on This'}
+                      <Rocket className="w-5 h-5" />
+                      {hasWorkspace ? 'Open Workspace & Start' : 'Start Execution'}
                     </button>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
