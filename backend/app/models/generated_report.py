@@ -10,6 +10,9 @@ class ReportType(str, enum.Enum):
     MARKET_ANALYSIS = "market_analysis"
     STRATEGIC_ASSESSMENT = "strategic_assessment"
     PROGRESS_REPORT = "progress_report"
+    LAYER_1_OVERVIEW = "layer_1_overview"
+    LAYER_2_DEEP_DIVE = "layer_2_deep_dive"
+    LAYER_3_EXECUTION = "layer_3_execution"
 
 
 class ReportStatus(str, enum.Enum):

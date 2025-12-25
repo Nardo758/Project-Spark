@@ -216,3 +216,277 @@ def get_report(
         raise HTTPException(status_code=404, detail="Report not found")
     
     return report
+
+
+@router.post("/opportunity/{opportunity_id}/layer1")
+def generate_layer1_report(
+    opportunity_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate Layer 1: Problem Overview Report
+    
+    Access: Pro tier and above, or $15 one-time purchase (via pay-per-unlock)
+    
+    Includes:
+    - Executive Summary
+    - The Problem (pain points, severity)
+    - Market Snapshot (size, audience, competition)
+    - Validation Signals
+    - Key Risks
+    - Next Steps
+    """
+    from app.models.opportunity import Opportunity
+    from app.services.report_generator import ReportGenerator
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    generator = ReportGenerator(db)
+    entitlement = generator.check_entitlement(current_user, ReportType.LAYER_1_OVERVIEW)
+    
+    if not entitlement["allowed"]:
+        has_paid_unlock = False
+        try:
+            from app.routers.opportunities import get_opportunity_entitlements
+            opp_ent = get_opportunity_entitlements(opportunity, current_user, db)
+            has_paid_unlock = opp_ent.is_unlocked
+        except Exception:
+            pass
+        
+        if not has_paid_unlock:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "message": "Layer 1 reports require Pro tier or paid opportunity unlock ($15)",
+                    "required_tiers": entitlement.get("required_tiers"),
+                    "user_tier": entitlement.get("user_tier"),
+                    "price_cents": 1500,
+                    "can_purchase": True,
+                    "purchase_path": f"/opportunity/{opportunity_id}?unlock=true"
+                }
+            )
+    
+    existing = db.query(GeneratedReport).filter(
+        GeneratedReport.user_id == current_user.id,
+        GeneratedReport.opportunity_id == opportunity_id,
+        GeneratedReport.report_type == ReportType.LAYER_1_OVERVIEW,
+        GeneratedReport.status == ReportStatus.COMPLETED
+    ).first()
+    
+    if existing:
+        return {
+            "report_id": existing.id,
+            "status": "existing",
+            "message": "Layer 1 report already exists for this opportunity",
+            "report": {
+                "id": existing.id,
+                "title": existing.title,
+                "summary": existing.summary,
+                "content": existing.content,
+                "confidence_score": existing.confidence_score,
+                "created_at": existing.created_at.isoformat() if existing.created_at else None,
+            }
+        }
+    
+    report = generator.generate_layer1_report(opportunity, current_user)
+    
+    return {
+        "report_id": report.id,
+        "status": "generated",
+        "message": "Layer 1 report generated successfully",
+        "report": {
+            "id": report.id,
+            "title": report.title,
+            "summary": report.summary,
+            "content": report.content,
+            "confidence_score": report.confidence_score,
+            "generation_time_ms": report.generation_time_ms,
+            "created_at": report.created_at.isoformat() if report.created_at else None,
+        }
+    }
+
+
+@router.post("/opportunity/{opportunity_id}/layer2")
+def generate_layer2_report(
+    opportunity_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate Layer 2: Deep Dive Analysis Report
+    
+    Access: Business tier and above
+    
+    Includes:
+    - TAM/SAM/SOM Analysis
+    - Demographic Deep Dive (Census data)
+    - Competitive Landscape
+    - Geographic Analysis
+    - Business Model Recommendations
+    """
+    from app.models.opportunity import Opportunity
+    from app.services.report_generator import ReportGenerator
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    generator = ReportGenerator(db)
+    entitlement = generator.check_entitlement(current_user, ReportType.LAYER_2_DEEP_DIVE)
+    
+    if not entitlement["allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Layer 2 Deep Dive reports require Business tier or higher",
+                "required_tiers": entitlement.get("required_tiers"),
+                "user_tier": entitlement.get("user_tier"),
+            }
+        )
+    
+    existing = db.query(GeneratedReport).filter(
+        GeneratedReport.user_id == current_user.id,
+        GeneratedReport.opportunity_id == opportunity_id,
+        GeneratedReport.report_type == ReportType.LAYER_2_DEEP_DIVE,
+        GeneratedReport.status == ReportStatus.COMPLETED
+    ).first()
+    
+    if existing:
+        return {
+            "report_id": existing.id,
+            "status": "existing",
+            "message": "Layer 2 report already exists for this opportunity",
+            "report": {
+                "id": existing.id,
+                "title": existing.title,
+                "summary": existing.summary,
+                "content": existing.content,
+                "confidence_score": existing.confidence_score,
+                "created_at": existing.created_at.isoformat() if existing.created_at else None,
+            }
+        }
+    
+    demographics = opportunity.demographics if hasattr(opportunity, 'demographics') else None
+    report = generator.generate_layer2_report(opportunity, current_user, demographics)
+    
+    return {
+        "report_id": report.id,
+        "status": "generated",
+        "message": "Layer 2 Deep Dive report generated successfully",
+        "report": {
+            "id": report.id,
+            "title": report.title,
+            "summary": report.summary,
+            "content": report.content,
+            "confidence_score": report.confidence_score,
+            "generation_time_ms": report.generation_time_ms,
+            "created_at": report.created_at.isoformat() if report.created_at else None,
+        }
+    }
+
+
+@router.post("/opportunity/{opportunity_id}/layer3")
+def generate_layer3_report(
+    opportunity_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate Layer 3: Execution Package Report
+    
+    Access: Business tier (5/month limit) or Enterprise (unlimited)
+    
+    Includes:
+    - Full Business Plan Summary
+    - Go-to-Market Strategy (3 phases)
+    - Financial Projections (3-year)
+    - 90-Day Action Roadmap
+    - Risk Mitigation Plan
+    """
+    from app.models.opportunity import Opportunity
+    from app.services.report_generator import ReportGenerator
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    generator = ReportGenerator(db)
+    entitlement = generator.check_entitlement(current_user, ReportType.LAYER_3_EXECUTION)
+    
+    if not entitlement["allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "message": "Layer 3 Execution Package requires Business tier or higher",
+                "required_tiers": entitlement.get("required_tiers"),
+                "user_tier": entitlement.get("user_tier"),
+            }
+        )
+    
+    user_tier = getattr(current_user, 'tier', 'free')
+    if hasattr(user_tier, 'value'):
+        user_tier = user_tier.value
+    user_tier = str(user_tier).lower() if user_tier else 'free'
+    
+    if user_tier == 'business':
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        rolling_count = db.query(GeneratedReport).filter(
+            GeneratedReport.user_id == current_user.id,
+            GeneratedReport.report_type == ReportType.LAYER_3_EXECUTION,
+            GeneratedReport.created_at >= thirty_days_ago
+        ).count()
+        
+        if rolling_count >= 5:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "message": "Business tier is limited to 5 Layer 3 reports per rolling 30-day period",
+                    "rolling_limit": 5,
+                    "used": rolling_count,
+                    "upgrade_to": "enterprise",
+                    "next_available": "Check again when your oldest report is 30+ days old"
+                }
+            )
+    
+    existing = db.query(GeneratedReport).filter(
+        GeneratedReport.user_id == current_user.id,
+        GeneratedReport.opportunity_id == opportunity_id,
+        GeneratedReport.report_type == ReportType.LAYER_3_EXECUTION,
+        GeneratedReport.status == ReportStatus.COMPLETED
+    ).first()
+    
+    if existing:
+        return {
+            "report_id": existing.id,
+            "status": "existing",
+            "message": "Layer 3 Execution Package already exists for this opportunity",
+            "report": {
+                "id": existing.id,
+                "title": existing.title,
+                "summary": existing.summary,
+                "content": existing.content,
+                "confidence_score": existing.confidence_score,
+                "created_at": existing.created_at.isoformat() if existing.created_at else None,
+            }
+        }
+    
+    demographics = opportunity.demographics if hasattr(opportunity, 'demographics') else None
+    report = generator.generate_layer3_report(opportunity, current_user, demographics)
+    
+    return {
+        "report_id": report.id,
+        "status": "generated",
+        "message": "Layer 3 Execution Package generated successfully",
+        "report": {
+            "id": report.id,
+            "title": report.title,
+            "summary": report.summary,
+            "content": report.content,
+            "confidence_score": report.confidence_score,
+            "generation_time_ms": report.generation_time_ms,
+            "created_at": report.created_at.isoformat() if report.created_at else None,
+        }
+    }

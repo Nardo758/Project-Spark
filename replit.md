@@ -47,6 +47,15 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 2024)
 
+### Tiered Report Framework (December 25, 2024)
+*   **ReportGenerator Service:** Backend service (`backend/app/services/report_generator.py`) for generating tiered opportunity reports with tier entitlement checks
+*   **Layer 1 - Problem Overview:** Pro+ access, includes Executive Summary, Problem Statement, Market Snapshot, Validation Signals, Key Risks, Next Steps ($15 one-time or Pro subscription)
+*   **Layer 2 - Deep Dive Analysis:** Business+ access, adds TAM/SAM/SOM, Demographic Deep Dive (Census data), Competitive Landscape, Geographic Analysis
+*   **Layer 3 - Execution Package:** Business (5/mo limit) or Enterprise (unlimited), full Business Plan, Go-to-Market Strategy (3 phases), Financial Projections (3-year), 90-Day Roadmap, Risk Mitigation Plan
+*   **Report Types:** Added `LAYER_1_OVERVIEW`, `LAYER_2_DEEP_DIVE`, `LAYER_3_EXECUTION` to ReportType enum
+*   **API Endpoints:** POST `/api/v1/reports/opportunity/{id}/layer1`, `/layer2`, `/layer3` with proper entitlement checks
+*   **Monthly Limits:** Business tier has 5 Layer 3 reports/month limit, Enterprise unlimited
+
 ### Census & Demographics Integration (December 25, 2024)
 *   **Database Schema:** Added `demographics` and `search_trends` JSONB columns to opportunities table with `demographics_fetched_at` timestamp
 *   **CensusDataService:** Backend service for Census Bureau ACS 5-Year API with 16 demographic variables (population, income, age, education, unemployment, housing, commute)
