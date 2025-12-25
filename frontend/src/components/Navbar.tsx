@@ -26,7 +26,13 @@ const guestNavItems = [
 const paidNavItems = [
   { name: 'Dashboard', path: '/dashboard' },
   { name: 'Discover', path: '/discover' },
-  { name: 'My Projects', path: '/projects' },
+  { 
+    name: 'My Projects',
+    dropdown: [
+      { name: 'Active Projects', path: '/projects', description: 'Opportunities you are working on' },
+      { name: 'Saved Ideas', path: '/saved', description: 'Bookmarked opportunities' },
+    ]
+  },
   { 
     name: 'Build',
     dropdown: [
@@ -37,13 +43,6 @@ const paidNavItems = [
     ]
   },
   { name: 'API', path: '/developers' },
-  { 
-    name: 'Account',
-    dropdown: [
-      { name: 'Saved Ideas', path: '/saved', description: 'Bookmarked opportunities' },
-      { name: 'Settings', path: '/settings', description: 'Account and preferences' },
-    ]
-  },
 ]
 
 type DropdownItem = {
