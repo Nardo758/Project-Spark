@@ -111,6 +111,13 @@ Total estimated timeline: 14 weeks (3.5 months)
 
 ## Recent Changes (December 25, 2025)
 
+- **Phase 1 Enhancement Complete:** Collections, Tags, and Notes system
+  - UserCollection model for organizing saved opportunities into folders
+  - UserTag model with custom colors for labeling opportunities
+  - OpportunityNote model for adding notes to opportunities
+  - Enhanced Saved page UI with collections sidebar, tags panel, and note editor
+  - API endpoints for CRUD operations on collections, tags, and notes
+  - Watchlist filtering by collection
 - Added AI Co-Founder chat feature with stage-specific guidance
 - Implemented tool recommendations engine (50+ tools)
 - Added business formation guide (LLC, S-Corp, Sole Proprietorship)
