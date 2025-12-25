@@ -134,6 +134,71 @@ export default function OpportunityHub() {
   const [aiMessage, setAiMessage] = useState('')
   const [validationPath, setValidationPath] = useState<'platform' | 'new_idea' | 'locations' | null>(null)
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(false)
+  
+  const validationChecklistItems = [
+    'Talked to 5+ potential customers',
+    'Identified willingness to pay',
+    'Confirmed problem urgency',
+    'Validated solution approach',
+    'Documented key insights',
+  ]
+  
+  const launchChecklistItems = [
+    'MVP feature complete',
+    'Landing page live',
+    'Payment integration',
+    'Email list built',
+    'Social media setup',
+    'Launch announcement',
+  ]
+  
+  const [validationChecked, setValidationChecked] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`validation-checklist-${opportunityId}`)
+      return saved ? JSON.parse(saved) : {}
+    } catch { return {} }
+  })
+  
+  const [launchChecked, setLaunchChecked] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`launch-checklist-${opportunityId}`)
+      return saved ? JSON.parse(saved) : {}
+    } catch { return {} }
+  })
+  
+  useEffect(() => {
+    localStorage.setItem(`validation-checklist-${opportunityId}`, JSON.stringify(validationChecked))
+  }, [validationChecked, opportunityId])
+  
+  useEffect(() => {
+    localStorage.setItem(`launch-checklist-${opportunityId}`, JSON.stringify(launchChecked))
+  }, [launchChecked, opportunityId])
+  
+  const canvasItems = [
+    { key: 'valueProp', title: 'Value Prop', placeholder: 'Core offering' },
+    { key: 'customers', title: 'Customers', placeholder: 'Define segments' },
+    { key: 'channels', title: 'Channels', placeholder: 'Distribution' },
+    { key: 'revenue', title: 'Revenue', placeholder: 'Pricing model' },
+    { key: 'resources', title: 'Resources', placeholder: 'Key assets' },
+    { key: 'activities', title: 'Activities', placeholder: 'Core operations' },
+    { key: 'partners', title: 'Partners', placeholder: 'Key alliances' },
+    { key: 'costs', title: 'Costs', placeholder: 'Major expenses' },
+    { key: 'advantage', title: 'Advantage', placeholder: 'Unique edge' },
+  ]
+  
+  const [canvasData, setCanvasData] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem(`canvas-${opportunityId}`)
+      return saved ? JSON.parse(saved) : {}
+    } catch { return {} }
+  })
+  
+  const [editingCanvas, setEditingCanvas] = useState<string | null>(null)
+  const [canvasEditValue, setCanvasEditValue] = useState('')
+  
+  useEffect(() => {
+    localStorage.setItem(`canvas-${opportunityId}`, JSON.stringify(canvasData))
+  }, [canvasData, opportunityId])
 
   const opportunityQuery = useQuery({
     queryKey: ['opportunity', opportunityId, isAuthenticated, token?.slice(-8)],
@@ -861,7 +926,8 @@ export default function OpportunityHub() {
                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                         Quick Validation Checklist
                       </h3>
-                      <div className="space-y-3">
+                      <p className="text-xs text-stone-500 mb-3">AI-verified items (auto-checked)</p>
+                      <div className="space-y-2 mb-4">
                         {[
                           { label: 'Problem is clearly defined', done: !!opp.ai_problem_statement },
                           { label: 'Target audience identified', done: !!opp.ai_target_audience },
@@ -869,12 +935,27 @@ export default function OpportunityHub() {
                           { label: 'Competition level assessed', done: !!opp.ai_competition_level },
                           { label: 'AI analysis completed', done: !!opp.ai_analyzed },
                         ].map((item, i) => (
-                          <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${item.done ? 'bg-emerald-50' : 'bg-stone-50'}`}>
+                          <div key={i} className={`flex items-center gap-3 p-2 rounded-lg ${item.done ? 'bg-emerald-50' : 'bg-stone-50'}`}>
                             <div className={`w-5 h-5 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500 text-white' : 'border-2 border-stone-300'}`}>
                               {item.done && <CheckCircle2 className="w-3 h-3" />}
                             </div>
                             <span className={`text-sm ${item.done ? 'text-emerald-700' : 'text-stone-600'}`}>{item.label}</span>
                           </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-stone-500 mb-3">Your validation progress (click to check)</p>
+                      <div className="space-y-2">
+                        {validationChecklistItems.map((item) => (
+                          <button
+                            key={item}
+                            onClick={() => setValidationChecked(prev => ({ ...prev, [item]: !prev[item] }))}
+                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer ${validationChecked[item] ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-stone-50 hover:bg-stone-100'}`}
+                          >
+                            <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${validationChecked[item] ? 'bg-emerald-500 text-white' : 'border-2 border-stone-300'}`}>
+                              {validationChecked[item] && <CheckCircle2 className="w-3 h-3" />}
+                            </div>
+                            <span className={`text-sm text-left ${validationChecked[item] ? 'text-emerald-700 line-through' : 'text-stone-600'}`}>{item}</span>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -1250,22 +1331,49 @@ export default function OpportunityHub() {
                       <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
                         <Briefcase className="w-5 h-5 text-purple-500" />
                         Business Model Canvas
+                        <span className="text-xs text-stone-400 font-normal ml-auto">Click to edit</span>
                       </h3>
                       <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { title: 'Value Prop', desc: 'Core offering' },
-                          { title: 'Customers', desc: opp.ai_target_audience || 'Define segments' },
-                          { title: 'Channels', desc: 'Distribution' },
-                          { title: 'Revenue', desc: 'Pricing model' },
-                          { title: 'Resources', desc: 'Key assets' },
-                          { title: 'Activities', desc: 'Core operations' },
-                          { title: 'Partners', desc: 'Key alliances' },
-                          { title: 'Costs', desc: 'Major expenses' },
-                          { title: 'Advantage', desc: 'Unique edge' },
-                        ].map((item, i) => (
-                          <div key={i} className="p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 cursor-pointer transition-colors">
-                            <p className="text-xs font-medium text-purple-700">{item.title}</p>
-                            <p className="text-xs text-stone-500 mt-1 truncate">{item.desc}</p>
+                        {canvasItems.map((item) => (
+                          <div key={item.key}>
+                            {editingCanvas === item.key ? (
+                              <div className="p-3 bg-purple-100 rounded-lg border-2 border-purple-400">
+                                <p className="text-xs font-medium text-purple-700 mb-1">{item.title}</p>
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={canvasEditValue}
+                                  onChange={(e) => setCanvasEditValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      setCanvasData(prev => ({ ...prev, [item.key]: canvasEditValue }))
+                                      setEditingCanvas(null)
+                                    } else if (e.key === 'Escape') {
+                                      setEditingCanvas(null)
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    setCanvasData(prev => ({ ...prev, [item.key]: canvasEditValue }))
+                                    setEditingCanvas(null)
+                                  }}
+                                  className="w-full text-xs p-1 rounded border border-purple-300 focus:outline-none focus:border-purple-500"
+                                  placeholder={item.placeholder}
+                                />
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingCanvas(item.key)
+                                  setCanvasEditValue(canvasData[item.key] || '')
+                                }}
+                                className="w-full text-left p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 hover:border-purple-200 cursor-pointer transition-colors"
+                              >
+                                <p className="text-xs font-medium text-purple-700">{item.title}</p>
+                                <p className={`text-xs mt-1 truncate ${canvasData[item.key] ? 'text-stone-700' : 'text-stone-400 italic'}`}>
+                                  {canvasData[item.key] || item.placeholder}
+                                </p>
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1547,22 +1655,24 @@ export default function OpportunityHub() {
 
                       <div className="bg-white rounded-xl border border-stone-200 p-5">
                         <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-violet-500" />
+                          <CheckCircle2 className="w-5 h-5 text-amber-500" />
                           Launch Checklist
                         </h3>
+                        <p className="text-xs text-stone-500 mb-3">
+                          {Object.values(launchChecked).filter(Boolean).length}/{launchChecklistItems.length} completed
+                        </p>
                         <div className="space-y-2">
-                          {[
-                            'MVP feature complete',
-                            'Landing page live',
-                            'Payment integration',
-                            'Email list built',
-                            'Social media setup',
-                            'Launch announcement',
-                          ].map((item, i) => (
-                            <div key={i} className="flex items-center gap-2 p-2 bg-stone-50 rounded-lg">
-                              <div className="w-4 h-4 rounded border-2 border-stone-300" />
-                              <span className="text-sm text-stone-600">{item}</span>
-                            </div>
+                          {launchChecklistItems.map((item) => (
+                            <button
+                              key={item}
+                              onClick={() => setLaunchChecked(prev => ({ ...prev, [item]: !prev[item] }))}
+                              className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors cursor-pointer ${launchChecked[item] ? 'bg-amber-50 hover:bg-amber-100' : 'bg-stone-50 hover:bg-stone-100'}`}
+                            >
+                              <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${launchChecked[item] ? 'bg-amber-500 text-white' : 'border-2 border-stone-300'}`}>
+                                {launchChecked[item] && <CheckCircle2 className="w-3 h-3" />}
+                              </div>
+                              <span className={`text-sm text-left ${launchChecked[item] ? 'text-amber-700 line-through' : 'text-stone-600'}`}>{item}</span>
+                            </button>
                           ))}
                         </div>
                       </div>
