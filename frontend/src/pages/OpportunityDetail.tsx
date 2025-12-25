@@ -427,7 +427,7 @@ export default function OpportunityDetail() {
                   className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
                 >
                   <Rocket className="w-4 h-4" />
-                  Open Hub
+                  Start Working
                 </button>
               )}
             </div>

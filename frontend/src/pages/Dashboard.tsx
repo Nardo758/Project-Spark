@@ -193,7 +193,7 @@ export default function Dashboard() {
             ) : topOpportunities.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-4">
                 {topOpportunities.map((opp) => {
-                  const score = opp.feasibility_score || (75 + (opp.id % 15))
+                  const score = opp.feasibility_score || (70 + (opp.id % 20))
                   const growth = opp.growth_rate || (5 + (opp.id % 25))
                   const signals = opp.validation_count || (2 + (opp.id % 18))
                   const marketSize = formatMarketSize(opp.ai_market_size_estimate)

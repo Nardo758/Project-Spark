@@ -164,9 +164,8 @@ export default function MyWorkspaces() {
                     <span>{completedTasks}/{totalTasks} tasks</span>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <span className="text-sm text-violet-600 font-medium">Open Hub</span>
-                    <ChevronRight className="w-4 h-4 text-violet-600" />
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-end">
+                    <ChevronRight className="w-4 h-4 text-violet-600 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </Link>
               )
