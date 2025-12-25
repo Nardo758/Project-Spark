@@ -844,7 +844,7 @@ ${o.ai_next_steps?.map(s => `- ${s}`).join('\n') || '- Define immediate next ste
                 
                 {workspace && (
                 
-                <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+                <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 140px)' }}>
                   <div className="bg-stone-50 rounded-lg p-4">
                     <div className="mb-2">
                       <span className="text-sm text-stone-600">Status:</span>
