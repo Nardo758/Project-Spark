@@ -152,29 +152,13 @@ export default function OpportunityHub() {
     'Launch announcement',
   ]
   
-  const [validationChecked, setValidationChecked] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(`validation-checklist-${opportunityId}`)
-      return saved ? JSON.parse(saved) : {}
-    } catch { return {} }
-  })
+  const [validationChecked, setValidationChecked] = useState<Record<string, boolean>>({})
+  const [launchChecked, setLaunchChecked] = useState<Record<string, boolean>>({})
+  const [canvasData, setCanvasData] = useState<Record<string, string>>({})
+  const [editingCanvas, setEditingCanvas] = useState<string | null>(null)
+  const [canvasEditValue, setCanvasEditValue] = useState('')
   
-  const [launchChecked, setLaunchChecked] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(`launch-checklist-${opportunityId}`)
-      return saved ? JSON.parse(saved) : {}
-    } catch { return {} }
-  })
-  
-  useEffect(() => {
-    localStorage.setItem(`validation-checklist-${opportunityId}`, JSON.stringify(validationChecked))
-  }, [validationChecked, opportunityId])
-  
-  useEffect(() => {
-    localStorage.setItem(`launch-checklist-${opportunityId}`, JSON.stringify(launchChecked))
-  }, [launchChecked, opportunityId])
-  
-  const canvasItems = [
+  const canvasItemsBase = [
     { key: 'valueProp', title: 'Value Prop', placeholder: 'Core offering' },
     { key: 'customers', title: 'Customers', placeholder: 'Define segments' },
     { key: 'channels', title: 'Channels', placeholder: 'Distribution' },
@@ -186,19 +170,46 @@ export default function OpportunityHub() {
     { key: 'advantage', title: 'Advantage', placeholder: 'Unique edge' },
   ]
   
-  const [canvasData, setCanvasData] = useState<Record<string, string>>(() => {
-    try {
-      const saved = localStorage.getItem(`canvas-${opportunityId}`)
-      return saved ? JSON.parse(saved) : {}
-    } catch { return {} }
-  })
-  
-  const [editingCanvas, setEditingCanvas] = useState<string | null>(null)
-  const [canvasEditValue, setCanvasEditValue] = useState('')
+  const [stateInitialized, setStateInitialized] = useState(false)
   
   useEffect(() => {
-    localStorage.setItem(`canvas-${opportunityId}`, JSON.stringify(canvasData))
-  }, [canvasData, opportunityId])
+    setStateInitialized(false)
+    try {
+      const savedValidation = localStorage.getItem(`validation-checklist-${opportunityId}`)
+      setValidationChecked(savedValidation ? JSON.parse(savedValidation) : {})
+      
+      const savedLaunch = localStorage.getItem(`launch-checklist-${opportunityId}`)
+      setLaunchChecked(savedLaunch ? JSON.parse(savedLaunch) : {})
+      
+      const savedCanvas = localStorage.getItem(`canvas-${opportunityId}`)
+      setCanvasData(savedCanvas ? JSON.parse(savedCanvas) : {})
+      
+      setEditingCanvas(null)
+    } catch {
+      setValidationChecked({})
+      setLaunchChecked({})
+      setCanvasData({})
+    }
+    setTimeout(() => setStateInitialized(true), 0)
+  }, [opportunityId])
+  
+  useEffect(() => {
+    if (stateInitialized) {
+      localStorage.setItem(`validation-checklist-${opportunityId}`, JSON.stringify(validationChecked))
+    }
+  }, [validationChecked, opportunityId, stateInitialized])
+  
+  useEffect(() => {
+    if (stateInitialized) {
+      localStorage.setItem(`launch-checklist-${opportunityId}`, JSON.stringify(launchChecked))
+    }
+  }, [launchChecked, opportunityId, stateInitialized])
+  
+  useEffect(() => {
+    if (stateInitialized) {
+      localStorage.setItem(`canvas-${opportunityId}`, JSON.stringify(canvasData))
+    }
+  }, [canvasData, opportunityId, stateInitialized])
 
   const opportunityQuery = useQuery({
     queryKey: ['opportunity', opportunityId, isAuthenticated, token?.slice(-8)],
@@ -1334,48 +1345,65 @@ export default function OpportunityHub() {
                         <span className="text-xs text-stone-400 font-normal ml-auto">Click to edit</span>
                       </h3>
                       <div className="grid grid-cols-3 gap-2">
-                        {canvasItems.map((item) => (
-                          <div key={item.key}>
-                            {editingCanvas === item.key ? (
-                              <div className="p-3 bg-purple-100 rounded-lg border-2 border-purple-400">
-                                <p className="text-xs font-medium text-purple-700 mb-1">{item.title}</p>
-                                <input
-                                  type="text"
-                                  autoFocus
-                                  value={canvasEditValue}
-                                  onChange={(e) => setCanvasEditValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
+                        {canvasItemsBase.map((item) => {
+                          const aiDefaults: Record<string, string | undefined> = {
+                            customers: opp.ai_target_audience,
+                            advantage: opp.ai_competition_level ? `Low competition: ${opp.ai_competition_level}` : undefined,
+                          }
+                          const aiValue = aiDefaults[item.key]
+                          const displayValue = canvasData[item.key] || aiValue || item.placeholder
+                          const hasValue = !!(canvasData[item.key] || aiValue)
+                          
+                          return (
+                            <div key={item.key}>
+                              {editingCanvas === item.key ? (
+                                <div className="p-3 bg-purple-100 rounded-lg border-2 border-purple-400">
+                                  <p className="text-xs font-medium text-purple-700 mb-1">{item.title}</p>
+                                  <input
+                                    type="text"
+                                    autoFocus
+                                    value={canvasEditValue}
+                                    onChange={(e) => setCanvasEditValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        setCanvasData(prev => ({ ...prev, [item.key]: canvasEditValue }))
+                                        setEditingCanvas(null)
+                                      } else if (e.key === 'Escape') {
+                                        setEditingCanvas(null)
+                                      }
+                                    }}
+                                    onBlur={() => {
                                       setCanvasData(prev => ({ ...prev, [item.key]: canvasEditValue }))
                                       setEditingCanvas(null)
-                                    } else if (e.key === 'Escape') {
-                                      setEditingCanvas(null)
-                                    }
+                                    }}
+                                    className="w-full text-xs p-1 rounded border border-purple-300 focus:outline-none focus:border-purple-500"
+                                    placeholder={item.placeholder}
+                                  />
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setEditingCanvas(item.key)
+                                    setCanvasEditValue(canvasData[item.key] || aiValue || '')
                                   }}
-                                  onBlur={() => {
-                                    setCanvasData(prev => ({ ...prev, [item.key]: canvasEditValue }))
-                                    setEditingCanvas(null)
-                                  }}
-                                  className="w-full text-xs p-1 rounded border border-purple-300 focus:outline-none focus:border-purple-500"
-                                  placeholder={item.placeholder}
-                                />
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setEditingCanvas(item.key)
-                                  setCanvasEditValue(canvasData[item.key] || '')
-                                }}
-                                className="w-full text-left p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 hover:border-purple-200 cursor-pointer transition-colors"
-                              >
-                                <p className="text-xs font-medium text-purple-700">{item.title}</p>
-                                <p className={`text-xs mt-1 truncate ${canvasData[item.key] ? 'text-stone-700' : 'text-stone-400 italic'}`}>
-                                  {canvasData[item.key] || item.placeholder}
-                                </p>
-                              </button>
-                            )}
-                          </div>
-                        ))}
+                                  className={`w-full text-left p-3 rounded-lg border cursor-pointer transition-colors ${
+                                    aiValue && !canvasData[item.key] 
+                                      ? 'bg-blue-50 border-blue-100 hover:bg-blue-100 hover:border-blue-200' 
+                                      : 'bg-purple-50 border-purple-100 hover:bg-purple-100 hover:border-purple-200'
+                                  }`}
+                                >
+                                  <p className="text-xs font-medium text-purple-700 flex items-center gap-1">
+                                    {item.title}
+                                    {aiValue && !canvasData[item.key] && <Sparkles className="w-3 h-3 text-blue-500" />}
+                                  </p>
+                                  <p className={`text-xs mt-1 truncate ${hasValue ? 'text-stone-700' : 'text-stone-400 italic'}`}>
+                                    {displayValue}
+                                  </p>
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
 
