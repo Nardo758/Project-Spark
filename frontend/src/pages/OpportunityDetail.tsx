@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { 
   Bookmark, CheckCircle2, Lock, TrendingUp, Users, 
-  FileText, BarChart3, Sparkles, Target, 
-  ChevronRight, Send, ArrowRight, Calendar, MessageSquare,
-  Zap, Download, Share2, Star, Video, Clock, Award, Rocket, Briefcase
+  FileText, BarChart3, Target, 
+  ChevronRight, ArrowRight,
+  Zap, Download, Share2, Star, Rocket, Briefcase
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
@@ -100,7 +100,6 @@ export default function OpportunityDetail() {
   
   const [activeTab, setActiveTab] = useState('validation')
   const [selectedRegion, setSelectedRegion] = useState('US National')
-  const [aiMessage, setAiMessage] = useState('')
 
   const opportunityQuery = useQuery({
     queryKey: ['opportunity', opportunityId, isAuthenticated, token?.slice(-8)],
@@ -160,23 +159,6 @@ export default function OpportunityDetail() {
     },
   })
 
-  const createWorkspaceMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/v1/workspaces/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ opportunity_id: opportunityId }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.detail || 'Failed to create workspace')
-      return data
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['workspace-check', opportunityId] })
-      queryClient.invalidateQueries({ queryKey: ['workspaces'] })
-      navigate(`/workspace/${data.id}`)
-    },
-  })
 
   const myValidation = useMemo(() => {
     const uid = user?.id
@@ -341,7 +323,6 @@ export default function OpportunityDetail() {
 
   const userTier = access?.user_tier?.toLowerCase() || 'free'
   const hasPro = userTier === 'pro' || userTier === 'business' || userTier === 'enterprise'
-  const hasBusiness = userTier === 'business' || userTier === 'enterprise'
 
   const score = opp.feasibility_score || opp.ai_pain_intensity || 75
   const growthRate = opp.growth_rate || 12
@@ -592,7 +573,30 @@ export default function OpportunityDetail() {
               <h2 className="text-xl font-bold text-stone-900">Research Dashboard</h2>
               <p className="text-stone-500 text-sm">Ideate - Market Analysis</p>
             </div>
-            <span className="ml-auto bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">PRO</span>
+            <div className="ml-auto flex items-center gap-2">
+              <button className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50">
+                <Download className="w-4 h-4" />
+                Export Report
+              </button>
+              <button className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50">
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+              <Link 
+                to="/network" 
+                className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50"
+              >
+                <Users className="w-4 h-4" />
+                Find Expert
+              </Link>
+              <Link 
+                to={`/opportunity/${id}/hub`}
+                className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700"
+              >
+                <Rocket className="w-4 h-4" />
+                Start Working on This
+              </Link>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -750,322 +754,44 @@ export default function OpportunityDetail() {
           </div>
         </div>
 
-        {/* TIER 3: Deep Dive + AI (BUSINESS) - Prototype + Test */}
-        <div className={`bg-white rounded-xl border-2 ${hasBusiness ? 'border-violet-200' : 'border-stone-200'} overflow-hidden mb-6 relative`}>
-          {!hasBusiness && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
-              <div className="text-center p-8">
-                <Sparkles className="w-12 h-12 text-stone-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-stone-900 mb-2">Unlock Deep Dive + AI</h3>
-                <p className="text-stone-600 mb-4">Get execution playbooks and AI guidance</p>
-                <Link 
-                  to="/pricing" 
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:opacity-90"
-                >
-                  Upgrade to Business ($499/mo)
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-violet-50 p-6 border-b-2 border-violet-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
+        {/* Next Step: Upgrade to Workstation CTA */}
+        <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-8 mb-6 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                <Rocket className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-stone-900">Deep Dive + AI Console</h2>
-                <p className="text-violet-700 text-sm">Prototype + Test - Execution Ready</p>
-              </div>
-              <span className="ml-auto bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-bold">BUSINESS</span>
-            </div>
-          </div>
-
-          <div className="flex" style={{ minHeight: '400px' }}>
-            {/* Sidebar */}
-            <div className="w-64 bg-white border-r-2 border-stone-200 p-4">
-              <div className="mb-4">
-                <div className="text-xs text-stone-600 mb-2">Progress: 33%</div>
-                <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-violet-600 to-purple-600 w-1/3"></div>
-                </div>
-                <div className="text-xs text-stone-500 mt-1">3 of 9 sections</div>
-              </div>
-
-              <div className="space-y-2">
-                {[
-                  { name: 'Executive Summary', completed: true },
-                  { name: 'Market Validation', completed: true },
-                  { name: 'Problem Analysis', completed: true },
-                  { name: 'Financial Modeling', completed: false },
-                  { name: 'Execution Playbook', completed: false },
-                  { name: 'Risk Assessment', completed: false },
-                ].map((section, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      section.completed 
-                        ? 'border-violet-300 bg-violet-50' 
-                        : 'border-stone-200 hover:border-stone-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {section.completed ? (
-                        <CheckCircle2 className="w-4 h-4 text-violet-600" />
-                      ) : (
-                        <div className="w-4 h-4 rounded-full border-2 border-stone-300" />
-                      )}
-                      <span className={`text-sm font-medium ${section.completed ? 'text-violet-700' : 'text-stone-700'}`}>
-                        {section.name}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                <h2 className="text-2xl font-bold mb-1">Ready to Execute?</h2>
+                <p className="text-violet-100">Move to the Workstation for AI-powered planning, task management, and expert collaboration.</p>
               </div>
             </div>
-
-            {/* Main Content */}
-            <div className="flex-1 p-6">
-              <div className="mb-6">
-                <h3 className="text-lg font-bold text-stone-900 mb-4">Execution Playbook</h3>
-                <div className="space-y-3">
-                  {(opp.ai_next_steps || [
-                    'Validate demand with landing page test',
-                    'Build MVP with core features only',
-                    'Launch in single geographic market',
-                    'Gather user feedback and iterate'
-                  ]).map((step, idx) => (
-                    <div key={idx} className="flex items-start gap-3 bg-stone-50 rounded-lg p-4">
-                      <div className="w-6 h-6 bg-violet-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-white text-xs font-bold">{idx + 1}</span>
-                      </div>
-                      <p className="text-stone-700">{typeof step === 'string' ? step : JSON.stringify(step)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* AI Chat */}
-              <div className="border-2 border-violet-200 rounded-xl overflow-hidden mb-6">
-                <div className="bg-violet-50 px-4 py-3 border-b border-violet-200">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-violet-600" />
-                    <span className="font-bold text-stone-900">AI Co-pilot</span>
-                  </div>
-                </div>
-                <div className="p-4 bg-white min-h-[100px]">
-                  <div className="bg-violet-50 rounded-lg p-3 mb-3">
-                    <p className="text-sm text-stone-700">
-                      Based on the analysis, this opportunity has strong market potential. 
-                      The low competition and growing demand signals indicate a favorable entry point. 
-                      Would you like me to help you create a detailed execution plan?
-                    </p>
-                  </div>
-                </div>
-                <div className="p-4 border-t border-stone-200">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={aiMessage}
-                      onChange={(e) => setAiMessage(e.target.value)}
-                      placeholder="Ask the AI co-pilot..."
-                      className="flex-1 px-4 py-2 border-2 border-stone-200 rounded-lg text-sm focus:outline-none focus:border-violet-400"
-                    />
-                    <button className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Expert Collaboration - Tier 3 Full Access */}
-              <div className="border-2 border-emerald-200 rounded-xl overflow-hidden">
-                <div className="bg-emerald-50 px-4 py-3 border-b border-emerald-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-emerald-600" />
-                      <span className="font-bold text-stone-900">Expert Collaboration</span>
-                    </div>
-                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">Active</span>
-                  </div>
-                </div>
-                
-                <div className="p-4 bg-white">
-                  {/* Assigned Expert - Use top recommended expert */}
-                  {(() => {
-                    const topExpert = expertsQuery.data?.experts?.[0]
-                    if (!topExpert) {
-                      return (
-                        <div className="text-center py-8 text-stone-500">
-                          <Users className="w-12 h-12 mx-auto mb-3 text-stone-300" />
-                          <p>No experts matched yet. Check back soon!</p>
-                        </div>
-                      )
-                    }
-                    return (
-                      <>
-                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-stone-100">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
-                              {topExpert.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-stone-900">{topExpert.name}</div>
-                              <div className="text-sm text-stone-500">{topExpert.headline}</div>
-                              <div className="flex items-center gap-2 mt-1">
-                                {topExpert.avg_rating && (
-                                  <span className="flex items-center gap-1 text-xs text-stone-600">
-                                    <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                    {topExpert.avg_rating.toFixed(1)}
-                                  </span>
-                                )}
-                                <span className="text-xs text-emerald-600 flex items-center gap-1">
-                                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                                  {topExpert.is_available ? 'Online' : 'Busy'}
-                                </span>
-                                <span className="text-xs text-blue-600 font-medium">{topExpert.match_score}% match</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button className="p-2 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors" title="Message">
-                              <MessageSquare className="w-5 h-5 text-stone-600" />
-                            </button>
-                            <button className="p-2 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors" title="Schedule Call">
-                              <Video className="w-5 h-5 text-stone-600" />
-                            </button>
-                            <button className="p-2 bg-stone-100 rounded-lg hover:bg-stone-200 transition-colors" title="Calendar">
-                              <Calendar className="w-5 h-5 text-stone-600" />
-                            </button>
-                          </div>
-                        </div>
-
-                  {/* Collaboration Actions */}
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <button className="flex items-center gap-2 p-3 bg-stone-50 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors">
-                      <MessageSquare className="w-5 h-5 text-violet-600" />
-                      <div className="text-left">
-                        <div className="font-medium text-stone-900 text-sm">Messages</div>
-                        <div className="text-xs text-stone-500">3 unread</div>
-                      </div>
-                    </button>
-                    <button className="flex items-center gap-2 p-3 bg-stone-50 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors">
-                      <Video className="w-5 h-5 text-blue-600" />
-                      <div className="text-left">
-                        <div className="font-medium text-stone-900 text-sm">Schedule Call</div>
-                        <div className="text-xs text-stone-500">Next: Tomorrow 2pm</div>
-                      </div>
-                    </button>
-                    <button className="flex items-center gap-2 p-3 bg-stone-50 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors">
-                      <FileText className="w-5 h-5 text-emerald-600" />
-                      <div className="text-left">
-                        <div className="font-medium text-stone-900 text-sm">Shared Workspace</div>
-                        <div className="text-xs text-stone-500">5 documents</div>
-                      </div>
-                    </button>
-                    <button className="flex items-center gap-2 p-3 bg-stone-50 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors">
-                      <Award className="w-5 h-5 text-amber-600" />
-                      <div className="text-left">
-                        <div className="font-medium text-stone-900 text-sm">Milestones</div>
-                        <div className="text-xs text-stone-500">2 of 5 complete</div>
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Milestone Progress */}
-                  <div className="bg-stone-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium text-stone-900 text-sm">Engagement Progress</span>
-                      <span className="text-xs text-emerald-600 font-medium">40% Complete</span>
-                    </div>
-                    <div className="h-2 bg-stone-200 rounded-full overflow-hidden mb-3">
-                      <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 w-2/5"></div>
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { name: 'Initial Consultation', status: 'complete', date: 'Dec 20' },
-                        { name: 'Market Research Review', status: 'complete', date: 'Dec 22' },
-                        { name: 'Strategy Development', status: 'active', date: 'In progress' },
-                        { name: 'Implementation Plan', status: 'pending', date: 'Dec 28' },
-                        { name: 'Final Deliverable', status: 'pending', date: 'Jan 3' },
-                      ].map((milestone, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            {milestone.status === 'complete' ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            ) : milestone.status === 'active' ? (
-                              <Clock className="w-4 h-4 text-blue-600" />
-                            ) : (
-                              <div className="w-4 h-4 rounded-full border-2 border-stone-300" />
-                            )}
-                            <span className={milestone.status === 'complete' ? 'text-stone-500' : 'text-stone-700'}>
-                              {milestone.name}
-                            </span>
-                          </div>
-                          <span className={`text-xs ${
-                            milestone.status === 'active' ? 'text-blue-600 font-medium' : 'text-stone-400'
-                          }`}>
-                            {milestone.date}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                      </>
-                    )
-                  })()}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="bg-stone-50 border-t-2 border-stone-200 p-4 flex items-center justify-between">
-            <div className="flex gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:border-stone-300">
-                <Download className="w-4 h-4" />
-                Export Report
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:border-stone-300">
-                <Share2 className="w-4 h-4" />
-                Share
-              </button>
-            </div>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => navigate('/network/experts')}
-                className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:border-stone-300"
-              >
-                <Users className="w-4 h-4" />
-                Find Expert
-              </button>
+            <div className="flex items-center gap-3">
               {isAuthenticated ? (
                 workspaceCheckQuery.data?.has_workspace ? (
-                  <button 
-                    onClick={() => navigate(`/workspace/${workspaceCheckQuery.data.workspace_id}`)}
-                    className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700"
+                  <Link 
+                    to={`/opportunity/${id}/hub`}
+                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                   >
-                    <Briefcase className="w-4 h-4" />
-                    Go to Workspace
-                  </button>
+                    <Briefcase className="w-5 h-5" />
+                    Go to Workstation
+                  </Link>
                 ) : (
-                  <button 
-                    onClick={() => createWorkspaceMutation.mutate()}
-                    disabled={createWorkspaceMutation.isPending}
-                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                  <Link 
+                    to={`/opportunity/${id}/hub`}
+                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                   >
-                    <Rocket className="w-4 h-4" />
-                    {createWorkspaceMutation.isPending ? 'Creating...' : 'Start Working on This'}
-                  </button>
+                    <Rocket className="w-5 h-5" />
+                    Start Working on This
+                  </Link>
                 )
               ) : (
                 <Link 
                   to="/login"
-                  className="flex items-center gap-2 px-6 py-2 bg-stone-900 text-white rounded-lg text-sm font-medium hover:bg-stone-800"
+                  className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                 >
-                  <Rocket className="w-4 h-4" />
-                  Sign in to Start Working
+                  <Rocket className="w-5 h-5" />
+                  Sign in to Start
                 </Link>
               )}
             </div>
