@@ -347,7 +347,6 @@ export default function Discover() {
             const accessInfo = accessInfoQuery.data?.[opp.id]
             const daysUntilUnlock = accessInfo?.days_until_unlock ?? 0
             const isAccessible = accessInfo?.is_accessible ?? true
-            const workingOnCount = accessInfo?.working_on_count ?? 0
 
             return (
               <div 
@@ -389,7 +388,7 @@ export default function Discover() {
                 </p>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-4 gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-3 mb-4">
                   <div className="bg-stone-50 rounded-lg p-3">
                     <div className="text-xs text-stone-500 mb-1">Signals</div>
                     <div className="text-lg font-bold text-stone-900">{validations.toLocaleString()}</div>
@@ -401,10 +400,6 @@ export default function Discover() {
                   <div className="bg-stone-50 rounded-lg p-3">
                     <div className="text-xs text-stone-500 mb-1">Growth</div>
                     <div className="text-lg font-bold text-emerald-600">+{growthRate}%</div>
-                  </div>
-                  <div className="bg-stone-50 rounded-lg p-3">
-                    <div className="text-xs text-stone-500 mb-1">Working On</div>
-                    <div className="text-lg font-bold text-stone-900">{workingOnCount}</div>
                   </div>
                 </div>
 
