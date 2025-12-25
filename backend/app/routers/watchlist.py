@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from typing import List
+from typing import List, Optional
 
 from app.db.database import get_db
 from app.models.watchlist import WatchlistItem
@@ -102,13 +102,19 @@ def remove_from_watchlist_by_opportunity(
 
 @router.get("/", response_model=List[WatchlistItemSchema])
 def get_watchlist(
+    collection_id: Optional[int] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Get all opportunities in user's watchlist"""
-    watchlist_items = db.query(WatchlistItem).filter(
+    """Get all opportunities in user's watchlist, optionally filtered by collection"""
+    query = db.query(WatchlistItem).filter(
         WatchlistItem.user_id == current_user.id
-    ).order_by(WatchlistItem.created_at.desc()).all()
+    )
+    
+    if collection_id is not None:
+        query = query.filter(WatchlistItem.collection_id == collection_id)
+    
+    watchlist_items = query.order_by(WatchlistItem.created_at.desc()).all()
 
     return watchlist_items
 
