@@ -1056,3 +1056,175 @@ def grant_subscription(
     db.commit()
 
     return {"message": f"Granted {tier} subscription to user {user.name}"}
+
+
+@router.get("/map-usage/stats")
+def get_map_usage_stats(
+    days: int = Query(30, ge=1, le=365),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Get map usage statistics for admin dashboard"""
+    from datetime import datetime, timedelta
+    from app.models.user_map_session import UserMapSession
+    from app.models.census_demographics import (
+        MarketGrowthTrajectory,
+        CensusMigrationFlow,
+        CensusServiceArea,
+    )
+    
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    total_sessions = db.query(UserMapSession).count()
+    recent_sessions = db.query(UserMapSession).filter(
+        UserMapSession.created_at >= cutoff_date
+    ).count()
+    
+    unique_users = db.query(func.count(func.distinct(UserMapSession.user_id))).filter(
+        UserMapSession.created_at >= cutoff_date
+    ).scalar() or 0
+    
+    growth_trajectories = db.query(MarketGrowthTrajectory).filter(
+        MarketGrowthTrajectory.is_active == True
+    ).count()
+    
+    migration_flows = db.query(CensusMigrationFlow).count()
+    
+    service_areas = db.query(CensusServiceArea).count()
+    
+    layer_usage = {}
+    layer_sessions = db.query(UserMapSession).filter(
+        UserMapSession.layer_state.isnot(None),
+        UserMapSession.created_at >= cutoff_date
+    ).all()
+    
+    for session in layer_sessions:
+        if session.layer_state:
+            for layer, enabled in session.layer_state.items():
+                if enabled:
+                    layer_usage[layer] = layer_usage.get(layer, 0) + 1
+    
+    daily_sessions = db.query(
+        func.date_trunc('day', UserMapSession.created_at).label('date'),
+        func.count(UserMapSession.id).label('count')
+    ).filter(
+        UserMapSession.created_at >= cutoff_date
+    ).group_by(
+        func.date_trunc('day', UserMapSession.created_at)
+    ).order_by(
+        func.date_trunc('day', UserMapSession.created_at)
+    ).all()
+    
+    return {
+        "total_sessions": total_sessions,
+        "recent_sessions": recent_sessions,
+        "unique_users": unique_users,
+        "growth_trajectories": growth_trajectories,
+        "migration_flows": migration_flows,
+        "service_areas": service_areas,
+        "layer_usage": layer_usage,
+        "daily_sessions": [
+            {"date": str(d.date), "count": d.count}
+            for d in daily_sessions
+        ],
+        "period_days": days
+    }
+
+
+@router.get("/map-usage/popular-opportunities")
+def get_popular_map_opportunities(
+    limit: int = Query(10, ge=1, le=50),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Get opportunities with most map views/sessions"""
+    from app.models.census_demographics import CensusServiceArea
+    
+    popular = db.query(
+        CensusServiceArea.opportunity_id,
+        Opportunity.title,
+        Opportunity.category,
+        CensusServiceArea.signal_count,
+        CensusServiceArea.total_population,
+        CensusServiceArea.addressable_market_value,
+    ).join(
+        Opportunity, CensusServiceArea.opportunity_id == Opportunity.id
+    ).order_by(
+        desc(CensusServiceArea.signal_count)
+    ).limit(limit).all()
+    
+    return {
+        "opportunities": [
+            {
+                "opportunity_id": p.opportunity_id,
+                "title": p.title,
+                "category": p.category,
+                "signal_count": p.signal_count,
+                "total_population": p.total_population,
+                "addressable_market": p.addressable_market_value,
+            }
+            for p in popular
+        ]
+    }
+
+
+@router.get("/map-usage/growth-trajectories")
+def get_growth_trajectories_admin(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Get all growth trajectory data for admin review"""
+    from app.models.census_demographics import MarketGrowthTrajectory
+    
+    trajectories = db.query(MarketGrowthTrajectory).filter(
+        MarketGrowthTrajectory.is_active == True
+    ).order_by(desc(MarketGrowthTrajectory.growth_score)).all()
+    
+    return {
+        "trajectories": [
+            {
+                "id": t.id,
+                "city": t.city,
+                "state_fips": t.state_fips,
+                "geography_name": t.geography_name,
+                "growth_category": t.growth_category.value if t.growth_category else None,
+                "growth_score": t.growth_score,
+                "population_growth_rate": t.population_growth_rate,
+                "net_migration_rate": t.net_migration_rate,
+                "latitude": float(t.latitude) if t.latitude else None,
+                "longitude": float(t.longitude) if t.longitude else None,
+            }
+            for t in trajectories
+        ],
+        "total": len(trajectories)
+    }
+
+
+@router.get("/map-usage/migration-flows")
+def get_migration_flows_admin(
+    limit: int = Query(50, ge=1, le=200),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Get top migration flows for admin review"""
+    from app.models.census_demographics import CensusMigrationFlow
+    
+    flows = db.query(CensusMigrationFlow).order_by(
+        desc(CensusMigrationFlow.flow_count)
+    ).limit(limit).all()
+    
+    return {
+        "flows": [
+            {
+                "id": f.id,
+                "origin_name": f.origin_name,
+                "destination_name": f.destination_name,
+                "flow_count": f.flow_count,
+                "year": f.year,
+                "origin_state_fips": f.origin_state_fips,
+                "destination_state_fips": f.destination_state_fips,
+            }
+            for f in flows
+        ],
+        "total": len(flows)
+    }
