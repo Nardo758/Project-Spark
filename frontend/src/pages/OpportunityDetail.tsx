@@ -437,7 +437,7 @@ export default function OpportunityDetail() {
                   className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
                 >
                   <Rocket className="w-4 h-4" />
-                  Start in WorkHub
+                  Deep Dive WorkHub
                 </button>
               ) : isAuthenticated && access?.can_pay_to_unlock ? (
                 <button
@@ -628,7 +628,7 @@ export default function OpportunityDetail() {
                 className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700"
               >
                 <Rocket className="w-4 h-4" />
-                Start in WorkHub
+                Deep Dive WorkHub
               </Link>
             </div>
           </div>
@@ -808,7 +808,7 @@ export default function OpportunityDetail() {
                     className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                   >
                     <Briefcase className="w-5 h-5" />
-                    {workspaceCheckQuery.data?.has_workspace ? 'Continue in WorkHub' : 'Start in WorkHub'}
+                    Deep Dive WorkHub
                   </Link>
                 ) : access?.can_pay_to_unlock ? (
                   <button
@@ -825,7 +825,7 @@ export default function OpportunityDetail() {
                     className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                   >
                     <Briefcase className="w-5 h-5" />
-                    Start in WorkHub
+                    Deep Dive WorkHub
                   </Link>
                 ) : (
                   <Link 
