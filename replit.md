@@ -54,7 +54,7 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 *   **Layer 3 - Execution Package:** Business (5/mo limit) or Enterprise (unlimited), full Business Plan, Go-to-Market Strategy (3 phases), Financial Projections (3-year), 90-Day Roadmap, Risk Mitigation Plan
 *   **Report Types:** Added `LAYER_1_OVERVIEW`, `LAYER_2_DEEP_DIVE`, `LAYER_3_EXECUTION` to ReportType enum
 *   **API Endpoints:** POST `/api/v1/reports/opportunity/{id}/layer1`, `/layer2`, `/layer3` with proper entitlement checks
-*   **Monthly Limits:** Business tier has 5 Layer 3 reports/month limit, Enterprise unlimited
+*   **Rolling Limits:** Business tier has 5 Layer 3 reports per rolling 30-day period, Enterprise unlimited
 
 ### Census & Demographics Integration (December 25, 2024)
 *   **Database Schema:** Added `demographics` and `search_trends` JSONB columns to opportunities table with `demographics_fetched_at` timestamp
