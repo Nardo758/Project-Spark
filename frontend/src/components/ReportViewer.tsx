@@ -20,6 +20,7 @@ type ReportViewerProps = {
   isOpen: boolean
   onClose: () => void
   initialLayer?: ReportLayer
+  hasUnlockedAccess?: boolean
 }
 
 const layerConfig = {
@@ -52,7 +53,8 @@ export default function ReportViewer({
   userTier, 
   isOpen, 
   onClose,
-  initialLayer = 'layer1' 
+  initialLayer = 'layer1',
+  hasUnlockedAccess = false
 }: ReportViewerProps) {
   const { token } = useAuthStore()
   const [selectedLayer, setSelectedLayer] = useState<ReportLayer>(initialLayer)
@@ -66,7 +68,7 @@ export default function ReportViewer({
 
   const canAccessLayer = (layer: ReportLayer): boolean => {
     const userLevel = tierLevel(userTier)
-    if (layer === 'layer1') return userLevel >= 1
+    if (layer === 'layer1') return userLevel >= 1 || hasUnlockedAccess
     if (layer === 'layer2') return userLevel >= 2
     if (layer === 'layer3') return userLevel >= 2
     return false
@@ -85,7 +87,14 @@ export default function ReportViewer({
       if (!res.ok) {
         throw new Error(data.detail?.message || data.detail || 'Failed to generate report')
       }
-      return data as GeneratedReport
+      const report = data.report
+      return {
+        id: report.id,
+        opportunity_id: opportunityId,
+        report_type: layer,
+        content: report.content,
+        created_at: report.created_at,
+      } as GeneratedReport
     },
     onSuccess: (data) => {
       setGeneratedReport(data)

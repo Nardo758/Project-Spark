@@ -1184,6 +1184,7 @@ export default function OpportunityDetail() {
         userTier={userTierFromQuery}
         isOpen={reportViewerOpen}
         onClose={() => setReportViewerOpen(false)}
+        hasUnlockedAccess={opp?.is_unlocked || access?.is_unlocked || false}
       />
     </div>
   )
