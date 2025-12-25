@@ -12,6 +12,7 @@ import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
 import ReportViewer from '../components/ReportViewer'
+import OpportunityMap from '../components/OpportunityMap'
 
 type AccessInfo = {
   age_days: number
@@ -778,15 +779,14 @@ export default function OpportunityDetail() {
               <div className="space-y-4">
                 <div className="bg-white rounded-lg border-2 border-stone-200 p-6">
                   <h3 className="text-lg font-bold text-stone-900 mb-4">Geographic Distribution</h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <div className="aspect-[4/3] bg-gradient-to-br from-blue-50 to-stone-100 rounded-lg flex items-center justify-center border-2 border-stone-200">
-                        <div className="text-center">
-                          <MapPin className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                          <p className="text-sm font-medium text-stone-900">{opp.city || 'Multiple Locations'}</p>
-                          <p className="text-xs text-stone-500">{opp.region || opp.country || 'United States'}</p>
-                        </div>
-                      </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                      <OpportunityMap 
+                        opportunityId={opp.id} 
+                        height="350px"
+                        showControls={true}
+                        initialZoom={8}
+                      />
                     </div>
                     <div className="space-y-3">
                       <div className="bg-stone-50 rounded-lg p-4">
@@ -796,6 +796,10 @@ export default function OpportunityDetail() {
                       <div className="bg-stone-50 rounded-lg p-4">
                         <div className="text-sm text-stone-500">Primary Region</div>
                         <div className="text-xl font-bold text-stone-900">{opp.region || opp.country || 'United States'}</div>
+                      </div>
+                      <div className="bg-stone-50 rounded-lg p-4">
+                        <div className="text-sm text-stone-500">Primary City</div>
+                        <div className="text-xl font-bold text-stone-900">{opp.city || 'Multiple Locations'}</div>
                       </div>
                       <div className="bg-stone-50 rounded-lg p-4">
                         <div className="text-sm text-stone-500">Market Coverage</div>

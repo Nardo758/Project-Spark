@@ -427,14 +427,15 @@ async def get_opportunity_map_data(
             },
             "properties": {
                 "layer": "growth_trajectory",
+                "city": trajectory.city,
                 "geography_name": trajectory.geography_name,
-                "growth_category": trajectory.growth_category.value if trajectory.growth_category else "stable",
+                "growth_category": trajectory.growth_category.value.lower() if trajectory.growth_category else "stable",
                 "growth_score": trajectory.growth_score,
                 "population_growth_rate": trajectory.population_growth_rate,
                 "net_migration_rate": trajectory.net_migration_rate,
                 "style": {
                     "markerColor": category_colors.get(
-                        trajectory.growth_category.value if trajectory.growth_category else "stable",
+                        trajectory.growth_category.value.lower() if trajectory.growth_category else "stable",
                         "#F59E0B"
                     ),
                     "markerSize": "medium",

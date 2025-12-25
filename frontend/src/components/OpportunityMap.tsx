@@ -303,7 +303,7 @@ export default function OpportunityMap({
             'circle-radius': 12,
             'circle-color': [
               'match',
-              ['get', 'trajectory'],
+              ['get', 'growth_category'],
               'booming', GROWTH_COLORS.booming,
               'growing', GROWTH_COLORS.growing,
               'stable', GROWTH_COLORS.stable,
@@ -314,6 +314,44 @@ export default function OpportunityMap({
             'circle-stroke-color': '#ffffff',
             'circle-opacity': 0.9
           }
+        });
+
+        map.current.on('click', 'growth-trajectory-circles', (e) => {
+          if (!e.features?.[0]) return;
+          const props = e.features[0].properties;
+          const coords = (e.features[0].geometry as any).coordinates;
+          const category = props.growth_category || 'unknown';
+          const growthRate = props.population_growth_rate 
+            ? `${(props.population_growth_rate * 100).toFixed(1)}%` 
+            : 'N/A';
+          
+          new mapboxgl.Popup({ closeButton: true, closeOnClick: true })
+            .setLngLat(coords)
+            .setHTML(`
+              <div style="padding: 8px; font-family: system-ui;">
+                <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">
+                  ${props.city || props.geography_name || 'Unknown'}
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${GROWTH_COLORS[category] || GROWTH_COLORS.unknown};"></span>
+                  <span style="text-transform: capitalize; font-weight: 500;">${category}</span>
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                  Growth Rate: ${growthRate}
+                </div>
+                <div style="font-size: 12px; color: #666;">
+                  Score: ${props.growth_score?.toFixed(0) || 'N/A'}
+                </div>
+              </div>
+            `)
+            .addTo(map.current!);
+        });
+
+        map.current.on('mouseenter', 'growth-trajectory-circles', () => {
+          if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+        });
+        map.current.on('mouseleave', 'growth-trajectory-circles', () => {
+          if (map.current) map.current.getCanvas().style.cursor = '';
         });
       }
 
@@ -448,38 +486,6 @@ export default function OpportunityMap({
           if (map.current) map.current.getCanvas().style.cursor = '';
         });
       }
-
-      map.current.on('click', 'growth-trajectory-circles', (e) => {
-        if (!e.features || e.features.length === 0) return;
-        const feature = e.features[0];
-        const coordinates = (feature.geometry as any).coordinates.slice();
-        const props = feature.properties;
-
-        new mapboxgl.Popup()
-          .setLngLat(coordinates)
-          .setHTML(`
-            <div class="text-sm p-2">
-              <div class="font-semibold mb-1">${props?.county_name || 'Market Area'}</div>
-              <div class="flex items-center gap-1 mb-1">
-                <span>${GROWTH_ICONS[props?.trajectory] || '❓'}</span>
-                <span class="capitalize">${props?.trajectory || 'Unknown'}</span>
-              </div>
-              ${props?.growth_rate !== undefined ? 
-                `<div class="text-gray-400">Growth: ${(props.growth_rate * 100).toFixed(1)}%</div>` : ''}
-              ${props?.signal_velocity !== undefined ? 
-                `<div class="text-gray-400">Signal Velocity: ${props.signal_velocity.toFixed(2)}</div>` : ''}
-            </div>
-          `)
-          .addTo(map.current!);
-      });
-
-      map.current.on('mouseenter', 'growth-trajectory-circles', () => {
-        if (map.current) map.current.getCanvas().style.cursor = 'pointer';
-      });
-
-      map.current.on('mouseleave', 'growth-trajectory-circles', () => {
-        if (map.current) map.current.getCanvas().style.cursor = '';
-      });
     });
 
     return () => {
