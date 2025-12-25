@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
+import { AICopilotPanel } from './AICopilotPanel'
 import { useAuthStore } from '../stores/authStore'
 
 export default function Layout() {
@@ -8,7 +9,6 @@ export default function Layout() {
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped)
 
   useEffect(() => {
-    // Best-effort: hydrate auth from cookies/storage and fetch /users/me.
     bootstrap().catch(() => {})
   }, [bootstrap])
 
@@ -18,6 +18,7 @@ export default function Layout() {
       <main>
         {isBootstrapped ? <Outlet /> : <div className="max-w-7xl mx-auto px-4 py-10">Loading…</div>}
       </main>
+      <AICopilotPanel />
     </div>
   )
 }
