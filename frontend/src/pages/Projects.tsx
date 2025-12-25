@@ -128,7 +128,7 @@ export default function Projects() {
               return (
                 <Link
                   key={ws.id}
-                  to={`/workspace/${ws.id}`}
+                  to={`/opportunity/${ws.opportunity_id}/hub`}
                   className="bg-white rounded-xl border border-stone-200 p-5 hover:border-violet-300 hover:shadow-md transition-all group"
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -181,7 +181,7 @@ export default function Projects() {
                   </div>
 
                   <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <span className="text-sm text-violet-600 font-medium group-hover:text-violet-700">Open Workspace</span>
+                    <span className="text-sm text-violet-600 font-medium group-hover:text-violet-700">Open Work Hub</span>
                     <ChevronRight className="w-4 h-4 text-violet-600 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </Link>
