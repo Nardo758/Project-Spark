@@ -324,11 +324,13 @@ export default function OpportunityDetail() {
   const userTier = access?.user_tier?.toLowerCase() || 'free'
   const hasPro = userTier === 'pro' || userTier === 'business' || userTier === 'enterprise'
 
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+  
   const score = opp.feasibility_score || (70 + (opp.id % 20))
   const growthRate = opp.growth_rate || 12
   const marketSize = opp.ai_market_size_estimate || opp.market_size || '$50M'
-  const urgency = opp.ai_urgency_level || 'Medium'
-  const competition = opp.ai_competition_level || 'Medium'
+  const urgency = capitalize(opp.ai_urgency_level || 'Medium')
+  const competition = capitalize(opp.ai_competition_level || 'Medium')
 
   async function confirmPayPerUnlock(paymentIntentId: string) {
     if (!token) throw new Error('Not authenticated')
@@ -558,7 +560,7 @@ export default function OpportunityDetail() {
               </div>
               <div className="bg-white rounded-lg border-2 border-stone-200 p-4">
                 <div className="text-sm text-stone-500 mb-1">Target Audience</div>
-                <div className="text-lg font-bold text-stone-900 truncate">{opp.ai_target_audience || 'Consumers'}</div>
+                <div className="text-lg font-bold text-stone-900 truncate">{opp.ai_target_audience ? capitalize(opp.ai_target_audience) : 'Consumers'}</div>
               </div>
               <div className="bg-white rounded-lg border-2 border-stone-200 p-4">
                 <div className="text-sm text-stone-500 mb-1">Feasibility</div>
