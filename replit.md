@@ -95,3 +95,25 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
     - **Database Models:** LocationCatalog, KeywordGroup, GoogleScrapeJob, GoogleMapsBusiness, GoogleSearchCache
 *   **OpenAI/Anthropic (LLMs):** Integrated for various AI capabilities, including specific models like Claude-Haiku and Claude-Sonnet.
 *   **LinkedIn OAuth:** Integrated for professional network authentication, enabling users to join as experts, investors, partners, or lenders using their LinkedIn credentials.
+
+## Enhancement Roadmap
+
+A comprehensive roadmap has been created at `docs/ENHANCEMENT_ROADMAP.md` with 6 phases covering:
+
+1. **Phase 1: Complete User Flow** (Weeks 1-2) - Collections, Tags, Notes system
+2. **Phase 2: Opportunity Lifecycle** (Weeks 3-4) - 8 lifecycle states with transitions
+3. **Phase 3: Persistent AI Copilot** (Weeks 5-6) - Cross-page AI assistant
+4. **Phase 4: Expert Collaboration** (Weeks 7-9) - Full expert matching and engagement
+5. **Phase 5: Launch Guidance** (Weeks 10-12) - Business formation wizard
+6. **Phase 6: Enhanced Tools** (Weeks 13-14) - 200+ tool database
+
+Total estimated timeline: 14 weeks (3.5 months)
+
+## Recent Changes (December 25, 2025)
+
+- Added AI Co-Founder chat feature with stage-specific guidance
+- Implemented tool recommendations engine (50+ tools)
+- Added business formation guide (LLC, S-Corp, Sole Proprietorship)
+- Created stage-specific guidance panels in workspace sidebar
+- Added "Open Hub" button on opportunity detail page for paid users
+- Created comprehensive enhancement roadmap documentation
