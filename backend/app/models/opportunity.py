@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, Float, ForeignKey, Boolean
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
@@ -70,6 +71,11 @@ class Opportunity(Base):
     
     # Raw source data (for user verification)
     raw_source_data = Column(Text, nullable=True)  # JSON of original scraped content
+
+    # Census Demographics & Market Intelligence
+    demographics = Column(JSONB, nullable=True)  # Census ACS data: population, income, age, education, etc.
+    search_trends = Column(JSONB, nullable=True)  # Google Trends data at DMA level
+    demographics_fetched_at = Column(DateTime(timezone=True), nullable=True)  # When demographic data was last fetched
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

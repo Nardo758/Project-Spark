@@ -468,3 +468,124 @@ def get_opportunity_experts(
         "experts": experts,
         "total": len(experts)
     }
+
+
+@router.get("/{opportunity_id}/demographics")
+async def get_opportunity_demographics(
+    opportunity_id: int,
+    refresh: bool = Query(False, description="Force refresh demographics from Census API"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get demographic and market intelligence data for an opportunity.
+    
+    Includes:
+    - Census ACS 5-Year data (population, income, age, education, etc.)
+    - Google Trends search demand data (DMA level)
+    - Enhanced opportunity scoring based on demographics
+    
+    Access: Business tier and above
+    """
+    from app.models.subscription import SubscriptionTier
+    from app.services.census_service import census_service
+    from app.services.google_trends_service import google_trends_service
+    from datetime import datetime, timedelta
+    
+    # Check user tier (Business+ required)
+    user_tier = getattr(current_user, 'tier', 'free')
+    allowed_tiers = [SubscriptionTier.BUSINESS.value, SubscriptionTier.ENTERPRISE.value, 'business', 'enterprise']
+    
+    if user_tier not in allowed_tiers and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Demographics data requires Business tier or higher"
+        )
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Opportunity not found"
+        )
+    
+    # Check if we need to fetch fresh data
+    needs_refresh = refresh
+    if opportunity.demographics_fetched_at:
+        age = datetime.now(opportunity.demographics_fetched_at.tzinfo) - opportunity.demographics_fetched_at
+        needs_refresh = needs_refresh or age > timedelta(days=30)
+    else:
+        needs_refresh = True
+    
+    demographics = opportunity.demographics
+    search_trends = opportunity.search_trends
+    
+    # Fetch Census data if needed
+    if needs_refresh and census_service.is_configured:
+        # Try to get ZIP code from opportunity location
+        zip_code = None
+        
+        # For now, we'll use region/city to estimate - in production, add zip_code field
+        # or use reverse geocoding from lat/lng
+        if opportunity.city and opportunity.region:
+            # Fetch by state if we have region info
+            state_fips = get_state_fips(opportunity.region)
+            if state_fips:
+                demographics = await census_service.fetch_by_state(state_fips)
+        
+        if demographics:
+            opportunity.demographics = demographics
+            opportunity.demographics_fetched_at = datetime.now()
+            db.commit()
+    
+    # Fetch Google Trends if needed
+    if needs_refresh and google_trends_service.is_configured:
+        trends_data = google_trends_service.analyze_opportunity_demand(
+            opportunity_title=opportunity.title,
+            category=opportunity.category,
+            city=opportunity.city,
+            state=opportunity.region
+        )
+        if trends_data:
+            opportunity.search_trends = trends_data
+            db.commit()
+            search_trends = trends_data
+    
+    # Calculate enhanced signal score
+    enhanced_score = None
+    if demographics and opportunity.ai_opportunity_score:
+        enhanced_score = census_service.calculate_enhanced_signal_score(
+            opportunity.ai_opportunity_score,
+            demographics
+        )
+    
+    return {
+        "opportunity_id": opportunity_id,
+        "demographics": demographics,
+        "search_trends": search_trends,
+        "enhanced_score": enhanced_score,
+        "original_score": opportunity.ai_opportunity_score,
+        "fetched_at": opportunity.demographics_fetched_at.isoformat() if opportunity.demographics_fetched_at else None,
+        "census_configured": census_service.is_configured,
+        "trends_configured": google_trends_service.is_configured
+    }
+
+
+def get_state_fips(state_name: str) -> Optional[str]:
+    """Convert state name to FIPS code."""
+    state_fips_map = {
+        "Alabama": "01", "Alaska": "02", "Arizona": "04", "Arkansas": "05",
+        "California": "06", "Colorado": "08", "Connecticut": "09", "Delaware": "10",
+        "Florida": "12", "Georgia": "13", "Hawaii": "15", "Idaho": "16",
+        "Illinois": "17", "Indiana": "18", "Iowa": "19", "Kansas": "20",
+        "Kentucky": "21", "Louisiana": "22", "Maine": "23", "Maryland": "24",
+        "Massachusetts": "25", "Michigan": "26", "Minnesota": "27", "Mississippi": "28",
+        "Missouri": "29", "Montana": "30", "Nebraska": "31", "Nevada": "32",
+        "New Hampshire": "33", "New Jersey": "34", "New Mexico": "35", "New York": "36",
+        "North Carolina": "37", "North Dakota": "38", "Ohio": "39", "Oklahoma": "40",
+        "Oregon": "41", "Pennsylvania": "42", "Rhode Island": "44", "South Carolina": "45",
+        "South Dakota": "46", "Tennessee": "47", "Texas": "48", "Utah": "49",
+        "Vermont": "50", "Virginia": "51", "Washington": "53", "West Virginia": "54",
+        "Wisconsin": "55", "Wyoming": "56", "District of Columbia": "11"
+    }
+    return state_fips_map.get(state_name)
