@@ -936,6 +936,26 @@ export default function OpportunityHub() {
                         </button>
                       ))}
                     </div>
+                    {chatMessages.length > 0 && (
+                      <div className="mb-4 max-h-48 overflow-y-auto space-y-2 p-3 bg-white rounded-lg border border-violet-100">
+                        {chatMessages.slice(-4).map((msg) => (
+                          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[85%] rounded-lg p-2 text-xs ${
+                              msg.role === 'user' ? 'bg-violet-600 text-white' : 'bg-stone-100 text-stone-700'
+                            }`}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        ))}
+                        {sendMessageMutation.isPending && (
+                          <div className="flex justify-start">
+                            <div className="bg-stone-100 rounded-lg p-2 text-xs text-stone-500 flex items-center gap-2">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Thinking...
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
@@ -1153,6 +1173,26 @@ export default function OpportunityHub() {
                         </button>
                       ))}
                     </div>
+                    {chatMessages.length > 0 && (
+                      <div className="mb-4 max-h-48 overflow-y-auto space-y-2 p-3 bg-white rounded-lg border border-blue-100">
+                        {chatMessages.slice(-4).map((msg) => (
+                          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[85%] rounded-lg p-2 text-xs ${
+                              msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-stone-100 text-stone-700'
+                            }`}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        ))}
+                        {sendMessageMutation.isPending && (
+                          <div className="flex justify-start">
+                            <div className="bg-stone-100 rounded-lg p-2 text-xs text-stone-500 flex items-center gap-2">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Thinking...
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
@@ -1358,6 +1398,26 @@ export default function OpportunityHub() {
                         </button>
                       ))}
                     </div>
+                    {chatMessages.length > 0 && (
+                      <div className="mb-4 max-h-48 overflow-y-auto space-y-2 p-3 bg-white rounded-lg border border-purple-100">
+                        {chatMessages.slice(-4).map((msg) => (
+                          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[85%] rounded-lg p-2 text-xs ${
+                              msg.role === 'user' ? 'bg-purple-600 text-white' : 'bg-stone-100 text-stone-700'
+                            }`}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        ))}
+                        {sendMessageMutation.isPending && (
+                          <div className="flex justify-start">
+                            <div className="bg-stone-100 rounded-lg p-2 text-xs text-stone-500 flex items-center gap-2">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Thinking...
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
@@ -1554,6 +1614,26 @@ export default function OpportunityHub() {
                         </button>
                       ))}
                     </div>
+                    {chatMessages.length > 0 && (
+                      <div className="mb-4 max-h-48 overflow-y-auto space-y-2 p-3 bg-white rounded-lg border border-amber-100">
+                        {chatMessages.slice(-4).map((msg) => (
+                          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[85%] rounded-lg p-2 text-xs ${
+                              msg.role === 'user' ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-700'
+                            }`}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        ))}
+                        {sendMessageMutation.isPending && (
+                          <div className="flex justify-start">
+                            <div className="bg-stone-100 rounded-lg p-2 text-xs text-stone-500 flex items-center gap-2">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Thinking...
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
