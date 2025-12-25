@@ -118,6 +118,10 @@ def login(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
 
+    from app.models.subscription import Subscription
+    subscription = db.query(Subscription).filter(Subscription.user_id == user.id).first()
+    tier = subscription.tier.value.lower() if subscription and subscription.tier else "free"
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -127,7 +131,8 @@ def login(
             "email": user.email,
             "full_name": user.name,
             "is_verified": user.is_verified,
-            "is_admin": user.is_admin
+            "is_admin": user.is_admin,
+            "tier": tier
         }
     }
 
