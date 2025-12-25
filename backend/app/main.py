@@ -21,6 +21,7 @@ from app.routers import (
     comments,
     consultant,
     contact,
+    copilot,
     experts,
     follows,
     generated_reports,
@@ -138,6 +139,7 @@ app.include_router(command_center.router, prefix=f"{settings.API_V1_PREFIX}/comm
 app.include_router(google_scraping.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Google Scraping"])
 app.include_router(workspaces.router, prefix=f"{settings.API_V1_PREFIX}/workspaces", tags=["Workspaces"])
 app.include_router(ai_cofounder.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Co-Founder"])
+app.include_router(copilot.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Copilot"])
 
 
 @app.get("/")

@@ -40,8 +40,9 @@ from .google_scraping import (
 )
 from .workspace import (
     UserWorkspace, WorkspaceNote, WorkspaceTask, WorkspaceDocument,
-    WorkspaceStatus, TaskPriority
+    WorkspaceChatMessage, WorkspaceStatus, TaskPriority
 )
+from .copilot import GlobalChatMessage, CopilotSuggestion
 
 __all__ = [
     "User",
@@ -122,6 +123,9 @@ __all__ = [
     "WorkspaceNote",
     "WorkspaceTask",
     "WorkspaceDocument",
+    "WorkspaceChatMessage",
     "WorkspaceStatus",
     "TaskPriority",
+    "GlobalChatMessage",
+    "CopilotSuggestion",
 ]

@@ -62,3 +62,4 @@ class User(Base):
     collections = relationship("UserCollection", back_populates="user", cascade="all, delete-orphan")
     tags = relationship("UserTag", back_populates="user", cascade="all, delete-orphan")
     opportunity_notes = relationship("OpportunityNote", back_populates="user", cascade="all, delete-orphan")
+    copilot_messages = relationship("GlobalChatMessage", back_populates="user", cascade="all, delete-orphan", order_by="GlobalChatMessage.created_at")
