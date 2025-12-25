@@ -1,7 +1,7 @@
 from .opportunity import Opportunity
 from .validation import Validation
 from .comment import Comment
-from .watchlist import WatchlistItem
+from .watchlist import WatchlistItem, UserCollection, UserTag, OpportunityNote
 from .notification import Notification
 from .subscription import Subscription, UsageRecord
 from .user_profile import UserProfile
@@ -49,6 +49,9 @@ __all__ = [
     "Validation", 
     "Comment",
     "WatchlistItem",
+    "UserCollection",
+    "UserTag",
+    "OpportunityNote",
     "Notification",
     "Subscription",
     "UsageRecord",

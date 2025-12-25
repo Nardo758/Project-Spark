@@ -81,3 +81,4 @@ class Opportunity(Base):
     comments = relationship("Comment", back_populates="opportunity", cascade="all, delete-orphan")
     generated_reports = relationship("GeneratedReport", back_populates="opportunity")
     workspaces = relationship("UserWorkspace", back_populates="opportunity")
+    user_notes = relationship("OpportunityNote", back_populates="opportunity", cascade="all, delete-orphan")

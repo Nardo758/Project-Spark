@@ -59,3 +59,6 @@ class User(Base):
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     generated_reports = relationship("GeneratedReport", back_populates="user", cascade="all, delete-orphan")
     workspaces = relationship("UserWorkspace", back_populates="user", cascade="all, delete-orphan")
+    collections = relationship("UserCollection", back_populates="user", cascade="all, delete-orphan")
+    tags = relationship("UserTag", back_populates="user", cascade="all, delete-orphan")
+    opportunity_notes = relationship("OpportunityNote", back_populates="user", cascade="all, delete-orphan")

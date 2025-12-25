@@ -16,6 +16,7 @@ from app.routers import (
     ai_engine,
     analytics,
     auth,
+    collections,
     command_center,
     comments,
     consultant,
@@ -91,6 +92,7 @@ app.include_router(comments.router, prefix=f"{settings.API_V1_PREFIX}/comments",
 app.include_router(users.router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])
 app.include_router(analytics.router, prefix=f"{settings.API_V1_PREFIX}/analytics", tags=["Analytics"])
 app.include_router(watchlist.router, prefix=f"{settings.API_V1_PREFIX}/watchlist", tags=["Watchlist"])
+app.include_router(collections.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Workhub"])
 app.include_router(two_factor.router, prefix=f"{settings.API_V1_PREFIX}/2fa", tags=["Two-Factor Auth"])
 app.include_router(oauth.router, prefix=f"{settings.API_V1_PREFIX}/oauth", tags=["OAuth"])
 app.include_router(notifications.router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
