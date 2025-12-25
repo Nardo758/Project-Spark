@@ -910,6 +910,54 @@ export default function OpportunityHub() {
                     </div>
                   )}
 
+                  <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-violet-600" />
+                        AI Co-Founder
+                      </h3>
+                      <span className="text-xs text-violet-600 bg-violet-100 px-2 py-1 rounded-full">Validate Stage</span>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-2 mb-4">
+                      {[
+                        'Is this problem worth solving?',
+                        'Who are the ideal customers?',
+                        'What makes this unique?',
+                      ].map((prompt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setAiMessage(prompt)
+                            if (hasWorkspace) sendMessageMutation.mutate(prompt)
+                          }}
+                          className="p-2 text-xs text-left bg-white rounded-lg border border-violet-100 hover:border-violet-300 hover:bg-violet-50 transition-colors"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={aiMessage}
+                        onChange={(e) => setAiMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        placeholder="Ask AI about validating this opportunity..."
+                        className="flex-1 px-3 py-2 border border-violet-200 rounded-lg text-sm focus:outline-none focus:border-violet-400 bg-white"
+                      />
+                      <button
+                        onClick={() => aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        disabled={!aiMessage.trim() || !hasWorkspace || sendMessageMutation.isPending}
+                        className="p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {!hasWorkspace && (
+                      <p className="text-xs text-violet-600 mt-2">Create a workspace to chat with the AI Co-Founder</p>
+                    )}
+                  </div>
+
                   <div className="flex justify-end">
                     <button
                       onClick={() => setActiveTab('validating')}
@@ -1079,6 +1127,54 @@ export default function OpportunityHub() {
                     </div>
                   </div>
 
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-blue-600" />
+                        AI Co-Founder
+                      </h3>
+                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">Research Stage</span>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-2 mb-4">
+                      {[
+                        'Help me calculate TAM/SAM/SOM',
+                        'Who are my competitors?',
+                        'What customer segments to target?',
+                      ].map((prompt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setAiMessage(prompt)
+                            if (hasWorkspace) sendMessageMutation.mutate(prompt)
+                          }}
+                          className="p-2 text-xs text-left bg-white rounded-lg border border-blue-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={aiMessage}
+                        onChange={(e) => setAiMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        placeholder="Ask AI about market research..."
+                        className="flex-1 px-3 py-2 border border-blue-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 bg-white"
+                      />
+                      <button
+                        onClick={() => aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        disabled={!aiMessage.trim() || !hasWorkspace || sendMessageMutation.isPending}
+                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {!hasWorkspace && (
+                      <p className="text-xs text-blue-600 mt-2">Create a workspace to chat with the AI Co-Founder</p>
+                    )}
+                  </div>
+
                   <div className="flex justify-between">
                     <button
                       onClick={() => setActiveTab('researching')}
@@ -1236,6 +1332,54 @@ export default function OpportunityHub() {
                     </div>
                   </div>
 
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-600" />
+                        AI Co-Founder
+                      </h3>
+                      <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">Plan Stage</span>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-2 mb-4">
+                      {[
+                        'Help me write a value proposition',
+                        'What pricing model works best?',
+                        'Create a go-to-market strategy',
+                      ].map((prompt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setAiMessage(prompt)
+                            if (hasWorkspace) sendMessageMutation.mutate(prompt)
+                          }}
+                          className="p-2 text-xs text-left bg-white rounded-lg border border-purple-100 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={aiMessage}
+                        onChange={(e) => setAiMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        placeholder="Ask AI about business planning..."
+                        className="flex-1 px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 bg-white"
+                      />
+                      <button
+                        onClick={() => aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        disabled={!aiMessage.trim() || !hasWorkspace || sendMessageMutation.isPending}
+                        className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {!hasWorkspace && (
+                      <p className="text-xs text-purple-600 mt-2">Create a workspace to chat with the AI Co-Founder</p>
+                    )}
+                  </div>
+
                   <div className="flex justify-between">
                     <button
                       onClick={() => setActiveTab('validating')}
@@ -1383,6 +1527,54 @@ export default function OpportunityHub() {
                       </div>
                     </div>
                   )}
+
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-amber-600" />
+                        AI Co-Founder
+                      </h3>
+                      <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">Execute Stage</span>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-2 mb-4">
+                      {[
+                        'What features for MVP?',
+                        'How to find beta testers?',
+                        'Help me plan the launch',
+                      ].map((prompt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setAiMessage(prompt)
+                            if (hasWorkspace) sendMessageMutation.mutate(prompt)
+                          }}
+                          className="p-2 text-xs text-left bg-white rounded-lg border border-amber-100 hover:border-amber-300 hover:bg-amber-50 transition-colors"
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={aiMessage}
+                        onChange={(e) => setAiMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        placeholder="Ask AI about execution..."
+                        className="flex-1 px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:border-amber-400 bg-white"
+                      />
+                      <button
+                        onClick={() => aiMessage.trim() && hasWorkspace && sendMessageMutation.mutate(aiMessage.trim())}
+                        disabled={!aiMessage.trim() || !hasWorkspace || sendMessageMutation.isPending}
+                        className="p-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {!hasWorkspace && (
+                      <p className="text-xs text-amber-600 mt-2">Create a workspace to chat with the AI Co-Founder</p>
+                    )}
+                  </div>
 
                   <div className="flex justify-between">
                     <button
