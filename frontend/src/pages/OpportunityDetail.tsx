@@ -324,13 +324,13 @@ export default function OpportunityDetail() {
   const userTier = access?.user_tier?.toLowerCase() || 'free'
   const hasPro = userTier === 'pro' || userTier === 'business' || userTier === 'enterprise'
 
-  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+  const titleCase = (s: string) => s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
   
   const score = opp.feasibility_score || (70 + (opp.id % 20))
   const growthRate = opp.growth_rate || 12
   const marketSize = opp.ai_market_size_estimate || opp.market_size || '$50M'
-  const urgency = capitalize(opp.ai_urgency_level || 'Medium')
-  const competition = capitalize(opp.ai_competition_level || 'Medium')
+  const urgency = titleCase(opp.ai_urgency_level || 'Medium')
+  const competition = titleCase(opp.ai_competition_level || 'Medium')
 
   async function confirmPayPerUnlock(paymentIntentId: string) {
     if (!token) throw new Error('Not authenticated')
@@ -545,7 +545,7 @@ export default function OpportunityDetail() {
           {/* Quick Validation Metrics */}
           <div className="mb-8">
             <h3 className="text-lg font-bold text-stone-900 mb-4">Quick Validation Metrics</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1.5fr_0.75fr] gap-4">
               <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 text-center">
                 <div className="text-xs text-stone-500 uppercase tracking-wide mb-2">Urgency</div>
                 <div className={`text-xl font-bold ${urgency === 'High' ? 'text-orange-600' : urgency === 'Critical' ? 'text-red-600' : 'text-stone-900'}`}>
@@ -560,7 +560,7 @@ export default function OpportunityDetail() {
               </div>
               <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 text-center">
                 <div className="text-xs text-stone-500 uppercase tracking-wide mb-2">Target Audience</div>
-                <div className="text-xl font-bold text-stone-900 truncate">{opp.ai_target_audience ? capitalize(opp.ai_target_audience) : 'Consumers'}</div>
+                <div className="text-xl font-bold text-stone-900">{opp.ai_target_audience ? titleCase(opp.ai_target_audience) : 'Consumers'}</div>
               </div>
               <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 text-center">
                 <div className="text-xs text-stone-500 uppercase tracking-wide mb-2">Feasibility</div>
