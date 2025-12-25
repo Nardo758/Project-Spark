@@ -1092,17 +1092,18 @@ def get_map_usage_stats(
     
     service_areas = db.query(CensusServiceArea).count()
     
-    layer_usage = {}
-    layer_sessions = db.query(UserMapSession).filter(
-        UserMapSession.layer_state.isnot(None),
-        UserMapSession.created_at >= cutoff_date
-    ).all()
-    
-    for session in layer_sessions:
-        if session.layer_state:
-            for layer, enabled in session.layer_state.items():
-                if enabled:
-                    layer_usage[layer] = layer_usage.get(layer, 0) + 1
+    from sqlalchemy import text
+    layer_usage_query = db.execute(text("""
+        SELECT kv.key as layer_name, COUNT(*) as usage_count
+        FROM user_map_sessions, 
+             jsonb_each_text(layer_state) AS kv
+        WHERE created_at >= :cutoff_date
+          AND layer_state IS NOT NULL
+          AND kv.value = 'true'
+        GROUP BY kv.key
+        ORDER BY usage_count DESC
+    """), {"cutoff_date": cutoff_date})
+    layer_usage = {row.layer_name: row.usage_count for row in layer_usage_query}
     
     daily_sessions = db.query(
         func.date_trunc('day', UserMapSession.created_at).label('date'),

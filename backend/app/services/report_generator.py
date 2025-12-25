@@ -16,6 +16,49 @@ from app.models.generated_report import GeneratedReport, ReportType, ReportStatu
 from app.models.user import User
 
 
+def build_static_map_url(
+    center_lng: float,
+    center_lat: float,
+    zoom: int = 4,
+    width: int = 600,
+    height: int = 300,
+    markers: Optional[List[Dict]] = None,
+    style: str = "mapbox/dark-v11"
+) -> Optional[str]:
+    """Build a Mapbox Static Images API URL for embedding in reports.
+    
+    Args:
+        center_lng: Center longitude
+        center_lat: Center latitude
+        zoom: Zoom level (1-22)
+        width: Image width in pixels (max 1280)
+        height: Image height in pixels (max 1280)
+        markers: List of marker dicts with lat, lng, color keys
+        style: Mapbox style ID
+    
+    Returns:
+        Static map URL or None if MAPBOX_ACCESS_TOKEN not set
+    """
+    token = os.environ.get("MAPBOX_ACCESS_TOKEN")
+    if not token:
+        return None
+    
+    overlay = ""
+    if markers:
+        marker_parts = []
+        for m in markers[:20]:
+            color = m.get("color", "ff5544")
+            lng = m.get("lng", m.get("longitude"))
+            lat = m.get("lat", m.get("latitude"))
+            if lng is not None and lat is not None:
+                marker_parts.append(f"pin-s+{color}({lng},{lat})")
+        if marker_parts:
+            overlay = ",".join(marker_parts) + "/"
+    
+    url = f"https://api.mapbox.com/styles/v1/{style}/static/{overlay}{center_lng},{center_lat},{zoom}/{width}x{height}@2x?access_token={token}"
+    return url
+
+
 class ReportGenerator:
     """Base class for generating opportunity reports."""
     
@@ -338,7 +381,7 @@ class ReportGenerator:
         return max_group or "Adults 25-54"
     
     def _get_top_cities_by_category(self, category: str, limit: int = 5) -> List[Dict]:
-        """Get top cities by problem density for a given category."""
+        """Get top cities by problem density for a given category with coordinates."""
         from sqlalchemy import func
         
         results = self.db.query(
@@ -346,7 +389,9 @@ class ReportGenerator:
             Opportunity.region,
             func.count(Opportunity.id).label('problem_count'),
             func.avg(Opportunity.severity).label('avg_severity'),
-            func.avg(Opportunity.ai_opportunity_score).label('avg_score')
+            func.avg(Opportunity.ai_opportunity_score).label('avg_score'),
+            func.avg(Opportunity.latitude).label('avg_latitude'),
+            func.avg(Opportunity.longitude).label('avg_longitude')
         ).filter(
             Opportunity.category == category,
             Opportunity.city.isnot(None),
@@ -366,6 +411,8 @@ class ReportGenerator:
                 "problem_count": r.problem_count,
                 "avg_severity": round(float(r.avg_severity or 0), 1),
                 "avg_score": round(float(r.avg_score or 70), 0),
+                "latitude": float(r.avg_latitude) if r.avg_latitude else None,
+                "longitude": float(r.avg_longitude) if r.avg_longitude else None,
             })
         return cities
     
@@ -420,7 +467,7 @@ class ReportGenerator:
 """
     
     def _build_geographic_heat_section(self, opp: Opportunity) -> str:
-        """Build Geographic Heat section showing top cities by problem density."""
+        """Build Geographic Heat section showing top cities by problem density with static map."""
         top_cities = self._get_top_cities_by_category(opp.category)
         
         if not top_cities:
@@ -430,6 +477,40 @@ class ReportGenerator:
         <p class="placeholder-note">Geographic data is being analyzed. Check back soon for insights on where this problem is most prevalent.</p>
     </section>
 """
+        
+        markers = []
+        for city in top_cities:
+            if city.get('latitude') and city.get('longitude'):
+                severity = city.get('avg_severity', 5)
+                color = "ff4444" if severity >= 7 else "ffaa44" if severity >= 5 else "44aaff"
+                markers.append({
+                    "lat": city['latitude'],
+                    "lng": city['longitude'],
+                    "color": color
+                })
+        
+        center_lng = -98.5795
+        center_lat = 39.8283
+        if markers:
+            center_lng = sum(m['lng'] for m in markers) / len(markers)
+            center_lat = sum(m['lat'] for m in markers) / len(markers)
+        
+        map_url = build_static_map_url(
+            center_lng=center_lng,
+            center_lat=center_lat,
+            zoom=3,
+            width=600,
+            height=280,
+            markers=markers,
+            style="mapbox/dark-v11"
+        )
+        
+        map_html = ""
+        if map_url:
+            map_html = f"""
+        <div class="geographic-map">
+            <img src="{map_url}" alt="Geographic hotspots map" class="static-map" style="width:100%;max-width:600px;border-radius:8px;margin-bottom:16px;" />
+        </div>"""
         
         city_rows = ""
         for i, city in enumerate(top_cities, 1):
@@ -448,6 +529,7 @@ class ReportGenerator:
     <section class="geographic-heat">
         <h2>Geographic Hotspots</h2>
         <p class="section-intro">Top 5 cities where this problem category is most prevalent.</p>
+        {map_html}
         <table class="heat-table">
             <thead>
                 <tr>
@@ -685,6 +767,39 @@ class ReportGenerator:
     </section>
 """
     
+    def _build_layer2_map_section(self, opp: Opportunity) -> str:
+        """Build static map image for Layer 2 geographic analysis."""
+        center_lat = float(opp.latitude) if opp.latitude else 39.8283
+        center_lng = float(opp.longitude) if opp.longitude else -98.5795
+        
+        markers = []
+        if opp.latitude and opp.longitude:
+            markers.append({
+                "lat": float(opp.latitude),
+                "lng": float(opp.longitude),
+                "color": "8b5cf6"
+            })
+        
+        zoom = 6 if opp.city else 4
+        
+        map_url = build_static_map_url(
+            center_lng=center_lng,
+            center_lat=center_lat,
+            zoom=zoom,
+            width=640,
+            height=320,
+            markers=markers,
+            style="mapbox/dark-v11"
+        )
+        
+        if not map_url:
+            return ""
+        
+        return f"""
+        <div class="geographic-map">
+            <img src="{map_url}" alt="Geographic analysis map" class="static-map" style="width:100%;max-width:640px;border-radius:8px;margin-bottom:20px;" />
+        </div>"""
+    
     def _build_housing_lifestyle_section(self, demographics: Optional[Dict]) -> str:
         """Build Housing & Lifestyle section for Layer 2."""
         if not demographics:
@@ -849,6 +964,7 @@ class ReportGenerator:
     
     <section class="geographic-analysis">
         <h2>Geographic Analysis</h2>
+        {self._build_layer2_map_section(opp)}
         <div class="geo-focus">
             <div class="primary-market">
                 <span class="label">Primary Market</span>
