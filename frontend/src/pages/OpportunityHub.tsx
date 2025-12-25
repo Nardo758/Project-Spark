@@ -945,309 +945,285 @@ export default function OpportunityHub() {
                 </div>
               </div>
 
-              <div className="mt-6 bg-white rounded-xl border border-stone-200 p-5">
-                <h3 className="font-semibold text-stone-900 mb-4 flex items-center gap-2">
-                  <Target className="w-5 h-5 text-violet-600" />
-                  {workspace.status === 'researching' && 'Empathize: User Research Tools'}
-                  {workspace.status === 'validating' && 'Define: Problem Definition Tools'}
-                  {workspace.status === 'planning' && 'Ideate: Solution Brainstorming Tools'}
-                  {workspace.status === 'building' && 'Prototype: Build & Test Tools'}
-                  {workspace.status === 'launched' && 'Test: Validation & Growth Tools'}
-                  {(workspace.status === 'paused' || workspace.status === 'archived') && 'Resume Your Journey'}
-                </h3>
+              <div className="mt-6 bg-white rounded-xl border border-stone-200 overflow-hidden">
+                <div className="border-b border-stone-200 bg-stone-50 px-5 py-3">
+                  <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+                    <Target className="w-5 h-5 text-violet-600" />
+                    Consultant Studio Workflow
+                  </h3>
+                </div>
+                
+                <div className="flex border-b border-stone-200">
+                  <button 
+                    onClick={() => updateStatusMutation.mutate('researching')}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                      workspace.status === 'researching' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+                    }`}
+                  >
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      workspace.status === 'researching' ? 'bg-violet-600 text-white' : 
+                      ['validating', 'planning', 'building', 'launched'].includes(workspace.status) ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
+                    }`}>{['validating', 'planning', 'building', 'launched'].includes(workspace.status) ? '✓' : '1'}</span>
+                    Validate
+                  </button>
+                  <button 
+                    onClick={() => updateStatusMutation.mutate('validating')}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                      workspace.status === 'validating' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+                    }`}
+                  >
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      workspace.status === 'validating' ? 'bg-violet-600 text-white' : 
+                      ['planning', 'building', 'launched'].includes(workspace.status) ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
+                    }`}>{['planning', 'building', 'launched'].includes(workspace.status) ? '✓' : '2'}</span>
+                    Research
+                  </button>
+                  <button 
+                    onClick={() => updateStatusMutation.mutate('planning')}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                      workspace.status === 'planning' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+                    }`}
+                  >
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      workspace.status === 'planning' ? 'bg-violet-600 text-white' : 
+                      ['building', 'launched'].includes(workspace.status) ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
+                    }`}>{['building', 'launched'].includes(workspace.status) ? '✓' : '3'}</span>
+                    Plan
+                  </button>
+                  <button 
+                    onClick={() => updateStatusMutation.mutate('building')}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                      ['building', 'launched'].includes(workspace.status) ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+                    }`}
+                  >
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      ['building', 'launched'].includes(workspace.status) ? 'bg-violet-600 text-white' : 'bg-stone-300 text-white'
+                    }`}>{workspace.status === 'launched' ? '✓' : '4'}</span>
+                    Execute
+                  </button>
+                </div>
 
-                {workspace.status === 'researching' && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                      <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        User Interviews
-                      </h4>
-                      <p className="text-xs text-blue-700 mb-3">Talk to potential customers to understand their pain points and needs.</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-blue-800">
-                          <Check className="w-3 h-3" />
-                          <span>Who are your target users?</span>
+                <div className="p-5">
+                  {workspace.status === 'researching' && (
+                    <div>
+                      <h4 className="font-medium text-stone-900 mb-4">Step 1: Validate Opportunity</h4>
+                      <p className="text-sm text-stone-600 mb-4">Choose how you want to validate this opportunity:</p>
+                      <div className="space-y-3">
+                        <div className="p-4 border border-violet-200 bg-violet-50 rounded-lg cursor-pointer hover:border-violet-400 transition-colors">
+                          <div className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full border-2 border-violet-600 flex items-center justify-center mt-0.5">
+                              <div className="w-2.5 h-2.5 rounded-full bg-violet-600"></div>
+                            </div>
+                            <div>
+                              <h5 className="font-medium text-violet-900">Validate this platform opportunity</h5>
+                              <p className="text-xs text-violet-700 mt-1">Use OppGrid's validated data as foundation (Recommended)</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-blue-800">
-                          <Check className="w-3 h-3" />
-                          <span>What frustrates them most?</span>
+                        <div className="p-4 border border-stone-200 rounded-lg cursor-pointer hover:border-stone-400 transition-colors">
+                          <div className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full border-2 border-stone-300 mt-0.5"></div>
+                            <div>
+                              <h5 className="font-medium text-stone-700">Research a new idea</h5>
+                              <p className="text-xs text-stone-500 mt-1">Start from scratch with your own concept</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-blue-800">
-                          <Check className="w-3 h-3" />
-                          <span>What solutions have they tried?</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                      <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
-                        <Search className="w-4 h-4" />
-                        Market Observation
-                      </h4>
-                      <p className="text-xs text-blue-700 mb-3">Observe how people currently solve this problem.</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-blue-800">
-                          <Check className="w-3 h-3" />
-                          <span>Existing solutions in market</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-blue-800">
-                          <Check className="w-3 h-3" />
-                          <span>User workarounds</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-blue-800">
-                          <Check className="w-3 h-3" />
-                          <span>Unmet needs & gaps</span>
+                        <div className="p-4 border border-stone-200 rounded-lg cursor-pointer hover:border-stone-400 transition-colors">
+                          <div className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full border-2 border-stone-300 mt-0.5"></div>
+                            <div>
+                              <h5 className="font-medium text-stone-700">Find optimal locations</h5>
+                              <p className="text-xs text-stone-500 mt-1">Geographic analysis and market sizing</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                      <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        Empathy Map
-                      </h4>
-                      <p className="text-xs text-blue-700 mb-3">Document what users say, think, feel, and do.</p>
+                      <div className="mt-4 p-4 bg-stone-50 rounded-lg">
+                        <h5 className="text-sm font-medium text-stone-700 mb-2">Platform Intelligence</h5>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="flex items-center gap-2 text-stone-600">
+                            <BarChart3 className="w-4 h-4 text-violet-500" />
+                            <span>{opportunity?.validations || 0} validated signals</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-stone-600">
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            <span>{opportunity?.market_size || 'Unknown'} market</span>
+                          </div>
+                        </div>
+                      </div>
                       <button 
-                        onClick={() => setWorkspaceSubTab('ai')}
-                        className="w-full py-2 text-xs bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                        onClick={() => updateStatusMutation.mutate('validating')}
+                        className="mt-4 w-full py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center justify-center gap-2"
                       >
-                        Create with AI
+                        Continue to Validation
+                        <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {workspace.status === 'validating' && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                      <h4 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
-                        <Target className="w-4 h-4" />
-                        Problem Statement
-                      </h4>
-                      <p className="text-xs text-amber-700 mb-3">Define the core problem from the user's perspective.</p>
-                      <div className="p-3 bg-white rounded border border-amber-200 text-xs text-amber-800">
-                        <strong>[User type]</strong> needs <strong>[need]</strong> because <strong>[insight]</strong>
+                  {workspace.status === 'validating' && (
+                    <div>
+                      <h4 className="font-medium text-stone-900 mb-4">Step 2: Market Research</h4>
+                      <p className="text-sm text-stone-600 mb-4">AI is analyzing market conditions for this opportunity:</p>
+                      <div className="grid md:grid-cols-2 gap-4 mb-4">
+                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                          <h5 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4" />
+                            Market Overview
+                          </h5>
+                          <div className="space-y-2 text-xs text-blue-800">
+                            <div className="flex justify-between">
+                              <span>Total Addressable Market (TAM)</span>
+                              <span className="font-medium">{opportunity?.market_size || 'Analyzing...'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Growth Rate</span>
+                              <span className="font-medium text-emerald-600">+15.3% YoY</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                          <h5 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            Competitive Landscape
+                          </h5>
+                          <div className="space-y-2 text-xs text-amber-800">
+                            <div className="flex justify-between">
+                              <span>Competition Level</span>
+                              <span className="font-medium">{opportunity?.competition || 'Medium'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Market Gaps</span>
+                              <span className="font-medium text-emerald-600">3 identified</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                      <h4 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4" />
-                        Insight Synthesis
-                      </h4>
-                      <p className="text-xs text-amber-700 mb-3">Combine your research into actionable insights.</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-amber-800">
-                          <Check className="w-3 h-3" />
-                          <span>Common patterns identified</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-amber-800">
-                          <Check className="w-3 h-3" />
-                          <span>Key user needs ranked</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-amber-800">
-                          <Check className="w-3 h-3" />
-                          <span>Opportunity validated</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
-                      <h4 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4" />
-                        Point of View
-                      </h4>
-                      <p className="text-xs text-amber-700 mb-3">Articulate your unique perspective on the problem.</p>
                       <button 
                         onClick={() => setWorkspaceSubTab('ai')}
-                        className="w-full py-2 text-xs bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700"
+                        className="w-full py-2 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 mb-3"
                       >
-                        Generate POV with AI
+                        Generate Full Research Report with AI
+                      </button>
+                      <button 
+                        onClick={() => updateStatusMutation.mutate('planning')}
+                        className="w-full py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center justify-center gap-2"
+                      >
+                        Continue to Business Plan
+                        <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {workspace.status === 'planning' && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-                      <h4 className="font-medium text-purple-900 mb-2 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Brainstorming
-                      </h4>
-                      <p className="text-xs text-purple-700 mb-3">Generate as many solution ideas as possible.</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-purple-800">
-                          <Check className="w-3 h-3" />
-                          <span>No idea is too crazy</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-purple-800">
-                          <Check className="w-3 h-3" />
-                          <span>Quantity over quality</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-purple-800">
-                          <Check className="w-3 h-3" />
-                          <span>Build on others' ideas</span>
-                        </div>
+                  {workspace.status === 'planning' && (
+                    <div>
+                      <h4 className="font-medium text-stone-900 mb-4">Step 3: Generate Business Plan</h4>
+                      <p className="text-sm text-stone-600 mb-4">Select sections to include in your business plan:</p>
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        {['Executive Summary', 'Market Analysis', 'Competitive Positioning', 'Product Strategy', 'Go-to-Market Plan', 'Financial Projections', 'Risk Analysis'].map((section) => (
+                          <label key={section} className="flex items-center gap-2 p-2 bg-stone-50 rounded text-sm cursor-pointer hover:bg-stone-100">
+                            <input type="checkbox" defaultChecked className="rounded border-stone-300 text-violet-600 focus:ring-violet-500" />
+                            <span>{section}</span>
+                          </label>
+                        ))}
                       </div>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-                      <h4 className="font-medium text-purple-900 mb-2 flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        Business Model Canvas
-                      </h4>
-                      <p className="text-xs text-purple-700 mb-3">Map out your business model on one page.</p>
-                      <div className="grid grid-cols-3 gap-1 text-[10px] text-purple-700">
-                        <div className="p-1 bg-white rounded border border-purple-200 text-center">Partners</div>
-                        <div className="p-1 bg-white rounded border border-purple-200 text-center">Activities</div>
-                        <div className="p-1 bg-white rounded border border-purple-200 text-center">Value Prop</div>
-                        <div className="p-1 bg-white rounded border border-purple-200 text-center">Resources</div>
-                        <div className="p-1 bg-white rounded border border-purple-200 text-center">Channels</div>
-                        <div className="p-1 bg-white rounded border border-purple-200 text-center">Customers</div>
+                      <div className="flex gap-2 mb-4">
+                        <span className="text-sm text-stone-600">Detail Level:</span>
+                        <label className="flex items-center gap-1 text-sm">
+                          <input type="radio" name="detail" className="text-violet-600" />
+                          Brief
+                        </label>
+                        <label className="flex items-center gap-1 text-sm">
+                          <input type="radio" name="detail" defaultChecked className="text-violet-600" />
+                          Standard
+                        </label>
+                        <label className="flex items-center gap-1 text-sm">
+                          <input type="radio" name="detail" className="text-violet-600" />
+                          Comprehensive
+                        </label>
                       </div>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-                      <h4 className="font-medium text-purple-900 mb-2 flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        Revenue Model
-                      </h4>
-                      <p className="text-xs text-purple-700 mb-3">Define how you'll make money.</p>
                       <button 
                         onClick={() => setWorkspaceSubTab('ai')}
-                        className="w-full py-2 text-xs bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700"
+                        className="w-full py-2 text-sm bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 mb-3"
                       >
-                        Explore Models with AI
+                        Generate Business Plan with AI
                       </button>
-                    </div>
-                  </div>
-                )}
-
-                {workspace.status === 'building' && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                      <h4 className="font-medium text-emerald-900 mb-2 flex items-center gap-2">
-                        <Rocket className="w-4 h-4" />
-                        MVP Checklist
-                      </h4>
-                      <p className="text-xs text-emerald-700 mb-3">Build only what's essential to test your idea.</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-emerald-800">
-                          <Check className="w-3 h-3" />
-                          <span>Core feature defined</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-emerald-800">
-                          <Check className="w-3 h-3" />
-                          <span>Landing page created</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-emerald-800">
-                          <Check className="w-3 h-3" />
-                          <span>Signup/waitlist ready</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                      <h4 className="font-medium text-emerald-900 mb-2 flex items-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        Recommended Tools
-                      </h4>
-                      <p className="text-xs text-emerald-700 mb-3">Build fast with the right tools.</p>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex items-center gap-2 text-emerald-800">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                          <span>Replit - Build apps fast</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-emerald-800">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                          <span>Figma - Design prototypes</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-emerald-800">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                          <span>Notion - Organize work</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                      <h4 className="font-medium text-emerald-900 mb-2 flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        User Testing
-                      </h4>
-                      <p className="text-xs text-emerald-700 mb-3">Get your prototype in front of real users.</p>
                       <button 
-                        onClick={() => setWorkspaceSubTab('ai')}
-                        className="w-full py-2 text-xs bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700"
+                        onClick={() => updateStatusMutation.mutate('building')}
+                        className="w-full py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center justify-center gap-2"
                       >
-                        Create Test Plan with AI
+                        Continue to Execution
+                        <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {workspace.status === 'launched' && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                      <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4" />
-                        Measure Results
-                      </h4>
-                      <p className="text-xs text-green-700 mb-3">Track key metrics to validate your solution.</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-green-800">
-                          <Check className="w-3 h-3" />
-                          <span>User signups</span>
+                  {(workspace.status === 'building' || workspace.status === 'launched') && (
+                    <div>
+                      <h4 className="font-medium text-stone-900 mb-4">Step 4: Execution Roadmap</h4>
+                      <p className="text-sm text-stone-600 mb-4">Connect with resources to launch your business:</p>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div className="p-4 bg-violet-50 rounded-lg border border-violet-100">
+                          <h5 className="font-medium text-violet-900 mb-2 flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            Team
+                          </h5>
+                          <p className="text-xs text-violet-700 mb-3">Find co-founders, advisors, and contractors</p>
+                          <Link to="/network" className="block w-full py-2 text-xs bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 text-center">
+                            Find Team Members
+                          </Link>
                         </div>
-                        <div className="flex items-center gap-2 text-green-800">
-                          <Check className="w-3 h-3" />
-                          <span>Engagement rate</span>
+                        <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                          <h5 className="font-medium text-emerald-900 mb-2 flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" />
+                            Funding
+                          </h5>
+                          <p className="text-xs text-emerald-700 mb-3">Connect with investors, grants, and loans</p>
+                          <Link to="/network" className="block w-full py-2 text-xs bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 text-center">
+                            Browse Investors
+                          </Link>
                         </div>
-                        <div className="flex items-center gap-2 text-green-800">
-                          <Check className="w-3 h-3" />
-                          <span>Revenue / conversions</span>
+                        <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
+                          <h5 className="font-medium text-amber-900 mb-2 flex items-center gap-2">
+                            <Target className="w-4 h-4" />
+                            Customers
+                          </h5>
+                          <p className="text-xs text-amber-700 mb-3">Get validated leads for beta users</p>
+                          <Link to="/leads" className="block w-full py-2 text-xs bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 text-center">
+                            Purchase Leads
+                          </Link>
                         </div>
                       </div>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                      <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" />
-                        Gather Feedback
-                      </h4>
-                      <p className="text-xs text-green-700 mb-3">Learn from users to iterate and improve.</p>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex items-center gap-2 text-green-800">
-                          <Check className="w-3 h-3" />
-                          <span>User interviews</span>
+                      {workspace.status === 'building' && (
+                        <button 
+                          onClick={() => updateStatusMutation.mutate('launched')}
+                          className="mt-4 w-full py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 flex items-center justify-center gap-2"
+                        >
+                          <Rocket className="w-4 h-4" />
+                          Mark as Launched
+                        </button>
+                      )}
+                      {workspace.status === 'launched' && (
+                        <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+                          <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                          <p className="font-medium text-emerald-800">Congratulations! Your project is launched.</p>
+                          <p className="text-xs text-emerald-600 mt-1">Track progress in the Active Projects dashboard.</p>
                         </div>
-                        <div className="flex items-center gap-2 text-green-800">
-                          <Check className="w-3 h-3" />
-                          <span>Surveys & NPS</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-green-800">
-                          <Check className="w-3 h-3" />
-                          <span>Analytics review</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
-                    <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                      <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
-                        <Rocket className="w-4 h-4" />
-                        Scale & Grow
-                      </h4>
-                      <p className="text-xs text-green-700 mb-3">Ready to scale? Get guidance on next steps.</p>
-                      <button 
-                        onClick={() => setWorkspaceSubTab('ai')}
-                        className="w-full py-2 text-xs bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
-                      >
-                        Growth Strategy with AI
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  )}
 
-                {(workspace.status === 'paused' || workspace.status === 'archived') && (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Clock className="w-8 h-8 text-stone-400" />
+                  {(workspace.status === 'paused' || workspace.status === 'archived') && (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Clock className="w-8 h-8 text-stone-400" />
+                      </div>
+                      <h4 className="font-medium text-stone-700 mb-2">This project is {workspace.status}</h4>
+                      <p className="text-sm text-stone-500 mb-4">Change the status above to resume your journey.</p>
                     </div>
-                    <h4 className="font-medium text-stone-700 mb-2">This project is {workspace.status}</h4>
-                    <p className="text-sm text-stone-500 mb-4">Change the status above to resume your Design Thinking journey.</p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}
