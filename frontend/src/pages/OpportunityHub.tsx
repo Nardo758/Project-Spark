@@ -128,12 +128,20 @@ export default function OpportunityHub() {
   const queryClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState<WorkspaceStatus>('researching')
-  const [workspaceSubTab, setWorkspaceSubTab] = useState<'tasks' | 'notes' | 'ai'>('tasks')
+  const [workspaceSubTab, setWorkspaceSubTab] = useState<'tasks' | 'notes'>('tasks')
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newNoteContent, setNewNoteContent] = useState('')
   const [aiMessage, setAiMessage] = useState('')
   const [validationPath, setValidationPath] = useState<'platform' | 'new_idea' | 'locations' | null>(null)
   const [workspacePanelOpen, setWorkspacePanelOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return !localStorage.getItem('hub-onboarding-dismissed')
+    } catch {
+      return false
+    }
+  })
   
   const validationChecklistItems = [
     'Talked to 5+ potential customers',
@@ -210,6 +218,21 @@ export default function OpportunityHub() {
       localStorage.setItem(`canvas-${opportunityId}`, JSON.stringify(canvasData))
     }
   }, [canvasData, opportunityId, stateInitialized])
+
+  const validateProgress = Math.round((Object.values(validationChecked).filter(Boolean).length / validationChecklistItems.length) * 100)
+  const researchProgress = Math.round((Object.keys(canvasData).filter(k => canvasData[k]?.trim()).length / Math.ceil(canvasItemsBase.length / 2)) * 100)
+  const planProgress = Math.round((Object.keys(canvasData).filter(k => canvasData[k]?.trim()).length / canvasItemsBase.length) * 100)
+  const executeProgress = Math.round((Object.values(launchChecked).filter(Boolean).length / launchChecklistItems.length) * 100)
+  
+  const stageProgress: Record<WorkspaceStatus, number> = {
+    researching: Math.min(validateProgress, 100),
+    validating: Math.min(researchProgress, 100),
+    planning: Math.min(planProgress, 100),
+    building: Math.min(executeProgress, 100),
+    launched: 100,
+    paused: 0,
+    archived: 0,
+  }
 
   const opportunityQuery = useQuery({
     queryKey: ['opportunity', opportunityId, isAuthenticated, token?.slice(-8)],
@@ -442,6 +465,51 @@ export default function OpportunityHub() {
           <span className="text-stone-900 font-medium truncate max-w-xs">{opp.title}</span>
         </div>
 
+        {showOnboarding && (
+          <div className="bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl p-4 mb-6 relative">
+            <button
+              onClick={() => {
+                localStorage.setItem('hub-onboarding-dismissed', 'true')
+                setShowOnboarding(false)
+              }}
+              className="absolute top-3 right-3 text-violet-400 hover:text-violet-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="w-5 h-5 text-violet-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-stone-900 mb-1">Welcome to your Opportunity Hub!</h3>
+                <p className="text-sm text-stone-600 mb-3">This is your command center for turning this opportunity into a real business. Here's how to get started:</p>
+                <div className="grid sm:grid-cols-4 gap-3 text-xs">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-stone-700"><strong>Validate</strong> - Confirm demand with real data</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Search className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-stone-700"><strong>Research</strong> - Analyze market and competition</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Briefcase className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-stone-700"><strong>Plan</strong> - Build your business model</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Rocket className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span className="text-stone-700"><strong>Execute</strong> - Launch and scale</span>
+                  </div>
+                </div>
+                <p className="text-xs text-violet-600 mt-3 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Tip: AI Co-Founder is available in each section to help guide you!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl border border-stone-200 mb-6 overflow-hidden">
           <div className="p-5 border-b border-stone-100">
             <div className="flex items-start justify-between">
@@ -478,17 +546,24 @@ export default function OpportunityHub() {
                       }}
                       className={`flex flex-col items-center ${idx > 0 ? 'ml-4' : ''} cursor-pointer group`}
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                        isCurrent 
-                          ? 'bg-violet-600 text-white ring-4 ring-violet-100' 
-                          : isCompleted 
-                            ? 'bg-emerald-100 text-emerald-600' 
-                            : 'bg-stone-100 text-stone-400'
-                      } group-hover:ring-2 group-hover:ring-violet-300 group-hover:ring-offset-2`}>
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-5 h-5" />
-                        ) : (
-                          <Icon className="w-5 h-5" />
+                      <div className="relative">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                          isCurrent 
+                            ? 'bg-violet-600 text-white ring-4 ring-violet-100' 
+                            : isCompleted 
+                              ? 'bg-emerald-100 text-emerald-600' 
+                              : 'bg-stone-100 text-stone-400'
+                        } group-hover:ring-2 group-hover:ring-violet-300 group-hover:ring-offset-2`}>
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-5 h-5" />
+                          ) : (
+                            <Icon className="w-5 h-5" />
+                          )}
+                        </div>
+                        {stageProgress[stage.key] > 0 && stageProgress[stage.key] < 100 && !isCompleted && (
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm border border-stone-200">
+                            <span className="text-[9px] font-bold text-violet-600">{stageProgress[stage.key]}</span>
+                          </div>
                         )}
                       </div>
                       <span className={`text-xs mt-1 font-medium ${
@@ -613,15 +688,6 @@ export default function OpportunityHub() {
                       <PenLine className="w-4 h-4" />
                       Notes ({workspace.notes.length})
                     </button>
-                    <button
-                      onClick={() => setWorkspaceSubTab('ai')}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        workspaceSubTab === 'ai' ? 'bg-white text-violet-700 shadow-sm' : 'text-stone-600 hover:bg-white/50'
-                      }`}
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      AI Assistant
-                    </button>
                   </div>
 
                   <div className="p-4 bg-stone-50 rounded-lg">
@@ -655,12 +721,7 @@ export default function OpportunityHub() {
                       {workspace.status === 'launched' && 'Track progress, measure results, iterate on feedback.'}
                       {(workspace.status === 'paused' || workspace.status === 'archived') && 'Resume to continue your journey.'}
                     </p>
-                    <button
-                      onClick={() => setWorkspaceSubTab('ai')}
-                      className="w-full py-2 text-xs bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700"
-                    >
-                      Ask AI Co-Founder
-                    </button>
+                    <p className="text-xs text-violet-600 italic">AI Co-Founder is available in each workflow stage below</p>
                   </div>
 
                   {workspace.status === 'researching' && !validationPath && (
@@ -813,44 +874,6 @@ export default function OpportunityHub() {
                     </div>
                   )}
 
-                  {workspaceSubTab === 'ai' && (
-                    <div className="bg-white rounded-lg border border-stone-200 p-4 flex flex-col" style={{ height: '400px' }}>
-                      <div className="flex-1 overflow-y-auto space-y-3 mb-3">
-                        {chatMessages.map((msg) => (
-                          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] rounded-lg p-3 text-sm ${
-                              msg.role === 'user' ? 'bg-violet-600 text-white' : 'bg-stone-100 text-stone-800'
-                            }`}>
-                              {msg.content}
-                            </div>
-                          </div>
-                        ))}
-                        {chatMessages.length === 0 && (
-                          <div className="text-center py-8">
-                            <MessageSquare className="w-8 h-8 mx-auto mb-2 text-stone-300" />
-                            <p className="text-sm text-stone-400">Ask AI about this opportunity</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={aiMessage}
-                          onChange={(e) => setAiMessage(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && aiMessage.trim() && sendMessageMutation.mutate(aiMessage.trim())}
-                          placeholder="Ask a question..."
-                          className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-violet-400"
-                        />
-                        <button
-                          onClick={() => aiMessage.trim() && sendMessageMutation.mutate(aiMessage.trim())}
-                          disabled={!aiMessage.trim() || sendMessageMutation.isPending}
-                          className="p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50"
-                        >
-                          <Send className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 )}
               </div>
