@@ -182,13 +182,13 @@ export default function OpportunityMap({
   }, [opportunityId]);
 
   useEffect(() => {
-    if (!isMapActivated) return;
+    if (!isMapActivated || tier === 'free') return;
     if (map.current) {
       map.current.remove();
       map.current = null;
     }
     fetchMapData();
-  }, [fetchMapData, isMapActivated]);
+  }, [fetchMapData, isMapActivated, tier]);
 
   useEffect(() => {
     if (!mapContainer.current || !mapData) return;
