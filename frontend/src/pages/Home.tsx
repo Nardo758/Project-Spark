@@ -78,7 +78,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6 hover:bg-emerald-200 transition-colors"
               >
                 <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                {loading ? '...' : `${stats?.validated_ideas || 176}+ Validated Opportunities`}
+                {loading ? '...' : `${stats?.validated_ideas || 300}+ Validated Opportunities`}
               </Link>
 
               {/* Headline */}
@@ -127,7 +127,7 @@ export default function Home() {
               <div className="flex gap-10 -mt-4">
                 <div>
                   <div className="text-2xl font-bold text-emerald-500">
-                    {loading ? '...' : stats?.validated_ideas || 176}
+                    {loading ? '...' : stats?.validated_ideas || 300}
                   </div>
                   <div className="text-xs text-gray-500">Validated Ideas</div>
                 </div>
