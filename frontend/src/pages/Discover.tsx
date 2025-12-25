@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Bookmark, Filter, FileText, ChevronRight, TrendingUp, Lock } from 'lucide-react'
+import { Search, Bookmark, Filter, FileText, ChevronRight, Lock } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 
@@ -33,6 +33,7 @@ type AccessInfo = {
   age_days: number
   days_until_unlock: number
   is_accessible: boolean
+  working_on_count?: number
   is_unlocked: boolean
   can_pay_to_unlock: boolean
   unlock_price?: number | null
@@ -339,16 +340,14 @@ export default function Discover() {
 
           <div className="grid md:grid-cols-2 gap-6">
           {filteredOpportunities.map((opp) => {
-            const freshness = getFreshnessLabel(opp.created_at)
             const score = opp.feasibility_score || (70 + (opp.id % 20))
             const growthRate = opp.growth_rate || (5 + (opp.id % 25))
             const marketSize = opp.ai_market_size_estimate || opp.market_size || '$50M'
-            const competition = opp.ai_competition_level || 'Medium'
             const validations = opp.validation_count || 0
-            const isTrending = growthRate > 20 || validations > 50
             const accessInfo = accessInfoQuery.data?.[opp.id]
             const daysUntilUnlock = accessInfo?.days_until_unlock ?? 0
             const isAccessible = accessInfo?.is_accessible ?? true
+            const workingOnCount = accessInfo?.working_on_count ?? 0
 
             return (
               <div 
@@ -356,22 +355,22 @@ export default function Discover() {
                 onClick={() => navigate(isPaidUser ? `/opportunity/${opp.id}/hub` : `/opportunity/${opp.id}`)}
                 className="bg-white rounded-xl border-2 border-stone-200 hover:border-stone-900 transition-all p-6 cursor-pointer group"
               >
-                {/* Header: Category + Trending + Score */}
+                {/* Header: Category + Unlock Status + Score */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
                         {opp.category}
                       </span>
-                      {isTrending && (
-                        <span className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                          <TrendingUp className="w-3 h-3" />
-                          Trending
+                      {!isAccessible && daysUntilUnlock > 0 && (
+                        <span className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                          <Lock className="w-3 h-3" />
+                          Unlocks in {daysUntilUnlock}d
                         </span>
                       )}
-                      {competition.toLowerCase() === 'low' && (
+                      {isAccessible && (
                         <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                          Low Competition
+                          Unlocked
                         </span>
                       )}
                     </div>
@@ -404,20 +403,10 @@ export default function Discover() {
                     <div className="text-lg font-bold text-emerald-600">+{growthRate}%</div>
                   </div>
                   <div className="bg-stone-50 rounded-lg p-3">
-                    <div className="text-xs text-stone-500 mb-1">Age</div>
-                    <div className="text-sm font-bold text-stone-900">{freshness.label}</div>
+                    <div className="text-xs text-stone-500 mb-1">Working On</div>
+                    <div className="text-lg font-bold text-stone-900">{workingOnCount}</div>
                   </div>
                 </div>
-
-                {/* Unlock Timing Banner */}
-                {!isAccessible && daysUntilUnlock > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg mb-4">
-                    <Lock className="w-4 h-4 text-amber-600" />
-                    <span className="text-sm text-amber-700">
-                      Unlocks for your tier in <strong>{daysUntilUnlock}</strong> days
-                    </span>
-                  </div>
-                )}
 
                 {/* Footer */}
                 <div className="pt-4 border-t border-stone-200 flex items-center justify-between">

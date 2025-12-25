@@ -412,12 +412,18 @@ async def get_batch_access_info(
 ):
     """Get access info for multiple opportunities at once (for cards display)"""
     from app.models.subscription import SubscriptionTier
+    from app.models.workspace import Workspace
     
     result = {}
     for opp_id in opportunity_ids[:50]:  # Limit to 50 at a time
         opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
         if not opportunity:
             continue
+        
+        # Count how many people are working on this opportunity
+        workspace_count = db.query(func.count(Workspace.id)).filter(
+            Workspace.opportunity_id == opp_id
+        ).scalar() or 0
             
         ent = get_opportunity_entitlements(opportunity, current_user, db)
         result[opp_id] = {
@@ -428,7 +434,8 @@ async def get_batch_access_info(
             "can_pay_to_unlock": ent.can_pay_to_unlock,
             "unlock_price": ent.unlock_price,
             "user_tier": current_user.tier if current_user else "free",
-            "content_state": ent.content_state
+            "content_state": ent.content_state,
+            "working_on_count": workspace_count
         }
     
     return result
