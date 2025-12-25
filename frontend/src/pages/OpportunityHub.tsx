@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, BarChart3, Briefcase, CheckCircle, CheckCircle2, ChevronDown, ChevronRight, 
-  Lightbulb, Loader2, MapPin, MessageSquare, PanelLeftClose, PanelLeftOpen,
+  Download, FileText, Lightbulb, Loader2, MapPin, MessageSquare, PanelLeftClose, PanelLeftOpen,
   PenLine, Plus, Rocket, Search, Send, Sparkles, 
   Target, Trash2, TrendingUp, Users, X, Zap
 } from 'lucide-react'
@@ -71,7 +71,7 @@ type Workspace = {
   opportunity: { id: number; title: string; category: string } | null
   notes: WorkspaceNote[]
   tasks: WorkspaceTask[]
-  documents: { id: number; name: string; doc_type: string | null }[]
+  documents: { id: number; name: string; doc_type: string | null; content: string | null; created_at: string }[]
 }
 
 type RecommendedExpert = {
@@ -128,7 +128,7 @@ export default function OpportunityHub() {
   const queryClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState<WorkspaceStatus>('researching')
-  const [workspaceSubTab, setWorkspaceSubTab] = useState<'tasks' | 'notes'>('tasks')
+  const [workspaceSubTab, setWorkspaceSubTab] = useState<'tasks' | 'notes' | 'docs'>('tasks')
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newNoteContent, setNewNoteContent] = useState('')
   const [aiMessage, setAiMessage] = useState('')
@@ -421,7 +421,76 @@ export default function OpportunityHub() {
     },
   })
 
+  const saveReportMutation = useMutation({
+    mutationFn: async (data: { name: string; doc_type: string; content: string }) => {
+      if (!workspaceId) throw new Error('No workspace')
+      const res = await fetch(`/api/v1/workspaces/${workspaceId}/documents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Failed to save report')
+      return await res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceId] })
+    },
+  })
+
+  const deleteDocMutation = useMutation({
+    mutationFn: async (docId: number) => {
+      const res = await fetch(`/api/v1/workspaces/${workspaceId}/documents/${docId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Failed to delete document')
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceId] })
+    },
+  })
+
   const chatMessages = chatHistoryQuery.data || []
+
+  const generatePhaseReport = (phase: 'validate' | 'research' | 'plan' | 'execute') => {
+    if (!opp) return
+    const now = new Date().toLocaleDateString()
+    let content = ''
+    let title = ''
+    
+    if (phase === 'validate') {
+      title = `Validation Report - ${now}`
+      const checkedItems = validationChecklistItems.filter(item => validationChecked[item])
+      content = `# Validation Report\n\n**Opportunity:** ${opp.title}\n**Date:** ${now}\n**Completion:** ${checkedItems.length}/${validationChecklistItems.length} items\n\n## Validation Checklist\n${validationChecklistItems.map(item => `- [${validationChecked[item] ? 'x' : ' '}] ${item}`).join('\n')}\n\n## Key Metrics\n- Community Interest: ${opp.validation_count} validations\n- Severity Score: ${opp.severity}/5\n- Feasibility: ${opp.feasibility_score ? Math.round(opp.feasibility_score) + '%' : 'N/A'}\n\n## AI Insights\n${opp.ai_summary || 'No AI analysis available'}`
+    } else if (phase === 'research') {
+      title = `Research Report - ${now}`
+      content = `# Market Research Report\n\n**Opportunity:** ${opp.title}\n**Date:** ${now}\n\n## Market Size\n${opp.ai_market_size_estimate || opp.market_size || 'TBD'}\n\n## Target Audience\n${opp.ai_target_audience || 'TBD'}\n\n## Competition Level\n${opp.ai_competition_level || 'TBD'}\n\n## Problem Statement\n${opp.ai_problem_statement || opp.description}\n\n## Key Risks\n${opp.ai_key_risks?.map(r => `- ${r}`).join('\n') || 'Not analyzed'}`
+    } else if (phase === 'plan') {
+      title = `Business Plan - ${now}`
+      const filledCanvas = canvasItemsBase.filter(c => canvasData[c.key]?.trim())
+      content = `# Business Plan\n\n**Opportunity:** ${opp.title}\n**Date:** ${now}\n**Canvas Completion:** ${filledCanvas.length}/${canvasItemsBase.length} sections\n\n## Business Model Canvas\n${canvasItemsBase.map(c => `### ${c.title}\n${canvasData[c.key] || '_Not defined_'}`).join('\n\n')}\n\n## Suggested Business Models\n${opp.ai_business_model_suggestions?.map(s => `- ${s}`).join('\n') || 'Not available'}\n\n## Competitive Advantages\n${opp.ai_competitive_advantages?.map(a => `- ${a}`).join('\n') || 'Not available'}`
+    } else {
+      title = `Launch Report - ${now}`
+      const checkedLaunch = launchChecklistItems.filter(item => launchChecked[item])
+      content = `# Launch Execution Report\n\n**Opportunity:** ${opp.title}\n**Date:** ${now}\n**Launch Progress:** ${checkedLaunch.length}/${launchChecklistItems.length} items\n\n## Launch Checklist\n${launchChecklistItems.map(item => `- [${launchChecked[item] ? 'x' : ' '}] ${item}`).join('\n')}\n\n## Next Steps\n${opp.ai_next_steps?.map(s => `- ${s}`).join('\n') || 'Review your launch checklist and complete remaining items.'}`
+    }
+    
+    saveReportMutation.mutate({ name: title, doc_type: phase, content })
+  }
+
+  const downloadAsPdf = (doc: { name: string; content: string | null }) => {
+    if (!doc.content) return
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(`
+        <html><head><title>${doc.name}</title>
+        <style>body{font-family:system-ui,sans-serif;padding:40px;max-width:800px;margin:0 auto;line-height:1.6}h1,h2,h3{color:#1a1a1a}h1{border-bottom:2px solid #8b5cf6;padding-bottom:10px}h2{color:#6d28d9;margin-top:24px}h3{color:#7c3aed}ul{padding-left:20px}li{margin:4px 0}</style>
+        </head><body>${doc.content.replace(/\n/g, '<br>').replace(/^# (.+)/gm, '<h1>$1</h1>').replace(/^## (.+)/gm, '<h2>$1</h2>').replace(/^### (.+)/gm, '<h3>$1</h3>').replace(/^- \[x\] (.+)/gm, '<li style="color:green">✓ $1</li>').replace(/^- \[ \] (.+)/gm, '<li style="color:gray">○ $1</li>').replace(/^- (.+)/gm, '<li>$1</li>')}</body></html>
+      `)
+      printWindow.document.close()
+      printWindow.print()
+    }
+  }
 
   const opp = opportunityQuery.data
   const workspace = workspaceQuery.data
@@ -688,6 +757,15 @@ export default function OpportunityHub() {
                       <PenLine className="w-4 h-4" />
                       Notes ({workspace.notes.length})
                     </button>
+                    <button
+                      onClick={() => setWorkspaceSubTab('docs')}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        workspaceSubTab === 'docs' ? 'bg-white text-violet-700 shadow-sm' : 'text-stone-600 hover:bg-white/50'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Reports ({workspace.documents.length})
+                    </button>
                   </div>
 
                   <div className="p-4 bg-stone-50 rounded-lg">
@@ -869,6 +947,52 @@ export default function OpportunityHub() {
                         ))}
                         {workspace.notes.length === 0 && (
                           <p className="text-center py-4 text-stone-400 text-sm">No notes yet</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {workspaceSubTab === 'docs' && (
+                    <div className="bg-white rounded-lg border border-stone-200 p-4">
+                      <h4 className="font-medium text-stone-900 mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-violet-600" />
+                        Saved Reports
+                      </h4>
+                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                        {workspace.documents.map((doc) => (
+                          <div key={doc.id} className="bg-stone-50 rounded-lg p-3 border border-stone-100">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-stone-900">{doc.name}</p>
+                                <p className="text-xs text-stone-500 mt-0.5">
+                                  {doc.doc_type && <span className="capitalize">{doc.doc_type} Report</span>}
+                                  {' • '}{new Date(doc.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button 
+                                  onClick={() => downloadAsPdf(doc)}
+                                  className="p-1.5 text-violet-600 hover:bg-violet-50 rounded"
+                                  title="Download PDF"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <button 
+                                  onClick={() => deleteDocMutation.mutate(doc.id)} 
+                                  className="p-1.5 text-stone-400 hover:text-red-500 rounded"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {workspace.documents.length === 0 && (
+                          <div className="text-center py-6">
+                            <FileText className="w-8 h-8 mx-auto mb-2 text-stone-300" />
+                            <p className="text-sm text-stone-400">No reports saved yet</p>
+                            <p className="text-xs text-stone-400 mt-1">Generate reports from each workflow stage</p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1093,7 +1217,15 @@ export default function OpportunityHub() {
                     )}
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-between items-center">
+                    <button
+                      onClick={() => generatePhaseReport('validate')}
+                      disabled={saveReportMutation.isPending}
+                      className="px-4 py-2 border border-emerald-200 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-50 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <FileText className="w-4 h-4" />
+                      {saveReportMutation.isPending ? 'Saving...' : 'Save Report'}
+                    </button>
                     <button
                       onClick={() => setActiveTab('validating')}
                       className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
@@ -1330,7 +1462,7 @@ export default function OpportunityHub() {
                     )}
                   </div>
 
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <button
                       onClick={() => setActiveTab('researching')}
                       className="px-6 py-3 bg-stone-100 text-stone-700 rounded-lg font-medium hover:bg-stone-200 flex items-center gap-2"
@@ -1338,13 +1470,23 @@ export default function OpportunityHub() {
                       <ArrowLeft className="w-5 h-5" />
                       Back to Validate
                     </button>
-                    <button
-                      onClick={() => setActiveTab('planning')}
-                      className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
-                    >
-                      Continue to Plan
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => generatePhaseReport('research')}
+                        disabled={saveReportMutation.isPending}
+                        className="px-4 py-2 border border-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-50 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <FileText className="w-4 h-4" />
+                        {saveReportMutation.isPending ? 'Saving...' : 'Save Report'}
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('planning')}
+                        className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
+                      >
+                        Continue to Plan
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1599,7 +1741,7 @@ export default function OpportunityHub() {
                     )}
                   </div>
 
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <button
                       onClick={() => setActiveTab('validating')}
                       className="px-6 py-3 bg-stone-100 text-stone-700 rounded-lg font-medium hover:bg-stone-200 flex items-center gap-2"
@@ -1607,13 +1749,23 @@ export default function OpportunityHub() {
                       <ArrowLeft className="w-5 h-5" />
                       Back to Research
                     </button>
-                    <button
-                      onClick={() => setActiveTab('building')}
-                      className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
-                    >
-                      Continue to Execute
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => generatePhaseReport('plan')}
+                        disabled={saveReportMutation.isPending}
+                        className="px-4 py-2 border border-purple-200 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-50 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <FileText className="w-4 h-4" />
+                        {saveReportMutation.isPending ? 'Saving...' : 'Save Report'}
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('building')}
+                        className="px-6 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center gap-2"
+                      >
+                        Continue to Execute
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1817,7 +1969,7 @@ export default function OpportunityHub() {
                     )}
                   </div>
 
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <button
                       onClick={() => setActiveTab('planning')}
                       className="px-6 py-3 bg-stone-100 text-stone-700 rounded-lg font-medium hover:bg-stone-200 flex items-center gap-2"
@@ -1825,20 +1977,30 @@ export default function OpportunityHub() {
                       <ArrowLeft className="w-5 h-5" />
                       Back to Plan
                     </button>
-                    <button
-                      onClick={() => {
-                        if (!hasWorkspace) {
-                          createWorkspaceMutation.mutate()
-                        } else {
-                          setWorkspacePanelOpen(true)
-                        }
-                      }}
-                      disabled={createWorkspaceMutation.isPending}
-                      className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 flex items-center gap-2"
-                    >
-                      <Rocket className="w-5 h-5" />
-                      {hasWorkspace ? 'Open Workspace & Start' : 'Start Execution'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => generatePhaseReport('execute')}
+                        disabled={saveReportMutation.isPending}
+                        className="px-4 py-2 border border-amber-200 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <FileText className="w-4 h-4" />
+                        {saveReportMutation.isPending ? 'Saving...' : 'Save Report'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!hasWorkspace) {
+                            createWorkspaceMutation.mutate()
+                          } else {
+                            setWorkspacePanelOpen(true)
+                          }
+                        }}
+                        disabled={createWorkspaceMutation.isPending}
+                        className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 flex items-center gap-2"
+                      >
+                        <Rocket className="w-5 h-5" />
+                        {hasWorkspace ? 'Open Workspace & Start' : 'Start Execution'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
