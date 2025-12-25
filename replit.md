@@ -111,6 +111,15 @@ Total estimated timeline: 14 weeks (3.5 months)
 
 ## Recent Changes (December 25, 2025)
 
+- **Phase 2 Enhancement Complete:** Opportunity Lifecycle States
+  - LifecycleState enum with 8 states: discovered, saved, analyzing, planning, executing, launched, paused, archived
+  - lifecycle_state, state_changed_at, paused_reason, archived_reason columns on watchlist_items
+  - Lifecycle API endpoints: GET /states, GET /summary, GET /by-state, POST /transition
+  - LifecycleTimeline React component with compact and full views
+  - Visual journey timeline showing progression through stages
+  - Workspace-to-lifecycle sync: workspace status changes automatically update lifecycle state
+  - Journey Stages summary panel in Saved page sidebar
+  - PAUSED and ARCHIVED states with reason input dialogs
 - **Phase 1 Enhancement Complete:** Collections, Tags, and Notes system
   - UserCollection model for organizing saved opportunities into folders
   - UserTag model with custom colors for labeling opportunities

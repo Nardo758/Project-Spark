@@ -3,6 +3,7 @@ import { Bookmark, Trash2, FolderPlus, Tag, StickyNote, Plus, X, Check } from 'l
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useState, useRef, useEffect } from 'react'
+import { LifecycleTimeline, LifecycleStateBadge, type LifecycleState } from '../components/LifecycleTimeline'
 
 type Opportunity = {
   id: number
@@ -25,6 +26,8 @@ type WatchlistItem = {
   opportunity_id: number
   created_at: string
   collection_id?: number | null
+  lifecycle_state?: LifecycleState
+  state_changed_at?: string | null
   opportunity?: Opportunity | null
   tags?: UserTag[]
 }
@@ -396,6 +399,32 @@ export default function Saved() {
               )}
             </div>
           </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mt-4">
+            <h3 className="font-semibold text-gray-900 mb-3">Journey Stages</h3>
+            <div className="space-y-2">
+              {[
+                { state: 'saved', label: 'Saved', color: '#3b82f6' },
+                { state: 'analyzing', label: 'Analyzing', color: '#8b5cf6' },
+                { state: 'planning', label: 'Planning', color: '#f59e0b' },
+                { state: 'executing', label: 'Executing', color: '#10b981' },
+                { state: 'launched', label: 'Launched', color: '#22c55e' },
+                { state: 'paused', label: 'Paused', color: '#f97316' },
+                { state: 'archived', label: 'Archived', color: '#9ca3af' },
+              ].map(({ state, label, color }) => {
+                const count = items.filter(i => (i.lifecycle_state || 'saved') === state).length
+                return (
+                  <div key={state} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                      <span className="text-sm text-gray-700">{label}</span>
+                    </div>
+                    <span className="text-sm text-gray-500">{count}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="flex-1">
@@ -427,7 +456,13 @@ export default function Saved() {
                 <div key={item.id} className="bg-white rounded-xl border border-gray-200 p-6">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <LifecycleTimeline 
+                          watchlistId={item.id} 
+                          currentState={item.lifecycle_state || 'saved'} 
+                          stateChangedAt={item.state_changed_at || undefined}
+                          compact 
+                        />
                         <span className="text-sm text-gray-500">{opp?.category || '—'}</span>
                         {itemTags.map((tag) => (
                           <span

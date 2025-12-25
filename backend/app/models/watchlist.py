@@ -1,7 +1,31 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, UniqueConstraint, Text, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, UniqueConstraint, Text, Table, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
+import enum
+
+
+class LifecycleState(str, enum.Enum):
+    DISCOVERED = "discovered"
+    SAVED = "saved"
+    ANALYZING = "analyzing"
+    PLANNING = "planning"
+    EXECUTING = "executing"
+    LAUNCHED = "launched"
+    PAUSED = "paused"
+    ARCHIVED = "archived"
+
+
+LIFECYCLE_TRANSITIONS = {
+    LifecycleState.DISCOVERED: [LifecycleState.SAVED],
+    LifecycleState.SAVED: [LifecycleState.ANALYZING, LifecycleState.ARCHIVED],
+    LifecycleState.ANALYZING: [LifecycleState.PLANNING, LifecycleState.PAUSED, LifecycleState.ARCHIVED],
+    LifecycleState.PLANNING: [LifecycleState.EXECUTING, LifecycleState.ANALYZING, LifecycleState.PAUSED, LifecycleState.ARCHIVED],
+    LifecycleState.EXECUTING: [LifecycleState.LAUNCHED, LifecycleState.PLANNING, LifecycleState.PAUSED, LifecycleState.ARCHIVED],
+    LifecycleState.LAUNCHED: [LifecycleState.PAUSED, LifecycleState.ARCHIVED],
+    LifecycleState.PAUSED: [LifecycleState.SAVED, LifecycleState.ANALYZING, LifecycleState.PLANNING, LifecycleState.EXECUTING, LifecycleState.LAUNCHED, LifecycleState.ARCHIVED],
+    LifecycleState.ARCHIVED: [LifecycleState.SAVED],
+}
 
 
 watchlist_item_tags = Table(
@@ -82,6 +106,11 @@ class WatchlistItem(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False)
     collection_id = Column(Integer, ForeignKey("user_collections.id", ondelete="SET NULL"), nullable=True, index=True)
+    
+    lifecycle_state = Column(SAEnum(LifecycleState), default=LifecycleState.SAVED, nullable=False, index=True)
+    state_changed_at = Column(DateTime(timezone=True), server_default=func.now())
+    paused_reason = Column(String(255), nullable=True)
+    archived_reason = Column(String(255), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

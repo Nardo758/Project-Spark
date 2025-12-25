@@ -9,6 +9,17 @@ from app.db.database import get_db
 from app.models.workspace import UserWorkspace, WorkspaceNote, WorkspaceTask, WorkspaceDocument, WorkspaceStatus, TaskPriority
 from app.models.opportunity import Opportunity
 from app.models.user import User
+from app.models.watchlist import WatchlistItem, LifecycleState
+
+WORKSPACE_TO_LIFECYCLE = {
+    WorkspaceStatus.RESEARCHING: LifecycleState.ANALYZING,
+    WorkspaceStatus.VALIDATING: LifecycleState.ANALYZING,
+    WorkspaceStatus.PLANNING: LifecycleState.PLANNING,
+    WorkspaceStatus.BUILDING: LifecycleState.EXECUTING,
+    WorkspaceStatus.LAUNCHED: LifecycleState.LAUNCHED,
+    WorkspaceStatus.PAUSED: LifecycleState.PAUSED,
+    WorkspaceStatus.ARCHIVED: LifecycleState.ARCHIVED,
+}
 from app.schemas.workspace import (
     WorkspaceCreate, WorkspaceUpdate, Workspace as WorkspaceSchema,
     WorkspaceNoteCreate, WorkspaceNoteUpdate, WorkspaceNote as WorkspaceNoteSchema,
@@ -66,6 +77,14 @@ def create_workspace(
         WorkspaceTask(title="Connect with an expert", priority=TaskPriority.LOW, sort_order=5),
     ]
     new_workspace.tasks = default_tasks
+
+    watchlist_item = db.query(WatchlistItem).filter(
+        WatchlistItem.user_id == current_user.id,
+        WatchlistItem.opportunity_id == workspace_data.opportunity_id
+    ).first()
+    if watchlist_item:
+        watchlist_item.lifecycle_state = LifecycleState.ANALYZING
+        watchlist_item.state_changed_at = func.now()
 
     db.add(new_workspace)
     db.commit()
@@ -168,11 +187,27 @@ def update_workspace(
         )
 
     update_dict = update_data.model_dump(exclude_unset=True)
+    new_status = None
     for key, value in update_dict.items():
         if key == "status" and value:
-            setattr(workspace, key, WorkspaceStatus(value))
+            new_status = WorkspaceStatus(value)
+            setattr(workspace, key, new_status)
         else:
             setattr(workspace, key, value)
+
+    if new_status:
+        lifecycle_state = WORKSPACE_TO_LIFECYCLE.get(new_status)
+        if lifecycle_state:
+            watchlist_item = db.query(WatchlistItem).filter(
+                WatchlistItem.user_id == current_user.id,
+                WatchlistItem.opportunity_id == workspace.opportunity_id
+            ).first()
+            if watchlist_item:
+                watchlist_item.lifecycle_state = lifecycle_state
+                watchlist_item.state_changed_at = func.now()
+                if lifecycle_state not in [LifecycleState.PAUSED, LifecycleState.ARCHIVED]:
+                    watchlist_item.paused_reason = None
+                    watchlist_item.archived_reason = None
 
     workspace.last_activity_at = func.now()
     db.commit()
