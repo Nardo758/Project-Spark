@@ -454,7 +454,7 @@ export default function OpportunityHub() {
                 }
               }}
               disabled={createWorkspaceMutation.isPending}
-              className={`ml-auto px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              className={`px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 workspacePanelOpen 
                   ? 'text-violet-600 bg-violet-50' 
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
@@ -474,7 +474,7 @@ export default function OpportunityHub() {
           </div>
 
           <div className="flex">
-            {workspacePanelOpen && workspace && (
+            {workspacePanelOpen && hasWorkspace && (
               <div className="w-[380px] flex-shrink-0 border-r border-stone-200 bg-white">
                 <div className="sticky top-0 bg-white border-b border-stone-200 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -488,6 +488,14 @@ export default function OpportunityHub() {
                     <X className="w-5 h-5 text-stone-500" />
                   </button>
                 </div>
+                
+                {!workspace && (
+                  <div className="p-8 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-violet-600" />
+                  </div>
+                )}
+                
+                {workspace && (
                 
                 <div className="p-4 space-y-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
                   <div className="bg-stone-50 rounded-lg p-4">
@@ -768,6 +776,7 @@ export default function OpportunityHub() {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             )}
 
