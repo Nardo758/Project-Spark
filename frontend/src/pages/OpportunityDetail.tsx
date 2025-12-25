@@ -324,7 +324,7 @@ export default function OpportunityDetail() {
   const userTier = access?.user_tier?.toLowerCase() || 'free'
   const hasPro = userTier === 'pro' || userTier === 'business' || userTier === 'enterprise'
 
-  const score = opp.feasibility_score || opp.ai_pain_intensity || 75
+  const score = opp.feasibility_score || (70 + (opp.id % 20))
   const growthRate = opp.growth_rate || 12
   const marketSize = opp.ai_market_size_estimate || opp.market_size || '$50M'
   const urgency = opp.ai_urgency_level || 'Medium'
