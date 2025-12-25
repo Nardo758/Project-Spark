@@ -86,7 +86,8 @@ export function AICopilotPanel() {
       if (!res.ok) return []
       return res.json()
     },
-    enabled: isAuthenticated && isOpen
+    enabled: isAuthenticated,
+    staleTime: 60000
   })
 
   const chatMutation = useMutation({

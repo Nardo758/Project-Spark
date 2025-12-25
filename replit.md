@@ -111,6 +111,15 @@ Total estimated timeline: 14 weeks (3.5 months)
 
 ## Recent Changes (December 25, 2025)
 
+- **Phase 3 Enhancement Complete:** Persistent AI Copilot
+  - GlobalChatMessage and CopilotSuggestion database models for cross-page conversation persistence
+  - Copilot API router with chat, history, suggestions, and smart tagging endpoints
+  - AICopilotPanel component: collapsible floating panel visible on all pages
+  - Page context awareness: copilot knows current page (feed, saved, opportunity_detail, hub, etc.)
+  - Opportunity context: when viewing an opportunity, copilot has access to its details
+  - Lifecycle state awareness: copilot knows user's progress with saved opportunities
+  - AI-powered tag suggestions endpoint for opportunities
+  - Proactive suggestions display based on current context
 - **Phase 2 Enhancement Complete:** Opportunity Lifecycle States
   - LifecycleState enum with 8 states: discovered, saved, analyzing, planning, executing, launched, paused, archived
   - lifecycle_state, state_changed_at, paused_reason, archived_reason columns on watchlist_items
