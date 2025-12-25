@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, BarChart3, Briefcase, CheckCircle, CheckCircle2, ChevronDown, ChevronRight, Clock, 
-  Lightbulb, Loader2, MessageSquare, 
+  Lightbulb, Loader2, MapPin, MessageSquare, 
   PenLine, Plus, Rocket, Search, Send, Sparkles, 
   Target, Trash2, TrendingUp, Users, Zap
 } from 'lucide-react'
@@ -132,6 +132,7 @@ export default function OpportunityHub() {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newNoteContent, setNewNoteContent] = useState('')
   const [aiMessage, setAiMessage] = useState('')
+  const [validationPath, setValidationPath] = useState<'platform' | 'new_idea' | 'locations' | null>(null)
 
   const opportunityQuery = useQuery({
     queryKey: ['opportunity', opportunityId, isAuthenticated, token?.slice(-8)],
@@ -705,20 +706,20 @@ export default function OpportunityHub() {
                   <div className="p-4 bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg border border-violet-100">
                     <h4 className="text-sm font-semibold text-stone-900 mb-2 flex items-center gap-2">
                       <Lightbulb className="w-4 h-4 text-violet-600" />
-                      {workspace.status === 'researching' && 'Empathize Phase'}
-                      {workspace.status === 'validating' && 'Define Phase'}
-                      {workspace.status === 'planning' && 'Ideate Phase'}
-                      {workspace.status === 'building' && 'Prototype Phase'}
-                      {workspace.status === 'launched' && 'Test Phase'}
+                      {workspace.status === 'researching' && 'Step 1: Validate'}
+                      {workspace.status === 'validating' && 'Step 2: Research'}
+                      {workspace.status === 'planning' && 'Step 3: Plan'}
+                      {workspace.status === 'building' && 'Step 4: Execute'}
+                      {workspace.status === 'launched' && 'Launched'}
                       {(workspace.status === 'paused' || workspace.status === 'archived') && 'Paused'}
                     </h4>
                     <p className="text-xs text-stone-600 mb-3">
-                      {workspace.status === 'researching' && 'Understand your users. Conduct interviews, observe behaviors, gather insights.'}
-                      {workspace.status === 'validating' && 'Define the problem. Synthesize findings into a clear problem statement.'}
-                      {workspace.status === 'planning' && 'Generate ideas. Brainstorm solutions, explore business models.'}
-                      {workspace.status === 'building' && 'Build prototypes. Create MVPs, test with real users.'}
-                      {workspace.status === 'launched' && 'Test and iterate. Gather feedback, measure results, scale.'}
-                      {(workspace.status === 'paused' || workspace.status === 'archived') && 'Resume to continue your Design Thinking journey.'}
+                      {workspace.status === 'researching' && 'Validate the opportunity with platform data or research your own idea. Choose a validation path to proceed.'}
+                      {workspace.status === 'validating' && 'Deep market research: TAM/SAM/SOM analysis, competitive landscape, target customer profiles, and pricing strategies.'}
+                      {workspace.status === 'planning' && 'Generate your business plan: executive summary, go-to-market strategy, financial projections, and risk analysis.'}
+                      {workspace.status === 'building' && 'Execute your roadmap: validate with customers, build MVP, secure funding, recruit team, and launch.'}
+                      {workspace.status === 'launched' && 'Track progress, measure results, iterate on feedback, and scale your business.'}
+                      {(workspace.status === 'paused' || workspace.status === 'archived') && 'Resume to continue your business development journey.'}
                     </p>
                     <button
                       onClick={() => setWorkspaceSubTab('ai')}
@@ -730,6 +731,123 @@ export default function OpportunityHub() {
                 </div>
 
                 <div className="lg:col-span-3">
+                  {workspace.status === 'researching' && !validationPath && (
+                    <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
+                      <h3 className="text-lg font-semibold text-stone-900 mb-2">Step 1: Validate Opportunity</h3>
+                      <p className="text-sm text-stone-600 mb-6">What do you want to validate?</p>
+                      
+                      <div className="space-y-3">
+                        <button
+                          onClick={() => setValidationPath('platform')}
+                          className="w-full flex items-start gap-4 p-4 rounded-lg border-2 border-stone-200 hover:border-violet-400 hover:bg-violet-50 transition-all text-left group"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0 group-hover:bg-violet-200">
+                            <CheckCircle className="w-5 h-5 text-violet-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-stone-900 mb-1">Validate this platform opportunity</p>
+                            <p className="text-sm text-stone-500">Use OppGrid's validated data as foundation. Recommended for this opportunity.</p>
+                            <span className="inline-block mt-2 text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">Recommended</span>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => setValidationPath('new_idea')}
+                          className="w-full flex items-start gap-4 p-4 rounded-lg border-2 border-stone-200 hover:border-violet-400 hover:bg-violet-50 transition-all text-left group"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-200">
+                            <Lightbulb className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-stone-900 mb-1">Research a new idea</p>
+                            <p className="text-sm text-stone-500">Start from scratch with your own concept. Get AI-powered validation and market analysis.</p>
+                          </div>
+                        </button>
+
+                        <button
+                          onClick={() => setValidationPath('locations')}
+                          className="w-full flex items-start gap-4 p-4 rounded-lg border-2 border-stone-200 hover:border-violet-400 hover:bg-violet-50 transition-all text-left group"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-200">
+                            <MapPin className="w-5 h-5 text-amber-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-stone-900 mb-1">Find optimal locations for this opportunity</p>
+                            <p className="text-sm text-stone-500">Geographic analysis and market sizing. Discover the best areas to launch.</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {workspace.status === 'researching' && validationPath && (
+                    <div className="bg-white rounded-lg border border-stone-200 p-6 mb-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            validationPath === 'platform' ? 'bg-violet-100' : 
+                            validationPath === 'new_idea' ? 'bg-blue-100' : 'bg-amber-100'
+                          }`}>
+                            {validationPath === 'platform' && <CheckCircle className="w-5 h-5 text-violet-600" />}
+                            {validationPath === 'new_idea' && <Lightbulb className="w-5 h-5 text-blue-600" />}
+                            {validationPath === 'locations' && <MapPin className="w-5 h-5 text-amber-600" />}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-stone-900">
+                              {validationPath === 'platform' && 'Validating Platform Opportunity'}
+                              {validationPath === 'new_idea' && 'Researching New Idea'}
+                              {validationPath === 'locations' && 'Finding Optimal Locations'}
+                            </h3>
+                            <p className="text-sm text-stone-500">
+                              {validationPath === 'platform' && 'Using OppGrid data to validate this opportunity'}
+                              {validationPath === 'new_idea' && 'AI-powered research for your concept'}
+                              {validationPath === 'locations' && 'Geographic market analysis'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setValidationPath(null)}
+                          className="text-sm text-stone-500 hover:text-stone-700"
+                        >
+                          Change path
+                        </button>
+                      </div>
+
+                      <div className="bg-stone-50 rounded-lg p-4 mb-4">
+                        <h4 className="text-sm font-medium text-stone-900 mb-3">Opportunity Data from OppGrid</h4>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4 text-violet-500" />
+                            <span className="text-stone-600">{opp.validation_count} validated signals</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            <span className="text-stone-600">{opp.market_size || 'TBD'} market size</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-blue-500" />
+                            <span className="text-stone-600">{opp.ai_target_audience || 'Various demographics'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Target className="w-4 h-4 text-amber-500" />
+                            <span className="text-stone-600">{opp.ai_competition_level || 'Analysis pending'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          updateStatusMutation.mutate('validating')
+                          setValidationPath(null)
+                        }}
+                        className="w-full py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 flex items-center justify-center gap-2"
+                      >
+                        <Rocket className="w-4 h-4" />
+                        Continue to Research
+                      </button>
+                    </div>
+                  )}
+
                   {workspaceSubTab === 'tasks' && (
                     <div>
                       <div className="flex items-center gap-2 mb-4">
