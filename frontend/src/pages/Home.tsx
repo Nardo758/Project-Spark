@@ -17,6 +17,7 @@ interface PlatformStats {
   total_market_opportunity: string
   global_markets: number
   validated_opportunities?: number
+  reports_generated?: number
 }
 
 interface FeaturedOpportunity {
@@ -65,17 +66,20 @@ export default function Home() {
     <div className="bg-white">
       {/* Hero Section - Transform Market Signals */}
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50/50 via-white to-emerald-50/30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.08),transparent_50%)]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(16,185,129,0.08),transparent_50%)] pointer-events-none" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
           
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             {/* Left Column - Main Content */}
             <div>
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6">
+              {/* Badge - Clickable */}
+              <Link 
+                to="/discover"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6 hover:bg-emerald-200 transition-colors"
+              >
                 <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
                 {loading ? '...' : `${stats?.validated_ideas || 176}+ Validated Opportunities`}
-              </div>
+              </Link>
 
               {/* Headline */}
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight leading-tight mb-6">
@@ -89,56 +93,77 @@ export default function Home() {
                 Discover validated market opportunities backed by real consumer insights. From AI-powered validation to expert execution playbooks—everything you need to build what people actually want.
               </p>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap gap-4 mb-12">
+              {/* CTA Buttons Row */}
+              <div className="flex flex-wrap sm:flex-nowrap gap-2.5 mb-12">
+                {/* Validate Your Idea */}
                 <Link
-                  to="/idea-engine"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors"
+                  to="/build/reports"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors whitespace-nowrap"
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   Validate Your Idea
                 </Link>
-                <button
-                  onClick={() => {}}
-                  className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 hover:border-gray-400 text-gray-700 font-medium rounded-lg transition-colors bg-white"
+
+                {/* Identify a Location */}
+                <Link
+                  to="/build/reports"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors whitespace-nowrap"
                 >
-                  <Play className="w-5 h-5" />
+                  <Target className="w-3.5 h-3.5" />
+                  Identify a Location
+                </Link>
+
+                {/* Watch Demo */}
+                <Link
+                  to="/about"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+                >
+                  <Play className="w-3.5 h-3.5" />
                   Watch Demo
-                </button>
+                </Link>
               </div>
 
               {/* Stats Row */}
-              <div className="flex gap-12">
+              <div className="flex gap-10 -mt-4">
                 <div>
-                  <div className="text-3xl font-bold text-emerald-500">
+                  <div className="text-2xl font-bold text-emerald-500">
                     {loading ? '...' : stats?.validated_ideas || 176}
                   </div>
-                  <div className="text-sm text-gray-500">Validated Ideas</div>
+                  <div className="text-xs text-gray-500">Validated Ideas</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900">
                     {loading ? '...' : stats?.total_market_opportunity || '$463B+'}
                   </div>
-                  <div className="text-sm text-gray-500">Market Opportunity</div>
+                  <div className="text-xs text-gray-500">Market Opportunity</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900">
                     {loading ? '...' : stats?.global_markets || 5}
                   </div>
-                  <div className="text-sm text-gray-500">Global Markets</div>
+                  <div className="text-xs text-gray-500">Global Markets</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-emerald-500">
+                    {loading ? '...' : stats?.reports_generated || 50}
+                  </div>
+                  <div className="text-xs text-gray-500">Reports Generated</div>
                 </div>
               </div>
             </div>
 
             {/* Right Column - Featured Opportunity Card */}
             <div className="relative">
-              {/* Users want this badge */}
-              <div className="absolute -top-2 right-0 flex items-center gap-2 text-sm text-gray-500">
+              {/* Users want this badge - positioned above card */}
+              <div className="flex items-center justify-end gap-2 text-sm text-gray-500 mb-3">
                 <Users className="w-4 h-4" />
                 <span>{featuredOpp?.submissions || 612} users want this</span>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 mt-8">
+              <Link 
+                to={`/opportunity/${featuredOpp?.id || 1}`}
+                className="block bg-white rounded-2xl border border-gray-200 shadow-lg p-6 hover:shadow-xl hover:border-emerald-200 transition-all group"
+              >
                 {/* Card Header */}
                 <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
                   UNLOCK THIS WEEK'S TOP OPPORTUNITY
@@ -146,7 +171,7 @@ export default function Home() {
 
                 {/* Title and Score */}
                 <div className="flex items-start justify-between gap-4 mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900 leading-snug">
+                  <h3 className="text-xl font-semibold text-gray-900 leading-snug group-hover:text-emerald-600 transition-colors">
                     {featuredOpp?.title || "Finding mental health therapists who accept insurance is difficult"}
                   </h3>
                   <div className="flex-shrink-0 w-14 h-14 bg-emerald-50 border-2 border-emerald-200 rounded-xl flex items-center justify-center">
@@ -186,15 +211,12 @@ export default function Home() {
                   <span>+{featuredOpp?.growth || 32}% monthly growth</span>
                 </div>
 
-                {/* See More Link */}
-                <Link 
-                  to="/discover"
-                  className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
-                >
+                {/* See More */}
+                <div className="inline-flex items-center gap-2 text-emerald-600 group-hover:text-emerald-700 font-medium">
                   See More Opportunities
                   <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -347,7 +369,10 @@ export default function Home() {
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-gray-900 font-bold text-sm">OG</span>
               </div>
-              <span className="font-semibold text-xl">OppGrid</span>
+              <div className="flex flex-col">
+                <span className="font-semibold text-xl leading-tight">OppGrid</span>
+                <span className="text-[9px] text-gray-400 leading-tight">The Opportunity Intelligence Platform</span>
+              </div>
             </div>
             <div className="flex gap-6 text-sm text-gray-400 mb-4 md:mb-0">
               <Link to="/about" className="hover:text-white">About</Link>
