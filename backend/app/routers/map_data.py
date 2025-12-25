@@ -324,7 +324,7 @@ async def get_opportunity_map_data(
     - Migration flow indicators (when available)
     """
     from app.models.opportunity import Opportunity
-    from app.models.census_demographics import MarketGrowthTrajectory
+    from app.models.census_demographics import MarketGrowthTrajectory, CensusMigrationFlow
     from app.services.service_area_algorithm import ServiceAreaAlgorithm
     
     opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
@@ -459,6 +459,93 @@ async def get_opportunity_map_data(
             }
         })
     
+    state_fips = None
+    
+    state_fips_map = {
+        "Alabama": "01", "Alaska": "02", "Arizona": "04", "Arkansas": "05",
+        "California": "06", "Colorado": "08", "Connecticut": "09", "Delaware": "10",
+        "District of Columbia": "11", "Florida": "12", "Georgia": "13", "Hawaii": "15",
+        "Idaho": "16", "Illinois": "17", "Indiana": "18", "Iowa": "19", "Kansas": "20",
+        "Kentucky": "21", "Louisiana": "22", "Maine": "23", "Maryland": "24",
+        "Massachusetts": "25", "Michigan": "26", "Minnesota": "27", "Mississippi": "28",
+        "Missouri": "29", "Montana": "30", "Nebraska": "31", "Nevada": "32",
+        "New Hampshire": "33", "New Jersey": "34", "New Mexico": "35", "New York": "36",
+        "North Carolina": "37", "North Dakota": "38", "Ohio": "39", "Oklahoma": "40",
+        "Oregon": "41", "Pennsylvania": "42", "Rhode Island": "44", "South Carolina": "45",
+        "South Dakota": "46", "Tennessee": "47", "Texas": "48", "Utah": "49",
+        "Vermont": "50", "Virginia": "51", "Washington": "53", "West Virginia": "54",
+        "Wisconsin": "55", "Wyoming": "56"
+    }
+    
+    if hasattr(opportunity, 'state') and opportunity.state:
+        state_fips = state_fips_map.get(opportunity.state)
+    elif hasattr(opportunity, 'city') and opportunity.city:
+        city_val = opportunity.city.strip()
+        if ',' in city_val:
+            parts = city_val.split(',')
+            if len(parts) >= 2:
+                state_name = parts[-1].strip()
+                state_fips = state_fips_map.get(state_name)
+    
+    if state_fips:
+        migration_flows = db.query(CensusMigrationFlow).filter(
+            (CensusMigrationFlow.destination_state_fips == state_fips) |
+            (CensusMigrationFlow.origin_state_fips == state_fips)
+        ).order_by(CensusMigrationFlow.flow_count.desc()).limit(20).all()
+        
+        state_centroids = {
+            "01": [-86.9023, 32.3617], "02": [-152.4044, 61.3707], "04": [-111.0937, 34.0489],
+            "05": [-92.3731, 34.9697], "06": [-119.4179, 36.7783], "08": [-105.7821, 39.5501],
+            "09": [-72.7554, 41.6032], "10": [-75.5277, 38.9108], "11": [-77.0369, 38.9072],
+            "12": [-81.5158, 27.6648], "13": [-82.9001, 32.1656], "15": [-155.5828, 19.8968],
+            "16": [-114.7420, 44.0682], "17": [-89.3985, 40.6331], "18": [-86.1349, 40.2672],
+            "19": [-93.0977, 41.8780], "20": [-98.4842, 39.0119], "21": [-84.2700, 37.8393],
+            "22": [-91.9623, 30.9843], "23": [-69.4455, 45.2538], "24": [-76.6413, 39.0458],
+            "25": [-71.3824, 42.4072], "26": [-84.5360, 44.3148], "27": [-94.6859, 46.7296],
+            "28": [-89.3985, 32.3547], "29": [-91.8318, 37.9643], "30": [-110.3626, 46.8797],
+            "31": [-99.9018, 41.4925], "32": [-116.4194, 38.8026], "33": [-71.5724, 43.1939],
+            "34": [-74.4057, 40.0583], "35": [-105.8701, 34.5199], "36": [-75.4652, 43.2994],
+            "37": [-79.0193, 35.7596], "38": [-101.0020, 47.5515], "39": [-82.9071, 40.4173],
+            "40": [-97.0929, 35.0078], "41": [-120.5542, 43.8041], "42": [-77.1945, 41.2033],
+            "44": [-71.4774, 41.5801], "45": [-81.1637, 33.8361], "46": [-99.9018, 43.9695],
+            "47": [-86.5804, 35.5175], "48": [-99.9018, 31.9686], "49": [-111.0937, 39.3210],
+            "50": [-72.5778, 44.5588], "51": [-78.6569, 37.4316], "53": [-120.7401, 47.7511],
+            "54": [-80.4549, 38.5976], "55": [-89.6165, 43.7844], "56": [-107.2903, 43.0760]
+        }
+        
+        for flow in migration_flows:
+            origin_coords = state_centroids.get(flow.origin_state_fips)
+            dest_coords = state_centroids.get(flow.destination_state_fips)
+            
+            if origin_coords and dest_coords and origin_coords != dest_coords:
+                is_inbound = flow.destination_state_fips == state_fips
+                flow_intensity = min(1.0, (flow.flow_count or 0) / 50000)
+                line_width = 2 + (flow_intensity * 6)
+                
+                features.append({
+                    "type": "Feature",
+                    "id": f"migration_{flow.id}",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [origin_coords, dest_coords]
+                    },
+                    "properties": {
+                        "layer": "migration_flow",
+                        "origin_name": flow.origin_name,
+                        "destination_name": flow.destination_name,
+                        "flow_count": flow.flow_count,
+                        "flow_direction": "inbound" if is_inbound else "outbound",
+                        "flow_intensity": flow_intensity,
+                        "line_width": line_width,
+                        "year": flow.year,
+                        "style": {
+                            "lineColor": "#22C55E" if is_inbound else "#EF4444",
+                            "lineWidth": line_width,
+                            "animated": True
+                        }
+                    }
+                })
+    
     geojson = {
         "type": "FeatureCollection",
         "features": features
@@ -507,6 +594,16 @@ async def get_opportunity_map_data(
                 "type": "markers",
                 "visible": True,
                 "label": "Growth Trajectory"
+            },
+            "migration_flow": {
+                "type": "line",
+                "visible": True,
+                "label": "Migration Flows",
+                "animated": True,
+                "style": {
+                    "inboundColor": "#22C55E",
+                    "outboundColor": "#EF4444"
+                }
             }
         }
     }

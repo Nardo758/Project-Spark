@@ -86,6 +86,16 @@ interface LayerConfig {
     visible: boolean;
     label: string;
   };
+  migration_flow?: {
+    type: string;
+    visible: boolean;
+    label: string;
+    animated?: boolean;
+    style?: {
+      inboundColor: string;
+      outboundColor: string;
+    };
+  };
 }
 
 interface MapDataResponse {
@@ -99,6 +109,7 @@ interface LayerVisibility {
   heatmap: boolean;
   growth_trajectory: boolean;
   opportunity_center: boolean;
+  migration_flow: boolean;
 }
 
 interface OpportunityMapProps {
@@ -141,8 +152,10 @@ export default function OpportunityMap({
     service_area: true,
     heatmap: true,
     growth_trajectory: true,
-    opportunity_center: true
+    opportunity_center: true,
+    migration_flow: true
   });
+  const animationRef = useRef<number | null>(null);
 
   const fetchMapData = useCallback(async () => {
     try {
@@ -341,6 +354,101 @@ export default function OpportunityMap({
         });
       }
 
+      const migrationFeatures = mapData.geojson.features.filter(
+        f => f.properties.layer === 'migration_flow'
+      );
+      if (migrationFeatures.length > 0) {
+        map.current.addSource('migration-flows', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: migrationFeatures as any
+          },
+          lineMetrics: true
+        });
+
+        map.current.addLayer({
+          id: 'migration-flow-lines',
+          type: 'line',
+          source: 'migration-flows',
+          paint: {
+            'line-color': [
+              'match',
+              ['get', 'flow_direction'],
+              'inbound', '#22C55E',
+              'outbound', '#EF4444',
+              '#6B7280'
+            ],
+            'line-width': ['coalesce', ['get', 'line_width'], 3],
+            'line-opacity': 0.7,
+            'line-dasharray': [2, 2]
+          },
+          layout: {
+            'line-cap': 'round',
+            'line-join': 'round'
+          }
+        });
+
+        map.current.addLayer({
+          id: 'migration-flow-arrows',
+          type: 'circle',
+          source: 'migration-flows',
+          paint: {
+            'circle-radius': 4,
+            'circle-color': [
+              'match',
+              ['get', 'flow_direction'],
+              'inbound', '#22C55E',
+              'outbound', '#EF4444',
+              '#6B7280'
+            ],
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#ffffff',
+            'circle-opacity': 0.9
+          }
+        });
+
+        let step = 0;
+        const animateDash = () => {
+          step = (step + 1) % 100;
+          const dashPhase = step / 25;
+          if (map.current?.getLayer('migration-flow-lines')) {
+            map.current.setPaintProperty('migration-flow-lines', 'line-dasharray', [
+              2 + Math.sin(dashPhase) * 0.3,
+              2 + Math.cos(dashPhase) * 0.3
+            ]);
+          }
+          animationRef.current = requestAnimationFrame(animateDash);
+        };
+        animateDash();
+        
+        map.current.on('click', 'migration-flow-lines', (e) => {
+          if (!e.features || e.features.length === 0) return;
+          const feature = e.features[0];
+          const props = feature.properties;
+          
+          new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`
+              <div class="text-sm p-2">
+                <div class="font-semibold mb-1">${props?.flow_direction === 'inbound' ? '⬅️ Inbound' : '➡️ Outbound'}</div>
+                <div class="text-gray-300">${props?.origin_name} → ${props?.destination_name}</div>
+                <div class="text-gray-400 mt-1">${props?.flow_count?.toLocaleString() || 0} people/year</div>
+                ${props?.year ? `<div class="text-gray-500 text-xs">Year: ${props.year}</div>` : ''}
+              </div>
+            `)
+            .addTo(map.current!);
+        });
+
+        map.current.on('mouseenter', 'migration-flow-lines', () => {
+          if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.current.on('mouseleave', 'migration-flow-lines', () => {
+          if (map.current) map.current.getCanvas().style.cursor = '';
+        });
+      }
+
       map.current.on('click', 'growth-trajectory-circles', (e) => {
         if (!e.features || e.features.length === 0) return;
         const feature = e.features[0];
@@ -375,6 +483,10 @@ export default function OpportunityMap({
     });
 
     return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -389,7 +501,8 @@ export default function OpportunityMap({
       service_area: ['service-area-fill', 'service-area-outline'],
       heatmap: ['heatmap-layer'],
       growth_trajectory: ['growth-trajectory-circles'],
-      opportunity_center: ['opportunity-center-marker', 'opportunity-center-pulse']
+      opportunity_center: ['opportunity-center-marker', 'opportunity-center-pulse'],
+      migration_flow: ['migration-flow-lines', 'migration-flow-arrows']
     };
 
     Object.entries(layerVisibility).forEach(([key, visible]) => {
@@ -491,6 +604,15 @@ export default function OpportunityMap({
                   className="w-4 h-4 rounded border-stone-600 bg-stone-700 text-violet-500 focus:ring-violet-500"
                 />
                 <span className="text-sm text-stone-300">Opportunity Center</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={layerVisibility.migration_flow}
+                  onChange={() => toggleLayer('migration_flow')}
+                  className="w-4 h-4 rounded border-stone-600 bg-stone-700 text-violet-500 focus:ring-violet-500"
+                />
+                <span className="text-sm text-stone-300">Migration Flows</span>
               </label>
             </div>
           </div>
