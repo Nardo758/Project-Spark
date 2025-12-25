@@ -1221,7 +1221,7 @@ export default function OpportunityHub() {
                     <button
                       onClick={() => generatePhaseReport('validate')}
                       disabled={saveReportMutation.isPending}
-                      className="px-4 py-2 border border-emerald-200 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-50 flex items-center gap-2 disabled:opacity-50"
+                      className="px-4 py-2 border border-violet-200 text-violet-700 rounded-lg text-sm font-medium hover:bg-violet-50 flex items-center gap-2 disabled:opacity-50"
                     >
                       <FileText className="w-4 h-4" />
                       {saveReportMutation.isPending ? 'Saving...' : 'Save Report'}
