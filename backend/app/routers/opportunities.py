@@ -404,6 +404,36 @@ def get_featured_opportunity(db: Session = Depends(get_db)):
     }
 
 
+@router.post("/batch-access")
+async def get_batch_access_info(
+    opportunity_ids: List[int],
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional)
+):
+    """Get access info for multiple opportunities at once (for cards display)"""
+    from app.models.subscription import SubscriptionTier
+    
+    result = {}
+    for opp_id in opportunity_ids[:50]:  # Limit to 50 at a time
+        opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+        if not opportunity:
+            continue
+            
+        ent = get_opportunity_entitlements(opportunity, current_user, db)
+        result[opp_id] = {
+            "age_days": ent.age_days,
+            "days_until_unlock": ent.days_until_unlock,
+            "is_accessible": ent.is_accessible,
+            "is_unlocked": ent.is_unlocked,
+            "can_pay_to_unlock": ent.can_pay_to_unlock,
+            "unlock_price": ent.unlock_price,
+            "user_tier": current_user.tier if current_user else "free",
+            "content_state": ent.content_state
+        }
+    
+    return result
+
+
 @router.get("/{opportunity_id}/experts")
 def get_opportunity_experts(
     opportunity_id: int,

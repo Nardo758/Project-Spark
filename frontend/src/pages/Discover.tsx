@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Bookmark, Filter, FileText, ChevronRight, TrendingUp } from 'lucide-react'
+import { Search, Bookmark, Filter, FileText, ChevronRight, TrendingUp, Lock } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 
@@ -132,6 +132,28 @@ export default function Discover() {
     }
     return map
   }, [watchlistQuery.data])
+
+  const opportunityIds = useMemo(() => 
+    (opportunitiesQuery.data?.opportunities ?? []).map(o => o.id),
+    [opportunitiesQuery.data]
+  )
+
+  const accessInfoQuery = useQuery({
+    queryKey: ['batch-access', opportunityIds],
+    enabled: opportunityIds.length > 0,
+    queryFn: async (): Promise<Record<number, AccessInfo>> => {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers.Authorization = `Bearer ${token}`
+      const res = await fetch('/api/v1/opportunities/batch-access', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(opportunityIds),
+      })
+      if (!res.ok) return {}
+      return (await res.json()) as Record<number, AccessInfo>
+    },
+    staleTime: 60 * 1000,
+  })
 
   const addToWatchlist = useMutation({
     mutationFn: async (opportunityId: number) => {
@@ -324,6 +346,9 @@ export default function Discover() {
             const competition = opp.ai_competition_level || 'Medium'
             const validations = opp.validation_count || 0
             const isTrending = growthRate > 20 || validations > 50
+            const accessInfo = accessInfoQuery.data?.[opp.id]
+            const daysUntilUnlock = accessInfo?.days_until_unlock ?? 0
+            const isAccessible = accessInfo?.is_accessible ?? true
 
             return (
               <div 
@@ -383,6 +408,16 @@ export default function Discover() {
                     <div className="text-sm font-bold text-stone-900">{freshness.label}</div>
                   </div>
                 </div>
+
+                {/* Unlock Timing Banner */}
+                {!isAccessible && daysUntilUnlock > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                    <Lock className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm text-amber-700">
+                      Unlocks for your tier in <strong>{daysUntilUnlock}</strong> days
+                    </span>
+                  </div>
+                )}
 
                 {/* Footer */}
                 <div className="pt-4 border-t border-stone-200 flex items-center justify-between">
