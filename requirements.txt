@@ -91,3 +91,6 @@ stripe
 uvicorn
 apify-client
 google-search-results
+pytest
+pytest-asyncio
+httpx==0.25.2
