@@ -1,0 +1,2859 @@
+Map Integration Comparison for OppGrid
+Primary Recommendation: Mapbox GL JS ⭐
+Why Mapbox is the best fit:
+
+WebGL-powered performance - Handles thousands of census tracts without lag
+Native GeoJSON support - Census data drops right in
+Multi-layer architecture - Perfect for overlapping: signals + growth + migration + boundaries
+Built-in heatmaps - Your signal density layer works out of the box
+Professional aesthetics - Modern, polished look for enterprise customers
+Choropleth made easy - Population growth coloring is straightforward
+Vector tiles - Scales smoothly at any zoom level
+
+Pricing:
+
+Free tier: 50,000 map loads/month
+Pay-as-you-go: $5 per 1,000 loads after free tier
+Enterprise: Custom pricing with volume discounts
+
+Cost mitigation strategies:
+javascript// 1. Lazy load maps (don't load until user clicks)
+const OpportunityDetail = () => {
+  const [showMap, setShowMap] = useState(false);
+  
+  return (
+    <div>
+      {!showMap ? (
+        <div onClick={() => setShowMap(true)} 
+             style={{cursor: 'pointer', background: '#f3f4f6', height: 400}}>
+          <img src="/static-map-preview.png" />
+          <button>Load Interactive Map</button>
+        </div>
+      ) : (
+        <MapboxMap opportunityId={id} />
+      )}
+    </div>
+  );
+};
+
+// 2. Cache aggressively
+map.current = new mapboxgl.Map({
+  container: mapContainer.current,
+  style: 'mapbox://styles/mapbox/light-v11',
+  transformRequest: (url, resourceType) => {
+    // Cache tiles for 7 days
+    if (resourceType === 'Tile') {
+      return {
+        url: url,
+        headers: { 'Cache-Control': 'max-age=604800' }
+      };
+    }
+  }
+});
+
+// 3. Tier-gate features
+// Free tier: Static map image
+// Pro tier: Interactive map with basic layers
+// Business tier: Full interactive with all overlays
+// Enterprise tier: Custom 3D visualizations
+
+Alternative Options Compared
+Option 2: Leaflet.js (Open Source)
+Pros:
+
+✅ FREE - No usage limits, no vendor lock-in
+✅ Lightweight (~40KB gzipped vs Mapbox ~200KB)
+✅ Large plugin ecosystem
+✅ Simple API, easier learning curve
+✅ Works offline with self-hosted tiles
+
+Cons:
+
+❌ Canvas-based rendering (slower with large datasets)
+❌ Heatmaps require plugins (Leaflet.heat)
+❌ Choropleth requires manual color calculations
+❌ Less polished appearance out of box
+❌ Migration arrows require custom work
+
+Best for: Budget-constrained MVP, simple mapping needs
+Code Example:
+javascriptimport L from 'leaflet';
+import 'leaflet.heat';
+
+// Basic choropleth
+const style = (feature) => {
+  const growthRate = feature.properties.growth_rate_5yr;
+  return {
+    fillColor: getColor(growthRate),
+    weight: 1,
+    opacity: 1,
+    color: 'white',
+    fillOpacity: 0.6
+  };
+};
+
+const getColor = (rate) => {
+  return rate > 7 ? '#1a9850' :
+         rate > 3 ? '#a6d96a' :
+         rate > 0 ? '#fee08b' :
+                    '#d73027';
+};
+
+// Add choropleth layer
+L.geoJSON(censusData, { style: style }).addTo(map);
+
+// Add heatmap
+const heatPoints = signals.map(s => [s.lat, s.lng, s.severity]);
+L.heatLayer(heatPoints, {radius: 25}).addTo(map);
+
+Option 3: Deck.gl (Uber's Visualization Library)
+Pros:
+
+✅ Extreme performance - Millions of data points
+✅ WebGL-powered like Mapbox
+✅ Amazing 3D visualizations
+✅ Arc layer perfect for migration flows
+✅ Beautiful out of box
+
+Cons:
+
+❌ Requires base map (usually Mapbox)
+❌ Steeper learning curve
+❌ Heavier bundle size
+❌ Overkill for most use cases
+
+Best for: When you need to visualize millions of points, 3D terrain, or advanced data viz
+Code Example:
+javascriptimport DeckGL from '@deck.gl/react';
+import { GeoJsonLayer, HeatmapLayer, ArcLayer } from '@deck.gl/layers';
+
+const layers = [
+  // Population growth choropleth
+  new GeoJsonLayer({
+    id: 'growth-layer',
+    data: censusTracts,
+    getFillColor: d => getColorFromGrowth(d.properties.growth_rate),
+    getLineColor: [255, 255, 255],
+    getLineWidth: 1,
+    pickable: true
+  }),
+  
+  // Migration flow arcs
+  new ArcLayer({
+    id: 'migration-arcs',
+    data: migrationFlows,
+    getSourcePosition: d => d.origin,
+    getTargetPosition: d => d.destination,
+    getSourceColor: [0, 128, 255],
+    getTargetColor: [255, 0, 128],
+    getWidth: d => d.movers / 100
+  }),
+  
+  // Signal heatmap
+  new HeatmapLayer({
+    id: 'signal-heatmap',
+    data: signals,
+    getPosition: d => [d.lng, d.lat],
+    getWeight: d => d.severity,
+    radiusPixels: 30
+  })
+];
+
+<DeckGL
+  initialViewState={viewState}
+  controller={true}
+  layers={layers}
+/>
+
+Option 4: Google Maps Platform
+Pros:
+
+✅ Familiar to users
+✅ Excellent geocoding & Places API
+✅ Street View integration
+✅ Good documentation
+
+Cons:
+
+❌ Expensive - $7 per 1,000 map loads
+❌ Data visualization is harder
+❌ Not designed for choropleth/heatmaps
+❌ Older rendering technology
+❌ Less flexible styling
+
+Best for: When you need Google's geocoding/POI data, or users demand Google Maps specifically
+
+My Recommendation: Tiered Approach
+Use different mapping solutions by tier to maximize value and control costs:
+Free Tier: Static Map Images
+javascript// Generate static maps server-side (Mapbox Static Images API)
+// FREE up to 50,000 requests/month
+const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/geojson(${encodeURIComponent(JSON.stringify(serviceArea))})/${lng},${lat},${zoom},0/600x400@2x?access_token=${MAPBOX_TOKEN}`;
+
+<img src={staticMapUrl} alt="Service area map" />
+Cost: $0 (within free tier)
+Pro Tier: Leaflet Interactive
+javascript// Simple interactive map with Leaflet
+// No per-load costs
+// Basic choropleth + markers
+<LeafletMap 
+  growthData={censusTracts}
+  signals={problemSignals}
+  showHeatmap={false}  // Keep it simple
+/>
+Cost: $0 (Leaflet is free)
+Business Tier: Mapbox GL JS
+javascript// Full Mapbox experience
+// All layers: heatmap, choropleth, migration flows
+<MapboxMap 
+  opportunityId={id}
+  showAllLayers={true}
+  enable3D={false}
+/>
+Cost: Manageable with lazy loading + caching
+Enterprise Tier: Deck.gl + Mapbox
+javascript// Advanced 3D visualizations
+// Arc layers for migration
+// Hexagon aggregation
+// Custom animations
+<DeckGLMap 
+  opportunityId={id}
+  enable3D={true}
+  showMigrationArcs={true}
+  showHexbinAggregation={true}
+/>
+Cost: Justifiable for enterprise pricing
+
+Implementation Plan
+Phase 1: Start with Mapbox (Weeks 1-4)
+Why: Get to market fast with best-in-class experience
+bashnpm install mapbox-gl react-map-gl
+javascript// components/OpportunityMap.jsx
+import Map, { Source, Layer } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+const OpportunityMap = ({ opportunityId }) => {
+  const [viewport, setViewport] = useState({
+    longitude: -98,
+    latitude: 38.5,
+    zoom: 4
+  });
+  
+  const [mapData, setMapData] = useState(null);
+  
+  useEffect(() => {
+    fetch(`/api/opportunity/${opportunityId}/map-data`)
+      .then(res => res.json())
+      .then(setMapData);
+  }, [opportunityId]);
+  
+  return (
+    <Map
+      {...viewport}
+      onMove={evt => setViewport(evt.viewState)}
+      mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+      mapStyle="mapbox://styles/mapbox/light-v11"
+      style={{ width: '100%', height: 600 }}
+    >
+      {/* Service area boundary */}
+      <Source id="service-area" type="geojson" data={mapData?.serviceArea}>
+        <Layer
+          id="service-area-fill"
+          type="fill"
+          paint={{
+            'fill-color': '#6366f1',
+            'fill-opacity': 0.15
+          }}
+        />
+        <Layer
+          id="service-area-outline"
+          type="line"
+          paint={{
+            'fill-color': '#4f46e5',
+            'line-width': 3
+          }}
+        />
+      </Source>
+      
+      {/* Population growth choropleth */}
+      <Source id="growth-data" type="geojson" data={mapData?.growthChoropleth}>
+        <Layer
+          id="growth-fill"
+          type="fill"
+          paint={{
+            'fill-color': [
+              'interpolate', ['linear'],
+              ['get', 'growthRate'],
+              -5, '#d73027',
+              0, '#fee08b',
+              3, '#a6d96a',
+              7, '#1a9850'
+            ],
+            'fill-opacity': 0.6
+          }}
+        />
+      </Source>
+      
+      {/* Signal heatmap */}
+      <Source id="signals" type="geojson" data={mapData?.signals}>
+        <Layer
+          id="signal-heatmap"
+          type="heatmap"
+          paint={{
+            'heatmap-weight': [
+              'interpolate', ['linear'],
+              ['get', 'severity'],
+              1, 0,
+              10, 1
+            ],
+            'heatmap-color': [
+              'interpolate', ['linear'],
+              ['heatmap-density'],
+              0, 'rgba(124, 58, 237, 0)',
+              0.2, 'rgba(124, 58, 237, 0.4)',
+              0.4, 'rgba(251, 146, 60, 0.6)',
+              0.6, 'rgba(239, 68, 68, 0.8)',
+              1, 'rgba(220, 38, 38, 1)'
+            ]
+          }}
+        />
+      </Source>
+      
+      {/* Migration flows */}
+      <Source id="migration" type="geojson" data={mapData?.migrationFlows}>
+        <Layer
+          id="migration-lines"
+          type="line"
+          paint={{
+            'line-color': '#3b82f6',
+            'line-width': [
+              'interpolate', ['linear'],
+              ['get', 'movers'],
+              0, 1,
+              5000, 6
+            ],
+            'line-opacity': 0.7
+          }}
+        />
+      </Source>
+    </Map>
+  );
+};
+Phase 2: Add Leaflet Fallback (Week 5)
+For users who want to avoid Mapbox costs:
+javascript// components/LeafletMap.jsx
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+const LeafletMap = ({ growthData, signals }) => {
+  return (
+    <MapContainer 
+      center={[38.5, -98]} 
+      zoom={4} 
+      style={{ height: 600 }}
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; OpenStreetMap contributors'
+      />
+      
+      <GeoJSON 
+        data={growthData}
+        style={(feature) => ({
+          fillColor: getGrowthColor(feature.properties.growthRate),
+          weight: 1,
+          fillOpacity: 0.6
+        })}
+      />
+    </MapContainer>
+  );
+};
+Phase 3: Optimize Costs (Week 6)
+javascript// Cost optimization wrapper
+const SmartMap = ({ tier, opportunityId }) => {
+  // Free: Static image
+  if (tier === 'free') {
+    return <StaticMapImage opportunityId={opportunityId} />;
+  }
+  
+  // Pro: Leaflet
+  if (tier === 'pro') {
+    return <LeafletMap opportunityId={opportunityId} />;
+  }
+  
+  // Business/Enterprise: Mapbox
+  return <MapboxMap opportunityId={opportunityId} />;
+};
+
+Final Recommendation
+Start with Mapbox GL JS for these reasons:
+
+Best user experience - Your B2B customers expect polish
+Development velocity - Built-in features save development time
+Scalable - Can optimize costs with tiering later
+Future-proof - Easy to add Deck.gl for enterprise features
+Cost manageable - 50k free loads/month, then tier-gate
+
+Implementation strategy:
+
+Weeks 1-4: Build full Mapbox experience
+Week 5: Add lazy loading to reduce map loads
+Week 6: Implement tier-based rendering
+Future: Add Deck.gl for Enterprise 3D visualizations
+
+Want me to build out:
+
+Complete Mapbox integration with all layers?
+The tiered rendering system?
+Cost optimization scripts?
+Backend GeoJSON generation endpoints?
+yes12:02 PM2 / 2Architected comprehensive mapping system with frontend, backend, and optimization layers.The user wants me to build out:
+
+Complete Mapbox integration with all layers
+The tiered rendering system
+Cost optimization scripts
+Backend GeoJSON generation endpoints
+
+This is a comprehensive request. I should create a complete, production-ready implementation that includes:
+
+Frontend Components:
+
+Mapbox map component with all layers (signals, growth, migration, service area)
+Leaflet fallback component
+Static map component
+Tiered wrapper component
+
+
+Backend Endpoints:
+
+GeoJSON generation for service areas
+Population growth data
+Migration flows
+Signal clustering
+
+
+Database queries:
+
+Service area builder
+Population growth aggregation
+Migration flow queries
+
+
+Cost optimization:
+
+Lazy loading
+Caching strategies
+Tier-based rendering
+Static map generation
+
+
+Utilities:
+
+Color scale generators
+Geographic calculations
+Data transformations
+
+
+
+Let me build this out comprehensively with real, production-ready code.Complete Mapbox Integration for OppGrid
+I'll build you a production-ready mapping system with all layers, tiered rendering, and cost optimization.
+Part 1: Database Schema & Queries
+Step 1: Create Migration for Census Population Data
+sql-- migrations/001_census_population_growth.sql
+
+-- Population estimates with year-over-year growth
+CREATE TABLE census_population_estimates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  geography_type VARCHAR(50) NOT NULL, -- 'county', 'metro', 'place', 'tract'
+  geography_id VARCHAR(20) NOT NULL,
+  geography_name VARCHAR(200) NOT NULL,
+  state_code VARCHAR(2),
+  year INTEGER NOT NULL,
+  
+  -- Population metrics
+  population BIGINT NOT NULL,
+  population_change INTEGER,
+  population_change_pct DECIMAL(5,2),
+  
+  -- Components of change
+  births INTEGER,
+  deaths INTEGER,
+  natural_increase INTEGER,
+  domestic_migration INTEGER,
+  international_migration INTEGER,
+  net_migration INTEGER,
+  
+  -- Geospatial
+  geography_boundary GEOGRAPHY(POLYGON, 4326),
+  centroid GEOGRAPHY(POINT, 4326),
+  
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  UNIQUE(geography_type, geography_id, year)
+);
+
+CREATE INDEX idx_pop_est_geography ON census_population_estimates(geography_type, geography_id);
+CREATE INDEX idx_pop_est_year ON census_population_estimates(year DESC);
+CREATE INDEX idx_pop_est_boundary ON census_population_estimates USING GIST(geography_boundary);
+CREATE INDEX idx_pop_est_centroid ON census_population_estimates USING GIST(centroid);
+
+-- Migration flows between geographies
+CREATE TABLE census_migration_flows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  year INTEGER NOT NULL,
+  
+  -- Origin
+  origin_type VARCHAR(50) NOT NULL,
+  origin_id VARCHAR(20) NOT NULL,
+  origin_name VARCHAR(200) NOT NULL,
+  origin_geography GEOGRAPHY(POINT, 4326),
+  
+  -- Destination  
+  destination_type VARCHAR(50) NOT NULL,
+  destination_id VARCHAR(20) NOT NULL,
+  destination_name VARCHAR(200) NOT NULL,
+  destination_geography GEOGRAPHY(POINT, 4326),
+  
+  -- Flow metrics
+  movers INTEGER NOT NULL,
+  margin_of_error INTEGER,
+  
+  -- Demographic breakdown of movers
+  median_age DECIMAL(4,1),
+  median_income INTEGER,
+  bachelors_or_higher_pct DECIMAL(5,2),
+  
+  created_at TIMESTAMP DEFAULT NOW(),
+  
+  UNIQUE(year, origin_id, destination_id)
+);
+
+CREATE INDEX idx_migration_origin ON census_migration_flows(origin_id, year);
+CREATE INDEX idx_migration_dest ON census_migration_flows(destination_id, year);
+CREATE INDEX idx_migration_year ON census_migration_flows(year DESC);
+
+-- Pre-calculated growth trajectories (materialized view for performance)
+CREATE TABLE market_growth_trajectories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  geography_type VARCHAR(50) NOT NULL,
+  geography_id VARCHAR(20) NOT NULL,
+  geography_name VARCHAR(200) NOT NULL,
+  state_code VARCHAR(2),
+  
+  -- Historical population (6 years)
+  population_2019 BIGINT,
+  population_2020 BIGINT,
+  population_2021 BIGINT,
+  population_2022 BIGINT,
+  population_2023 BIGINT,
+  population_2024 BIGINT,
+  
+  -- Calculated growth metrics
+  cagr_5year DECIMAL(5,2), -- Compound annual growth rate
+  total_growth_5year INTEGER,
+  total_growth_5year_pct DECIMAL(5,2),
+  growth_category VARCHAR(20), -- 'rapid', 'growing', 'stable', 'declining'
+  
+  -- Migration trends (5-year averages)
+  avg_annual_in_migration INTEGER,
+  avg_annual_out_migration INTEGER,
+  net_migration_5year INTEGER,
+  
+  -- Geospatial
+  geography_boundary GEOGRAPHY(POLYGON, 4326),
+  centroid GEOGRAPHY(POINT, 4326),
+  
+  last_calculated TIMESTAMP DEFAULT NOW(),
+  
+  UNIQUE(geography_type, geography_id)
+);
+
+CREATE INDEX idx_growth_traj_geography ON market_growth_trajectories(geography_type, geography_id);
+CREATE INDEX idx_growth_traj_boundary ON market_growth_trajectories USING GIST(geography_boundary);
+CREATE INDEX idx_growth_traj_growth ON market_growth_trajectories(cagr_5year DESC);
+
+-- Function to calculate and update growth trajectories
+CREATE OR REPLACE FUNCTION refresh_growth_trajectories()
+RETURNS void AS $$
+BEGIN
+  TRUNCATE market_growth_trajectories;
+  
+  INSERT INTO market_growth_trajectories (
+    geography_type,
+    geography_id,
+    geography_name,
+    state_code,
+    population_2019,
+    population_2020,
+    population_2021,
+    population_2022,
+    population_2023,
+    population_2024,
+    cagr_5year,
+    total_growth_5year,
+    total_growth_5year_pct,
+    growth_category,
+    avg_annual_in_migration,
+    avg_annual_out_migration,
+    net_migration_5year,
+    geography_boundary,
+    centroid
+  )
+  SELECT 
+    p2024.geography_type,
+    p2024.geography_id,
+    p2024.geography_name,
+    p2024.state_code,
+    p2019.population as population_2019,
+    p2020.population as population_2020,
+    p2021.population as population_2021,
+    p2022.population as population_2022,
+    p2023.population as population_2023,
+    p2024.population as population_2024,
+    
+    -- Calculate CAGR: ((final/initial)^(1/years) - 1) * 100
+    ROUND(((POWER(p2024.population::DECIMAL / NULLIF(p2019.population, 0), 1.0/5.0) - 1) * 100)::NUMERIC, 2) as cagr_5year,
+    
+    (p2024.population - p2019.population) as total_growth_5year,
+    
+    ROUND((((p2024.population - p2019.population)::DECIMAL / NULLIF(p2019.population, 0)) * 100)::NUMERIC, 2) as total_growth_5year_pct,
+    
+    -- Categorize growth
+    CASE 
+      WHEN ((p2024.population - p2019.population)::DECIMAL / NULLIF(p2019.population, 0)) * 100 >= 7 THEN 'rapid'
+      WHEN ((p2024.population - p2019.population)::DECIMAL / NULLIF(p2019.population, 0)) * 100 >= 3 THEN 'growing'
+      WHEN ((p2024.population - p2019.population)::DECIMAL / NULLIF(p2019.population, 0)) * 100 >= 0 THEN 'stable'
+      ELSE 'declining'
+    END as growth_category,
+    
+    -- Migration averages (from migration flows table)
+    (SELECT ROUND(AVG(movers)) FROM census_migration_flows 
+     WHERE destination_id = p2024.geography_id 
+     AND year BETWEEN 2019 AND 2023) as avg_annual_in_migration,
+     
+    (SELECT ROUND(AVG(movers)) FROM census_migration_flows 
+     WHERE origin_id = p2024.geography_id 
+     AND year BETWEEN 2019 AND 2023) as avg_annual_out_migration,
+     
+    (SELECT SUM(
+      COALESCE((SELECT SUM(movers) FROM census_migration_flows WHERE destination_id = p2024.geography_id AND year = y), 0) -
+      COALESCE((SELECT SUM(movers) FROM census_migration_flows WHERE origin_id = p2024.geography_id AND year = y), 0)
+     ) FROM generate_series(2019, 2023) y) as net_migration_5year,
+    
+    p2024.geography_boundary,
+    p2024.centroid
+    
+  FROM census_population_estimates p2024
+  LEFT JOIN census_population_estimates p2023 ON p2024.geography_id = p2023.geography_id AND p2023.year = 2023
+  LEFT JOIN census_population_estimates p2022 ON p2024.geography_id = p2022.geography_id AND p2022.year = 2022
+  LEFT JOIN census_population_estimates p2021 ON p2024.geography_id = p2021.geography_id AND p2021.year = 2021
+  LEFT JOIN census_population_estimates p2020 ON p2024.geography_id = p2020.geography_id AND p2020.year = 2020
+  LEFT JOIN census_population_estimates p2019 ON p2024.geography_id = p2019.geography_id AND p2019.year = 2019
+  WHERE p2024.year = 2024
+  AND p2019.population IS NOT NULL;
+  
+END;
+$$ LANGUAGE plpgsql;
+Step 2: Service Area Builder Function
+sql-- Function to build optimal service area based on signals + demographics
+CREATE OR REPLACE FUNCTION build_service_area(
+  p_opportunity_id UUID,
+  p_min_population INTEGER DEFAULT 100000,
+  p_min_growth_rate DECIMAL DEFAULT 0.0,
+  p_target_income INTEGER DEFAULT 50000,
+  p_max_radius_miles INTEGER DEFAULT 50
+) RETURNS TABLE (
+  service_boundary GEOGRAPHY(POLYGON, 4326),
+  radius_miles INTEGER,
+  total_population BIGINT,
+  median_income INTEGER,
+  growth_rate_5yr DECIMAL,
+  target_households INTEGER,
+  market_size_usd BIGINT,
+  included_geographies JSONB
+) AS $$
+DECLARE
+  signal_centroid GEOGRAPHY(POINT, 4326);
+  current_radius INTEGER := 5;
+BEGIN
+  -- Find weighted centroid of signal cluster (weighted by severity)
+  WITH signal_points AS (
+    SELECT 
+      business_location,
+      severity::FLOAT / NULLIF(SUM(severity) OVER (), 0) as weight
+    FROM scraped_sources
+    WHERE opportunity_id = p_opportunity_id
+    AND business_location IS NOT NULL
+  )
+  SELECT ST_Centroid(
+    ST_Collect(
+      ARRAY(
+        SELECT ST_Translate(
+          business_location::geometry,
+          0, 0, weight
+        )::geography
+        FROM signal_points
+      )
+    )
+  )::geography
+  INTO signal_centroid
+  FROM signal_points
+  LIMIT 1;
+  
+  -- If no signals found, return null
+  IF signal_centroid IS NULL THEN
+    RETURN;
+  END IF;
+  
+  -- Expand radius until we meet all criteria or hit max radius
+  WHILE current_radius <= p_max_radius_miles LOOP
+    
+    WITH area_boundary AS (
+      SELECT ST_Buffer(signal_centroid::geography, current_radius * 1609.34)::geography as boundary
+    ),
+    area_tracts AS (
+      SELECT 
+        cg.geography_id,
+        cg.geography_name,
+        cg.geography_type,
+        c.B01003_001E as population,
+        c.B11001_001E as households,
+        c.B19013_001E as income,
+        g.cagr_5year as growth,
+        cg.geography_boundary
+      FROM census_geographies cg
+      JOIN census_acs_5year c ON cg.geography_id = c.geography_id
+      LEFT JOIN market_growth_trajectories g ON cg.geography_id = g.geography_id
+      WHERE ST_Intersects(cg.geography_boundary, (SELECT boundary FROM area_boundary))
+      AND cg.geography_type = 'tract'
+      AND c.year = 2023
+    ),
+    area_metrics AS (
+      SELECT 
+        (SELECT boundary FROM area_boundary) as boundary,
+        current_radius as radius,
+        SUM(population) as total_pop,
+        ROUND(AVG(income)) as avg_income,
+        ROUND(AVG(growth), 2) as avg_growth,
+        SUM(CASE WHEN income >= p_target_income THEN households ELSE 0 END) as target_hh,
+        SUM(households * income) as total_purchasing_power,
+        jsonb_agg(
+          jsonb_build_object(
+            'id', geography_id,
+            'name', geography_name,
+            'population', population,
+            'income', income,
+            'growth', growth
+          )
+        ) as geographies
+      FROM area_tracts
+    )
+    SELECT 
+      boundary,
+      radius,
+      total_pop,
+      avg_income,
+      avg_growth,
+      target_hh,
+      total_purchasing_power,
+      geographies
+    INTO 
+      service_boundary,
+      radius_miles,
+      total_population,
+      median_income,
+      growth_rate_5yr,
+      target_households,
+      market_size_usd,
+      included_geographies
+    FROM area_metrics;
+    
+    -- Check if criteria met
+    IF total_population >= p_min_population 
+       AND (growth_rate_5yr >= p_min_growth_rate OR growth_rate_5yr IS NULL)
+       AND median_income >= p_target_income THEN
+      RETURN NEXT;
+      RETURN;
+    END IF;
+    
+    -- Expand radius
+    current_radius := current_radius + 5;
+  END LOOP;
+  
+  -- If we maxed out, return what we have
+  IF service_boundary IS NOT NULL THEN
+    RETURN NEXT;
+  END IF;
+  
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to generate GeoJSON for map layers
+CREATE OR REPLACE FUNCTION get_map_data(
+  p_opportunity_id UUID,
+  p_min_population INTEGER DEFAULT 100000,
+  p_min_growth DECIMAL DEFAULT 0.0
+) RETURNS JSONB AS $$
+DECLARE
+  result JSONB;
+  service_area_data RECORD;
+BEGIN
+  -- Get service area
+  SELECT * INTO service_area_data
+  FROM build_service_area(p_opportunity_id, p_min_population, p_min_growth)
+  LIMIT 1;
+  
+  IF service_area_data IS NULL THEN
+    RETURN jsonb_build_object(
+      'error', 'No valid service area found',
+      'serviceArea', null,
+      'signals', null,
+      'growthChoropleth', null,
+      'migrationFlows', null
+    );
+  END IF;
+  
+  -- Build complete response
+  SELECT jsonb_build_object(
+    -- Service Area
+    'serviceArea', jsonb_build_object(
+      'type', 'Feature',
+      'geometry', ST_AsGeoJSON(service_area_data.service_boundary)::jsonb,
+      'properties', jsonb_build_object(
+        'radiusMiles', service_area_data.radius_miles,
+        'population', service_area_data.total_population,
+        'medianIncome', service_area_data.median_income,
+        'growthRate', service_area_data.growth_rate_5yr,
+        'targetHouseholds', service_area_data.target_households,
+        'marketSize', service_area_data.market_size_usd
+      )
+    ),
+    
+    -- Signal Points
+    'signals', (
+      SELECT jsonb_build_object(
+        'type', 'FeatureCollection',
+        'features', COALESCE(jsonb_agg(
+          jsonb_build_object(
+            'type', 'Feature',
+            'geometry', ST_AsGeoJSON(business_location)::jsonb,
+            'properties', jsonb_build_object(
+              'severity', severity,
+              'source', source_type,
+              'content', LEFT(raw_content, 200),
+              'date', scraped_at
+            )
+          )
+        ), '[]'::jsonb)
+      )
+      FROM scraped_sources
+      WHERE opportunity_id = p_opportunity_id
+      AND business_location IS NOT NULL
+    ),
+    
+    -- Growth Choropleth (Census Tracts)
+    'growthChoropleth', (
+      SELECT jsonb_build_object(
+        'type', 'FeatureCollection',
+        'features', COALESCE(jsonb_agg(
+          jsonb_build_object(
+            'type', 'Feature',
+            'geometry', ST_AsGeoJSON(cg.geography_boundary)::jsonb,
+            'properties', jsonb_build_object(
+              'id', cg.geography_id,
+              'name', cg.geography_name,
+              'population', g.population_2024,
+              'growthRate', g.cagr_5year,
+              'growthCategory', g.growth_category,
+              'medianIncome', c.B19013_001E,
+              'households', c.B11001_001E,
+              'educatedPop', c.B15003_022E + c.B15003_023E + c.B15003_024E + c.B15003_025E
+            )
+          )
+        ), '[]'::jsonb)
+      )
+      FROM census_geographies cg
+      JOIN market_growth_trajectories g ON cg.geography_id = g.geography_id
+      JOIN census_acs_5year c ON cg.geography_id = c.geography_id
+      WHERE ST_Intersects(cg.geography_boundary, service_area_data.service_boundary)
+      AND cg.geography_type = 'tract'
+      AND c.year = 2023
+    ),
+    
+    -- Migration Flows (top 20 inbound)
+    'migrationFlows', (
+      SELECT jsonb_build_object(
+        'type', 'FeatureCollection',
+        'features', COALESCE(jsonb_agg(
+          jsonb_build_object(
+            'type', 'Feature',
+            'geometry', ST_AsGeoJSON(
+              ST_MakeLine(origin_geography::geometry, destination_geography::geometry)
+            )::jsonb,
+            'properties', jsonb_build_object(
+              'origin', origin_name,
+              'destination', destination_name,
+              'movers', movers,
+              'medianAge', median_age,
+              'medianIncome', median_income,
+              'educated', bachelors_or_higher_pct
+            )
+          )
+        ), '[]'::jsonb)
+      )
+      FROM (
+        SELECT mf.*
+        FROM census_migration_flows mf
+        WHERE mf.destination_id IN (
+          SELECT cg.geography_id
+          FROM census_geographies cg
+          WHERE ST_Intersects(cg.geography_boundary, service_area_data.service_boundary)
+          AND cg.geography_type IN ('county', 'metro')
+        )
+        AND mf.year = 2023
+        AND mf.movers > 100
+        ORDER BY mf.movers DESC
+        LIMIT 20
+      ) top_flows
+    )
+  ) INTO result;
+  
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+Part 2: Backend API Endpoints
+javascript// backend/routes/maps.js
+const express = require('express');
+const router = express.Router();
+const { Pool } = require('pg');
+const mapboxStatic = require('@mapbox/mapbox-sdk/services/static');
+const mapboxClient = mapboxStatic({ accessToken: process.env.MAPBOX_TOKEN });
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+/**
+ * GET /api/opportunity/:id/map-data
+ * Returns GeoJSON for all map layers
+ */
+router.get('/opportunity/:id/map-data', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    min_population = 100000, 
+    min_growth = 0,
+    cache = 'true'
+  } = req.query;
+  
+  try {
+    // Check cache first (Redis recommended for production)
+    const cacheKey = `map:${id}:${min_population}:${min_growth}`;
+    
+    // Query database
+    const result = await pool.query(
+      'SELECT get_map_data($1, $2, $3) as data',
+      [id, parseInt(min_population), parseFloat(min_growth)]
+    );
+    
+    const mapData = result.rows[0].data;
+    
+    if (mapData.error) {
+      return res.status(404).json({ error: mapData.error });
+    }
+    
+    // Set cache headers
+    res.set('Cache-Control', 'public, max-age=3600'); // 1 hour
+    res.json(mapData);
+    
+  } catch (error) {
+    console.error('Map data error:', error);
+    res.status(500).json({ error: 'Failed to generate map data' });
+  }
+});
+
+/**
+ * GET /api/opportunity/:id/static-map
+ * Returns static map image URL (for free tier)
+ */
+router.get('/opportunity/:id/static-map', async (req, res) => {
+  const { id } = req.params;
+  const { width = 600, height = 400, zoom } = req.query;
+  
+  try {
+    // Get service area boundary
+    const result = await pool.query(`
+      SELECT 
+        ST_AsGeoJSON(service_boundary) as boundary,
+        ST_X(ST_Centroid(service_boundary::geometry)) as lng,
+        ST_Y(ST_Centroid(service_boundary::geometry)) as lat
+      FROM build_service_area($1)
+      LIMIT 1
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Service area not found' });
+    }
+    
+    const { boundary, lng, lat } = result.rows[0];
+    const boundaryGeoJSON = JSON.parse(boundary);
+    
+    // Calculate appropriate zoom if not provided
+    const calculatedZoom = zoom || calculateZoomLevel(boundaryGeoJSON);
+    
+    // Generate Mapbox static image URL
+    const staticUrl = mapboxClient.getStaticImage({
+      ownerId: 'mapbox',
+      styleId: 'light-v11',
+      width: parseInt(width),
+      height: parseInt(height),
+      position: {
+        coordinates: [lng, lat],
+        zoom: calculatedZoom
+      },
+      overlays: [
+        {
+          geoJson: {
+            type: 'Feature',
+            geometry: boundaryGeoJSON,
+            properties: {}
+          },
+          strokeColor: '4f46e5',
+          strokeWidth: 3,
+          fillColor: '6366f1',
+          fillOpacity: 0.2
+        }
+      ],
+      highRes: true
+    }).url();
+    
+    res.json({ 
+      url: staticUrl,
+      width: parseInt(width),
+      height: parseInt(height),
+      center: { lng, lat },
+      zoom: calculatedZoom
+    });
+    
+  } catch (error) {
+    console.error('Static map error:', error);
+    res.status(500).json({ error: 'Failed to generate static map' });
+  }
+});
+
+/**
+ * GET /api/opportunity/:id/service-area
+ * Returns just the service area polygon (lightweight)
+ */
+router.get('/opportunity/:id/service-area', async (req, res) => {
+  const { id } = req.params;
+  const { min_population = 100000, min_growth = 0 } = req.query;
+  
+  try {
+    const result = await pool.query(`
+      SELECT 
+        ST_AsGeoJSON(service_boundary) as geometry,
+        radius_miles,
+        total_population,
+        median_income,
+        growth_rate_5yr,
+        target_households,
+        market_size_usd
+      FROM build_service_area($1, $2, $3)
+      LIMIT 1
+    `, [id, parseInt(min_population), parseFloat(min_growth)]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Service area not found' });
+    }
+    
+    const row = result.rows[0];
+    
+    res.json({
+      type: 'Feature',
+      geometry: JSON.parse(row.geometry),
+      properties: {
+        radiusMiles: row.radius_miles,
+        population: row.total_population,
+        medianIncome: row.median_income,
+        growthRate: row.growth_rate_5yr,
+        targetHouseholds: row.target_households,
+        marketSize: row.market_size_usd
+      }
+    });
+    
+  } catch (error) {
+    console.error('Service area error:', error);
+    res.status(500).json({ error: 'Failed to calculate service area' });
+  }
+});
+
+/**
+ * POST /api/opportunity/:id/custom-area
+ * Allows user to draw custom service area and get demographics
+ */
+router.post('/opportunity/:id/custom-area', async (req, res) => {
+  const { id } = req.params;
+  const { geometry } = req.body; // GeoJSON polygon from user drawing
+  
+  try {
+    const result = await pool.query(`
+      WITH custom_area AS (
+        SELECT ST_GeomFromGeoJSON($1)::geography as boundary
+      ),
+      area_tracts AS (
+        SELECT 
+          c.B01003_001E as population,
+          c.B11001_001E as households,
+          c.B19013_001E as income,
+          g.cagr_5year as growth
+        FROM census_geographies cg
+        JOIN census_acs_5year c ON cg.geography_id = c.geography_id
+        LEFT JOIN market_growth_trajectories g ON cg.geography_id = g.geography_id
+        WHERE ST_Intersects(cg.geography_boundary, (SELECT boundary FROM custom_area))
+        AND cg.geography_type = 'tract'
+        AND c.year = 2023
+      )
+      SELECT 
+        SUM(population) as total_population,
+        SUM(households) as total_households,
+        ROUND(AVG(income)) as median_income,
+        ROUND(AVG(growth), 2) as avg_growth_rate,
+        SUM(households * income) as purchasing_power
+      FROM area_tracts
+    `, [JSON.stringify(geometry)]);
+    
+    res.json(result.rows[0]);
+    
+  } catch (error) {
+    console.error('Custom area error:', error);
+    res.status(500).json({ error: 'Failed to analyze custom area' });
+  }
+});
+
+// Helper function to calculate zoom level from GeoJSON bounds
+function calculateZoomLevel(geoJSON) {
+  // Simple bbox calculation
+  const coords = geoJSON.coordinates[0];
+  const lngs = coords.map(c => c[0]);
+  const lats = coords.map(c => c[1]);
+  
+  const lngSpan = Math.max(...lngs) - Math.min(...lngs);
+  const latSpan = Math.max(...lats) - Math.min(...lats);
+  const maxSpan = Math.max(lngSpan, latSpan);
+  
+  // Rough zoom calculation
+  if (maxSpan > 10) return 4;
+  if (maxSpan > 5) return 6;
+  if (maxSpan > 2) return 8;
+  if (maxSpan > 1) return 9;
+  if (maxSpan > 0.5) return 10;
+  return 11;
+}
+
+module.exports = router;
+Part 3: Frontend Components
+Mapbox Component (Business/Enterprise Tier)
+jsx// components/maps/MapboxOpportunityMap.jsx
+import { useEffect, useRef, useState } from 'react';
+import Map, { Source, Layer, Popup, NavigationControl, FullscreenControl } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+const MapboxOpportunityMap = ({ 
+  opportunityId,
+  userTier = 'business',
+  onServiceAreaChange 
+}) => {
+  const mapRef = useRef(null);
+  const [viewport, setViewport] = useState({
+    longitude: -98,
+    latitude: 38.5,
+    zoom: 4
+  });
+  
+  const [mapData, setMapData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [hoveredFeature, setHoveredFeature] = useState(null);
+  
+  const [filters, setFilters] = useState({
+    minPopulation: 100000,
+    minGrowth: 0,
+    showSignals: true,
+    showGrowth: true,
+    showMigration: userTier === 'enterprise', // Enterprise only
+    show3D: false // Enterprise only
+  });
+  
+  const [layerVisibility, setLayerVisibility] = useState({
+    signals: true,
+    growth: true,
+    migration: userTier === 'enterprise',
+    serviceArea: true
+  });
+  
+  // Load map data
+  useEffect(() => {
+    loadMapData();
+  }, [opportunityId, filters.minPopulation, filters.minGrowth]);
+  
+  const loadMapData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(
+        `/api/opportunity/${opportunityId}/map-data?` +
+        `min_population=${filters.minPopulation}&` +
+        `min_growth=${filters.minGrowth}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to load map data');
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setMapData(data);
+      
+      // Fit map to service area bounds
+      if (data.serviceArea && mapRef.current) {
+        const map = mapRef.current.getMap();
+        const coords = data.serviceArea.geometry.coordinates[0];
+        
+        const bounds = coords.reduce((bounds, coord) => {
+          return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(coords[0], coords[0]));
+        
+        map.fitBounds(bounds, {
+          padding: 50,
+          maxZoom: 12,
+          duration: 1000
+        });
+      }
+      
+      // Notify parent of service area metrics
+      if (onServiceAreaChange && data.serviceArea) {
+        onServiceAreaChange(data.serviceArea.properties);
+      }
+      
+    } catch (err) {
+      console.error('Map data error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle feature click
+  const handleClick = (event) => {
+    const feature = event.features?.[0];
+    if (feature) {
+      setSelectedFeature({
+        ...feature,
+        lngLat: event.lngLat
+      });
+    }
+  };
+  
+  // Handle feature hover
+  const handleHover = (event) => {
+    const feature = event.features?.[0];
+    if (feature) {
+      setHoveredFeature(feature);
+      // Change cursor
+      if (mapRef.current) {
+        mapRef.current.getMap().getCanvas().style.cursor = 'pointer';
+      }
+    } else {
+      setHoveredFeature(null);
+      if (mapRef.current) {
+        mapRef.current.getMap().getCanvas().style.cursor = '';
+      }
+    }
+  };
+  
+  if (error) {
+    return (
+      <div className="map-error" style={{
+        height: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f9fafb',
+        border: '1px solid #e5e7eb',
+        borderRadius: 8
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📍</div>
+          <div style={{ fontSize: 16, color: '#6b7280', marginBottom: 8 }}>
+            {error}
+          </div>
+          <button 
+            onClick={loadMapData}
+            style={{
+              padding: '8px 16px',
+              background: '#6366f1',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div style={{ position: 'relative', height: 600, borderRadius: 8, overflow: 'hidden' }}>
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255,255,255,0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="spinner">Loading map...</div>
+        </div>
+      )}
+      
+      <Map
+        ref={mapRef}
+        {...viewport}
+        onMove={evt => setViewport(evt.viewState)}
+        mapboxAccessToken={MAPBOX_TOKEN}
+        mapStyle="mapbox://styles/mapbox/light-v11"
+        style={{ width: '100%', height: '100%' }}
+        onClick={handleClick}
+        onMouseMove={handleHover}
+        interactiveLayerIds={[
+          'growth-fill',
+          'signal-points',
+          'migration-lines'
+        ]}
+      >
+        {/* Navigation Controls */}
+        <NavigationControl position="top-left" />
+        <FullscreenControl position="top-left" />
+        
+        {/* Service Area Layer */}
+        {mapData?.serviceArea && layerVisibility.serviceArea && (
+          <Source id="service-area" type="geojson" data={mapData.serviceArea}>
+            <Layer
+              id="service-area-fill"
+              type="fill"
+              paint={{
+                'fill-color': '#6366f1',
+                'fill-opacity': 0.15
+              }}
+            />
+            <Layer
+              id="service-area-outline"
+              type="line"
+              paint={{
+                'line-color': '#4f46e5',
+                'line-width': 3,
+                'line-dasharray': [2, 2]
+              }}
+            />
+          </Source>
+        )}
+        
+        {/* Population Growth Choropleth */}
+        {mapData?.growthChoropleth && layerVisibility.growth && (
+          <Source id="growth-data" type="geojson" data={mapData.growthChoropleth}>
+            <Layer
+              id="growth-fill"
+              type="fill"
+              paint={{
+                'fill-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'growthRate'],
+                  -10, '#d73027',  // Declining (red)
+                  -2, '#fc8d59',
+                  0, '#fee08b',    // Stable (yellow)
+                  2, '#d9ef8b',
+                  5, '#91cf60',
+                  10, '#1a9850'    // Rapid growth (green)
+                ],
+                'fill-opacity': [
+                  'case',
+                  ['boolean', ['feature-state', 'hover'], false],
+                  0.8,
+                  0.6
+                ]
+              }}
+            />
+            <Layer
+              id="growth-outline"
+              type="line"
+              paint={{
+                'line-color': '#ffffff',
+                'line-width': 0.5,
+                'line-opacity': 0.5
+              }}
+            />
+          </Source>
+        )}
+        
+        {/* Signal Heatmap & Points */}
+        {mapData?.signals && layerVisibility.signals && (
+          <Source id="signals" type="geojson" data={mapData.signals}>
+            {/* Heatmap at low zoom */}
+            <Layer
+              id="signal-heatmap"
+              type="heatmap"
+              maxzoom={11}
+              paint={{
+                'heatmap-weight': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'severity'],
+                  1, 0,
+                  10, 1
+                ],
+                'heatmap-intensity': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0, 1,
+                  11, 3
+                ],
+                'heatmap-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['heatmap-density'],
+                  0, 'rgba(124, 58, 237, 0)',
+                  0.2, 'rgba(124, 58, 237, 0.4)',
+                  0.4, 'rgba(251, 146, 60, 0.6)',
+                  0.6, 'rgba(239, 68, 68, 0.8)',
+                  1, 'rgba(220, 38, 38, 1)'
+                ],
+                'heatmap-radius': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0, 2,
+                  11, 20
+                ],
+                'heatmap-opacity': 0.8
+              }}
+            />
+            
+            {/* Points at high zoom */}
+            <Layer
+              id="signal-points"
+              type="circle"
+              minzoom={11}
+              paint={{
+                'circle-radius': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'severity'],
+                  1, 4,
+                  10, 12
+                ],
+                'circle-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'severity'],
+                  1, '#fbbf24',
+                  5, '#f97316',
+                  10, '#dc2626'
+                ],
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-width': 2,
+                'circle-opacity': 0.8
+              }}
+            />
+          </Source>
+        )}
+        
+        {/* Migration Flow Arrows (Enterprise only) */}
+        {mapData?.migrationFlows && layerVisibility.migration && userTier === 'enterprise' && (
+          <Source id="migration" type="geojson" data={mapData.migrationFlows}>
+            <Layer
+              id="migration-lines"
+              type="line"
+              paint={{
+                'line-color': '#3b82f6',
+                'line-width': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'movers'],
+                  0, 1,
+                  2000, 3,
+                  5000, 6,
+                  10000, 10
+                ],
+                'line-opacity': 0.6,
+                'line-gradient': [
+                  'interpolate',
+                  ['linear'],
+                  ['line-progress'],
+                  0, '#3b82f6',
+                  1, '#8b5cf6'
+                ]
+              }}
+              layout={{
+                'line-cap': 'round',
+                'line-join': 'round'
+              }}
+            />
+            
+            {/* Arrow heads */}
+            <Layer
+              id="migration-arrows"
+              type="symbol"
+              layout={{
+                'symbol-placement': 'line',
+                'symbol-spacing': 100,
+                'icon-image': 'arrow',
+                'icon-size': 0.5,
+                'icon-rotate': 90,
+                'icon-rotation-alignment': 'map',
+                'icon-allow-overlap': true,
+                'icon-ignore-placement': true
+              }}
+            />
+          </Source>
+        )}
+        
+        {/* Popup on click */}
+        {selectedFeature && (
+          <Popup
+            longitude={selectedFeature.lngLat.lng}
+            latitude={selectedFeature.lngLat.lat}
+            closeButton={true}
+            closeOnClick={false}
+            onClose={() => setSelectedFeature(null)}
+            anchor="bottom"
+          >
+            <div style={{ padding: 8, minWidth: 200 }}>
+              {selectedFeature.layer.id === 'growth-fill' && (
+                <>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: 14, fontWeight: 600 }}>
+                    {selectedFeature.properties.name}
+                  </h4>
+                  <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+                    <div><strong>Population:</strong> {selectedFeature.properties.population?.toLocaleString()}</div>
+                    <div><strong>5-Yr Growth:</strong> {selectedFeature.properties.growthRate?.toFixed(1)}%</div>
+                    <div><strong>Category:</strong> {selectedFeature.properties.growthCategory}</div>
+                    <div><strong>Median Income:</strong> ${selectedFeature.properties.medianIncome?.toLocaleString()}</div>
+                    <div><strong>Households:</strong> {selectedFeature.properties.households?.toLocaleString()}</div>
+                  </div>
+                </>
+              )}
+              
+              {selectedFeature.layer.id === 'signal-points' && (
+                <>
+                  <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+                    <div><strong>Severity:</strong> {selectedFeature.properties.severity}/10</div>
+                    <div><strong>Source:</strong> {selectedFeature.properties.source}</div>
+                    <div style={{ marginTop: 8, fontStyle: 'italic', color: '#6b7280' }}>
+                      "{selectedFeature.properties.content}..."
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {selectedFeature.layer.id === 'migration-lines' && (
+                <>
+                  <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+                    <div><strong>From:</strong> {selectedFeature.properties.origin}</div>
+                    <div><strong>To:</strong> {selectedFeature.properties.destination}</div>
+                    <div><strong>Movers:</strong> {selectedFeature.properties.movers?.toLocaleString()}/year</div>
+                    <div><strong>Median Age:</strong> {selectedFeature.properties.medianAge}</div>
+                    <div><strong>Median Income:</strong> ${selectedFeature.properties.medianIncome?.toLocaleString()}</div>
+                  </div>
+                </>
+              )}
+            </div>
+          </Popup>
+        )}
+      </Map>
+      
+      {/* Map Controls Overlay */}
+      <MapControls
+        mapData={mapData}
+        filters={filters}
+        setFilters={setFilters}
+        layerVisibility={layerVisibility}
+        setLayerVisibility={setLayerVisibility}
+        onRefresh={loadMapData}
+        userTier={userTier}
+      />
+      
+      {/* Legend */}
+      <MapLegend 
+        layerVisibility={layerVisibility}
+        userTier={userTier}
+      />
+    </div>
+  );
+};
+
+// Map Controls Component
+const MapControls = ({ 
+  mapData, 
+  filters, 
+  setFilters, 
+  layerVisibility,
+  setLayerVisibility,
+  onRefresh,
+  userTier
+}) => {
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 20,
+      right: 20,
+      background: 'white',
+      padding: 16,
+      borderRadius: 8,
+      boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+      width: 300,
+      maxHeight: 'calc(100% - 40px)',
+      overflow: 'auto'
+    }}>
+      <h4 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 600 }}>
+        Service Area Metrics
+      </h4>
+      
+      {mapData?.serviceArea && (
+        <div style={{ 
+          fontSize: 12, 
+          lineHeight: 1.8,
+          padding: 12,
+          background: '#f9fafb',
+          borderRadius: 6,
+          marginBottom: 16
+        }}>
+          <div><strong>Population:</strong> {mapData.serviceArea.properties.population?.toLocaleString()}</div>
+          <div><strong>Radius:</strong> {mapData.serviceArea.properties.radiusMiles} miles</div>
+          <div><strong>5-Yr Growth:</strong> {mapData.serviceArea.properties.growthRate?.toFixed(1)}%</div>
+          <div><strong>Median Income:</strong> ${mapData.serviceArea.properties.medianIncome?.toLocaleString()}</div>
+          <div><strong>Target HH:</strong> {mapData.serviceArea.properties.targetHouseholds?.toLocaleString()}</div>
+          <div><strong>Market Size:</strong> ${(mapData.serviceArea.properties.marketSize / 1000000).toFixed(1)}M</div>
+        </div>
+      )}
+      
+      <hr style={{ margin: '16px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+      
+      <h4 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600 }}>
+        Map Layers
+      </h4>
+      
+      <div style={{ fontSize: 12, marginBottom: 16 }}>
+        <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={layerVisibility.serviceArea}
+            onChange={e => setLayerVisibility({...layerVisibility, serviceArea: e.target.checked})}
+            style={{ marginRight: 8 }}
+          />
+          Service Area Boundary
+        </label>
+        
+        <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={layerVisibility.growth}
+            onChange={e => setLayerVisibility({...layerVisibility, growth: e.target.checked})}
+            style={{ marginRight: 8 }}
+          />
+          Population Growth
+        </label>
+        
+        <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={layerVisibility.signals}
+            onChange={e => setLayerVisibility({...layerVisibility, signals: e.target.checked})}
+            style={{ marginRight: 8 }}
+          />
+          Problem Signals
+        </label>
+        
+        {userTier === 'enterprise' && (
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={layerVisibility.migration}
+              onChange={e => setLayerVisibility({...layerVisibility, migration: e.target.checked})}
+              style={{ marginRight: 8 }}
+            />
+            Migration Flows
+            <span style={{ 
+              marginLeft: 8, 
+              fontSize: 10, 
+              background: '#fbbf24', 
+              color: 'white', 
+              padding: '2px 6px', 
+              borderRadius: 4,
+              fontWeight: 600
+            }}>
+              ENTERPRISE
+            </span>
+          </label>
+        )}
+      </div>
+      
+      <hr style={{ margin: '16px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+      
+      <h4 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600 }}>
+        Area Requirements
+      </h4>
+      
+      <div style={{ fontSize: 12 }}>
+        <label style={{ display: 'block', marginBottom: 8 }}>
+          Min Population: {filters.minPopulation.toLocaleString()}
+        </label>
+        <input
+          type="range"
+          min="25000"
+          max="500000"
+          step="25000"
+          value={filters.minPopulation}
+          onChange={e => setFilters({...filters, minPopulation: parseInt(e.target.value)})}
+          style={{ width: '100%', marginBottom: 16 }}
+        />
+        
+        <label style={{ display: 'block', marginBottom: 8 }}>
+          Min Growth Rate: {filters.minGrowth}%
+        </label>
+        <input
+          type="range"
+          min="-5"
+          max="15"
+          step="0.5"
+          value={filters.minGrowth}
+          onChange={e => setFilters({...filters, minGrowth: parseFloat(e.target.value)})}
+          style={{ width: '100%', marginBottom: 16 }}
+        />
+      </div>
+      
+      <button
+        onClick={onRefresh}
+        style={{
+          width: '100%',
+          padding: 10,
+          background: '#6366f1',
+          color: 'white',
+          border: 'none',
+          borderRadius: 6,
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: 'pointer'
+        }}
+      >
+        Update Service Area
+      </button>
+    </div>
+  );
+};
+
+// Map Legend Component
+const MapLegend = ({ layerVisibility, userTier }) => {
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 20,
+      left: 20,
+      background: 'white',
+      padding: 12,
+      borderRadius: 8,
+      boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+      fontSize: 11
+    }}>
+      {layerVisibility.growth && (
+        <>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Population Growth (5-Year)</div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+            <div style={{ width: 24, height: 12, background: '#1a9850', marginRight: 8 }}></div>
+            10%+ (Rapid)
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+            <div style={{ width: 24, height: 12, background: '#91cf60', marginRight: 8 }}></div>
+            5-10% (Strong)
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+            <div style={{ width: 24, height: 12, background: '#fee08b', marginRight: 8 }}></div>
+            0-5% (Stable)
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ width: 24, height: 12, background: '#d73027', marginRight: 8 }}></div>
+            &lt;0% (Declining)
+          </div>
+        </>
+      )}
+      
+      {layerVisibility.signals && (
+        <>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Problem Severity</div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+            <div style={{ 
+              width: 12, 
+              height: 12, 
+              background: '#dc2626', 
+              borderRadius: '50%', 
+              marginRight: 8 
+            }}></div>
+            High (8-10)
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+            <div style={{ 
+              width: 10, 
+              height: 10, 
+              background: '#f97316', 
+              borderRadius: '50%', 
+              marginRight: 8 
+            }}></div>
+            Medium (4-7)
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ 
+              width: 8, 
+              height: 8, 
+              background: '#fbbf24', 
+              borderRadius: '50%', 
+              marginRight: 8 
+            }}></div>
+            Low (1-3)
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default MapboxOpportunityMap;
+I'll continue with the remaining components in the next message - we need:
+
+Leaflet fallback component (Pro tier)
+Static map component (Free tier)
+Tiered wrapper component
+Cost optimization utilities
+
+Should I continue?yes but i already have Leaflet integrated12:07 PMPivoted strategy to leverage existing Leaflet integration.Great! The user already has Leaflet integrated. So I should focus on:
+
+Static map component for Free tier
+Tiered wrapper component that uses their existing Leaflet for Pro, Mapbox for Business/Enterprise
+Cost optimization utilities
+Census data import scripts
+Complete the system integration
+
+Let me continue with these components.Perfect! Let me build the remaining pieces to complete the integration with your existing Leaflet setup.
+Part 4: Tiered Map System (Using Your Existing Leaflet)
+Static Map Component (Free Tier)
+jsx// components/maps/StaticMapImage.jsx
+import { useState, useEffect } from 'react';
+
+const StaticMapImage = ({ opportunityId, width = 600, height = 400 }) => {
+  const [mapUrl, setMapUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showInteractive, setShowInteractive] = useState(false);
+  
+  useEffect(() => {
+    loadStaticMap();
+  }, [opportunityId]);
+  
+  const loadStaticMap = async () => {
+    try {
+      const response = await fetch(
+        `/api/opportunity/${opportunityId}/static-map?width=${width}&height=${height}`
+      );
+      const data = await response.json();
+      setMapUrl(data.url);
+    } catch (error) {
+      console.error('Failed to load static map:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  if (loading) {
+    return (
+      <div style={{
+        width,
+        height,
+        background: '#f3f4f6',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 8
+      }}>
+        <div>Loading map preview...</div>
+      </div>
+    );
+  }
+  
+  return (
+    <div style={{ position: 'relative', width, height, borderRadius: 8, overflow: 'hidden' }}>
+      {!showInteractive ? (
+        <>
+          <img 
+            src={mapUrl} 
+            alt="Service area map" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+          
+          {/* Overlay with upgrade prompt */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
+            padding: 20,
+            color: 'white'
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+              📍 Service Area Preview
+            </div>
+            <div style={{ fontSize: 12, marginBottom: 12, opacity: 0.9 }}>
+              Upgrade to Pro for interactive maps with demographic overlays
+            </div>
+            <button
+              onClick={() => window.location.href = '/pricing'}
+              style={{
+                padding: '8px 16px',
+                background: '#6366f1',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Upgrade to Pro
+            </button>
+          </div>
+        </>
+      ) : (
+        <div style={{ padding: 20, textAlign: 'center' }}>
+          <p>Interactive maps available on Pro tier and above</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default StaticMapImage;
+Tiered Wrapper Component
+jsx// components/maps/OpportunityMap.jsx
+import { lazy, Suspense } from 'react';
+import StaticMapImage from './StaticMapImage';
+
+// Lazy load heavy map components
+const MapboxOpportunityMap = lazy(() => import('./MapboxOpportunityMap'));
+const LeafletOpportunityMap = lazy(() => import('./LeafletOpportunityMap')); // Your existing component
+
+const OpportunityMap = ({ 
+  opportunityId, 
+  userTier = 'free',
+  onServiceAreaChange,
+  height = 600 
+}) => {
+  
+  const MapLoadingFallback = () => (
+    <div style={{
+      height,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#f9fafb',
+      borderRadius: 8
+    }}>
+      <div>Loading interactive map...</div>
+    </div>
+  );
+  
+  // Free tier: Static image only
+  if (userTier === 'free') {
+    return (
+      <div>
+        <StaticMapImage 
+          opportunityId={opportunityId} 
+          height={height}
+        />
+        <div style={{
+          marginTop: 12,
+          padding: 12,
+          background: '#eff6ff',
+          border: '1px solid #bfdbfe',
+          borderRadius: 6,
+          fontSize: 13
+        }}>
+          <strong>💡 Tip:</strong> Upgrade to Pro for interactive maps with:
+          <ul style={{ margin: '8px 0 0 20px', paddingLeft: 0 }}>
+            <li>Live demographic data overlays</li>
+            <li>Population growth heatmaps</li>
+            <li>Custom service area drawing</li>
+            <li>Exportable territory reports</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+  
+  // Pro tier: Your existing Leaflet (lightweight, no usage costs)
+  if (userTier === 'pro') {
+    return (
+      <Suspense fallback={<MapLoadingFallback />}>
+        <LeafletOpportunityMap 
+          opportunityId={opportunityId}
+          onServiceAreaChange={onServiceAreaChange}
+          showMigrationFlows={false} // Disable enterprise features
+          enableCustomDrawing={true}
+          height={height}
+        />
+        <div style={{
+          marginTop: 12,
+          padding: 12,
+          background: '#fefce8',
+          border: '1px solid #fde047',
+          borderRadius: 6,
+          fontSize: 13
+        }}>
+          <strong>⚡ Business Tier:</strong> Unlock migration flow analysis and advanced visualizations
+        </div>
+      </Suspense>
+    );
+  }
+  
+  // Business/Enterprise tier: Full Mapbox experience
+  return (
+    <Suspense fallback={<MapLoadingFallback />}>
+      <MapboxOpportunityMap 
+        opportunityId={opportunityId}
+        userTier={userTier}
+        onServiceAreaChange={onServiceAreaChange}
+        height={height}
+      />
+    </Suspense>
+  );
+};
+
+export default OpportunityMap;
+Enhanced Leaflet Component (Adapting Your Existing One)
+jsx// components/maps/LeafletOpportunityMap.jsx
+// This enhances your existing Leaflet component with Census data
+import { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, GeoJSON, Circle, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Component to fit bounds
+const FitBounds = ({ bounds }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [bounds, map]);
+  
+  return null;
+};
+
+const LeafletOpportunityMap = ({ 
+  opportunityId,
+  onServiceAreaChange,
+  enableCustomDrawing = true,
+  height = 600 
+}) => {
+  const [mapData, setMapData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [bounds, setBounds] = useState(null);
+  const [filters, setFilters] = useState({
+    minPopulation: 100000,
+    minGrowth: 0,
+    showSignals: true,
+    showGrowth: true
+  });
+  
+  useEffect(() => {
+    loadMapData();
+  }, [opportunityId, filters.minPopulation, filters.minGrowth]);
+  
+  const loadMapData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/opportunity/${opportunityId}/map-data?` +
+        `min_population=${filters.minPopulation}&` +
+        `min_growth=${filters.minGrowth}`
+      );
+      const data = await response.json();
+      setMapData(data);
+      
+      // Calculate bounds from service area
+      if (data.serviceArea) {
+        const coords = data.serviceArea.geometry.coordinates[0];
+        const latLngs = coords.map(c => [c[1], c[0]]);
+        setBounds(latLngs);
+        
+        if (onServiceAreaChange) {
+          onServiceAreaChange(data.serviceArea.properties);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load map data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Style function for growth choropleth
+  const getGrowthStyle = (feature) => {
+    const growthRate = feature.properties.growthRate;
+    let fillColor;
+    
+    if (growthRate >= 10) fillColor = '#1a9850';
+    else if (growthRate >= 5) fillColor = '#91cf60';
+    else if (growthRate >= 3) fillColor = '#d9ef8b';
+    else if (growthRate >= 0) fillColor = '#fee08b';
+    else if (growthRate >= -2) fillColor = '#fc8d59';
+    else fillColor = '#d73027';
+    
+    return {
+      fillColor,
+      weight: 1,
+      opacity: 1,
+      color: 'white',
+      fillOpacity: 0.6
+    };
+  };
+  
+  const getServiceAreaStyle = () => ({
+    fillColor: '#6366f1',
+    fillOpacity: 0.15,
+    color: '#4f46e5',
+    weight: 3,
+    dashArray: '5, 5'
+  });
+  
+  // Get signal color based on severity
+  const getSignalColor = (severity) => {
+    if (severity >= 8) return '#dc2626';
+    if (severity >= 5) return '#f97316';
+    return '#fbbf24';
+  };
+  
+  if (loading) {
+    return (
+      <div style={{
+        height,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f9fafb',
+        borderRadius: 8
+      }}>
+        Loading map...
+      </div>
+    );
+  }
+  
+  return (
+    <div style={{ position: 'relative' }}>
+      <MapContainer 
+        center={[38.5, -98]} 
+        zoom={4} 
+        style={{ height, borderRadius: 8 }}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        {/* Fit to bounds */}
+        {bounds && <FitBounds bounds={bounds} />}
+        
+        {/* Service Area */}
+        {mapData?.serviceArea && (
+          <GeoJSON 
+            data={mapData.serviceArea} 
+            style={getServiceAreaStyle}
+          >
+            <Popup>
+              <div style={{ fontSize: 12 }}>
+                <strong>Service Area</strong><br />
+                Population: {mapData.serviceArea.properties.population?.toLocaleString()}<br />
+                Radius: {mapData.serviceArea.properties.radiusMiles} miles<br />
+                Growth: {mapData.serviceArea.properties.growthRate?.toFixed(1)}%
+              </div>
+            </Popup>
+          </GeoJSON>
+        )}
+        
+        {/* Population Growth Choropleth */}
+        {mapData?.growthChoropleth && filters.showGrowth && (
+          <GeoJSON 
+            data={mapData.growthChoropleth}
+            style={getGrowthStyle}
+            onEachFeature={(feature, layer) => {
+              layer.on({
+                mouseover: (e) => {
+                  const layer = e.target;
+                  layer.setStyle({
+                    fillOpacity: 0.8
+                  });
+                },
+                mouseout: (e) => {
+                  const layer = e.target;
+                  layer.setStyle({
+                    fillOpacity: 0.6
+                  });
+                }
+              });
+              
+              layer.bindPopup(`
+                <div style="font-size: 12px;">
+                  <strong>${feature.properties.name}</strong><br />
+                  Population: ${feature.properties.population?.toLocaleString()}<br />
+                  5-Year Growth: ${feature.properties.growthRate?.toFixed(1)}%<br />
+                  Median Income: $${feature.properties.medianIncome?.toLocaleString()}<br />
+                  Households: ${feature.properties.households?.toLocaleString()}
+                </div>
+              `);
+            }}
+          />
+        )}
+        
+        {/* Signal Points */}
+        {mapData?.signals && filters.showSignals && 
+          mapData.signals.features.map((feature, idx) => {
+            const coords = feature.geometry.coordinates;
+            const props = feature.properties;
+            
+            return (
+              <Circle
+                key={idx}
+                center={[coords[1], coords[0]]}
+                radius={props.severity * 100} // Scale radius by severity
+                pathOptions={{
+                  color: getSignalColor(props.severity),
+                  fillColor: getSignalColor(props.severity),
+                  fillOpacity: 0.6,
+                  weight: 2
+                }}
+              >
+                <Popup>
+                  <div style={{ fontSize: 12 }}>
+                    <strong>Problem Signal</strong><br />
+                    Severity: {props.severity}/10<br />
+                    Source: {props.source}<br />
+                    <em>"{props.content}..."</em>
+                  </div>
+                </Popup>
+              </Circle>
+            );
+          })
+        }
+      </MapContainer>
+      
+      {/* Control Panel */}
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        background: 'white',
+        padding: 16,
+        borderRadius: 8,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+        width: 280,
+        zIndex: 1000
+      }}>
+        <h4 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 600 }}>
+          Service Area
+        </h4>
+        
+        {mapData?.serviceArea && (
+          <div style={{ fontSize: 12, lineHeight: 1.8, marginBottom: 16 }}>
+            <div><strong>Population:</strong> {mapData.serviceArea.properties.population?.toLocaleString()}</div>
+            <div><strong>Growth:</strong> {mapData.serviceArea.properties.growthRate?.toFixed(1)}%</div>
+            <div><strong>Income:</strong> ${mapData.serviceArea.properties.medianIncome?.toLocaleString()}</div>
+            <div><strong>Market:</strong> ${(mapData.serviceArea.properties.marketSize / 1000000).toFixed(1)}M</div>
+          </div>
+        )}
+        
+        <div style={{ fontSize: 12, marginBottom: 12 }}>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+            <input
+              type="checkbox"
+              checked={filters.showGrowth}
+              onChange={e => setFilters({...filters, showGrowth: e.target.checked})}
+              style={{ marginRight: 8 }}
+            />
+            Population Growth
+          </label>
+          
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+            <input
+              type="checkbox"
+              checked={filters.showSignals}
+              onChange={e => setFilters({...filters, showSignals: e.target.checked})}
+              style={{ marginRight: 8 }}
+            />
+            Problem Signals
+          </label>
+        </div>
+        
+        <div style={{ fontSize: 12 }}>
+          <label style={{ display: 'block', marginBottom: 8 }}>
+            Min Population: {filters.minPopulation.toLocaleString()}
+          </label>
+          <input
+            type="range"
+            min="50000"
+            max="500000"
+            step="25000"
+            value={filters.minPopulation}
+            onChange={e => setFilters({...filters, minPopulation: parseInt(e.target.value)})}
+            style={{ width: '100%', marginBottom: 12 }}
+          />
+          
+          <label style={{ display: 'block', marginBottom: 8 }}>
+            Min Growth: {filters.minGrowth}%
+          </label>
+          <input
+            type="range"
+            min="-5"
+            max="15"
+            step="0.5"
+            value={filters.minGrowth}
+            onChange={e => setFilters({...filters, minGrowth: parseFloat(e.target.value)})}
+            style={{ width: '100%', marginBottom: 12 }}
+          />
+        </div>
+        
+        <button
+          onClick={loadMapData}
+          style={{
+            width: '100%',
+            padding: 10,
+            background: '#6366f1',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer'
+          }}
+        >
+          Update Area
+        </button>
+      </div>
+      
+      {/* Legend */}
+      <div style={{
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        background: 'white',
+        padding: 12,
+        borderRadius: 8,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+        fontSize: 11,
+        zIndex: 1000
+      }}>
+        {filters.showGrowth && (
+          <>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Population Growth</div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ width: 20, height: 12, background: '#1a9850', marginRight: 8 }}></div>
+              10%+ Rapid
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ width: 20, height: 12, background: '#91cf60', marginRight: 8 }}></div>
+              5-10% Strong
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ width: 20, height: 12, background: '#fee08b', marginRight: 8 }}></div>
+              0-5% Stable
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ width: 20, height: 12, background: '#d73027', marginRight: 8 }}></div>
+              &lt;0% Declining
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default LeafletOpportunityMap;
+Part 5: Cost Optimization Utilities
+javascript// utils/mapOptimization.js
+
+/**
+ * Track Mapbox usage to prevent overage
+ */
+class MapUsageTracker {
+  constructor() {
+    this.storage = typeof window !== 'undefined' ? window.localStorage : null;
+    this.cacheKey = 'mapbox_usage';
+  }
+  
+  getUsage() {
+    if (!this.storage) return { count: 0, resetDate: null };
+    
+    const data = this.storage.getItem(this.cacheKey);
+    if (!data) return { count: 0, resetDate: this.getResetDate() };
+    
+    const usage = JSON.parse(data);
+    
+    // Reset if past reset date
+    if (new Date() > new Date(usage.resetDate)) {
+      return { count: 0, resetDate: this.getResetDate() };
+    }
+    
+    return usage;
+  }
+  
+  getResetDate() {
+    const now = new Date();
+    const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return resetDate.toISOString();
+  }
+  
+  incrementUsage() {
+    const usage = this.getUsage();
+    usage.count += 1;
+    
+    if (this.storage) {
+      this.storage.setItem(this.cacheKey, JSON.stringify(usage));
+    }
+    
+    return usage;
+  }
+  
+  isNearLimit(limit = 50000) {
+    const usage = this.getUsage();
+    return usage.count >= limit * 0.9; // 90% of limit
+  }
+  
+  hasExceededLimit(limit = 50000) {
+    const usage = this.getUsage();
+    return usage.count >= limit;
+  }
+}
+
+export const mapUsageTracker = new MapUsageTracker();
+
+/**
+ * Lazy load map component only when visible
+ */
+export const useLazyMap = (ref) => {
+  const [shouldLoad, setShouldLoad] = useState(false);
+  
+  useEffect(() => {
+    if (!ref.current) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    observer.observe(ref.current);
+    
+    return () => observer.disconnect();
+  }, [ref]);
+  
+  return shouldLoad;
+};
+
+/**
+ * Cache map data to reduce API calls
+ */
+export class MapDataCache {
+  constructor(ttl = 3600000) { // 1 hour default
+    this.cache = new Map();
+    this.ttl = ttl;
+  }
+  
+  get(key) {
+    const item = this.cache.get(key);
+    
+    if (!item) return null;
+    
+    if (Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return item.data;
+  }
+  
+  set(key, data) {
+    this.cache.set(key, {
+      data,
+      expiry: Date.now() + this.ttl
+    });
+  }
+  
+  clear() {
+    this.cache.clear();
+  }
+}
+
+export const mapDataCache = new MapDataCache();
+Usage Example with Optimization
+jsx// Example: Using the optimized map in a page
+import { useRef } from 'react';
+import OpportunityMap from '@/components/maps/OpportunityMap';
+import { useLazyMap, mapUsageTracker } from '@/utils/mapOptimization';
+
+const OpportunityDetailPage = ({ opportunity, user }) => {
+  const mapContainerRef = useRef(null);
+  const shouldLoadMap = useLazyMap(mapContainerRef);
+  
+  const handleServiceAreaChange = (metrics) => {
+    console.log('Service area updated:', metrics);
+    // Update parent state, trigger analytics, etc.
+  };
+  
+  // Check if near Mapbox limit
+  const nearLimit = mapUsageTracker.isNearLimit();
+  
+  return (
+    <div>
+      <h1>{opportunity.title}</h1>
+      
+      {/* Map container */}
+      <div ref={mapContainerRef} style={{ marginTop: 24 }}>
+        {shouldLoadMap ? (
+          <>
+            {nearLimit && user.tier === 'business' && (
+              <div style={{
+                padding: 12,
+                marginBottom: 16,
+                background: '#fef3c7',
+                border: '1px solid #fbbf24',
+                borderRadius: 6,
+                fontSize: 13
+              }}>
+                ⚠️ You're approaching your monthly map load limit. Consider upgrading to Enterprise for unlimited usage.
+              </div>
+            )}
+            
+            <OpportunityMap
+              opportunityId={opportunity.id}
+              userTier={user.tier}
+              onServiceAreaChange={handleServiceAreaChange}
+            />
+          </>
+        ) : (
+          <div style={{
+            height: 600,
+            background: '#f9fafb',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 8
+          }}>
+            Scroll down to load map...
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+Part 6: Census Data Import Scripts
+javascript// scripts/importCensusData.js
+const axios = require('axios');
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+const CENSUS_API_KEY = process.env.CENSUS_API_KEY;
+
+/**
+ * Import population estimates for all counties
+ */
+async function importPopulationEstimates(year = 2024) {
+  console.log(`Importing population estimates for ${year}...`);
+  
+  try {
+    // Get population data from Census API
+    const response = await axios.get(
+      `https://api.census.gov/data/${year}/pep/population`,
+      {
+        params: {
+          get: 'POP,DENSITY,NAME',
+          for: 'county:*',
+          key: CENSUS_API_KEY
+        }
+      }
+    );
+    
+    const data = response.data;
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    console.log(`Fetched ${rows.length} counties`);
+    
+    // Insert into database
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      for (const row of rows) {
+        const population = parseInt(row[headers.indexOf('POP')]);
+        const name = row[headers.indexOf('NAME')];
+        const state = row[headers.indexOf('state')];
+        const county = row[headers.indexOf('county')];
+        const geoid = `${state}${county}`;
+        
+        await client.query(`
+          INSERT INTO census_population_estimates (
+            geography_type,
+            geography_id,
+            geography_name,
+            state_code,
+            year,
+            population
+          ) VALUES ($1, $2, $3, $4, $5, $6)
+          ON CONFLICT (geography_type, geography_id, year) 
+          DO UPDATE SET 
+            population = EXCLUDED.population,
+            updated_at = NOW()
+        `, ['county', geoid, name, state, year, population]);
+      }
+      
+      await client.query('COMMIT');
+      console.log(`Successfully imported ${rows.length} population estimates`);
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('Error importing population estimates:', error);
+    throw error;
+  }
+}
+
+/**
+ * Import migration flows
+ */
+async function importMigrationFlows(year = 2023) {
+  console.log(`Importing migration flows for ${year}...`);
+  
+  try {
+    // Migration flows API endpoint
+    const response = await axios.get(
+      `https://api.census.gov/data/${year}/acs/flows`,
+      {
+        params: {
+          get: 'MOVEDIN,GEOID1,FULL1_NAME,GEOID2,FULL2_NAME',
+          for: 'county:*',
+          key: CENSUS_API_KEY
+        }
+      }
+    );
+    
+    const data = response.data;
+    const headers = data[0];
+    const rows = data.slice(1);
+    
+    console.log(`Fetched ${rows.length} migration flows`);
+    
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      for (const row of rows) {
+        const movers = parseInt(row[headers.indexOf('MOVEDIN')]);
+        const originId = row[headers.indexOf('GEOID1')];
+        const originName = row[headers.indexOf('FULL1_NAME')];
+        const destId = row[headers.indexOf('GEOID2')];
+        const destName = row[headers.indexOf('FULL2_NAME')];
+        
+        if (movers > 0) {
+          await client.query(`
+            INSERT INTO census_migration_flows (
+              year,
+              origin_type,
+              origin_id,
+              origin_name,
+              destination_type,
+              destination_id,
+              destination_name,
+              movers
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (year, origin_id, destination_id)
+            DO UPDATE SET 
+              movers = EXCLUDED.movers
+          `, [year, 'county', originId, originName, 'county', destId, destName, movers]);
+        }
+      }
+      
+      await client.query('COMMIT');
+      console.log(`Successfully imported migration flows`);
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('Error importing migration flows:', error);
+    throw error;
+  }
+}
+
+/**
+ * Calculate growth trajectories
+ */
+async function calculateGrowthTrajectories() {
+  console.log('Calculating growth trajectories...');
+  
+  try {
+    const client = await pool.connect();
+    
+    try {
+      await client.query('SELECT refresh_growth_trajectories()');
+      console.log('Growth trajectories calculated successfully');
+    } finally {
+      client.release();
+    }
+    
+  } catch (error) {
+    console.error('Error calculating growth trajectories:', error);
+    throw error;
+  }
+}
+
+/**
+ * Main import function
+ */
+async function runImport() {
+  try {
+    // Import historical data (2019-2024)
+    for (let year = 2019; year <= 2024; year++) {
+      await importPopulationEstimates(year);
+    }
+    
+    // Import migration flows (2019-2023, 2024 not yet available)
+    for (let year = 2019; year <= 2023; year++) {
+      await importMigrationFlows(year);
+    }
+    
+    // Calculate growth trajectories
+    await calculateGrowthTrajectories();
+    
+    console.log('✅ Census data import complete!');
+    
+  } catch (error) {
+    console.error('❌ Import failed:', error);
+    process.exit(1);
+  } finally {
+    await pool.end();
+  }
+}
+
+// Run if called directly
+if (require.main === module) {
+  runImport();
+}
+
+module.exports = {
+  importPopulationEstimates,
+  importMigrationFlows,
+  calculateGrowthTrajectories
+};
+Scheduled Update Script
+javascript// scripts/updateCensusData.js
+const cron = require('node-cron');
+const { 
+  importPopulationEstimates, 
+  importMigrationFlows,
+  calculateGrowthTrajectories 
+} = require('./importCensusData');
+
+/**
+ * Schedule monthly Census data updates
+ * Runs on 1st of each month at 2 AM
+ */
+cron.schedule('0 2 1 * *', async () => {
+  console.log('Running scheduled Census data update...');
+  
+  try {
+    const currentYear = new Date().getFullYear();
+    
+    // Import latest population estimates
+    await importPopulationEstimates(currentYear);
+    
+    // Import latest migration data (typically 1 year behind)
+    await importMigrationFlows(currentYear - 1);
+    
+    // Recalculate trajectories
+    await calculateGrowthTrajectories();
+    
+    console.log('✅ Scheduled update complete');
+    
+  } catch (error) {
+    console.error('❌ Scheduled update failed:', error);
+    // Send alert to admin
+  }
+});
+
+console.log('Census data update scheduler started');
+Part 7: Environment Variables
+Add to your .env:
+bash# Census Bureau API
+CENSUS_API_KEY=your_census_api_key_here
+
+# Mapbox
+NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_public_token_here
+MAPBOX_SECRET_TOKEN=your_mapbox_secret_token_here
+Part 8: Package Dependencies
+Add to package.json:
+json{
+  "dependencies": {
+    "mapbox-gl": "^3.0.0",
+    "react-map-gl": "^7.1.0",
+    "@mapbox/mapbox-sdk": "^0.15.0",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^4.2.1",
+    "node-cron": "^3.0.3"
+  }
+}

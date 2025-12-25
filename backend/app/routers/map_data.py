@@ -271,6 +271,34 @@ async def get_county_demographics(
     return data
 
 
+@router.get("/census/extended/{state_fips}/{county_fips}")
+async def get_county_extended_demographics(
+    state_fips: str,
+    county_fips: str,
+):
+    """
+    Get extended demographic data for a county.
+    
+    Includes income distribution (16 brackets), age distribution,
+    commute patterns, internet access, and housing tenure.
+    """
+    if not census_service.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="Census API key not configured"
+        )
+    
+    data = await census_service.fetch_extended_demographics(state_fips, county_fips)
+    
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No extended demographic data found for county {state_fips}-{county_fips}"
+        )
+    
+    return data
+
+
 @router.get("/census/status")
 async def get_census_api_status():
     """Check if Census API is configured and available."""

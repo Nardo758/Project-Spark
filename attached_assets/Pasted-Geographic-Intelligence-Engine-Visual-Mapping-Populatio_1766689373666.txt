@@ -1,0 +1,1042 @@
+Geographic Intelligence Engine: Visual Mapping + Population Dynamics
+Core Concept: Signal-Driven Territory Builder
+Instead of static "this opportunity exists in Denver," we're building:
+
+Dynamic service areas drawn from signal clusters
+Population-validated territories ensuring adequate market size
+Growth trajectory overlays highlighting expanding vs. declining markets
+Migration flow visualization showing where your customers are coming from/going to
+
+
+Phase 1: Census Data Integration for Growth & Migration
+Primary Datasets to Add
+1. Population Estimates and Projections API (Annual Updates)
+javascript// Latest population data with year-over-year change
+const populationGrowthAPI = 'https://api.census.gov/data/2024/pep/population';
+
+// Key variables:
+// POP - Total population
+// PPOPCHG - Percent population change from prior year
+// BIRTHS, DEATHS - Components of change
+// DOMESTICMIG - Net domestic migration
+// INTERNATIONALMIG - Net international migration
+
+// Available geographies: State, County, Metro, Place (city)
+2. ACS Migration Flows (Where people are moving)
+javascript// Migration between geographies
+const migrationFlowsAPI = 'https://api.census.gov/data/2023/acs/flows';
+
+// Shows:
+// - County-to-county migration
+// - Metro-to-metro migration  
+// - In-migration sources (where people are coming FROM)
+// - Out-migration destinations (where people are going TO)
+// - Crossed with demographics (age, income, education)
+3. Decennial Census Comparison (Long-term change)
+javascript// Compare 2020 vs 2010 for 10-year growth patterns
+const decennialAPI = 'https://api.census.gov/data/2020/dec/pl';
+Database Schema for Population Dynamics
+sql-- Add to your existing database
+CREATE TABLE census_population_estimates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  geography_type VARCHAR(50), -- 'county', 'metro', 'place', 'state'
+  geography_id VARCHAR(20),
+  geography_name VARCHAR(200),
+  year INTEGER,
+  
+  -- Population metrics
+  population BIGINT,
+  population_change INTEGER,
+  population_change_pct DECIMAL(5,2),
+  
+  -- Components of change
+  births INTEGER,
+  deaths INTEGER,
+  natural_increase INTEGER,
+  domestic_migration INTEGER,
+  international_migration INTEGER,
+  net_migration INTEGER,
+  
+  -- Geospatial
+  geography_boundary GEOGRAPHY(POLYGON, 4326),
+  centroid GEOGRAPHY(POINT, 4326),
+  
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_pop_est_geography ON census_population_estimates(geography_type, geography_id);
+CREATE INDEX idx_pop_est_year ON census_population_estimates(year);
+CREATE INDEX idx_pop_est_boundary ON census_population_estimates USING GIST(geography_boundary);
+
+-- Migration flows between geographies
+CREATE TABLE census_migration_flows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  year INTEGER,
+  
+  -- Origin
+  origin_type VARCHAR(50), -- 'county', 'metro'
+  origin_id VARCHAR(20),
+  origin_name VARCHAR(200),
+  origin_geography GEOGRAPHY(POINT, 4326),
+  
+  -- Destination  
+  destination_type VARCHAR(50),
+  destination_id VARCHAR(20),
+  destination_name VARCHAR(200),
+  destination_geography GEOGRAPHY(POINT, 4326),
+  
+  -- Flow metrics
+  movers INTEGER, -- Total people who moved
+  margin_of_error INTEGER,
+  
+  -- Demographic breakdown of movers
+  median_age DECIMAL(4,1),
+  median_income INTEGER,
+  bachelors_or_higher_pct DECIMAL(5,2),
+  
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_migration_origin ON census_migration_flows(origin_id);
+CREATE INDEX idx_migration_dest ON census_migration_flows(destination_id);
+
+-- Growth trajectories for trend analysis
+CREATE TABLE market_growth_trajectories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  geography_type VARCHAR(50),
+  geography_id VARCHAR(20),
+  geography_name VARCHAR(200),
+  
+  -- Historical growth (5-year trend)
+  population_2019 BIGINT,
+  population_2020 BIGINT,
+  population_2021 BIGINT,
+  population_2022 BIGINT,
+  population_2023 BIGINT,
+  population_2024 BIGINT,
+  
+  -- Calculated metrics
+  cagr_5year DECIMAL(5,2), -- Compound annual growth rate
+  total_growth_5year INTEGER,
+  total_growth_5year_pct DECIMAL(5,2),
+  growth_category VARCHAR(20), -- 'rapid', 'growing', 'stable', 'declining'
+  
+  -- Migration trends
+  avg_annual_in_migration INTEGER,
+  avg_annual_out_migration INTEGER,
+  net_migration_5year INTEGER,
+  
+  geography_boundary GEOGRAPHY(POLYGON, 4326),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+Phase 2: Visual Mapping Architecture
+Map Component Stack
+javascript// Frontend: Interactive mapping with Mapbox GL JS
+// Backend: PostGIS for spatial queries
+// Rendering: Dynamic GeoJSON generation
+
+const MapLayers = {
+  // Layer 1: Signal Heatmap (your existing problem mentions)
+  signalDensity: {
+    type: 'heatmap',
+    source: 'opportunity-signals',
+    paint: {
+      'heatmap-weight': ['get', 'severity'],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 15, 3],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0, 'rgba(124, 58, 237, 0)',
+        0.2, 'rgba(124, 58, 237, 0.4)',
+        0.4, 'rgba(251, 146, 60, 0.6)',
+        0.6, 'rgba(239, 68, 68, 0.8)',
+        1, 'rgba(220, 38, 38, 1)'
+      ]
+    }
+  },
+  
+  // Layer 2: Census Tract Population Growth Choropleth
+  populationGrowth: {
+    type: 'fill',
+    source: 'census-tracts',
+    paint: {
+      'fill-color': [
+        'interpolate', ['linear'], ['get', 'growth_rate_5yr'],
+        -10, '#d73027',  // Declining (red)
+        0, '#fee08b',    // Stable (yellow)
+        5, '#a6d96a',    // Growing (light green)
+        10, '#1a9850'    // Rapid growth (dark green)
+      ],
+      'fill-opacity': 0.6
+    }
+  },
+  
+  // Layer 3: Migration Flow Arrows
+  migrationFlows: {
+    type: 'line',
+    source: 'migration-vectors',
+    paint: {
+      'line-color': '#3b82f6',
+      'line-width': [
+        'interpolate', ['linear'], ['get', 'movers'],
+        0, 1,
+        10000, 8
+      ],
+      'line-opacity': 0.7
+    },
+    layout: {
+      'line-cap': 'round',
+      'line-join': 'round'
+    }
+  },
+  
+  // Layer 4: Recommended Service Area Polygon
+  serviceArea: {
+    type: 'fill',
+    source: 'service-boundary',
+    paint: {
+      'fill-color': '#6366f1',
+      'fill-opacity': 0.2,
+      'fill-outline-color': '#4f46e5'
+    }
+  },
+  
+  // Layer 5: Market Metrics Overlay
+  marketMetrics: {
+    type: 'symbol',
+    source: 'census-tracts',
+    layout: {
+      'text-field': [
+        'concat',
+        ['to-string', ['get', 'population']],
+        '\n',
+        ['to-string', ['get', 'growth_rate_5yr']], '%'
+      ],
+      'text-size': 12,
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold']
+    }
+  }
+};
+Dynamic Service Area Builder Algorithm
+sql-- Generate service area based on signal clustering + demographic validation
+CREATE OR REPLACE FUNCTION build_service_area(
+  p_opportunity_id UUID,
+  p_min_population INTEGER DEFAULT 100000,
+  p_min_growth_rate DECIMAL DEFAULT 0.0,
+  p_target_income INTEGER DEFAULT 50000
+) RETURNS TABLE (
+  service_boundary GEOGRAPHY(POLYGON, 4326),
+  total_population BIGINT,
+  median_income INTEGER,
+  growth_rate_5yr DECIMAL,
+  target_households INTEGER,
+  market_size_usd BIGINT
+) AS $$
+DECLARE
+  signal_centroid GEOGRAPHY(POINT, 4326);
+  current_radius INTEGER := 5; -- Start with 5 mile radius
+  max_radius INTEGER := 50; -- Max 50 mile radius
+BEGIN
+  -- Find centroid of signal cluster
+  SELECT ST_Centroid(ST_Union(business_location))
+  INTO signal_centroid
+  FROM scraped_sources
+  WHERE opportunity_id = p_opportunity_id;
+  
+  -- Expand radius until we meet population threshold
+  WHILE current_radius <= max_radius LOOP
+    -- Calculate metrics within current radius
+    WITH area_metrics AS (
+      SELECT 
+        ST_Buffer(signal_centroid::geography, current_radius * 1609.34)::geography as boundary,
+        SUM(c.B01003_001E) as pop,
+        AVG(c.B19013_001E) as income,
+        AVG(g.cagr_5year) as growth
+      FROM census_acs_5year c
+      JOIN census_geographies cg ON c.geography_id = cg.geography_id
+      JOIN market_growth_trajectories g ON cg.geography_id = g.geography_id
+      WHERE ST_DWithin(
+        cg.geography_center,
+        signal_centroid,
+        current_radius * 1609.34
+      )
+      AND c.year = 2023
+    )
+    SELECT 
+      boundary,
+      pop,
+      income,
+      growth
+    INTO 
+      service_boundary,
+      total_population,
+      median_income,
+      growth_rate_5yr
+    FROM area_metrics;
+    
+    -- Check if we meet criteria
+    IF total_population >= p_min_population 
+       AND growth_rate_5yr >= p_min_growth_rate
+       AND median_income >= p_target_income THEN
+      
+      -- Calculate target households and market size
+      SELECT 
+        COUNT(*) FILTER (WHERE B19013_001E >= p_target_income),
+        SUM(B19013_001E * B11001_001E)
+      INTO
+        target_households,
+        market_size_usd
+      FROM census_acs_5year c
+      JOIN census_geographies cg ON c.geography_id = cg.geography_id
+      WHERE ST_Intersects(cg.geography_boundary, service_boundary)
+      AND c.year = 2023;
+      
+      RETURN NEXT;
+      RETURN;
+    END IF;
+    
+    -- Expand radius
+    current_radius := current_radius + 5;
+  END LOOP;
+  
+  -- If we maxed out, return what we have
+  RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
+API Endpoint for Map Data
+javascript// Backend API endpoint: /api/opportunity/:id/map-data
+app.get('/api/opportunity/:id/map-data', async (req, res) => {
+  const { id } = req.params;
+  const { min_population = 100000, min_growth = 0 } = req.query;
+  
+  // Get service area recommendation
+  const serviceArea = await db.query(`
+    SELECT * FROM build_service_area($1, $2, $3)
+  `, [id, min_population, min_growth]);
+  
+  // Get signal density points
+  const signals = await db.query(`
+    SELECT 
+      ST_AsGeoJSON(business_location) as geometry,
+      severity,
+      raw_content,
+      source_type
+    FROM scraped_sources
+    WHERE opportunity_id = $1
+  `, [id]);
+  
+  // Get census tracts with population growth
+  const growthData = await db.query(`
+    SELECT 
+      cg.name,
+      ST_AsGeoJSON(cg.geography_boundary) as geometry,
+      g.population_2024,
+      g.cagr_5year as growth_rate_5yr,
+      c.B19013_001E as median_income,
+      c.B15003_022E + c.B15003_023E + c.B15003_024E + c.B15003_025E as educated_pop
+    FROM census_geographies cg
+    JOIN market_growth_trajectories g ON cg.geography_id = g.geography_id
+    JOIN census_acs_5year c ON cg.geography_id = c.geography_id
+    WHERE ST_Intersects(
+      cg.geography_boundary,
+      (SELECT service_boundary FROM build_service_area($1, $2, $3))
+    )
+    AND cg.geography_type = 'tract'
+    AND c.year = 2023
+  `, [id, min_population, min_growth]);
+  
+  // Get migration flows INTO this area
+  const migrationFlows = await db.query(`
+    SELECT 
+      mf.origin_name,
+      ST_AsGeoJSON(ST_MakeLine(mf.origin_geography, mf.destination_geography)) as geometry,
+      mf.movers,
+      mf.median_income,
+      mf.median_age
+    FROM census_migration_flows mf
+    WHERE mf.destination_id IN (
+      SELECT geography_id 
+      FROM census_geographies
+      WHERE ST_Intersects(
+        geography_boundary,
+        (SELECT service_boundary FROM build_service_area($1, $2, $3))
+      )
+    )
+    AND mf.year = 2023
+    AND mf.movers > 100
+    ORDER BY mf.movers DESC
+    LIMIT 20
+  `, [id, min_population, min_growth]);
+  
+  // Build GeoJSON response
+  res.json({
+    serviceArea: {
+      type: 'Feature',
+      geometry: JSON.parse(serviceArea.rows[0].service_boundary),
+      properties: {
+        population: serviceArea.rows[0].total_population,
+        medianIncome: serviceArea.rows[0].median_income,
+        growthRate: serviceArea.rows[0].growth_rate_5yr,
+        targetHouseholds: serviceArea.rows[0].target_households,
+        marketSize: serviceArea.rows[0].market_size_usd
+      }
+    },
+    signals: {
+      type: 'FeatureCollection',
+      features: signals.rows.map(s => ({
+        type: 'Feature',
+        geometry: JSON.parse(s.geometry),
+        properties: {
+          severity: s.severity,
+          content: s.raw_content,
+          source: s.source_type
+        }
+      }))
+    },
+    growthChoropleth: {
+      type: 'FeatureCollection',
+      features: growthData.rows.map(g => ({
+        type: 'Feature',
+        geometry: JSON.parse(g.geometry),
+        properties: {
+          name: g.name,
+          population: g.population_2024,
+          growthRate: g.growth_rate_5yr,
+          medianIncome: g.median_income,
+          educatedPop: g.educated_pop
+        }
+      }))
+    },
+    migrationFlows: {
+      type: 'FeatureCollection',
+      features: migrationFlows.rows.map(m => ({
+        type: 'Feature',
+        geometry: JSON.parse(m.geometry),
+        properties: {
+          origin: m.origin_name,
+          movers: m.movers,
+          medianIncome: m.median_income,
+          medianAge: m.median_age
+        }
+      }))
+    }
+  });
+});
+
+Phase 3: Frontend Map Component
+jsx// React component for interactive opportunity map
+import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+
+const OpportunityMap = ({ opportunityId }) => {
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+  const [mapData, setMapData] = useState(null);
+  const [filters, setFilters] = useState({
+    minPopulation: 100000,
+    minGrowth: 0,
+    showMigration: true,
+    showGrowth: true,
+    showSignals: true
+  });
+  
+  useEffect(() => {
+    // Initialize map
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [-98, 38.5], // Center of USA
+      zoom: 4
+    });
+    
+    map.current.on('load', loadMapData);
+    
+    return () => map.current.remove();
+  }, []);
+  
+  const loadMapData = async () => {
+    const response = await fetch(
+      `/api/opportunity/${opportunityId}/map-data?` +
+      `min_population=${filters.minPopulation}&` +
+      `min_growth=${filters.minGrowth}`
+    );
+    const data = await response.json();
+    setMapData(data);
+    
+    // Add service area boundary
+    map.current.addSource('service-area', {
+      type: 'geojson',
+      data: data.serviceArea
+    });
+    
+    map.current.addLayer({
+      id: 'service-area-fill',
+      type: 'fill',
+      source: 'service-area',
+      paint: {
+        'fill-color': '#6366f1',
+        'fill-opacity': 0.15
+      }
+    });
+    
+    map.current.addLayer({
+      id: 'service-area-outline',
+      type: 'line',
+      source: 'service-area',
+      paint: {
+        'line-color': '#4f46e5',
+        'line-width': 3
+      }
+    });
+    
+    // Add population growth choropleth
+    if (filters.showGrowth) {
+      map.current.addSource('growth-data', {
+        type: 'geojson',
+        data: data.growthChoropleth
+      });
+      
+      map.current.addLayer({
+        id: 'growth-choropleth',
+        type: 'fill',
+        source: 'growth-data',
+        paint: {
+          'fill-color': [
+            'interpolate', ['linear'],
+            ['get', 'growthRate'],
+            -5, '#d73027',   // Declining
+            0, '#fee08b',    // Stable
+            3, '#a6d96a',    // Growing
+            7, '#1a9850'     // Rapid growth
+          ],
+          'fill-opacity': 0.6
+        }
+      });
+    }
+    
+    // Add signal heatmap
+    if (filters.showSignals) {
+      map.current.addSource('signals', {
+        type: 'geojson',
+        data: data.signals
+      });
+      
+      map.current.addLayer({
+        id: 'signal-heatmap',
+        type: 'heatmap',
+        source: 'signals',
+        paint: {
+          'heatmap-weight': [
+            'interpolate', ['linear'],
+            ['get', 'severity'],
+            1, 0,
+            10, 1
+          ],
+          'heatmap-intensity': [
+            'interpolate', ['linear'],
+            ['zoom'],
+            0, 1,
+            15, 3
+          ],
+          'heatmap-color': [
+            'interpolate', ['linear'],
+            ['heatmap-density'],
+            0, 'rgba(124, 58, 237, 0)',
+            0.2, 'rgba(124, 58, 237, 0.4)',
+            0.4, 'rgba(251, 146, 60, 0.6)',
+            0.6, 'rgba(239, 68, 68, 0.8)',
+            1, 'rgba(220, 38, 38, 1)'
+          ]
+        }
+      });
+      
+      // Add signal points for zoom levels > 10
+      map.current.addLayer({
+        id: 'signal-points',
+        type: 'circle',
+        source: 'signals',
+        minzoom: 10,
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#ef4444',
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 2
+        }
+      });
+    }
+    
+    // Add migration flow arrows
+    if (filters.showMigration) {
+      map.current.addSource('migration', {
+        type: 'geojson',
+        data: data.migrationFlows
+      });
+      
+      map.current.addLayer({
+        id: 'migration-flows',
+        type: 'line',
+        source: 'migration',
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': [
+            'interpolate', ['linear'],
+            ['get', 'movers'],
+            0, 1,
+            5000, 6
+          ],
+          'line-opacity': 0.7
+        },
+        layout: {
+          'line-cap': 'round'
+        }
+      });
+    }
+    
+    // Fit map to service area bounds
+    const bounds = new mapboxgl.LngLatBounds();
+    data.serviceArea.geometry.coordinates[0].forEach(coord => {
+      bounds.extend(coord);
+    });
+    map.current.fitBounds(bounds, { padding: 50 });
+    
+    // Add popup on click
+    map.current.on('click', 'growth-choropleth', (e) => {
+      const properties = e.features[0].properties;
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div style="padding: 12px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">
+              ${properties.name}
+            </h3>
+            <div style="font-size: 12px;">
+              <div><strong>Population:</strong> ${properties.population.toLocaleString()}</div>
+              <div><strong>5-Year Growth:</strong> ${properties.growthRate.toFixed(1)}%</div>
+              <div><strong>Median Income:</strong> $${properties.medianIncome.toLocaleString()}</div>
+              <div><strong>Bachelor's+:</strong> ${properties.educatedPop.toLocaleString()}</div>
+            </div>
+          </div>
+        `)
+        .addTo(map.current);
+    });
+  };
+  
+  return (
+    <div style={{ position: 'relative', height: '600px' }}>
+      {/* Map container */}
+      <div ref={mapContainer} style={{ height: '100%', width: '100%' }} />
+      
+      {/* Map controls overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        background: 'white',
+        padding: '16px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        width: '280px'
+      }}>
+        <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600 }}>
+          Service Area Metrics
+        </h4>
+        
+        {mapData && (
+          <div style={{ fontSize: '12px', lineHeight: '1.8' }}>
+            <div><strong>Population:</strong> {mapData.serviceArea.properties.population.toLocaleString()}</div>
+            <div><strong>5-Year Growth:</strong> {mapData.serviceArea.properties.growthRate.toFixed(1)}%</div>
+            <div><strong>Median Income:</strong> ${mapData.serviceArea.properties.medianIncome.toLocaleString()}</div>
+            <div><strong>Target Households:</strong> {mapData.serviceArea.properties.targetHouseholds.toLocaleString()}</div>
+            <div><strong>Market Size:</strong> ${(mapData.serviceArea.properties.marketSize / 1000000).toFixed(1)}M</div>
+          </div>
+        )}
+        
+        <hr style={{ margin: '12px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+        
+        <div style={{ fontSize: '12px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <input
+              type="checkbox"
+              checked={filters.showGrowth}
+              onChange={e => setFilters({...filters, showGrowth: e.target.checked})}
+              style={{ marginRight: '8px' }}
+            />
+            Population Growth
+          </label>
+          
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <input
+              type="checkbox"
+              checked={filters.showMigration}
+              onChange={e => setFilters({...filters, showMigration: e.target.checked})}
+              style={{ marginRight: '8px' }}
+            />
+            Migration Flows
+          </label>
+          
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <input
+              type="checkbox"
+              checked={filters.showSignals}
+              onChange={e => setFilters({...filters, showSignals: e.target.checked})}
+              style={{ marginRight: '8px' }}
+            />
+            Problem Signals
+          </label>
+        </div>
+        
+        <hr style={{ margin: '12px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+        
+        <div style={{ fontSize: '12px' }}>
+          <label style={{ display: 'block', marginBottom: '8px' }}>
+            Min Population: {filters.minPopulation.toLocaleString()}
+          </label>
+          <input
+            type="range"
+            min="50000"
+            max="500000"
+            step="25000"
+            value={filters.minPopulation}
+            onChange={e => setFilters({...filters, minPopulation: parseInt(e.target.value)})}
+            style={{ width: '100%' }}
+          />
+          
+          <label style={{ display: 'block', marginTop: '12px', marginBottom: '8px' }}>
+            Min Growth Rate: {filters.minGrowth}%
+          </label>
+          <input
+            type="range"
+            min="-5"
+            max="10"
+            step="0.5"
+            value={filters.minGrowth}
+            onChange={e => setFilters({...filters, minGrowth: parseFloat(e.target.value)})}
+            style={{ width: '100%' }}
+          />
+        </div>
+        
+        <button
+          onClick={loadMapData}
+          style={{
+            marginTop: '12px',
+            width: '100%',
+            padding: '8px',
+            background: '#6366f1',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer'
+          }}
+        >
+          Update Service Area
+        </button>
+      </div>
+      
+      {/* Legend */}
+      <div style={{
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        background: 'white',
+        padding: '12px',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        fontSize: '11px'
+      }}>
+        <div style={{ fontWeight: 600, marginBottom: '8px' }}>Population Growth Legend</div>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+          <div style={{ width: '20px', height: '12px', background: '#1a9850', marginRight: '8px' }}></div>
+          Rapid Growth (7%+)
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+          <div style={{ width: '20px', height: '12px', background: '#a6d96a', marginRight: '8px' }}></div>
+          Growing (3-7%)
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+          <div style={{ width: '20px', height: '12px', background: '#fee08b', marginRight: '8px' }}></div>
+          Stable (0-3%)
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ width: '20px', height: '12px', background: '#d73027', marginRight: '8px' }}></div>
+          Declining (&lt;0%)
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OpportunityMap;
+
+Phase 4: Integration into ALL Report Types
+Now let's integrate population growth + migration into every report on your platform:
+1. Layer 1 - Problem Overview Reports
+markdown## Geographic Opportunity Map
+
+[EMBEDDED INTERACTIVE MAP]
+
+### Service Area Recommendation
+Based on signal clustering and demographic analysis, we recommend a **[X]-mile radius** centered on **[City, State]**.
+
+**Territory Metrics:**
+- Population: [XXX,XXX] ([+X.X%] 5-year growth)
+- Target Households: [XX,XXX]
+- Median Income: $[XX,XXX]
+- Market Size: $[X.X]M
+
+### Population Dynamics
+**Growth Trajectory:** [Rapid Growth / Growing / Stable / Declining]
+- 5-year population change: [+X.X%]
+- 2024 population: [XXX,XXX]
+- 2019 population: [XXX,XXX]
+
+**Migration Patterns:**
+This market is attracting [X,XXX] net new residents annually, primarily from:
+1. [Origin City 1] - [X,XXX] movers (Median income: $[XX,XXX])
+2. [Origin City 2] - [X,XXX] movers (Median income: $[XX,XXX])
+3. [Origin City 3] - [X,XXX] movers (Median income: $[XX,XXX])
+
+**Key Insight:** [In-migration from high-income markets / Young professionals moving in / Families relocating from urban cores / etc.]
+2. Layer 2 - Deep Dive Analysis Reports
+Add these new sections:
+markdown## Section 5: Population Dynamics & Migration Analysis
+
+### 5.1 Growth Trajectory Assessment
+
+**Historical Growth (2019-2024):**
+| Year | Population | Change | % Change |
+|------|-----------|--------|----------|
+| 2024 | [XXX,XXX] | +[X,XXX] | +[X.X]% |
+| 2023 | [XXX,XXX] | +[X,XXX] | +[X.X]% |
+| 2022 | [XXX,XXX] | +[X,XXX] | +[X.X]% |
+| 2021 | [XXX,XXX] | +[X,XXX] | +[X.X]% |
+| 2020 | [XXX,XXX] | +[X,XXX] | +[X.X]% |
+| 2019 | [XXX,XXX] | - | - |
+
+**5-Year CAGR:** [X.X]%
+
+**Growth Drivers:**
+- Natural increase (births - deaths): [+X,XXX] annually
+- Net domestic migration: [+X,XXX] annually
+- Net international migration: [+X,XXX] annually
+
+**Projected 2025-2029 Growth:** [+X.X]% (extrapolated from current trend)
+
+---
+
+### 5.2 Migration Flow Analysis
+
+**Top 10 Origin Markets (Where Your Customers Are Coming From):**
+
+| Origin | Movers (Annual) | Median Age | Median Income | Education |
+|--------|----------------|-----------|--------------|-----------|
+| [City 1] | [X,XXX] | [XX] | $[XX,XXX] | [XX]% Bach+ |
+| [City 2] | [X,XXX] | [XX] | $[XX,XXX] | [XX]% Bach+ |
+| ... | ... | ... | ... | ... |
+
+**Migration Insights:**
+- **Age profile of movers:** [XX]% are ages 25-44 (prime customer demographic)
+- **Income of movers:** [XX]% earn above $75,000 (high purchasing power)
+- **Education:** [XX]% have bachelor's degrees or higher (tech adoption)
+
+**Customer Acquisition Implication:**
+Since [X,XXX] new residents arrive annually from [high-income/tech-savvy/family-oriented] markets, consider:
+- [Marketing strategy based on migration patterns]
+- [Partnership opportunities with relocation services]
+- [Welcome wagon / new resident targeting campaigns]
+
+---
+
+### 5.3 Neighborhood-Level Growth Heatmap
+
+[INTERACTIVE MAP WITH TRACT-LEVEL GROWTH DATA]
+
+**Fastest Growing Sub-Markets:**
+1. **[Neighborhood 1]:** +[X.X]% 5-year growth
+   - Current population: [XX,XXX]
+   - Median income: $[XX,XXX]
+   - Households: [X,XXX]
+   - **Opportunity:** [Why this matters for the business]
+
+2. **[Neighborhood 2]:** +[X.X]% 5-year growth
+   - Current population: [XX,XXX]
+   - Median income: $[XX,XXX]
+   - Households: [X,XXX]
+   - **Opportunity:** [Why this matters for the business]
+
+**Strategic Recommendation:**
+Focus initial launch in [Neighborhood X] due to combination of:
+- High growth rate ([X.X]%)
+- Strong demographic fit ([criteria])
+- Concentrated signal density ([X] mentions per 10k residents)
+3. Consultant Studio Reports
+When users generate a business plan, include:
+markdown## Market Selection & Site Analysis
+
+### Recommended Launch Territory
+
+[EMBEDDED MAP]
+
+We recommend launching in **[City, Market]** within a **[X]-mile service radius** based on:
+
+1. **Growth Momentum:** [+X.X]% population growth (vs [X.X]% national avg)
+2. **Migration Advantage:** [X,XXX] annual in-migrants from target demographics
+3. **Signal Strength:** [X.X] problem mentions per 100k residents
+4. **Economic Fundamentals:** $[XX,XXX] median HH income, [XX]% educated
+
+### Year 1-3 Market Expansion Roadmap
+
+**Phase 1 (Months 1-12): Core Territory**
+- Target: [X]-mile radius around [Primary City]
+- Population: [XXX,XXX]
+- Growth rate: [+X.X]%
+- Year 1 revenue potential: $[X.X]M
+
+**Phase 2 (Year 2): Adjacent Growth Markets**
+Expand to neighboring high-growth submarkets:
+1. [Submarket 1]: [XXX,XXX] pop, [+X.X]% growth
+2. [Submarket 2]: [XXX,XXX] pop, [+X.X]% growth
+- Year 2 revenue potential: $[X.X]M
+
+**Phase 3 (Year 3): Regional Expansion**
+Enter secondary markets within [State/Region]:
+1. [Secondary Market 1]: [X.X]M pop, [+X.X]% growth
+2. [Secondary Market 2]: [X.X]M pop, [+X.X]% growth
+- Year 3 revenue potential: $[X.X]M
+
+### Site-Specific Recommendations
+
+If this is a physical location business (retail, restaurant, service center):
+
+**Recommended Locations (Ranked by Score):**
+| Address/Intersection | Growth Score | Traffic | Demographics | Rent | Total Score |
+|---------------------|--------------|---------|--------------|------|-------------|
+| [Location 1] | 95/100 | High | Excellent | $$$ | 92/100 |
+| [Location 2] | 88/100 | Medium | Excellent | $$ | 88/100 |
+
+Growth Score = Census tract 5-year growth + migration inflow + income trends
+4. Lead Reports (For Lead Marketplace)
+markdown# Lead List: [Business Category] in [Market]
+
+## Market Context
+
+**Population Dynamics:**
+- Current population: [XXX,XXX]
+- 5-year growth: [+X.X]%
+- Annual new residents: [X,XXX]
+- Migration sources: [Top 3 cities]
+
+**Why This Market Matters:**
+This is a [rapidly growing/stable/mature] market with [X,XXX] new potential customers arriving annually. The demographic profile of in-migrants ([age/income/education]) aligns perfectly with [business category] customer needs.
+
+---
+
+## [XXX] Qualified Leads
+
+Each lead includes:
+- Full contact information
+- Demographic profile
+- Home value / rent
+- Length of residency (new residents flagged)
+- Census tract growth rate
+- Likelihood to purchase score
+
+### Sample Leads:
+
+**Lead #1: Recent Arrival from High-Income Market**
+- Name: [Redacted until purchase]
+- Move date: [Month/Year]
+- Origin: [High-income city]
+- Age: [Range]
+- HH Income: $[XXX,XXX]
+- Home value: $[XXX,XXX]
+- **Why valuable:** Recent mover from affluent market, likely shopping for [category] services
+
+[Repeat for sample leads]
+5. Expert Network Opportunity Briefs
+When consultants/experts view opportunities:
+markdown# Consultant Opportunity Brief: [Opportunity Name]
+
+## Geographic Scope
+
+**Primary Market:** [City, State]
+**Service Radius:** [X] miles
+**Total Addressable Population:** [XXX,XXX]
+
+**Growth Profile:** [Rapid Growth / Growing / Stable / Declining]
+- 5-year growth: [+X.X]%
+- Projected 5-year growth: [+X.X]%
+- Annual new residents: [X,XXX]
+
+**Client Opportunity:**
+Your potential client will be launching in a [growing/stable] market with [X,XXX] new potential customers arriving annually. Migration patterns show in-flow from [geographic/demographic profile], suggesting [business implication].
+
+**Consulting Scope Recommendation:**
+- Market entry strategy for growing market
+- New resident customer acquisition programs
+- Multi-site expansion roadmap (if growth >5%)
+- Competitive positioning in attracting migrants from [origin markets]
+6. API Responses
+For enterprise API customers:
+json{
+  "opportunity_id": "uuid",
+  "title": "Problem statement",
+  "geography": {
+    "service_area": {
+      "type": "Polygon",
+      "coordinates": [...],
+      "properties": {
+        "radius_miles": 15,
+        "centroid": {
+          "lat": 40.7128,
+          "lng": -74.0060
+        }
+      }
+    },
+    "population_dynamics": {
+      "current_population": 524893,
+      "population_2019": 489234,
+      "population_change_5yr": 35659,
+      "population_change_pct_5yr": 7.3,
+      "cagr_5yr": 1.4,
+      "growth_category": "growing",
+      "annual_natural_increase": 1234,
+      "annual_net_migration": 5888,
+      "projected_population_2029": 575420
+    },
+    "migration_flows": {
+      "total_annual_in_migration": 12456,
+      "total_annual_out_migration": 6568,
+      "net_migration": 5888,
+      "top_origin_markets": [
+        {
+          "origin_name": "San Francisco-Oakland-Berkeley, CA",
+          "movers": 2341,
+          "median_age": 32,
+          "median_income": 95000,
+          "bachelors_or_higher_pct": 58.3
+        }
+      ]
+    },
+    "growth_submarkets": [
+      {
+        "name": "Downtown Core",
+        "population": 45230,
+        "growth_rate_5yr": 12.3,
+        "median_income": 87500
+      }
+    ]
+  },
+  "market_sizing": {
+    "tam": 8500000000,
+    "sam": 3200000000,
+    "som": 45000000,
+    "target_households": 125340,
+    "demographic_filters_applied": {
+      "min_income": 75000,
+      "age_range": [25, 55],
+      "education": "bachelors_or_higher"
+    }
+  }
+}

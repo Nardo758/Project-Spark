@@ -66,6 +66,91 @@ class CensusDataService:
         "B08301_019E",  # Work from home
     ]
     
+    EXTENDED_VARIABLES = [
+        "B19001_002E",  # Income < $10k
+        "B19001_003E",  # Income $10k-$15k
+        "B19001_004E",  # Income $15k-$20k
+        "B19001_005E",  # Income $20k-$25k
+        "B19001_006E",  # Income $25k-$30k
+        "B19001_007E",  # Income $30k-$35k
+        "B19001_008E",  # Income $35k-$40k
+        "B19001_009E",  # Income $40k-$45k
+        "B19001_010E",  # Income $45k-$50k
+        "B19001_011E",  # Income $50k-$60k
+        "B19001_012E",  # Income $60k-$75k
+        "B19001_013E",  # Income $75k-$100k
+        "B19001_014E",  # Income $100k-$125k
+        "B19001_015E",  # Income $125k-$150k
+        "B19001_016E",  # Income $150k-$200k
+        "B19001_017E",  # Income $200k+
+        "B01001_003E",  # Male under 5
+        "B01001_004E",  # Male 5-9
+        "B01001_005E",  # Male 10-14
+        "B01001_006E",  # Male 15-17
+        "B01001_007E",  # Male 18-19
+        "B01001_008E",  # Male 20
+        "B01001_009E",  # Male 21
+        "B01001_010E",  # Male 22-24
+        "B01001_011E",  # Male 25-29
+        "B01001_012E",  # Male 30-34
+        "B01001_013E",  # Male 35-39
+        "B01001_014E",  # Male 40-44
+        "B01001_015E",  # Male 45-49
+        "B01001_016E",  # Male 50-54
+        "B01001_017E",  # Male 55-59
+        "B01001_018E",  # Male 60-61
+        "B01001_019E",  # Male 62-64
+        "B01001_020E",  # Male 65-66
+        "B01001_021E",  # Male 67-69
+        "B01001_022E",  # Male 70-74
+        "B01001_023E",  # Male 75-79
+        "B01001_024E",  # Male 80-84
+        "B01001_025E",  # Male 85+
+        "B01001_027E",  # Female under 5
+        "B01001_028E",  # Female 5-9
+        "B01001_029E",  # Female 10-14
+        "B01001_030E",  # Female 15-17
+        "B01001_031E",  # Female 18-19
+        "B01001_032E",  # Female 20
+        "B01001_033E",  # Female 21
+        "B01001_034E",  # Female 22-24
+        "B01001_035E",  # Female 25-29
+        "B01001_036E",  # Female 30-34
+        "B01001_037E",  # Female 35-39
+        "B01001_038E",  # Female 40-44
+        "B01001_039E",  # Female 45-49
+        "B01001_040E",  # Female 50-54
+        "B01001_041E",  # Female 55-59
+        "B01001_042E",  # Female 60-61
+        "B01001_043E",  # Female 62-64
+        "B01001_044E",  # Female 65-66
+        "B01001_045E",  # Female 67-69
+        "B01001_046E",  # Female 70-74
+        "B01001_047E",  # Female 75-79
+        "B01001_048E",  # Female 80-84
+        "B01001_049E",  # Female 85+
+        "B08303_001E",  # Total commuters
+        "B08303_002E",  # Commute < 5 min
+        "B08303_003E",  # Commute 5-9 min
+        "B08303_004E",  # Commute 10-14 min
+        "B08303_005E",  # Commute 15-19 min
+        "B08303_006E",  # Commute 20-24 min
+        "B08303_007E",  # Commute 25-29 min
+        "B08303_008E",  # Commute 30-34 min
+        "B08303_009E",  # Commute 35-39 min
+        "B08303_010E",  # Commute 40-44 min
+        "B08303_011E",  # Commute 45-59 min
+        "B08303_012E",  # Commute 60-89 min
+        "B08303_013E",  # Commute 90+ min
+        "B28002_001E",  # Total households (internet)
+        "B28002_002E",  # With internet subscription
+        "B28002_004E",  # With broadband
+        "B28002_007E",  # Without internet
+        "B25003_001E",  # Total housing units
+        "B25003_002E",  # Owner occupied
+        "B25003_003E",  # Renter occupied
+    ]
+    
     VARIABLE_LABELS = {
         "B01003_001E": "population",
         "B01002_001E": "median_age",
@@ -84,6 +169,25 @@ class CensusDataService:
         "B15003_025E": "doctorate",
         "B08301_019E": "work_from_home",
     }
+    
+    INCOME_BRACKETS = [
+        ("under_10k", "B19001_002E"),
+        ("10k_15k", "B19001_003E"),
+        ("15k_20k", "B19001_004E"),
+        ("20k_25k", "B19001_005E"),
+        ("25k_30k", "B19001_006E"),
+        ("30k_35k", "B19001_007E"),
+        ("35k_40k", "B19001_008E"),
+        ("40k_45k", "B19001_009E"),
+        ("45k_50k", "B19001_010E"),
+        ("50k_60k", "B19001_011E"),
+        ("60k_75k", "B19001_012E"),
+        ("75k_100k", "B19001_013E"),
+        ("100k_125k", "B19001_014E"),
+        ("125k_150k", "B19001_015E"),
+        ("150k_200k", "B19001_016E"),
+        ("200k_plus", "B19001_017E"),
+    ]
     
     def __init__(self):
         self.api_key = os.getenv("CENSUS_API_KEY")
@@ -369,6 +473,198 @@ class CensusDataService:
         enhanced_score = base_score * population_multiplier * income_multiplier * underserved_bonus
         
         return min(round(enhanced_score, 1), 100)
+    
+    async def fetch_extended_demographics(
+        self,
+        state_fips: str,
+        county_fips: str,
+        year: int = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Fetch extended demographic data including income distribution, 
+        age distribution, commute patterns, and internet access.
+        
+        Args:
+            state_fips: 2-digit state FIPS code
+            county_fips: 3-digit county FIPS code
+            year: Data year (default: 2023)
+        
+        Returns:
+            Dictionary with extended demographic breakdowns
+        """
+        if not self.is_configured:
+            logger.warning("Census API key not configured")
+            return None
+        
+        year = year or self.DEFAULT_YEAR
+        
+        chunk_size = 25
+        all_raw = {}
+        
+        try:
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
+                for i in range(0, len(self.EXTENDED_VARIABLES), chunk_size):
+                    chunk = self.EXTENDED_VARIABLES[i:i+chunk_size]
+                    variables = ",".join(chunk)
+                    url = f"{self.BASE_URL}/{year}/{self.DATASET}?get={variables}&for=county:{county_fips}&in=state:{state_fips}&key={self.api_key}"
+                    
+                    response = await client.get(url)
+                    
+                    if response.status_code == 302:
+                        location = response.headers.get("location", "")
+                        if "invalid_key" in location:
+                            logger.error("Census API key is invalid")
+                            return None
+                        return None
+                    
+                    if response.status_code == 204 or response.status_code == 404:
+                        continue
+                    
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if len(data) >= 2:
+                        headers = data[0]
+                        values = data[1]
+                        for j, header in enumerate(headers):
+                            if header not in ["state", "county"]:
+                                try:
+                                    val = values[j]
+                                    if val is None or val == "" or val == "-":
+                                        all_raw[header] = None
+                                    else:
+                                        all_raw[header] = int(val) if str(val).lstrip('-').isdigit() else float(val)
+                                except (ValueError, TypeError):
+                                    all_raw[header] = None
+                
+                if not all_raw:
+                    return None
+                
+                result = self._parse_extended_demographics_from_raw(all_raw)
+                result["geography_type"] = "county"
+                result["geography_id"] = f"{state_fips}{county_fips}"
+                result["fetched_at"] = datetime.now().isoformat()
+                result["year"] = year
+                
+                return result
+                
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Census extended API error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching extended Census data: {e}")
+            return None
+    
+    def _parse_extended_demographics(self, data: list) -> Dict[str, Any]:
+        """Parse extended demographics response into structured data."""
+        headers = data[0]
+        values = data[1]
+        
+        raw = {}
+        for i, header in enumerate(headers):
+            try:
+                val = values[i]
+                if val is None or val == "" or val == "-":
+                    raw[header] = None
+                else:
+                    raw[header] = int(val) if str(val).lstrip('-').isdigit() else float(val)
+            except (ValueError, TypeError, AttributeError):
+                raw[header] = None
+        
+        return self._parse_extended_demographics_from_raw(raw)
+    
+    def _parse_extended_demographics_from_raw(self, raw: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse raw Census data into structured extended demographics."""
+        result = {}
+        
+        income_distribution = {}
+        for label, var in self.INCOME_BRACKETS:
+            income_distribution[label] = raw.get(var)
+        result["income_distribution"] = income_distribution
+        
+        total_hh = sum(v for v in income_distribution.values() if v)
+        if total_hh > 0:
+            result["income_distribution_pct"] = {
+                k: round((v / total_hh) * 100, 1) if v else 0
+                for k, v in income_distribution.items()
+            }
+            result["income_under_50k"] = sum(
+                income_distribution.get(k, 0) or 0 
+                for k in ["under_10k", "10k_15k", "15k_20k", "20k_25k", "25k_30k", "30k_35k", "35k_40k", "40k_45k", "45k_50k"]
+            )
+            result["income_50k_100k"] = sum(
+                income_distribution.get(k, 0) or 0 
+                for k in ["50k_60k", "60k_75k", "75k_100k"]
+            )
+            result["income_100k_plus"] = sum(
+                income_distribution.get(k, 0) or 0 
+                for k in ["100k_125k", "125k_150k", "150k_200k", "200k_plus"]
+            )
+        
+        male_under_18 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(3, 7))
+        male_18_24 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(7, 11))
+        male_25_44 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(11, 15))
+        male_45_64 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(15, 20))
+        male_65_plus = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(20, 26))
+        
+        female_under_18 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(27, 31))
+        female_18_24 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(31, 35))
+        female_25_44 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(35, 39))
+        female_45_64 = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(39, 44))
+        female_65_plus = sum(raw.get(f"B01001_{str(i).zfill(3)}E", 0) or 0 for i in range(44, 50))
+        
+        result["age_distribution"] = {
+            "under_18": male_under_18 + female_under_18,
+            "18_24": male_18_24 + female_18_24,
+            "25_44": male_25_44 + female_25_44,
+            "45_64": male_45_64 + female_45_64,
+            "65_plus": male_65_plus + female_65_plus,
+        }
+        
+        total_commuters = raw.get("B08303_001E") or 0
+        short_commute = sum(raw.get(f"B08303_{str(i).zfill(3)}E", 0) or 0 for i in range(2, 6))
+        medium_commute = sum(raw.get(f"B08303_{str(i).zfill(3)}E", 0) or 0 for i in range(6, 9))
+        long_commute = sum(raw.get(f"B08303_{str(i).zfill(3)}E", 0) or 0 for i in range(9, 14))
+        
+        result["commute_patterns"] = {
+            "total_commuters": total_commuters,
+            "under_20_min": short_commute,
+            "20_34_min": medium_commute,
+            "35_plus_min": long_commute,
+        }
+        if total_commuters > 0:
+            result["commute_patterns"]["under_20_min_pct"] = round((short_commute / total_commuters) * 100, 1)
+            result["commute_patterns"]["long_commute_pct"] = round((long_commute / total_commuters) * 100, 1)
+        
+        internet_total = raw.get("B28002_001E") or 0
+        internet_sub = raw.get("B28002_002E") or 0
+        broadband = raw.get("B28002_004E") or 0
+        no_internet = raw.get("B28002_007E") or 0
+        
+        result["internet_access"] = {
+            "total_households": internet_total,
+            "with_internet": internet_sub,
+            "with_broadband": broadband,
+            "without_internet": no_internet,
+        }
+        if internet_total > 0:
+            result["internet_access"]["internet_pct"] = round((internet_sub / internet_total) * 100, 1)
+            result["internet_access"]["broadband_pct"] = round((broadband / internet_total) * 100, 1)
+        
+        housing_total = raw.get("B25003_001E") or 0
+        owner_occupied = raw.get("B25003_002E") or 0
+        renter_occupied = raw.get("B25003_003E") or 0
+        
+        result["housing_tenure"] = {
+            "total_units": housing_total,
+            "owner_occupied": owner_occupied,
+            "renter_occupied": renter_occupied,
+        }
+        if housing_total > 0:
+            result["housing_tenure"]["owner_pct"] = round((owner_occupied / housing_total) * 100, 1)
+            result["housing_tenure"]["renter_pct"] = round((renter_occupied / housing_total) * 100, 1)
+        
+        return result
     
     async def fetch_population_estimates(
         self, 
