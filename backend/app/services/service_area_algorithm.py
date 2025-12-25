@@ -7,7 +7,7 @@ Computes optimal service areas for opportunities using:
 3. Geographic boundaries - Creates polygon/radius-based service areas
 """
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -52,7 +52,7 @@ class ServiceAreaAlgorithm:
             ServiceAreaBoundary.is_active == True
         ).first()
         
-        if existing and existing.computed_at > datetime.utcnow() - timedelta(days=7):
+        if existing and existing.computed_at and existing.computed_at.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc) - timedelta(days=7):
             return existing
         
         if existing:
@@ -519,7 +519,7 @@ class ServiceAreaAlgorithm:
             MarketGrowthTrajectory.is_active == True
         ).first()
         
-        if existing and existing.computed_at > datetime.utcnow() - timedelta(days=30):
+        if existing and existing.computed_at and existing.computed_at.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc) - timedelta(days=30):
             return existing
         
         if existing:
