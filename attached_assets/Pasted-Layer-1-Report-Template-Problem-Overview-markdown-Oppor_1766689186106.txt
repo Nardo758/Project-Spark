@@ -1,0 +1,495 @@
+Layer 1 Report Template: Problem Overview
+markdown# [Opportunity Title]
+
+**Discovered:** [Date] | **Signal Score:** [X/100] | **Geography:** [Regions]
+
+---
+
+## Executive Summary
+[3-4 sentences capturing the essence of the opportunity]
+
+---
+
+## The Problem
+
+### What People Are Saying
+[3-5 curated direct quotes from sources - verbatim consumer pain]
+
+### Why This Matters Now
+- **Trend Catalyst:** [What's changing that makes this urgent]
+- **Market Timing:** [Why the window is open]
+- **Urgency Indicators:** [Signals of growing frustration]
+
+---
+
+## Market Snapshot
+
+### Target Customer Profile
+**Primary Demographic:**
+- Age range: [from ACS B01001]
+- Household income: [from ACS B19013]
+- Education level: [from ACS B15003]
+- Location density: [Urban/Suburban/Rural from ACS B01003]
+
+**Household Characteristics:**
+- Family structure: [from ACS B11001]
+- Employment status: [from ACS B23025]
+- Commute patterns: [from ACS B08301]
+
+### Geographic Heat
+**Top 5 Cities by Problem Density:**
+1. [City, State] - [X mentions, Y population]
+2. [City, State] - [X mentions, Y population]
+3. [City, State] - [X mentions, Y population]
+4. [City, State] - [X mentions, Y population]
+5. [City, State] - [X mentions, Y population]
+
+### Market Size Indicators
+- **Addressable Population:** [Total from ACS within geography]
+- **Target Households:** [Filtered by demographics]
+- **Estimated Spending Power:** $[Aggregate income of target segment]
+
+---
+
+## Validation Signals
+
+### Signal Quality Breakdown
+- **Source Diversity:** [X platforms, Y unique discussions]
+- **Problem Severity:** [Average 1-10 from sentiment analysis]
+- **Monetization Mentions:** [% mentioning willingness to pay]
+- **Competitive Gap:** [High/Medium/Low existing solutions]
+
+---
+
+## What's Next
+
+**If you're interested in this opportunity, Deep Dive Analysis (Layer 2) includes:**
+- Complete TAM/SAM/SOM analysis with Census validation
+- Full competitive landscape with market positioning
+- 6 geographic market breakdowns with demographic overlays
+- Customer acquisition channel analysis
+- Financial feasibility modeling
+
+---
+
+## Sources
+[Preview of first 3-5 sources with links]
+Census Data Requirements for Layer 1
+sql-- Pull this data for every opportunity in Layer 1
+SELECT 
+  -- Demographics
+  B01003_001E as total_population,
+  B01002_001E as median_age,
+  B19013_001E as median_household_income,
+  B15003_022E + B15003_023E + B15003_024E + B15003_025E as bachelors_or_higher,
+  
+  -- Household
+  B11001_001E as total_households,
+  B11001_003E as family_households,
+  B25077_001E as median_home_value,
+  B25064_001E as median_gross_rent,
+  
+  -- Economic
+  B23025_005E as unemployed,
+  B23025_002E as labor_force,
+  
+  -- Location context
+  B08301_001E as commuters,
+  B08301_019E as work_from_home
+
+FROM acs5year_2023
+WHERE geography_id IN (
+  SELECT DISTINCT zip_code 
+  FROM scraped_sources 
+  WHERE opportunity_id = '[opportunity_id]'
+);
+
+Layer 2 Report Template: Deep Dive Analysis
+This is where Census data becomes CRITICAL for building defensible market analysis.
+Section 1: Market Sizing (TAM/SAM/SOM)
+markdown# Market Sizing Analysis
+
+## Total Addressable Market (TAM)
+**Methodology:** Census ACS 5-Year + Bureau of Labor Statistics Consumer Expenditure
+
+### National Market Size
+- **Total US Population:** [from B01003 national]
+- **Target Demographic:** [Filtered population]
+- **Market Penetration Assumption:** [Industry benchmark]
+- **TAM:** $[X.XB]
+
+### Calculation Detail
+```
+Target Population: [X,XXX,XXX households meeting criteria]
+× Average Annual Spending: $[X,XXX per ACS + BLS]
+× Market Penetration: [XX%]
+= TAM: $[X.XB]
+```
+
+---
+
+## Serviceable Addressable Market (SAM)
+**Geographic Constraint:** [Top 50 MSAs / US National / North America]
+
+### Market Breakdown by Census Regions
+| Region | Households | Med Income | Purchasing Power | SAM |
+|--------|-----------|------------|------------------|-----|
+| Northeast | [from ACS] | [B19013] | $[calc] | $XXM |
+| South | [from ACS] | [B19013] | $[calc] | $XXM |
+| Midwest | [from ACS] | [B19013] | $[calc] | $XXM |
+| West | [from ACS] | [B19013] | $[calc] | $XXM |
+| **TOTAL** | | | | **$X.XB** |
+
+---
+
+## Serviceable Obtainable Market (SOM)
+**Year 1 Target:** [Geographic focus + early adopter segment]
+
+### Launch Market Analysis
+**Target: [City/Metro Area]**
+
+**Demographics (Census Data):**
+- Population: [B01003]
+- Households: [B11001]
+- Median HH Income: $[B19013]
+- Age Distribution: [B01001 breakdown]
+- Education: [B15003] - [XX%] bachelor's or higher
+- Employment: [B23025] - [XX%] employed, [XX%] WFH
+
+**Economic Indicators:**
+- Median Home Value: $[B25077]
+- Median Rent: $[B25064]
+- Unemployment: [B23025 calculated]
+- Commute Time: [B08303 average]
+
+**Market Opportunity:**
+- Target households in MSA: [filtered count]
+- Year 1 market penetration: [X%]
+- **SOM:** $[X.XM]
+Census Data Query for Layer 2 Market Sizing
+sql-- Comprehensive market sizing query
+WITH target_demographics AS (
+  SELECT 
+    g.name as geography_name,
+    g.geography_type,
+    SUM(d.B01003_001E) as total_population,
+    SUM(d.B11001_001E) as total_households,
+    AVG(d.B19013_001E) as median_income,
+    AVG(d.B01002_001E) as median_age,
+    SUM(d.B15003_022E + d.B15003_023E + d.B15003_024E + d.B15003_025E) as educated_population,
+    AVG(d.B25077_001E) as median_home_value,
+    AVG(d.B25064_001E) as median_rent,
+    SUM(d.B23025_005E)::FLOAT / NULLIF(SUM(d.B23025_002E), 0) as unemployment_rate
+  FROM census_acs_5year d
+  JOIN census_geographies g ON d.geography_id = g.geography_id
+  WHERE ST_DWithin(
+    g.geography_boundary::geography,
+    (SELECT coverage_area FROM opportunities WHERE id = '[opportunity_id]'),
+    0  -- Within coverage area
+  )
+  AND d.year = 2023
+  GROUP BY g.name, g.geography_type
+),
+market_segments AS (
+  SELECT 
+    geography_name,
+    total_households,
+    median_income,
+    -- Apply filters based on opportunity target demographic
+    CASE 
+      WHEN median_age BETWEEN 25 AND 45 
+        AND median_income > 75000
+        AND educated_population::FLOAT / total_population > 0.3
+      THEN total_households * 0.4  -- 40% fit criteria
+      ELSE total_households * 0.15  -- 15% fit criteria
+    END as target_households,
+    median_income * total_households as purchasing_power
+  FROM target_demographics
+)
+SELECT 
+  SUM(target_households) as total_target_households,
+  SUM(purchasing_power) as total_purchasing_power,
+  AVG(median_income) as avg_target_income,
+  -- TAM calculation
+  SUM(target_households * median_income * 0.02) as estimated_tam,  -- 2% of income
+  -- SAM calculation (top 50 metros)
+  SUM(target_households * median_income * 0.02) * 0.65 as estimated_sam,  -- 65% coverage
+  -- SOM calculation (first year)
+  SUM(target_households * median_income * 0.02) * 0.65 * 0.01 as estimated_som  -- 1% market penetration
+FROM market_segments;
+Section 2: Demographic Deep Dive
+markdown# Target Customer Analysis
+
+## Demographic Profile (Census-Validated)
+
+### Age & Life Stage
+**Primary Segment:** [Age range]
+- Ages 25-34: [XX%] of target market
+- Ages 35-44: [XX%] of target market
+- Ages 45-54: [XX%] of target market
+
+**Secondary Segment:** [Age range if applicable]
+
+**Data Source:** ACS Table B01001 - Sex by Age
+
+---
+
+### Economic Profile
+**Income Distribution in Target Market:**
+| Income Bracket | Households | % of Target | Purchasing Power |
+|---------------|-----------|-------------|------------------|
+| $50k-$75k | [count] | [XX%] | $[XXM] |
+| $75k-$100k | [count] | [XX%] | $[XXM] |
+| $100k-$150k | [count] | [XX%] | $[XXM] |
+| $150k+ | [count] | [XX%] | $[XXM] |
+
+**Key Insight:** [XX%] of target households earn above $[threshold], indicating strong purchasing power for [price point] solution.
+
+**Data Source:** ACS Table B19001 - Household Income
+
+---
+
+### Education & Employment
+**Education Levels:**
+- Bachelor's degree or higher: [XX%] (vs [XX%] national avg)
+- Graduate or professional degree: [XX%] (vs [XX%] national avg)
+
+**Employment Status:**
+- Employed: [XX%]
+- Work from home: [XX%] (vs [XX%] national avg)
+- Unemployed: [XX%] (vs [XX%] national avg)
+
+**Average Commute Time:** [XX] minutes (vs [XX] min national avg)
+
+**Key Insight:** [High WFH rates / Long commutes / Education level] suggests [behavioral pattern relevant to opportunity]
+
+**Data Sources:** ACS B15003 (Education), B23025 (Employment), B08303 (Commute Time)
+
+---
+
+### Housing & Lifestyle
+**Housing Characteristics:**
+- Homeownership rate: [XX%] (vs [XX%] national)
+- Median home value: $[XXX,XXX]
+- Median rent: $[X,XXX]/month
+- Average household size: [X.X] persons
+
+**Family Structure:**
+- Married couples: [XX%]
+- Families with children under 18: [XX%]
+- Single-person households: [XX%]
+
+**Key Insight:** [Homeownership/rental pattern] combined with [family structure] indicates [relevant behavior for opportunity]
+
+**Data Sources:** ACS B25077 (Home Value), B25064 (Rent), B11001 (Household Type)
+
+---
+
+### Digital Readiness
+**Technology Adoption Indicators:**
+- Households with internet: [XX%]
+- Broadband subscription: [XX%]
+- Smartphone ownership: [XX%] (estimated from B28002)
+
+**Key Insight:** [High/Low] digital adoption suggests [go-to-market channel preference]
+
+**Data Source:** ACS B28002 - Internet Subscriptions
+Section 3: Geographic Market Breakdown
+markdown# Geographic Opportunity Map
+
+## Top 10 Markets by Opportunity Score
+
+**Scoring Methodology:**
+- Problem density (30%): Mentions per 100k population
+- Purchasing power (25%): Aggregate income × households
+- Competitive gap (20%): Low competitor density
+- Demographics fit (15%): Match to target profile
+- Growth trajectory (10%): Population/income trends
+
+| Rank | Metro Area | Opportunity Score | Target HH | Med Income | Problem Density |
+|------|-----------|-------------------|-----------|------------|-----------------|
+| 1 | [MSA Name] | 94/100 | [XXX,XXX] | $[XX,XXX] | [X.X/100k] |
+| 2 | [MSA Name] | 91/100 | [XXX,XXX] | $[XX,XXX] | [X.X/100k] |
+| ... | ... | ... | ... | ... | ... |
+| 10 | [MSA Name] | 82/100 | [XXX,XXX] | $[XX,XXX] | [X.X/100k] |
+
+---
+
+## Market #1 Deep Dive: [Top Metro]
+
+### Demographics (Census ACS 2023)
+- **Population:** [X.XM] (rank #[X] nationally)
+- **Households:** [XXX,XXX]
+- **Median Age:** [XX] years
+- **Median HH Income:** $[XX,XXX] ([XX%] above national median)
+- **Bachelor's or higher:** [XX%]
+- **Employment rate:** [XX%]
+
+### Economic Indicators
+- **Unemployment:** [X.X%] (vs [X.X%] national)
+- **Median home value:** $[XXX,XXX]
+- **Average rent:** $[X,XXX]/month
+- **Work from home:** [XX%] of workforce
+
+### Problem Signals
+- **Mentions collected:** [XXX] unique data points
+- **Problem density:** [X.X] per 100k population
+- **Average severity:** [X.X/10]
+- **Monetization signals:** [XX%] mention willingness to pay
+
+### Competitive Landscape
+- **Direct competitors:** [X] companies
+- **Average rating:** [X.X/5.0]
+- **Market saturation:** [Low/Medium/High]
+
+### Market Opportunity
+- **Target households:** [XX,XXX] ([XX%] of metro)
+- **Aggregate purchasing power:** $[X.XB]
+- **Estimated year 1 revenue potential:** $[X.X]M at [X%] penetration
+
+[Repeat for top 3-5 markets]
+SQL for Geographic Analysis
+sql-- Top markets by opportunity score
+WITH market_metrics AS (
+  SELECT 
+    m.cbsa_code,
+    m.cbsa_name,
+    -- Demographics
+    SUM(c.B01003_001E) as population,
+    SUM(c.B11001_001E) as households,
+    AVG(c.B19013_001E) as median_income,
+    AVG(c.B01002_001E) as median_age,
+    
+    -- Problem density
+    COUNT(DISTINCT s.id) as mention_count,
+    (COUNT(DISTINCT s.id)::FLOAT / SUM(c.B01003_001E) * 100000) as problem_density,
+    
+    -- Competitive density
+    COUNT(DISTINCT comp.id) as competitor_count,
+    
+    -- Economic indicators
+    AVG(c.B25077_001E) as median_home_value,
+    SUM(c.B23025_005E)::FLOAT / NULLIF(SUM(c.B23025_002E), 0) as unemployment_rate,
+    SUM(c.B08301_019E)::FLOAT / NULLIF(SUM(c.B08301_001E), 0) as wfh_rate
+    
+  FROM metro_areas m
+  JOIN census_acs_5year c ON c.cbsa = m.cbsa_code
+  LEFT JOIN scraped_sources s ON ST_Within(s.business_location, m.boundary)
+    AND s.opportunity_id = '[opportunity_id]'
+  LEFT JOIN competitors comp ON ST_Within(comp.location, m.boundary)
+  WHERE c.year = 2023
+  GROUP BY m.cbsa_code, m.cbsa_name
+),
+opportunity_scores AS (
+  SELECT 
+    *,
+    -- Calculate opportunity score (0-100)
+    (
+      (LEAST(problem_density, 50) / 50 * 30) +  -- Problem density (30%)
+      (LEAST((households * median_income) / 1000000000, 100) * 0.25) +  -- Purchasing power (25%)
+      (CASE 
+        WHEN competitor_count < 3 THEN 20
+        WHEN competitor_count < 6 THEN 15
+        WHEN competitor_count < 10 THEN 10
+        ELSE 5
+      END) +  -- Competitive gap (20%)
+      (CASE
+        WHEN median_income > 90000 AND median_age BETWEEN 25 AND 45 THEN 15
+        WHEN median_income > 75000 THEN 12
+        WHEN median_income > 60000 THEN 8
+        ELSE 5
+      END) +  -- Demographics fit (15%)
+      (CASE
+        WHEN unemployment_rate < 0.04 AND wfh_rate > 0.15 THEN 10
+        WHEN unemployment_rate < 0.05 THEN 7
+        ELSE 5
+      END)  -- Growth/modernity indicators (10%)
+    ) as opportunity_score
+  FROM market_metrics
+)
+SELECT 
+  cbsa_name as metro_area,
+  ROUND(opportunity_score, 0) as score,
+  TO_CHAR(households, 'FM999,999,999') as target_households,
+  TO_CHAR(median_income, 'FM$999,999') as median_income,
+  ROUND(problem_density, 1) || '/100k' as problem_density,
+  competitor_count,
+  TO_CHAR(households * median_income, 'FM$999,999,999,999') as purchasing_power
+FROM opportunity_scores
+ORDER BY opportunity_score DESC
+LIMIT 10;
+Section 4: Competitive Analysis with Demographics
+markdown# Competitive Landscape
+
+## Market Saturation Analysis
+
+### Competitor Density by Market
+| Market | Population | Competitors | Saturation Ratio | Opportunity |
+|--------|-----------|-------------|------------------|-------------|
+| [MSA] | [X.XM] | [XX] | 1:[XX,XXX] | [High/Med/Low] |
+
+**Industry Benchmark:** [1 competitor per X population]
+**Key Insight:** [Markets with ratios above X:XXX indicate undersupply]
+
+---
+
+## Demographic Whitespace Analysis
+
+### Who's Being Underserved?
+
+**Income Segments:**
+- **$150k+ households:** [XX%] of market, [XX%] of existing customer base → **[XX%] underserved**
+- **$75k-$100k households:** [XX%] of market, [XX%] of existing customer base → **[XX%] overserved**
+
+**Age Segments:**
+- **Millennials (27-42):** [XX%] of market, [XX%] of existing solutions → **Gap: [XX]%**
+- **Gen X (43-58):** [XX%] of market, [XX%] of existing solutions → **Gap: [XX]%**
+
+**Geographic Gaps:**
+- **Suburban areas:** [XX%] of target population, [XX%] of competitors → **Underserved by [XX]%**
+- **Urban core:** [XX%] of target population, [XX%] of competitors → **Saturated**
+
+**Data Sources:** ACS B19001 (Income), B01001 (Age), B01003 (Population Distribution)
+```
+
+---
+
+## Key Census Variables to Track
+
+Here's your priority list of Census variables to integrate:
+
+### Tier 1: Essential (Use in ALL reports)
+```
+B01003_001E - Total population
+B11001_001E - Total households
+B19013_001E - Median household income
+B01002_001E - Median age
+B15003_022E through B15003_025E - Education (bachelor's or higher)
+B23025_005E / B23025_002E - Unemployment rate
+```
+
+### Tier 2: Market Sizing (Use in Layer 2+)
+```
+B19001_* - Household income brackets (detailed)
+B01001_* - Age by sex (detailed segments)
+B25077_001E - Median home value
+B25064_001E - Median gross rent
+B11001_003E - Family households
+B09019_002E - Households with children under 6
+```
+
+### Tier 3: Behavioral Insights (Use in Layer 2+ for specific opportunities)
+```
+B08301_019E / B08301_001E - Work from home rate
+B08303_001E - Mean travel time to work
+B28002_004E - Broadband internet subscription
+B08134_* - Commute time brackets
+B25044_003E / B25044_010E - No vehicle available
+```
+
+### Tier 4: Niche Segmentation (Use when relevant)
+```
+B16004_* - Language spoken at home
+B03002_* - Race and Hispanic origin (for culturally specific opportunities)
+B27001_* - Health insurance coverage
+B09021_* - Living arrangements (for child/elder care opportunities)
