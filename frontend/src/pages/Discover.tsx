@@ -358,7 +358,7 @@ export default function Discover() {
             return (
               <div 
                 key={opp.id} 
-                onClick={() => navigate(isPaidUser ? `/opportunity/${opp.id}/hub` : `/opportunity/${opp.id}`)}
+                onClick={() => navigate(`/opportunity/${opp.id}`)}
                 className="bg-white rounded-xl border-2 border-stone-200 hover:border-stone-900 transition-all p-6 cursor-pointer group"
               >
                 {/* Header: Category + Unlock Status + Score */}
