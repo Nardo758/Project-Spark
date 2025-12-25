@@ -36,6 +36,7 @@ type Opportunity = {
   status?: string
   ai_competition_level?: string | null
   ai_market_size_estimate?: string | null
+  ai_summary?: string | null
   validation_count?: number
   growth_rate?: number
   views?: number
@@ -229,7 +230,7 @@ export default function Dashboard() {
                       
                       <h3 className="font-semibold text-stone-900 text-lg mb-1 group-hover:text-violet-600 transition-colors">{opp.title}</h3>
                       <p className="text-sm text-stone-500 mb-4 line-clamp-2">
-                        {opp.description?.replace(/\*\*/g, '').split('\n')[0] || 'Market Opportunity Overview'}
+                        {opp.description?.replace(/\*\*/g, '').split('\n')[0] || opp.ai_summary?.replace(/\*\*/g, '').split('\n')[0] || 'Analysis pending...'}
                       </p>
                       
                       <div className="grid grid-cols-3 gap-3 mb-4">

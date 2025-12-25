@@ -21,6 +21,7 @@ type Opportunity = {
   market_size?: string | null
   ai_market_size_estimate?: string | null
   ai_competition_level?: string | null
+  ai_summary?: string | null
   feasibility_score?: number | null
   created_at?: string
   views?: number
@@ -390,7 +391,7 @@ export default function Discover() {
                 
                 {/* Description */}
                 <p className="text-stone-600 text-sm mb-4 line-clamp-2">
-                  {opp.description?.replace(/\*\*/g, '').split('\n')[0] || 'Opportunity analysis available...'}
+                  {opp.description?.replace(/\*\*/g, '').split('\n')[0] || opp.ai_summary?.replace(/\*\*/g, '').split('\n')[0] || 'Analysis pending...'}
                 </p>
 
                 {/* Stats Grid */}
