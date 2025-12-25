@@ -438,24 +438,7 @@ export default function OpportunityDetail() {
                   <CheckCircle2 className="w-5 h-5" />
                 </button>
               </div>
-              {hasPro ? (
-                <button
-                  onClick={() => navigate(`/opportunity/${opp.id}/hub`)}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
-                >
-                  <Rocket className="w-4 h-4" />
-                  Deep Dive WorkHub
-                </button>
-              ) : isAuthenticated && access?.can_pay_to_unlock ? (
-                <button
-                  onClick={() => payPerUnlockMutation.mutate()}
-                  disabled={payPerUnlockMutation.isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                >
-                  <Lock className="w-4 h-4" />
-                  {payPerUnlockMutation.isPending ? 'Processing...' : `Unlock Now (${fmtCents(access.unlock_price) || '$15'})`}
-                </button>
-              ) : !isAuthenticated ? (
+              {!isAuthenticated ? (
                 <Link
                   to={`/login?next=${encodeURIComponent(`/opportunity/${opp.id}`)}`}
                   className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
@@ -463,7 +446,24 @@ export default function OpportunityDetail() {
                   <Rocket className="w-4 h-4" />
                   Sign in to Continue
                 </Link>
-              ) : !access?.is_accessible && access?.days_until_unlock ? (
+              ) : access?.is_accessible ? (
+                <button
+                  onClick={() => navigate(`/opportunity/${opp.id}/hub`)}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
+                >
+                  <Rocket className="w-4 h-4" />
+                  Deep Dive WorkHub
+                </button>
+              ) : access?.can_pay_to_unlock ? (
+                <button
+                  onClick={() => payPerUnlockMutation.mutate()}
+                  disabled={payPerUnlockMutation.isPending}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  <Lock className="w-4 h-4" />
+                  {payPerUnlockMutation.isPending ? 'Processing...' : `Unlock Now (${fmtCents(access?.unlock_price) || '$15'})`}
+                </button>
+              ) : access?.days_until_unlock ? (
                 <Link
                   to="/pricing"
                   className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg font-medium hover:bg-stone-800 transition-colors"
@@ -815,49 +815,47 @@ export default function OpportunityDetail() {
                 <p className="text-violet-100">Take action in our WorkHub with AI-powered planning, task management, and expert collaboration.</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {isAuthenticated ? (
-                hasPro ? (
-                  <Link 
-                    to={`/opportunity/${id}/hub`}
-                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
-                  >
-                    <Briefcase className="w-5 h-5" />
-                    Deep Dive WorkHub
-                  </Link>
-                ) : access?.can_pay_to_unlock ? (
-                  <button
-                    onClick={() => payPerUnlockMutation.mutate()}
-                    disabled={payPerUnlockMutation.isPending}
-                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors disabled:opacity-50"
-                  >
-                    <Lock className="w-5 h-5" />
-                    {payPerUnlockMutation.isPending ? 'Processing...' : `Unlock Now (${fmtCents(access?.unlock_price) || '$15'})`}
-                  </button>
-                ) : access?.is_accessible ? (
-                  <Link 
-                    to={`/opportunity/${id}/hub`}
-                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
-                  >
-                    <Briefcase className="w-5 h-5" />
-                    Deep Dive WorkHub
-                  </Link>
-                ) : (
-                  <Link 
-                    to="/pricing"
-                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
-                  >
-                    <Rocket className="w-5 h-5" />
-                    Upgrade to Access WorkHub
-                  </Link>
-                )
-              ) : (
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {!isAuthenticated ? (
                 <Link 
                   to={`/login?next=${encodeURIComponent(`/opportunity/${id}`)}`}
                   className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                 >
                   <Rocket className="w-5 h-5" />
                   Sign in to Start
+                </Link>
+              ) : access?.is_accessible ? (
+                <Link 
+                  to={`/opportunity/${id}/hub`}
+                  className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
+                >
+                  <Briefcase className="w-5 h-5" />
+                  Deep Dive WorkHub
+                </Link>
+              ) : access?.can_pay_to_unlock ? (
+                <button
+                  onClick={() => payPerUnlockMutation.mutate()}
+                  disabled={payPerUnlockMutation.isPending}
+                  className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors disabled:opacity-50"
+                >
+                  <Lock className="w-5 h-5" />
+                  {payPerUnlockMutation.isPending ? 'Processing...' : `Unlock Now (${fmtCents(access?.unlock_price) || '$15'})`}
+                </button>
+              ) : access?.days_until_unlock ? (
+                <Link 
+                  to="/pricing"
+                  className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
+                >
+                  <Rocket className="w-5 h-5" />
+                  Upgrade for Earlier Access
+                </Link>
+              ) : (
+                <Link 
+                  to="/pricing"
+                  className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
+                >
+                  <Rocket className="w-5 h-5" />
+                  Upgrade to Access WorkHub
                 </Link>
               )}
             </div>
