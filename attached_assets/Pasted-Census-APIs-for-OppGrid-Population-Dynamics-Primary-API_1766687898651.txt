@@ -1,0 +1,216 @@
+Census APIs for OppGrid Population Dynamics
+Primary APIs (Must Have)
+1. Population Estimates API ⭐ MOST IMPORTANT
+URL: https://api.census.gov/data/2024/pep/population
+What it provides:
+
+Current population counts (updated annually)
+Year-over-year change
+Components of change (births, deaths, migration)
+
+Key Variables:
+javascript// Annual population estimates
+POP         // Total population
+DENSITY     // Population density
+BIRTHS      // Number of births
+DEATHS      // Number of deaths
+NATURALINC  // Natural increase (births - deaths)
+DOMESTICMIG // Net domestic migration
+INTERNATIONALMIG // Net international migration
+NETMIG      // Total net migration
+
+// Available geographies: Nation, State, County, Metro/Micro Areas
+Example Call:
+javascript// Get all counties with population and migration data
+const response = await axios.get(
+  'https://api.census.gov/data/2024/pep/population',
+  {
+    params: {
+      get: 'POP,BIRTHS,DEATHS,DOMESTICMIG,INTERNATIONALMIG,NETMIG,NAME',
+      for: 'county:*',
+      key: YOUR_CENSUS_API_KEY
+    }
+  }
+);
+
+// Returns data like:
+// ["POP","BIRTHS","DEATHS","DOMESTICMIG","INTERNATIONALMIG","NETMIG","NAME","state","county"]
+// ["524893","5432","3876","2341","567","2908","Austin County, Texas","48","015"]
+
+2. ACS Migration Flows ⭐ FOR MIGRATION PATTERNS
+URL: https://api.census.gov/data/2023/acs/flows
+What it provides:
+
+County-to-county migration
+Metro-to-metro migration
+Demographics of movers (age, income, education)
+
+Key Variables:
+javascriptMOVEDIN     // Number of people who moved in
+MOVEDOUT    // Number of people who moved out
+MOVEDNET    // Net migration (in - out)
+GEOID1      // Origin geography ID
+FULL1_NAME  // Origin geography name
+GEOID2      // Destination geography ID
+FULL2_NAME  // Destination geography name
+
+// Demographic breakdowns (when available):
+AGE1        // Movers age 1-17
+AGE2        // Movers age 18-34
+AGE3        // Movers age 35-64
+AGE4        // Movers age 65+
+INCOME      // Median income of movers
+Example Call:
+javascript// Get migration flows INTO Austin County, TX
+const response = await axios.get(
+  'https://api.census.gov/data/2023/acs/flows',
+  {
+    params: {
+      get: 'MOVEDIN,MOVEDOUT,MOVEDNET,GEOID1,FULL1_NAME,GEOID2,FULL2_NAME',
+      for: 'county:015',  // Austin County
+      in: 'state:48',     // Texas
+      key: YOUR_CENSUS_API_KEY
+    }
+  }
+);
+
+// Returns where people are moving FROM into Austin County
+
+3. ACS 5-Year Data (You already have this)
+URL: https://api.census.gov/data/2023/acs/acs5
+This is what you're already using for demographics. Just confirming you have it.
+
+Secondary APIs (Nice to Have)
+4. Decennial Census - For 10-year comparisons
+URL: https://api.census.gov/data/2020/dec/pl
+Use case: Compare 2020 vs 2010 for long-term growth trends
+javascript// Get 2020 population
+const response2020 = await axios.get(
+  'https://api.census.gov/data/2020/dec/pl',
+  {
+    params: {
+      get: 'P1_001N,NAME',  // Total population
+      for: 'county:*',
+      key: YOUR_CENSUS_API_KEY
+    }
+  }
+);
+
+// Get 2010 population
+const response2010 = await axios.get(
+  'https://api.census.gov/data/2010/dec/sf1',
+  {
+    params: {
+      get: 'P001001,NAME',  // Total population
+      for: 'county:*',
+      key: YOUR_CENSUS_API_KEY
+    }
+  }
+);
+
+// Calculate 10-year CAGR
+
+Recommended Data Collection Strategy
+Phase 1: Population Growth (Week 1)
+Use Population Estimates API to get:
+
+2019-2024 annual population for all counties
+Migration components for each year
+
+javascript// Import script - run once, then monthly updates
+async function importPopulationData() {
+  for (let year = 2019; year <= 2024; year++) {
+    const response = await axios.get(
+      `https://api.census.gov/data/${year}/pep/population`,
+      {
+        params: {
+          get: 'POP,BIRTHS,DEATHS,DOMESTICMIG,INTERNATIONALMIG,NETMIG,NAME',
+          for: 'county:*',
+          key: CENSUS_API_KEY
+        }
+      }
+    );
+    
+    // Store in your database
+    await storePopulationData(response.data, year);
+  }
+}
+Phase 2: Migration Flows (Week 2)
+Use ACS Migration Flows to get:
+
+County-to-county movement patterns
+Top origins for each destination
+
+javascriptasync function importMigrationFlows() {
+  // Get all counties first
+  const counties = await getCountiesFromDB();
+  
+  for (const county of counties) {
+    const response = await axios.get(
+      'https://api.census.gov/data/2023/acs/flows',
+      {
+        params: {
+          get: 'MOVEDIN,GEOID1,FULL1_NAME,GEOID2,FULL2_NAME',
+          for: `county:${county.code}`,
+          in: `state:${county.state}`,
+          key: CENSUS_API_KEY
+        }
+      }
+    );
+    
+    // Store top 20 origins for each county
+    await storeMigrationFlows(response.data, county);
+  }
+}
+
+Quick Reference: Which API for What
+NeedAPIEndpointCurrent populationPopulation Estimates/data/2024/pep/populationYear-over-year growthPopulation Estimates/data/{year}/pep/populationMigration (where from/to)ACS Flows/data/2023/acs/flowsDemographics (age, income)ACS 5-Year/data/2023/acs/acs510-year comparisonDecennial/data/2020/dec/pl
+
+Geographic Levels Available
+Each API supports different geography levels:
+Population Estimates:
+
+✅ Nation
+✅ State
+✅ County
+✅ Metro/Micro Areas
+✅ Place (cities)
+❌ Census Tract (not available)
+
+ACS Flows:
+
+✅ County-to-county
+✅ Metro-to-metro
+❌ Tract-level (not available)
+
+ACS 5-Year:
+
+✅ Nation to Census Tract (all levels)
+
+For tract-level growth: You'll need to calculate it from ACS 5-Year data by comparing 2019 vs 2023 estimates, not from Population Estimates API.
+
+Final Recommendation
+Start with these 2 APIs:
+
+Population Estimates API (/data/2024/pep/population)
+
+Import for years 2019-2024
+Get county-level population and migration
+Updates annually (released in March)
+
+
+ACS Migration Flows (/data/2023/acs/flows)
+
+Import county-to-county flows
+Get top 20 origins for each destination
+Updates annually with ACS data
+
+
+
+You already have ACS 5-Year, which gives you the demographic details (income, age, education) for each geography.
+Together these 3 APIs give you everything:
+
+Current population (Pop Estimates)
+Growth rates (Pop Estimates historical)
+Where people are moving from (Migration Flows)
+Who is moving (ACS 5-Year demographics)
