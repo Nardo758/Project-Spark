@@ -24,7 +24,7 @@ from app.schemas.workspace import (
     WorkspaceCreate, WorkspaceUpdate, Workspace as WorkspaceSchema,
     WorkspaceNoteCreate, WorkspaceNoteUpdate, WorkspaceNote as WorkspaceNoteSchema,
     WorkspaceTaskCreate, WorkspaceTaskUpdate, WorkspaceTask as WorkspaceTaskSchema,
-    WorkspaceDocumentCreate, WorkspaceDocument as WorkspaceDocumentSchema,
+    WorkspaceDocumentCreate, WorkspaceDocumentUpdate, WorkspaceDocument as WorkspaceDocumentSchema,
     WorkspaceList, WorkspaceCheck
 )
 from app.core.dependencies import get_current_active_user
@@ -479,6 +479,43 @@ def create_document(
         file_url=doc_data.file_url
     )
     db.add(doc)
+    workspace.last_activity_at = func.now()
+    db.commit()
+    db.refresh(doc)
+
+    return doc
+
+
+@router.patch("/{workspace_id}/documents/{doc_id}", response_model=WorkspaceDocumentSchema)
+def update_document(
+    workspace_id: int,
+    doc_id: int,
+    doc_data: WorkspaceDocumentUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Update a document"""
+    workspace = db.query(UserWorkspace).filter(
+        UserWorkspace.id == workspace_id,
+        UserWorkspace.user_id == current_user.id
+    ).first()
+
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    doc = db.query(WorkspaceDocument).filter(
+        WorkspaceDocument.id == doc_id,
+        WorkspaceDocument.workspace_id == workspace_id
+    ).first()
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    if doc_data.name is not None:
+        doc.name = doc_data.name
+    if doc_data.content is not None:
+        doc.content = doc_data.content
+    doc.updated_at = func.now()
     workspace.last_activity_at = func.now()
     db.commit()
     db.refresh(doc)

@@ -91,6 +91,11 @@ class WorkspaceDocumentCreate(WorkspaceDocumentBase):
     pass
 
 
+class WorkspaceDocumentUpdate(BaseModel):
+    name: Optional[str] = None
+    content: Optional[str] = None
+
+
 class WorkspaceDocument(WorkspaceDocumentBase):
     id: int
     workspace_id: int

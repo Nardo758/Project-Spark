@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, BarChart3, Briefcase, CheckCircle, CheckCircle2, ChevronDown, ChevronRight, 
-  Download, FileText, Lightbulb, Loader2, MapPin, MessageSquare, PanelLeftClose, PanelLeftOpen,
+  Download, FileText, Lightbulb, Loader2, MapPin, PanelLeftClose, PanelLeftOpen,
   PenLine, Plus, Rocket, Search, Send, Sparkles, 
   Target, Trash2, TrendingUp, Users, X, Zap
 } from 'lucide-react'
@@ -128,7 +128,10 @@ export default function OpportunityHub() {
   const queryClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState<WorkspaceStatus>('researching')
-  const [workspaceSubTab, setWorkspaceSubTab] = useState<'tasks' | 'notes' | 'docs'>('tasks')
+  const [workspaceSubTab, setWorkspaceSubTab] = useState<'tasks' | 'notes' | 'docs' | 'plan'>('tasks')
+  const [businessPlanContent, setBusinessPlanContent] = useState('')
+  const [businessPlanDocId, setBusinessPlanDocId] = useState<number | null>(null)
+  const [isEditingPlan, setIsEditingPlan] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newNoteContent, setNewNoteContent] = useState('')
   const [aiMessage, setAiMessage] = useState('')
@@ -283,6 +286,19 @@ export default function OpportunityHub() {
       return await res.json()
     },
   })
+
+  useEffect(() => {
+    if (workspaceSubTab === 'plan' && workspaceQuery.data?.documents) {
+      const businessPlanDocs = workspaceQuery.data.documents.filter(d => d.doc_type === 'business_plan')
+      const latestPlan = businessPlanDocs.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0]
+      if (latestPlan?.content && latestPlan.id !== businessPlanDocId) {
+        setBusinessPlanContent(latestPlan.content)
+        setBusinessPlanDocId(latestPlan.id)
+      }
+    }
+  }, [workspaceSubTab, workspaceQuery.data?.documents, businessPlanDocId])
 
   const createWorkspaceMutation = useMutation({
     mutationFn: async () => {
@@ -450,6 +466,21 @@ export default function OpportunityHub() {
     },
   })
 
+  const updateDocMutation = useMutation({
+    mutationFn: async ({ docId, content }: { docId: number; content: string }) => {
+      const res = await fetch(`/api/v1/workspaces/${workspaceId}/documents/${docId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content }),
+      })
+      if (!res.ok) throw new Error('Failed to update document')
+      return await res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceId] })
+    },
+  })
+
   const chatMessages = chatHistoryQuery.data || []
 
   const generatePhaseReport = (phase: 'validate' | 'research' | 'plan' | 'execute') => {
@@ -490,6 +521,102 @@ export default function OpportunityHub() {
       printWindow.document.close()
       printWindow.print()
     }
+  }
+
+  const generateFullBusinessPlan = () => {
+    if (!opportunityQuery.data) return ''
+    const o = opportunityQuery.data
+    const now = new Date().toLocaleDateString()
+    const checkedValidation = validationChecklistItems.filter(item => validationChecked[item])
+    const checkedLaunch = launchChecklistItems.filter(item => launchChecked[item])
+    const filledCanvas = canvasItemsBase.filter(c => canvasData[c.key]?.trim())
+    
+    return `# Business Plan
+**${o.title}**
+Generated: ${now}
+
+---
+
+## Executive Summary
+
+${o.ai_summary || o.description || 'No summary available.'}
+
+**Key Opportunity Metrics:**
+- Severity Score: ${o.severity}/5
+- Community Interest: ${o.validation_count} validations
+- Feasibility: ${o.feasibility_score ? Math.round(o.feasibility_score) + '%' : 'N/A'}
+
+---
+
+## 1. Problem & Opportunity
+
+### Problem Statement
+${o.ai_problem_statement || o.description || 'Not defined'}
+
+### Market Opportunity
+${o.ai_summary || 'Market opportunity analysis pending.'}
+
+---
+
+## 2. Market Analysis
+
+### Market Size
+- **Total Addressable Market (TAM):** ${o.ai_market_size_estimate || o.market_size || 'TBD'}
+- **Serviceable Addressable Market (SAM):** Est. 20-30% of TAM
+- **Serviceable Obtainable Market (SOM):** Est. 5-10% of SAM
+
+### Target Audience
+${o.ai_target_audience || 'Target audience not yet defined.'}
+
+### Competition Level
+${o.ai_competition_level || 'Competition analysis pending.'}
+
+### Key Risks
+${o.ai_key_risks?.map(r => `- ${r}`).join('\n') || '- Risk analysis not yet completed'}
+
+---
+
+## 3. Validation Status
+
+**Progress:** ${checkedValidation.length}/${validationChecklistItems.length} items completed
+
+${validationChecklistItems.map(item => `- [${validationChecked[item] ? 'x' : ' '}] ${item}`).join('\n')}
+
+---
+
+## 4. Business Model
+
+### Business Model Canvas
+**Completion:** ${filledCanvas.length}/${canvasItemsBase.length} sections
+
+${canvasItemsBase.map(c => `### ${c.title}
+${canvasData[c.key] || '_Not yet defined_'}`).join('\n\n')}
+
+### Suggested Business Models
+${o.ai_business_model_suggestions?.map(s => `- ${s}`).join('\n') || '- Business model suggestions pending'}
+
+### Competitive Advantages
+${o.ai_competitive_advantages?.map(a => `- ${a}`).join('\n') || '- Competitive advantages not yet identified'}
+
+---
+
+## 5. Go-to-Market Strategy
+
+### Launch Readiness
+**Progress:** ${checkedLaunch.length}/${launchChecklistItems.length} items completed
+
+${launchChecklistItems.map(item => `- [${launchChecked[item] ? 'x' : ' '}] ${item}`).join('\n')}
+
+### Next Steps
+${o.ai_next_steps?.map(s => `- ${s}`).join('\n') || '- Define immediate next steps for launch'}
+
+---
+
+## Appendix
+
+**Category:** ${o.category || 'Uncategorized'}
+**Created:** ${o.created_at ? new Date(o.created_at).toLocaleDateString() : 'N/A'}
+`
   }
 
   const opp = opportunityQuery.data
@@ -766,6 +893,15 @@ export default function OpportunityHub() {
                       <FileText className="w-4 h-4" />
                       Reports ({workspace.documents.length})
                     </button>
+                    <button
+                      onClick={() => setWorkspaceSubTab('plan')}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        workspaceSubTab === 'plan' ? 'bg-white text-violet-700 shadow-sm' : 'text-stone-600 hover:bg-white/50'
+                      }`}
+                    >
+                      <Briefcase className="w-4 h-4" />
+                      Business Plan
+                    </button>
                   </div>
 
                   <div className="p-4 bg-stone-50 rounded-lg">
@@ -995,6 +1131,107 @@ export default function OpportunityHub() {
                           </div>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {workspaceSubTab === 'plan' && (
+                    <div className="bg-white rounded-lg border border-stone-200 p-4">
+                      <h4 className="font-medium text-stone-900 mb-3 flex items-center gap-2">
+                        <Briefcase className="w-4 h-4 text-violet-600" />
+                        Business Plan
+                      </h4>
+                      
+                      {!businessPlanContent ? (
+                        <div className="text-center py-6">
+                          <Briefcase className="w-10 h-10 mx-auto mb-3 text-violet-300" />
+                          <p className="text-sm text-stone-600 mb-2">Generate your complete business plan</p>
+                          <p className="text-xs text-stone-400 mb-4">Compiles data from all 4 workflow stages into a structured document</p>
+                          <button
+                            onClick={() => {
+                              const plan = generateFullBusinessPlan()
+                              setBusinessPlanContent(plan)
+                            }}
+                            className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 flex items-center gap-2 mx-auto"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            Generate from Journey
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setIsEditingPlan(!isEditingPlan)}
+                                className={`px-3 py-1.5 rounded text-xs font-medium ${isEditingPlan ? 'bg-violet-100 text-violet-700' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                              >
+                                {isEditingPlan ? 'Preview' : 'Edit'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const plan = generateFullBusinessPlan()
+                                  setBusinessPlanContent(plan)
+                                }}
+                                className="px-3 py-1.5 bg-stone-100 text-stone-600 rounded text-xs font-medium hover:bg-stone-200"
+                              >
+                                Regenerate
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  const doc = { name: `Business Plan - ${opp.title}`, content: businessPlanContent }
+                                  downloadAsPdf(doc as any)
+                                }}
+                                className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded text-xs font-medium hover:bg-emerald-200 flex items-center gap-1"
+                              >
+                                <Download className="w-3 h-3" />
+                                Export PDF
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (businessPlanDocId) {
+                                    updateDocMutation.mutate({ docId: businessPlanDocId, content: businessPlanContent })
+                                  } else {
+                                    saveReportMutation.mutate({
+                                      name: `Business Plan - ${new Date().toLocaleDateString()}`,
+                                      content: businessPlanContent,
+                                      doc_type: 'business_plan'
+                                    })
+                                  }
+                                }}
+                                disabled={saveReportMutation.isPending || updateDocMutation.isPending}
+                                className="px-3 py-1.5 bg-violet-100 text-violet-700 rounded text-xs font-medium hover:bg-violet-200 flex items-center gap-1 disabled:opacity-50"
+                              >
+                                <FileText className="w-3 h-3" />
+                                {(saveReportMutation.isPending || updateDocMutation.isPending) ? 'Saving...' : 'Save'}
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {isEditingPlan ? (
+                            <textarea
+                              value={businessPlanContent}
+                              onChange={(e) => setBusinessPlanContent(e.target.value)}
+                              className="w-full h-[300px] px-3 py-2 border border-stone-200 rounded-lg text-sm font-mono focus:outline-none focus:border-violet-400 resize-none"
+                            />
+                          ) : (
+                            <div className="h-[300px] overflow-y-auto p-3 bg-stone-50 rounded-lg border border-stone-100">
+                              <div className="prose prose-sm max-w-none">
+                                {businessPlanContent.split('\n').map((line, i) => {
+                                  if (line.startsWith('# ')) return <h1 key={i} className="text-lg font-bold text-stone-900 mt-4 mb-2">{line.slice(2)}</h1>
+                                  if (line.startsWith('## ')) return <h2 key={i} className="text-base font-semibold text-stone-800 mt-3 mb-1">{line.slice(3)}</h2>
+                                  if (line.startsWith('### ')) return <h3 key={i} className="text-sm font-medium text-stone-700 mt-2 mb-1">{line.slice(4)}</h3>
+                                  if (line.startsWith('- ')) return <p key={i} className="text-sm text-stone-600 ml-4">• {line.slice(2)}</p>
+                                  if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="text-sm font-semibold text-stone-700">{line.slice(2, -2)}</p>
+                                  if (line.trim() === '') return <div key={i} className="h-2" />
+                                  return <p key={i} className="text-sm text-stone-600">{line}</p>
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
