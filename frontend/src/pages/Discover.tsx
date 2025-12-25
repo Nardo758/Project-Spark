@@ -63,14 +63,15 @@ function getAgeInDays(createdAt?: string): number {
   return Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24))
 }
 
-function getFreshnessLabel(createdAt?: string): { 
-  label: string
-  daysAgo: number 
-} {
-  const days = getAgeInDays(createdAt)
-  if (days === 0) return { label: 'Today', daysAgo: days }
-  if (days === 1) return { label: '1 day ago', daysAgo: days }
-  return { label: `${days} days ago`, daysAgo: days }
+function formatMarketSize(size?: string | null): string {
+  if (!size) return '~$50M'
+  const cleaned = size.replace(/\s/g, '')
+  if (cleaned.includes('-')) {
+    const parts = cleaned.split('-')
+    const first = parts[0].replace(/[^0-9.BMK$]/gi, '')
+    return `~${first}`
+  }
+  return size.startsWith('~') ? size : `~${size}`
 }
 
 
@@ -342,7 +343,7 @@ export default function Discover() {
           {filteredOpportunities.map((opp) => {
             const score = opp.feasibility_score || (70 + (opp.id % 20))
             const growthRate = opp.growth_rate || (5 + (opp.id % 25))
-            const marketSize = opp.ai_market_size_estimate || opp.market_size || '$50M'
+            const marketSize = formatMarketSize(opp.ai_market_size_estimate || opp.market_size)
             const validations = opp.validation_count || 0
             const accessInfo = accessInfoQuery.data?.[opp.id]
             const daysUntilUnlock = accessInfo?.days_until_unlock ?? 0

@@ -1,9 +1,21 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/authStore'
+import { useMemo } from 'react'
 import { 
-  Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, TrendingUp, Bookmark, ChevronRight
+  Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight
 } from 'lucide-react'
+
+type AccessInfo = {
+  age_days: number
+  days_until_unlock: number
+  is_accessible: boolean
+  is_unlocked: boolean
+  can_pay_to_unlock: boolean
+  unlock_price?: number | null
+  user_tier?: string | null
+  content_state?: string | null
+}
 
 const quickActions = [
   { icon: Target, label: 'Find Opportunity', path: '/discover', color: 'bg-blue-500' },
@@ -35,30 +47,15 @@ type OpportunityList = {
   total: number
 }
 
-function getFreshnessLabel(createdAt: string): { label: string; daysAgo: number } {
-  const now = new Date()
-  const created = new Date(createdAt)
-  const days = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24))
-  if (days === 0) return { label: 'Today', daysAgo: days }
-  if (days === 1) return { label: '1 day ago', daysAgo: days }
-  return { label: `${days} days ago`, daysAgo: days }
-}
-
-function getFreshnessColor(daysAgo: number): string {
-  if (daysAgo <= 2) return 'bg-red-100 text-red-700'
-  if (daysAgo <= 7) return 'bg-blue-100 text-blue-700'
-  if (daysAgo <= 30) return 'bg-green-100 text-green-700'
-  return 'bg-gray-100 text-gray-600'
-}
-
-function getCompetitionColor(level?: string | null): string {
-  if (!level) return 'bg-gray-100 text-gray-600'
-  switch (level.toLowerCase()) {
-    case 'low': return 'bg-green-100 text-green-700'
-    case 'medium': return 'bg-yellow-100 text-yellow-700'
-    case 'high': return 'bg-red-100 text-red-700'
-    default: return 'bg-gray-100 text-gray-600'
+function formatMarketSize(size?: string | null): string {
+  if (!size) return '~$50M'
+  const cleaned = size.replace(/\s/g, '')
+  if (cleaned.includes('-')) {
+    const parts = cleaned.split('-')
+    const first = parts[0].replace(/[^0-9.BMK$]/gi, '')
+    return `~${first}`
   }
+  return size.startsWith('~') ? size : `~${size}`
 }
 
 export default function Dashboard() {
@@ -103,6 +100,28 @@ export default function Dashboard() {
   const avgMatch = topOpportunities.length > 0 
     ? Math.round(topOpportunities.reduce((acc, o) => acc + (o.feasibility_score || 75), 0) / topOpportunities.length)
     : 0
+
+  const opportunityIds = useMemo(() => 
+    topOpportunities.map(o => o.id),
+    [topOpportunities]
+  )
+
+  const { data: accessInfoData } = useQuery({
+    queryKey: ['dashboard-batch-access', opportunityIds],
+    enabled: opportunityIds.length > 0,
+    queryFn: async (): Promise<Record<number, AccessInfo>> => {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers.Authorization = `Bearer ${token}`
+      const res = await fetch('/api/v1/opportunities/batch-access', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(opportunityIds),
+      })
+      if (!res.ok) return {}
+      return res.json()
+    },
+    staleTime: 60 * 1000,
+  })
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -169,70 +188,76 @@ export default function Dashboard() {
             ) : topOpportunities.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-4">
                 {topOpportunities.map((opp) => {
-                  const freshness = getFreshnessLabel(opp.created_at)
                   const score = opp.feasibility_score || (75 + (opp.id % 15))
-                  const competition = opp.ai_competition_level || 'low'
                   const growth = opp.growth_rate || (5 + (opp.id % 25))
                   const signals = opp.validation_count || (2 + (opp.id % 18))
-                  const marketSize = opp.ai_market_size_estimate || '$50M'
-                  const isTrending = freshness.daysAgo <= 2 || growth > 20
+                  const marketSize = formatMarketSize(opp.ai_market_size_estimate)
+                  const accessInfo = accessInfoData?.[opp.id]
+                  const daysUntilUnlock = accessInfo?.days_until_unlock ?? 0
+                  const isAccessible = accessInfo?.is_accessible ?? true
                   
                   return (
-                    <div key={opp.id} className="bg-white p-5 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all">
+                    <div 
+                      key={opp.id} 
+                      onClick={() => window.location.href = isPaidUser ? `/opportunity/${opp.id}/hub` : `/opportunity/${opp.id}`}
+                      className="bg-white p-5 rounded-xl border-2 border-stone-200 hover:border-stone-900 transition-all cursor-pointer group"
+                    >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-semibold text-gray-500 uppercase">{opp.category}</span>
-                          {isTrending && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded bg-orange-100 text-orange-700">
-                              <TrendingUp className="w-3 h-3" /> Trending
+                          <span className="text-xs font-semibold text-stone-500 uppercase">{opp.category}</span>
+                          {!isAccessible && daysUntilUnlock > 0 && (
+                            <span className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                              <Lock className="w-3 h-3" />
+                              Unlocks in {daysUntilUnlock}d
                             </span>
                           )}
-                          <span className={`px-2 py-0.5 text-xs font-semibold rounded ${getCompetitionColor(competition)}`}>
-                            {competition.charAt(0).toUpperCase() + competition.slice(1)} Competition
-                          </span>
+                          {isAccessible && (
+                            <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                              Unlocked
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 border-2 border-emerald-200 flex-shrink-0">
-                          <span className="text-lg font-bold text-emerald-600">{score}</span>
-                        </div>
-                      </div>
-                      
-                      <h3 className="font-semibold text-gray-900 text-lg mb-1">{opp.title}</h3>
-                      <p className="text-sm text-gray-500 mb-4">Market Opportunity Overview</p>
-                      
-                      <div className="grid grid-cols-4 gap-2 py-3 border-t border-b border-gray-100 mb-4">
-                        <div className="text-center">
-                          <p className="text-xs text-gray-500">Signals</p>
-                          <p className="font-semibold text-gray-900">{signals}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-gray-500">Market</p>
-                          <p className="font-semibold text-gray-900">{marketSize}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-gray-500">Growth</p>
-                          <p className="font-semibold text-emerald-600">+{growth}%</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-gray-500">Age</p>
-                          <p className="font-semibold text-gray-900">{freshness.label}</p>
+                        <div className="bg-emerald-100 text-emerald-700 px-3 py-2 rounded-full flex-shrink-0">
+                          <div className="text-2xl font-bold leading-none">{score}</div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <button className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
+                      <h3 className="font-semibold text-stone-900 text-lg mb-1 group-hover:text-violet-600 transition-colors">{opp.title}</h3>
+                      <p className="text-sm text-stone-500 mb-4 line-clamp-2">
+                        {opp.description?.replace(/\*\*/g, '').split('\n')[0] || 'Market Opportunity Overview'}
+                      </p>
+                      
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="bg-stone-50 rounded-lg p-3">
+                          <div className="text-xs text-stone-500 mb-1">Signals</div>
+                          <div className="text-lg font-bold text-stone-900">{signals}</div>
+                        </div>
+                        <div className="bg-stone-50 rounded-lg p-3">
+                          <div className="text-xs text-stone-500 mb-1">Market</div>
+                          <div className="text-lg font-bold text-stone-900">{marketSize}</div>
+                        </div>
+                        <div className="bg-stone-50 rounded-lg p-3">
+                          <div className="text-xs text-stone-500 mb-1">Growth</div>
+                          <div className="text-lg font-bold text-emerald-600">+{growth}%</div>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-4 border-t border-stone-200 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); window.location.href = `/build/reports?opp=${opp.id}` }}
+                            className="flex items-center gap-1 text-sm text-stone-600 hover:text-violet-600"
+                          >
                             <FileText className="w-4 h-4" /> Report
                           </button>
-                          <button className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
+                          <button className="flex items-center gap-1 text-sm text-stone-600 hover:text-violet-600">
                             <Bookmark className="w-4 h-4" /> Save
                           </button>
                         </div>
-                        <Link 
-                          to={isPaidUser ? `/opportunity/${opp.id}/hub` : `/opportunity/${opp.id}`} 
-                          className="inline-flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700"
-                        >
-                          {isPaidUser ? 'Open Hub' : 'View full analysis'} <ChevronRight className="w-4 h-4" />
-                        </Link>
+                        <div className="flex items-center gap-1 text-sm text-stone-600 group-hover:text-violet-600 transition-colors">
+                          <span>View full analysis</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </div>
                       </div>
                     </div>
                   )
