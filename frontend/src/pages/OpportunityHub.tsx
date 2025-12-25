@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
-  ArrowLeft, BarChart3, Briefcase, CheckCircle2, ChevronDown, ChevronRight, Clock, 
+  ArrowLeft, BarChart3, Briefcase, CheckCircle, CheckCircle2, ChevronDown, ChevronRight, Clock, 
   Lightbulb, Loader2, MessageSquare, 
   PenLine, Plus, Rocket, Search, Send, Sparkles, 
-  Target, Trash2, TrendingUp, Users
+  Target, Trash2, TrendingUp, Users, Zap
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 
@@ -95,6 +95,14 @@ type ChatMessage = {
   content: string
   created_at: string
 }
+
+// Workflow stages with icons for circular navigation
+const workflowStages = [
+  { key: 'researching' as WorkspaceStatus, label: 'Validate', icon: CheckCircle },
+  { key: 'validating' as WorkspaceStatus, label: 'Research', icon: Search },
+  { key: 'planning' as WorkspaceStatus, label: 'Plan', icon: Target },
+  { key: 'building' as WorkspaceStatus, label: 'Execute', icon: Zap },
+]
 
 const statusOptions: { value: WorkspaceStatus; label: string; color: string }[] = [
   { value: 'researching', label: 'Researching', color: 'bg-blue-100 text-blue-700' },
@@ -375,110 +383,70 @@ export default function OpportunityHub() {
             </div>
           </div>
 
-          {/* Consultant Studio Workflow - Main Navigation */}
-          <div className="border-b border-stone-200 bg-stone-50 px-5 py-3">
-            <h3 className="font-semibold text-stone-900 flex items-center gap-2">
-              <Target className="w-5 h-5 text-violet-600" />
-              Consultant Studio Workflow
-            </h3>
-          </div>
-          
-          <div className="flex border-b border-stone-200">
-            <button 
-              onClick={() => {
-                if (!hasWorkspace) {
-                  createWorkspaceMutation.mutate()
-                } else {
-                  updateStatusMutation.mutate('researching')
-                  setActiveTab('workspace')
-                }
-              }}
-              disabled={createWorkspaceMutation.isPending}
-              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                hasWorkspace && workspace?.status === 'researching' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                hasWorkspace && workspace?.status === 'researching' ? 'bg-violet-600 text-white' : 
-                hasWorkspace && ['validating', 'planning', 'building', 'launched'].includes(workspace?.status || '') ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
-              }`}>{hasWorkspace && ['validating', 'planning', 'building', 'launched'].includes(workspace?.status || '') ? '✓' : '1'}</span>
-              Validate
-            </button>
-            <button 
-              onClick={() => {
-                if (!hasWorkspace) {
-                  createWorkspaceMutation.mutate()
-                } else {
-                  updateStatusMutation.mutate('validating')
-                  setActiveTab('workspace')
-                }
-              }}
-              disabled={createWorkspaceMutation.isPending}
-              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                hasWorkspace && workspace?.status === 'validating' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                hasWorkspace && workspace?.status === 'validating' ? 'bg-violet-600 text-white' : 
-                hasWorkspace && ['planning', 'building', 'launched'].includes(workspace?.status || '') ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
-              }`}>{hasWorkspace && ['planning', 'building', 'launched'].includes(workspace?.status || '') ? '✓' : '2'}</span>
-              Research
-            </button>
-            <button 
-              onClick={() => {
-                if (!hasWorkspace) {
-                  createWorkspaceMutation.mutate()
-                } else {
-                  updateStatusMutation.mutate('planning')
-                  setActiveTab('workspace')
-                }
-              }}
-              disabled={createWorkspaceMutation.isPending}
-              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                hasWorkspace && workspace?.status === 'planning' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                hasWorkspace && workspace?.status === 'planning' ? 'bg-violet-600 text-white' : 
-                hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
-              }`}>{hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? '✓' : '3'}</span>
-              Plan
-            </button>
-            <button 
-              onClick={() => {
-                if (!hasWorkspace) {
-                  createWorkspaceMutation.mutate()
-                } else {
-                  updateStatusMutation.mutate('building')
-                  setActiveTab('workspace')
-                }
-              }}
-              disabled={createWorkspaceMutation.isPending}
-              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-              }`}
-            >
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? 'bg-violet-600 text-white' : 'bg-stone-300 text-white'
-              }`}>{hasWorkspace && workspace?.status === 'launched' ? '✓' : '4'}</span>
-              Execute
-            </button>
-          </div>
-
-          {hasWorkspace && workspace && (
-            <div className="px-5 py-3 bg-stone-50 border-b border-stone-100">
+          {/* Consultant Studio Workflow - Circular Icon Navigation */}
+          <div className="px-5 py-4 bg-stone-50 border-b border-stone-100">
+            <div className="flex items-center justify-between max-w-2xl mx-auto">
+              {workflowStages.map((stage, idx) => {
+                const Icon = stage.icon
+                const currentIdx = hasWorkspace ? workflowStages.findIndex(s => s.key === workspace?.status) : -1
+                const isCompleted = hasWorkspace && idx < currentIdx
+                const isCurrent = hasWorkspace && stage.key === workspace?.status
+                
+                return (
+                  <div key={stage.key} className="flex items-center">
+                    <button
+                      onClick={() => {
+                        if (!hasWorkspace) {
+                          createWorkspaceMutation.mutate()
+                        } else {
+                          updateStatusMutation.mutate(stage.key)
+                          setActiveTab('workspace')
+                        }
+                      }}
+                      disabled={createWorkspaceMutation.isPending}
+                      className={`flex flex-col items-center ${idx > 0 ? 'ml-4' : ''} cursor-pointer group`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                        isCurrent 
+                          ? 'bg-violet-600 text-white ring-4 ring-violet-100' 
+                          : isCompleted 
+                            ? 'bg-emerald-100 text-emerald-600' 
+                            : 'bg-stone-100 text-stone-400'
+                      } group-hover:ring-2 group-hover:ring-violet-300 group-hover:ring-offset-2`}>
+                        {isCompleted ? (
+                          <CheckCircle2 className="w-5 h-5" />
+                        ) : (
+                          <Icon className="w-5 h-5" />
+                        )}
+                      </div>
+                      <span className={`text-xs mt-1 font-medium ${
+                        isCurrent ? 'text-violet-600' : isCompleted ? 'text-emerald-600' : 'text-stone-400'
+                      }`}>
+                        {stage.label}
+                      </span>
+                    </button>
+                    {idx < workflowStages.length - 1 && (
+                      <div className={`w-12 h-0.5 ml-4 ${isCompleted || isCurrent ? 'bg-emerald-300' : 'bg-stone-200'}`} />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mt-4 max-w-2xl mx-auto">
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-stone-600">Overall Progress</span>
-                <span className="font-medium text-stone-900">{workspace.progress_percent}%</span>
+                <span className="font-medium text-stone-900">{hasWorkspace && workspace ? workspace.progress_percent : 0}%</span>
               </div>
               <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
-                  style={{ width: `${workspace.progress_percent}%` }}
+                  style={{ width: `${hasWorkspace && workspace ? workspace.progress_percent : 0}%` }}
                 />
               </div>
             </div>
-          )}
+          </div>
 
           <div className="flex border-b border-stone-200">
             <button
