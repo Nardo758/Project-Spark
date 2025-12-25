@@ -127,7 +127,7 @@ export default function OpportunityHub() {
   const { token, isAuthenticated } = useAuthStore()
   const queryClient = useQueryClient()
 
-  const [activeTab, setActiveTab] = useState<'research' | 'workspace'>('research')
+  const [activeTab, setActiveTab] = useState<WorkspaceStatus>('researching')
   const [workspaceSubTab, setWorkspaceSubTab] = useState<'tasks' | 'notes' | 'ai'>('tasks')
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newNoteContent, setNewNoteContent] = useState('')
@@ -402,7 +402,7 @@ export default function OpportunityHub() {
                           createWorkspaceMutation.mutate()
                         } else {
                           updateStatusMutation.mutate(stage.key)
-                          setActiveTab('workspace')
+                          setActiveTab(stage.key)
                         }
                       }}
                       disabled={createWorkspaceMutation.isPending}
@@ -451,38 +451,45 @@ export default function OpportunityHub() {
           </div>
 
           <div className="flex border-b border-stone-200">
-            <button
-              onClick={() => setActiveTab('research')}
-              className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'research' 
-                  ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50' 
-                  : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-              }`}
-            >
-              <Search className="w-4 h-4 inline mr-2" />
-              Research
-            </button>
+            {workflowStages.map((stage) => {
+              const Icon = stage.icon
+              const isActive = activeTab === stage.key
+              return (
+                <button
+                  key={stage.key}
+                  onClick={() => setActiveTab(stage.key)}
+                  className={`flex-1 px-6 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                    isActive 
+                      ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50' 
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {stage.label}
+                </button>
+              )
+            })}
             <button
               onClick={() => {
                 if (!hasWorkspace) {
                   createWorkspaceMutation.mutate()
                 } else {
-                  setWorkspacePanelOpen(true)
+                  setWorkspacePanelOpen(!workspacePanelOpen)
                 }
               }}
               disabled={createWorkspaceMutation.isPending}
-              className={`flex-1 px-6 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              className={`px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border-l border-stone-200 ${
                 workspacePanelOpen 
-                  ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50' 
+                  ? 'text-violet-600 bg-violet-50' 
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
               }`}
+              title={workspacePanelOpen ? 'Hide Workspace' : 'Show Workspace'}
             >
               <Briefcase className="w-4 h-4" />
-              {hasWorkspace ? 'Workspace' : (createWorkspaceMutation.isPending ? 'Creating...' : 'Start Working')}
-              {hasWorkspace && (
-                <span className="ml-1">
-                  {workspacePanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
-                </span>
+              {hasWorkspace ? (
+                workspacePanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />
+              ) : (
+                <span>{createWorkspaceMutation.isPending ? 'Creating...' : 'Workspace'}</span>
               )}
             </button>
           </div>
