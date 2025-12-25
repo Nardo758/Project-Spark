@@ -372,17 +372,27 @@ export default function OpportunityDetail() {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">{opp.category}</span>
-                {growthRate > 20 && (
-                  <span className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                    <TrendingUp className="w-3 h-3" />
-                    Trending
+                {access?.freshness_badge && (
+                  <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    access.freshness_badge.color === 'red' ? 'bg-red-100 text-red-700' :
+                    access.freshness_badge.color === 'orange' ? 'bg-orange-100 text-orange-700' :
+                    access.freshness_badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-stone-100 text-stone-700'
+                  }`}>
+                    <Zap className="w-3 h-3" />
+                    {access.freshness_badge.label}
                   </span>
                 )}
-                {competition?.toLowerCase() === 'low' && (
-                  <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                    Low Competition
+                {access && !access.is_accessible && access.days_until_unlock > 0 ? (
+                  <span className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                    <Lock className="w-3 h-3" />
+                    Unlocks for your tier in {access.days_until_unlock} days
                   </span>
-                )}
+                ) : access?.is_accessible ? (
+                  <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                    Unlocked
+                  </span>
+                ) : null}
               </div>
               <h1 className="text-3xl font-bold text-stone-900 mb-3">{opp.title}</h1>
               <p className="text-stone-600 text-lg leading-relaxed">{opp.description?.replace(/\*\*/g, '').split('\n')[0]}</p>
@@ -421,15 +431,39 @@ export default function OpportunityDetail() {
                   <CheckCircle2 className="w-5 h-5" />
                 </button>
               </div>
-              {hasPro && (
+              {hasPro ? (
                 <button
                   onClick={() => navigate(`/opportunity/${opp.id}/hub`)}
                   className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
                 >
                   <Rocket className="w-4 h-4" />
-                  Start Working
+                  Start in WorkHub
                 </button>
-              )}
+              ) : isAuthenticated && access?.can_pay_to_unlock ? (
+                <button
+                  onClick={() => payPerUnlockMutation.mutate()}
+                  disabled={payPerUnlockMutation.isPending}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                >
+                  <Lock className="w-4 h-4" />
+                  {payPerUnlockMutation.isPending ? 'Processing...' : `Unlock Now (${fmtCents(access.unlock_price) || '$15'})`}
+                </button>
+              ) : !isAuthenticated ? (
+                <Link
+                  to={`/login?next=${encodeURIComponent(`/opportunity/${opp.id}`)}`}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors"
+                >
+                  <Rocket className="w-4 h-4" />
+                  Sign in to Continue
+                </Link>
+              ) : !access?.is_accessible && access?.days_until_unlock ? (
+                <Link
+                  to="/pricing"
+                  className="flex items-center gap-2 px-4 py-2 bg-stone-900 text-white rounded-lg font-medium hover:bg-stone-800 transition-colors"
+                >
+                  Get Earlier Access
+                </Link>
+              ) : null}
             </div>
           </div>
         </div>
@@ -594,7 +628,7 @@ export default function OpportunityDetail() {
                 className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700"
               >
                 <Rocket className="w-4 h-4" />
-                Start Working on This
+                Start in WorkHub
               </Link>
             </div>
           </div>
@@ -754,7 +788,7 @@ export default function OpportunityDetail() {
           </div>
         </div>
 
-        {/* Next Step: Upgrade to Workstation CTA */}
+        {/* CTA: Start Working in WorkHub */}
         <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-8 mb-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -762,32 +796,49 @@ export default function OpportunityDetail() {
                 <Rocket className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Ready to Execute?</h2>
-                <p className="text-violet-100">Move to the Workstation for AI-powered planning, task management, and expert collaboration.</p>
+                <h2 className="text-2xl font-bold mb-1">Start Working on This</h2>
+                <p className="text-violet-100">Start working on this in our WorkHub with AI-powered planning, task management, and expert collaboration.</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {isAuthenticated ? (
-                workspaceCheckQuery.data?.has_workspace ? (
+                hasPro ? (
                   <Link 
                     to={`/opportunity/${id}/hub`}
                     className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                   >
                     <Briefcase className="w-5 h-5" />
-                    Go to Workstation
+                    {workspaceCheckQuery.data?.has_workspace ? 'Continue in WorkHub' : 'Start in WorkHub'}
                   </Link>
-                ) : (
+                ) : access?.can_pay_to_unlock ? (
+                  <button
+                    onClick={() => payPerUnlockMutation.mutate()}
+                    disabled={payPerUnlockMutation.isPending}
+                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors disabled:opacity-50"
+                  >
+                    <Lock className="w-5 h-5" />
+                    {payPerUnlockMutation.isPending ? 'Processing...' : `Unlock Now (${fmtCents(access?.unlock_price) || '$15'})`}
+                  </button>
+                ) : access?.is_accessible ? (
                   <Link 
                     to={`/opportunity/${id}/hub`}
                     className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                   >
+                    <Briefcase className="w-5 h-5" />
+                    Start in WorkHub
+                  </Link>
+                ) : (
+                  <Link 
+                    to="/pricing"
+                    className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
+                  >
                     <Rocket className="w-5 h-5" />
-                    Start Working on This
+                    Upgrade to Access WorkHub
                   </Link>
                 )
               ) : (
                 <Link 
-                  to="/login"
+                  to={`/login?next=${encodeURIComponent(`/opportunity/${id}`)}`}
                   className="flex items-center gap-2 px-6 py-3 bg-white text-violet-700 rounded-lg font-medium hover:bg-violet-50 transition-colors"
                 >
                   <Rocket className="w-5 h-5" />
