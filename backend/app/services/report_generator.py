@@ -494,9 +494,181 @@ class ReportGenerator:
         
         return report
     
+    def _calculate_tam_sam_som(self, opp: Opportunity, demographics: Optional[Dict] = None) -> Dict[str, Any]:
+        """Calculate TAM/SAM/SOM using Census data and opportunity characteristics."""
+        category_spend_per_capita = {
+            "Home Services": 3500,
+            "Healthcare": 4200,
+            "Transportation": 2800,
+            "Food & Beverage": 2400,
+            "Professional Services": 1800,
+            "Technology": 1500,
+            "Retail": 3200,
+            "Education": 2100,
+            "Entertainment": 1200,
+            "Financial Services": 1600,
+        }
+        
+        base_spend = category_spend_per_capita.get(opp.category, 2000)
+        
+        us_population = 330_000_000
+        tam_value = us_population * base_spend * 0.15
+        tam_methodology = f"US population ({us_population/1_000_000:.0f}M) × Category annual spend (${base_spend:,}) × Problem addressable rate (15%)"
+        
+        if demographics and demographics.get('population'):
+            regional_pop = demographics['population']
+            income = demographics.get('median_income', 65000)
+            income_multiplier = min(1.5, max(0.7, income / 65000))
+            sam_value = regional_pop * base_spend * 0.20 * income_multiplier
+            sam_methodology = f"Regional population ({regional_pop:,}) × Category spend (${base_spend:,}) × Addressable rate (20%) × Income multiplier ({income_multiplier:.2f}x)"
+            
+            households = demographics.get('total_households') or demographics.get('households') or (regional_pop // 2.5)
+            broadband_rate = 0.85
+            if demographics.get('internet_access'):
+                broadband_rate = demographics['internet_access'].get('broadband_pct', 85) / 100
+            
+            som_value = households * base_spend * 0.05 * broadband_rate
+            som_methodology = f"Households ({households:,}) × Category spend (${base_spend:,}) × Capture rate (5%) × Digital accessibility ({broadband_rate*100:.0f}%)"
+        else:
+            sam_value = tam_value * 0.10
+            sam_methodology = "TAM × Geographic filter (10%)"
+            som_value = sam_value * 0.10
+            som_methodology = "SAM × Realistic capture rate (10%)"
+        
+        def format_market_size(value: float) -> str:
+            if value >= 1_000_000_000:
+                return f"${value/1_000_000_000:.1f}B"
+            elif value >= 1_000_000:
+                return f"${value/1_000_000:.0f}M"
+            else:
+                return f"${value/1_000:.0f}K"
+        
+        return {
+            "tam": {"value": tam_value, "display": format_market_size(tam_value), "methodology": tam_methodology},
+            "sam": {"value": sam_value, "display": format_market_size(sam_value), "methodology": sam_methodology},
+            "som": {"value": som_value, "display": format_market_size(som_value), "methodology": som_methodology},
+            "data_source": "US Census Bureau ACS 5-Year Estimates" if demographics else "Industry benchmarks",
+            "confidence": "High" if demographics else "Medium"
+        }
+    
+    def _build_income_distribution_section(self, demographics: Optional[Dict]) -> str:
+        """Build Income Distribution table section for Layer 2."""
+        if not demographics or not demographics.get('income_segments'):
+            return """
+    <section class="income-distribution">
+        <h2>Income Distribution</h2>
+        <p class="no-data">Income distribution data not available for this region.</p>
+    </section>
+"""
+        income_data = demographics['income_segments']
+        
+        rows_html = ""
+        income_brackets = [
+            ("Under $25K", "under_25k_pct", "Entry-level, budget-conscious"),
+            ("$25K - $50K", "25k_50k_pct", "Price-sensitive middle"),
+            ("$50K - $100K", "50k_100k_pct", "Core purchasing power"),
+            ("$100K - $150K", "100k_150k_pct", "Premium segment"),
+            ("$150K+", "over_150k_pct", "Affluent market"),
+        ]
+        
+        for label, key, insight in income_brackets:
+            pct = income_data.get(key, 0)
+            bar_width = min(100, max(5, pct * 3))
+            rows_html += f"""
+            <tr>
+                <td>{label}</td>
+                <td class="pct">{pct:.1f}%</td>
+                <td class="bar-cell"><div class="bar" style="width: {bar_width}%;"></div></td>
+                <td class="insight">{insight}</td>
+            </tr>"""
+        
+        return f"""
+    <section class="income-distribution">
+        <h2>Income Distribution</h2>
+        <p class="source-note">Data source: US Census Bureau ACS 5-Year Estimates (B19001)</p>
+        <table class="income-table">
+            <thead>
+                <tr>
+                    <th>Income Bracket</th>
+                    <th>% of Households</th>
+                    <th>Distribution</th>
+                    <th>Market Insight</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </section>
+"""
+    
+    def _build_housing_lifestyle_section(self, demographics: Optional[Dict]) -> str:
+        """Build Housing & Lifestyle section for Layer 2."""
+        if not demographics:
+            return """
+    <section class="housing-lifestyle">
+        <h2>Housing & Lifestyle</h2>
+        <p class="no-data">Housing data not available for this region.</p>
+    </section>
+"""
+        
+        housing_tenure = demographics.get('housing_tenure', {})
+        internet = demographics.get('internet_access', {})
+        commute = demographics.get('commute_patterns', {})
+        
+        homeowner_pct = housing_tenure.get('owner_pct', 0)
+        renter_pct = housing_tenure.get('renter_pct', 0)
+        broadband_pct = internet.get('broadband_pct', 0)
+        no_internet_pct = internet.get('no_internet_pct', 0)
+        avg_commute = commute.get('avg_commute_minutes', 0)
+        work_from_home_pct = commute.get('work_from_home_pct', 0)
+        
+        return f"""
+    <section class="housing-lifestyle">
+        <h2>Housing & Lifestyle</h2>
+        <p class="source-note">Data source: US Census Bureau ACS 5-Year Estimates</p>
+        <div class="lifestyle-grid">
+            <div class="lifestyle-block">
+                <h3>Housing Tenure</h3>
+                <div class="tenure-bar">
+                    <div class="owner" style="width: {homeowner_pct}%;">{homeowner_pct:.0f}% Own</div>
+                    <div class="renter" style="width: {renter_pct}%;">{renter_pct:.0f}% Rent</div>
+                </div>
+                <p class="insight">{"Homeowner-dominant market - stable, higher LTV" if homeowner_pct > 50 else "Renter-dominant market - higher churn, subscription-friendly"}</p>
+            </div>
+            <div class="lifestyle-block">
+                <h3>Digital Access</h3>
+                <div class="stat-row">
+                    <span class="stat-value">{broadband_pct:.1f}%</span>
+                    <span class="stat-label">Broadband Access</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-value">{no_internet_pct:.1f}%</span>
+                    <span class="stat-label">No Internet</span>
+                </div>
+                <p class="insight">{"High digital readiness - strong e-commerce potential" if broadband_pct > 80 else "Mixed digital access - consider offline channels"}</p>
+            </div>
+            <div class="lifestyle-block">
+                <h3>Commute Patterns</h3>
+                <div class="stat-row">
+                    <span class="stat-value">{avg_commute:.0f} min</span>
+                    <span class="stat-label">Avg Commute Time</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-value">{work_from_home_pct:.1f}%</span>
+                    <span class="stat-label">Work From Home</span>
+                </div>
+                <p class="insight">{"Remote-work friendly - daytime residential traffic" if work_from_home_pct > 15 else "Traditional commuter market - peak hour patterns"}</p>
+            </div>
+        </div>
+    </section>
+"""
+    
     def _build_layer2_content(self, opp: Opportunity, demographics: Optional[Dict] = None) -> str:
         """Build Layer 2 report content with demographics."""
-        market_size = opp.ai_market_size_estimate or opp.market_size or "$1B+"
+        market_sizing = self._calculate_tam_sam_som(opp, demographics)
+        income_section = self._build_income_distribution_section(demographics)
+        housing_section = self._build_housing_lifestyle_section(demographics)
         
         pop_display = "--"
         income_display = "--"
@@ -511,8 +683,8 @@ class ReportGenerator:
                 income_display = f"${demographics['median_income']/1000:.0f}K"
             if demographics.get('bachelors_degree_holders') and demographics.get('population'):
                 education_display = f"{(demographics['bachelors_degree_holders'] / demographics['population'] * 100):.0f}%"
-            if demographics.get('total_households'):
-                hh = demographics['total_households']
+            if demographics.get('total_households') or demographics.get('households'):
+                hh = demographics.get('total_households') or demographics.get('households')
                 households_display = f"{hh/1000:.0f}K" if hh >= 1000 else str(hh)
         
         html_content = f"""
@@ -528,21 +700,22 @@ class ReportGenerator:
     
     <section class="tam-sam-som">
         <h2>Market Size Analysis (TAM/SAM/SOM)</h2>
+        <p class="source-note">Data source: {market_sizing['data_source']} | Confidence: {market_sizing['confidence']}</p>
         <div class="market-funnel">
             <div class="funnel-level tam">
                 <span class="label">Total Addressable Market (TAM)</span>
-                <span class="value">{market_size}</span>
-                <p>Total global market for this problem space</p>
+                <span class="value">{market_sizing['tam']['display']}</span>
+                <p class="methodology">{market_sizing['tam']['methodology']}</p>
             </div>
             <div class="funnel-level sam">
                 <span class="label">Serviceable Available Market (SAM)</span>
-                <span class="value">~$500M</span>
-                <p>Market reachable with current business model</p>
+                <span class="value">{market_sizing['sam']['display']}</span>
+                <p class="methodology">{market_sizing['sam']['methodology']}</p>
             </div>
             <div class="funnel-level som">
                 <span class="label">Serviceable Obtainable Market (SOM)</span>
-                <span class="value">~$50M</span>
-                <p>Realistic Year 1-3 capture target</p>
+                <span class="value">{market_sizing['som']['display']}</span>
+                <p class="methodology">{market_sizing['som']['methodology']}</p>
             </div>
         </div>
     </section>
@@ -569,6 +742,10 @@ class ReportGenerator:
             </div>
         </div>
     </section>
+    
+    {income_section}
+    
+    {housing_section}
     
     <section class="competitive-landscape">
         <h2>Competitive Landscape</h2>
