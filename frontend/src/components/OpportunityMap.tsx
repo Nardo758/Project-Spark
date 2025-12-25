@@ -112,12 +112,16 @@ interface LayerVisibility {
   migration_flow: boolean;
 }
 
+type MapTier = 'free' | 'pro' | 'business' | 'enterprise';
+
 interface OpportunityMapProps {
   opportunityId: number;
   height?: string;
   showControls?: boolean;
   initialZoom?: number;
   className?: string;
+  tier?: MapTier;
+  lazyLoad?: boolean;
 }
 
 const GROWTH_COLORS: Record<string, string> = {
@@ -141,19 +145,22 @@ export default function OpportunityMap({
   height = '500px',
   showControls = true,
   initialZoom = 10,
-  className = ''
+  className = '',
+  tier = 'business',
+  lazyLoad = false
 }: OpportunityMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapData, setMapData] = useState<MapDataResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!lazyLoad);
   const [error, setError] = useState<string | null>(null);
+  const [isMapActivated, setIsMapActivated] = useState(!lazyLoad);
   const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>({
     service_area: true,
-    heatmap: true,
-    growth_trajectory: true,
+    heatmap: tier === 'business' || tier === 'enterprise',
+    growth_trajectory: tier === 'business' || tier === 'enterprise',
     opportunity_center: true,
-    migration_flow: true
+    migration_flow: tier === 'enterprise'
   });
   const animationRef = useRef<number | null>(null);
 
@@ -175,12 +182,13 @@ export default function OpportunityMap({
   }, [opportunityId]);
 
   useEffect(() => {
+    if (!isMapActivated) return;
     if (map.current) {
       map.current.remove();
       map.current = null;
     }
     fetchMapData();
-  }, [fetchMapData]);
+  }, [fetchMapData, isMapActivated]);
 
   useEffect(() => {
     if (!mapContainer.current || !mapData) return;
@@ -527,6 +535,60 @@ export default function OpportunityMap({
       [layer]: !prev[layer]
     }));
   };
+
+  const activateMap = () => {
+    setIsMapActivated(true);
+    setLoading(true);
+  };
+
+  if (!isMapActivated && lazyLoad) {
+    return (
+      <div 
+        className={`bg-gradient-to-br from-stone-800 to-stone-900 rounded-lg flex items-center justify-center border border-stone-700 cursor-pointer hover:border-violet-500/50 transition-all group ${className}`}
+        style={{ height }}
+        onClick={activateMap}
+      >
+        <div className="text-center p-6">
+          <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🗺️</div>
+          <p className="text-stone-300 mb-2 font-medium">Interactive Map</p>
+          <p className="text-sm text-stone-500 mb-4">Service areas, growth trends, and migration flows</p>
+          <button
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Load Interactive Map
+          </button>
+          {tier === 'free' && (
+            <p className="text-xs text-stone-600 mt-3">Upgrade to Pro for enhanced map features</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (tier === 'free') {
+    return (
+      <div 
+        className={`bg-stone-800 rounded-lg overflow-hidden border border-stone-700 relative ${className}`}
+        style={{ height }}
+      >
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-900/30 to-violet-900/30">
+          <div className="text-center p-6">
+            <div className="text-4xl mb-4">📍</div>
+            <p className="text-stone-300 mb-2 font-medium">Service Area Preview</p>
+            <p className="text-sm text-stone-500 mb-4">Upgrade to Pro for interactive maps</p>
+            <div className="inline-flex items-center gap-2 text-xs text-stone-400">
+              <span className="w-3 h-3 rounded-full bg-violet-500"></span>
+              Opportunity Location
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
