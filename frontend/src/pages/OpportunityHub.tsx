@@ -5,7 +5,7 @@ import {
   ArrowLeft, BarChart3, Briefcase, CheckCircle2, ChevronDown, ChevronRight, Clock, 
   Lightbulb, Loader2, MessageSquare, 
   PenLine, Plus, Rocket, Search, Send, Sparkles, 
-  Target, Trash2, TrendingUp, Users, Zap
+  Target, Trash2, TrendingUp, Users
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 
@@ -95,14 +95,6 @@ type ChatMessage = {
   content: string
   created_at: string
 }
-
-const journeyStages = [
-  { key: 'researching', label: 'Research', icon: Search },
-  { key: 'validating', label: 'Validate', icon: CheckCircle2 },
-  { key: 'planning', label: 'Plan', icon: Target },
-  { key: 'building', label: 'Build', icon: Rocket },
-  { key: 'launched', label: 'Launch', icon: Zap },
-]
 
 const statusOptions: { value: WorkspaceStatus; label: string; color: string }[] = [
   { value: 'researching', label: 'Researching', color: 'bg-blue-100 text-blue-700' },
@@ -327,10 +319,6 @@ export default function OpportunityHub() {
   const hasWorkspace = workspaceCheckQuery.data?.has_workspace
   const experts = expertsQuery.data?.experts || []
 
-  const currentStageIndex = workspace 
-    ? journeyStages.findIndex(s => s.key === workspace.status) 
-    : 0
-
   if (opportunityQuery.isLoading) {
     return (
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
@@ -387,62 +375,110 @@ export default function OpportunityHub() {
             </div>
           </div>
 
-          <div className="px-5 py-4 bg-stone-50 border-b border-stone-100">
-            <div className="flex items-center justify-between max-w-2xl mx-auto">
-              {journeyStages.map((stage, idx) => {
-                const Icon = stage.icon
-                const isActive = hasWorkspace && idx <= currentStageIndex
-                const isCurrent = hasWorkspace && stage.key === workspace?.status
-                const canClick = hasWorkspace
-                return (
-                  <div key={stage.key} className="flex items-center">
-                    <button
-                      onClick={() => {
-                        if (canClick) {
-                          updateStatusMutation.mutate(stage.key as WorkspaceStatus)
-                          setActiveTab('workspace')
-                        }
-                      }}
-                      disabled={!canClick}
-                      className={`flex flex-col items-center ${idx > 0 ? 'ml-4' : ''} ${canClick ? 'cursor-pointer' : 'cursor-default'} group`}
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                        isCurrent 
-                          ? 'bg-violet-600 text-white' 
-                          : isActive 
-                            ? 'bg-emerald-100 text-emerald-600' 
-                            : 'bg-stone-100 text-stone-400'
-                      } ${canClick ? 'group-hover:ring-2 group-hover:ring-violet-300 group-hover:ring-offset-2' : ''}`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span className={`text-xs mt-1 font-medium ${
-                        isCurrent ? 'text-violet-600' : isActive ? 'text-stone-700' : 'text-stone-400'
-                      }`}>
-                        {stage.label}
-                      </span>
-                    </button>
-                    {idx < journeyStages.length - 1 && (
-                      <div className={`w-8 h-0.5 ml-4 ${isActive ? 'bg-emerald-300' : 'bg-stone-200'}`} />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-            {hasWorkspace && workspace && (
-              <div className="mt-4 max-w-2xl mx-auto">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-stone-600">Overall Progress</span>
-                  <span className="font-medium text-stone-900">{workspace.progress_percent}%</span>
-                </div>
-                <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
-                    style={{ width: `${workspace.progress_percent}%` }}
-                  />
-                </div>
-              </div>
-            )}
+          {/* Consultant Studio Workflow - Main Navigation */}
+          <div className="border-b border-stone-200 bg-stone-50 px-5 py-3">
+            <h3 className="font-semibold text-stone-900 flex items-center gap-2">
+              <Target className="w-5 h-5 text-violet-600" />
+              Consultant Studio Workflow
+            </h3>
           </div>
+          
+          <div className="flex border-b border-stone-200">
+            <button 
+              onClick={() => {
+                if (!hasWorkspace) {
+                  createWorkspaceMutation.mutate()
+                } else {
+                  updateStatusMutation.mutate('researching')
+                  setActiveTab('workspace')
+                }
+              }}
+              disabled={createWorkspaceMutation.isPending}
+              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                hasWorkspace && workspace?.status === 'researching' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                hasWorkspace && workspace?.status === 'researching' ? 'bg-violet-600 text-white' : 
+                hasWorkspace && ['validating', 'planning', 'building', 'launched'].includes(workspace?.status || '') ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
+              }`}>{hasWorkspace && ['validating', 'planning', 'building', 'launched'].includes(workspace?.status || '') ? '✓' : '1'}</span>
+              Validate
+            </button>
+            <button 
+              onClick={() => {
+                if (!hasWorkspace) {
+                  createWorkspaceMutation.mutate()
+                } else {
+                  updateStatusMutation.mutate('validating')
+                  setActiveTab('workspace')
+                }
+              }}
+              disabled={createWorkspaceMutation.isPending}
+              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                hasWorkspace && workspace?.status === 'validating' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                hasWorkspace && workspace?.status === 'validating' ? 'bg-violet-600 text-white' : 
+                hasWorkspace && ['planning', 'building', 'launched'].includes(workspace?.status || '') ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
+              }`}>{hasWorkspace && ['planning', 'building', 'launched'].includes(workspace?.status || '') ? '✓' : '2'}</span>
+              Research
+            </button>
+            <button 
+              onClick={() => {
+                if (!hasWorkspace) {
+                  createWorkspaceMutation.mutate()
+                } else {
+                  updateStatusMutation.mutate('planning')
+                  setActiveTab('workspace')
+                }
+              }}
+              disabled={createWorkspaceMutation.isPending}
+              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                hasWorkspace && workspace?.status === 'planning' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                hasWorkspace && workspace?.status === 'planning' ? 'bg-violet-600 text-white' : 
+                hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
+              }`}>{hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? '✓' : '3'}</span>
+              Plan
+            </button>
+            <button 
+              onClick={() => {
+                if (!hasWorkspace) {
+                  createWorkspaceMutation.mutate()
+                } else {
+                  updateStatusMutation.mutate('building')
+                  setActiveTab('workspace')
+                }
+              }}
+              disabled={createWorkspaceMutation.isPending}
+              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
+                hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                hasWorkspace && ['building', 'launched'].includes(workspace?.status || '') ? 'bg-violet-600 text-white' : 'bg-stone-300 text-white'
+              }`}>{hasWorkspace && workspace?.status === 'launched' ? '✓' : '4'}</span>
+              Execute
+            </button>
+          </div>
+
+          {hasWorkspace && workspace && (
+            <div className="px-5 py-3 bg-stone-50 border-b border-stone-100">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-stone-600">Overall Progress</span>
+                <span className="font-medium text-stone-900">{workspace.progress_percent}%</span>
+              </div>
+              <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
+                  style={{ width: `${workspace.progress_percent}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex border-b border-stone-200">
             <button
@@ -936,64 +972,8 @@ export default function OpportunityHub() {
                 </div>
               </div>
 
+              {/* Step Content - shows based on current workflow status */}
               <div className="mt-6 bg-white rounded-xl border border-stone-200 overflow-hidden">
-                <div className="border-b border-stone-200 bg-stone-50 px-5 py-3">
-                  <h3 className="font-semibold text-stone-900 flex items-center gap-2">
-                    <Target className="w-5 h-5 text-violet-600" />
-                    Consultant Studio Workflow
-                  </h3>
-                </div>
-                
-                <div className="flex border-b border-stone-200">
-                  <button 
-                    onClick={() => updateStatusMutation.mutate('researching')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                      workspace.status === 'researching' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-                    }`}
-                  >
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      workspace.status === 'researching' ? 'bg-violet-600 text-white' : 
-                      ['validating', 'planning', 'building', 'launched'].includes(workspace.status) ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
-                    }`}>{['validating', 'planning', 'building', 'launched'].includes(workspace.status) ? '✓' : '1'}</span>
-                    Validate
-                  </button>
-                  <button 
-                    onClick={() => updateStatusMutation.mutate('validating')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                      workspace.status === 'validating' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-                    }`}
-                  >
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      workspace.status === 'validating' ? 'bg-violet-600 text-white' : 
-                      ['planning', 'building', 'launched'].includes(workspace.status) ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
-                    }`}>{['planning', 'building', 'launched'].includes(workspace.status) ? '✓' : '2'}</span>
-                    Research
-                  </button>
-                  <button 
-                    onClick={() => updateStatusMutation.mutate('planning')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                      workspace.status === 'planning' ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-                    }`}
-                  >
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      workspace.status === 'planning' ? 'bg-violet-600 text-white' : 
-                      ['building', 'launched'].includes(workspace.status) ? 'bg-emerald-500 text-white' : 'bg-stone-300 text-white'
-                    }`}>{['building', 'launched'].includes(workspace.status) ? '✓' : '3'}</span>
-                    Plan
-                  </button>
-                  <button 
-                    onClick={() => updateStatusMutation.mutate('building')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 border-b-2 transition-colors ${
-                      ['building', 'launched'].includes(workspace.status) ? 'border-violet-600 text-violet-700 bg-violet-50' : 'border-transparent text-stone-500 hover:text-stone-700'
-                    }`}
-                  >
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      ['building', 'launched'].includes(workspace.status) ? 'bg-violet-600 text-white' : 'bg-stone-300 text-white'
-                    }`}>{workspace.status === 'launched' ? '✓' : '4'}</span>
-                    Execute
-                  </button>
-                </div>
-
                 <div className="p-5">
                   {workspace.status === 'researching' && (
                     <div>
@@ -1035,7 +1015,7 @@ export default function OpportunityHub() {
                         <div className="grid grid-cols-2 gap-3 text-xs">
                           <div className="flex items-center gap-2 text-stone-600">
                             <BarChart3 className="w-4 h-4 text-violet-500" />
-                            <span>{(opp as Record<string, unknown>)?.validations || 0} validated signals</span>
+                            <span>{String((opp as Record<string, unknown>)?.validations || 0)} validated signals</span>
                           </div>
                           <div className="flex items-center gap-2 text-stone-600">
                             <TrendingUp className="w-4 h-4 text-emerald-500" />
@@ -1082,7 +1062,7 @@ export default function OpportunityHub() {
                           <div className="space-y-2 text-xs text-amber-800">
                             <div className="flex justify-between">
                               <span>Competition Level</span>
-                              <span className="font-medium">{(opp as Record<string, unknown>)?.competition || 'Medium'}</span>
+                              <span className="font-medium">{String((opp as Record<string, unknown>)?.competition || 'Medium')}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Market Gaps</span>
