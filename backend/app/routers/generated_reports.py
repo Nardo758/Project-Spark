@@ -78,11 +78,15 @@ def list_user_reports(
     page_size: int = Query(20, ge=1, le=100),
     report_type: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    opportunity_id: Optional[int] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """List current user's generated reports"""
     query = db.query(GeneratedReport).filter(GeneratedReport.user_id == current_user.id)
+    
+    if opportunity_id:
+        query = query.filter(GeneratedReport.opportunity_id == opportunity_id)
     
     if report_type:
         try:

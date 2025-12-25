@@ -11,6 +11,7 @@ import {
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
+import ReportViewer from '../components/ReportViewer'
 
 type AccessInfo = {
   age_days: number
@@ -289,6 +290,7 @@ export default function OpportunityDetail() {
 
   const [ppuOpen, setPpuOpen] = useState(false)
   const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
+  const [reportViewerOpen, setReportViewerOpen] = useState(false)
   const [ppuClientSecret, setPpuClientSecret] = useState<string | null>(null)
   const [ppuPublishableKey, setPpuPublishableKey] = useState<string | null>(null)
   const [ppuAmountLabel, setPpuAmountLabel] = useState<string>('$15')
@@ -674,9 +676,12 @@ export default function OpportunityDetail() {
               <p className="text-stone-500 text-sm">Ideate - Market Analysis</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <button className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50">
-                <Download className="w-4 h-4" />
-                Export Report
+              <button 
+                onClick={() => setReportViewerOpen(true)}
+                className="flex items-center gap-2 px-3 py-2 border border-violet-200 bg-violet-50 rounded-lg text-sm font-medium text-violet-700 hover:bg-violet-100"
+              >
+                <FileText className="w-4 h-4" />
+                Generate Report
               </button>
               <button className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50">
                 <Share2 className="w-4 h-4" />
@@ -1173,6 +1178,13 @@ export default function OpportunityDetail() {
       {enterpriseModalOpen && (
         <EnterpriseContactModal onClose={() => setEnterpriseModalOpen(false)} />
       )}
+      <ReportViewer
+        opportunityId={opportunityId}
+        opportunityTitle={opp?.title || 'Opportunity Report'}
+        userTier={userTierFromQuery}
+        isOpen={reportViewerOpen}
+        onClose={() => setReportViewerOpen(false)}
+      />
     </div>
   )
 }
