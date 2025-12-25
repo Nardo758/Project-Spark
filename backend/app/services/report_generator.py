@@ -602,6 +602,89 @@ class ReportGenerator:
     </section>
 """
     
+    def _build_top_markets_section(self, opp: Opportunity) -> str:
+        """Build Top 10 Markets by Opportunity Score section for Layer 2."""
+        from sqlalchemy import func
+        
+        top_markets = self.db.query(
+            Opportunity.city,
+            Opportunity.region,
+            func.count(Opportunity.id).label('signal_count'),
+            func.avg(Opportunity.ai_opportunity_score).label('avg_score'),
+            func.avg(Opportunity.severity).label('avg_severity'),
+            func.sum(Opportunity.validation_count).label('total_validations')
+        ).filter(
+            Opportunity.category == opp.category,
+            Opportunity.city.isnot(None)
+        ).group_by(
+            Opportunity.city,
+            Opportunity.region
+        ).order_by(
+            func.avg(Opportunity.ai_opportunity_score).desc().nullslast()
+        ).limit(10).all()
+        
+        if not top_markets:
+            return """
+    <section class="top-markets">
+        <h2>Top Markets by Opportunity Score</h2>
+        <p class="no-data">Insufficient market data available for ranking.</p>
+    </section>
+"""
+        
+        rows_html = ""
+        for idx, market in enumerate(top_markets, 1):
+            city = market.city or "Unknown"
+            region = market.region or ""
+            location = f"{city}, {region}" if region else city
+            signal_count = market.signal_count or 0
+            avg_score = float(market.avg_score or 70)
+            severity = float(market.avg_severity or 5)
+            validations = market.total_validations or 0
+            
+            score_class = "high" if avg_score >= 80 else "medium" if avg_score >= 60 else "low"
+            medal = "🥇" if idx == 1 else "🥈" if idx == 2 else "🥉" if idx == 3 else str(idx)
+            
+            rows_html += f"""
+            <tr>
+                <td class="rank">{medal}</td>
+                <td class="location">{location}</td>
+                <td class="signals">{signal_count}</td>
+                <td class="score {score_class}">{avg_score:.0f}</td>
+                <td class="severity">{severity:.1f}</td>
+                <td class="validations">{validations}</td>
+            </tr>"""
+        
+        return f"""
+    <section class="top-markets">
+        <h2>Top 10 Markets by Opportunity Score</h2>
+        <p class="source-note">Category: {opp.category} | Scoring: Signal density × Severity × Validation strength</p>
+        <table class="markets-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Market</th>
+                    <th>Signals</th>
+                    <th>Score</th>
+                    <th>Severity</th>
+                    <th>Validations</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+        <div class="methodology">
+            <h4>Scoring Methodology</h4>
+            <ul>
+                <li><strong>Signals:</strong> Count of validated market signals in this geography</li>
+                <li><strong>Score:</strong> AI-computed opportunity score (0-100) based on market fit, timing, and growth potential</li>
+                <li><strong>Severity:</strong> Average pain intensity (1-10) reported across signals</li>
+                <li><strong>Validations:</strong> Total user/expert confirmations supporting these signals</li>
+            </ul>
+        </div>
+    </section>
+"""
+    
     def _build_housing_lifestyle_section(self, demographics: Optional[Dict]) -> str:
         """Build Housing & Lifestyle section for Layer 2."""
         if not demographics:
@@ -669,6 +752,7 @@ class ReportGenerator:
         market_sizing = self._calculate_tam_sam_som(opp, demographics)
         income_section = self._build_income_distribution_section(demographics)
         housing_section = self._build_housing_lifestyle_section(demographics)
+        top_markets_section = self._build_top_markets_section(opp)
         
         pop_display = "--"
         income_display = "--"
@@ -746,6 +830,8 @@ class ReportGenerator:
     {income_section}
     
     {housing_section}
+    
+    {top_markets_section}
     
     <section class="competitive-landscape">
         <h2>Competitive Landscape</h2>
