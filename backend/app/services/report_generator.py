@@ -57,7 +57,7 @@ class ReportGenerator:
             "price": self.TIER_PRICES.get(report_type)
         }
     
-    def generate_layer1_report(self, opportunity: Opportunity, user: User) -> GeneratedReport:
+    def generate_layer1_report(self, opportunity: Opportunity, user: User, demographics: Optional[Dict] = None) -> GeneratedReport:
         """Generate Layer 1: Problem Overview report."""
         start_time = datetime.utcnow()
         
@@ -71,7 +71,7 @@ class ReportGenerator:
         self.db.add(report)
         self.db.commit()
         
-        content = self._build_layer1_content(opportunity)
+        content = self._build_layer1_content(opportunity, demographics)
         summary = self._build_layer1_summary(opportunity)
         
         report.content = content
@@ -86,7 +86,7 @@ class ReportGenerator:
         
         return report
     
-    def _build_layer1_content(self, opp: Opportunity) -> str:
+    def _build_layer1_content(self, opp: Opportunity, demographics: Optional[Dict] = None) -> str:
         """Build Layer 1 report content in HTML format."""
         market_size = opp.ai_market_size_estimate or opp.market_size or "Under Analysis"
         target_audience = opp.ai_target_audience or "General consumers"
@@ -97,6 +97,8 @@ class ReportGenerator:
         problem_statement = opp.ai_problem_statement or opp.description
         pain_points = opp.ai_competitive_advantages or ["Market gap exists", "User pain point validated"]
         risks = opp.ai_key_risks or ["Market timing", "Competition"]
+        
+        target_customer_section = self._build_target_customer_section(opp, demographics)
         
         html_content = f"""
 <div class="report-layer1">
@@ -161,6 +163,8 @@ class ReportGenerator:
         </div>
     </section>
     
+    {target_customer_section}
+    
     <section class="validation-signals">
         <h2>Validation Signals</h2>
         <ul class="signal-list">
@@ -196,6 +200,136 @@ class ReportGenerator:
     def _build_layer1_summary(self, opp: Opportunity) -> str:
         """Build Layer 1 report summary."""
         return f"Problem Overview for '{opp.title}' - Score: {opp.ai_opportunity_score or opp.severity * 20}/100. {opp.ai_summary[:200] if opp.ai_summary else opp.description[:200] if opp.description else 'Analysis pending'}..."
+    
+    def _build_target_customer_section(self, opp: Opportunity, demographics: Optional[Dict] = None) -> str:
+        """Build Target Customer Profile section using Census data."""
+        if not demographics:
+            return """
+    <section class="target-customer">
+        <h2>Target Customer Profile</h2>
+        <p class="placeholder-note">Demographic insights will be available after geographic analysis is complete.</p>
+        <div class="customer-grid">
+            <div class="customer-card">
+                <span class="label">Primary Demographic</span>
+                <span class="value">--</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Income Level</span>
+                <span class="value">--</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Purchasing Power</span>
+                <span class="value">--</span>
+            </div>
+        </div>
+    </section>
+"""
+        
+        pop = demographics.get('population', 0)
+        pop_display = f"{pop/1000000:.1f}M" if pop >= 1000000 else f"{pop/1000:.0f}K" if pop >= 1000 else str(pop)
+        
+        income = demographics.get('median_income', 0)
+        income_display = f"${income/1000:.0f}K" if income else "--"
+        
+        income_level = "High Income" if income > 100000 else "Upper-Middle" if income > 75000 else "Middle Income" if income > 50000 else "Working Class"
+        
+        purchasing_power = demographics.get('purchasing_power', 0)
+        pp_display = f"${purchasing_power/1000000000:.1f}B" if purchasing_power >= 1000000000 else f"${purchasing_power/1000000:.0f}M" if purchasing_power >= 1000000 else "--"
+        
+        age_data = demographics.get('age_distribution', {})
+        primary_demo = self._get_primary_demographic(age_data)
+        
+        households = demographics.get('households') or demographics.get('total_households') or demographics.get('internet_access', {}).get('total_households', 0)
+        hh_display = f"{households/1000:.0f}K" if households >= 1000 else str(households) if households else "--"
+        
+        homeowner_pct = demographics.get('housing_tenure', {}).get('owner_pct', 0)
+        housing_status = "Homeowner Majority" if homeowner_pct > 60 else "Renter Majority" if homeowner_pct < 40 else "Mixed Housing"
+        
+        broadband_pct = demographics.get('internet_access', {}).get('broadband_pct', 0)
+        digital_ready = "High" if broadband_pct > 90 else "Moderate" if broadband_pct > 70 else "Developing"
+        
+        income_segments = ""
+        income_under_50k = demographics.get('income_under_50k', 0)
+        income_50k_100k = demographics.get('income_50k_100k', 0)
+        income_100k_plus = demographics.get('income_100k_plus', 0)
+        total_income_hh = income_under_50k + income_50k_100k + income_100k_plus
+        
+        if total_income_hh > 0:
+            pct_under_50k = round((income_under_50k / total_income_hh) * 100)
+            pct_50k_100k = round((income_50k_100k / total_income_hh) * 100)
+            pct_100k_plus = round((income_100k_plus / total_income_hh) * 100)
+            income_segments = f"""
+            <div class="income-segments">
+                <div class="segment"><span class="bar" style="width: {pct_under_50k}%"></span><span>Under $50K: {pct_under_50k}%</span></div>
+                <div class="segment"><span class="bar" style="width: {pct_50k_100k}%"></span><span>$50K-$100K: {pct_50k_100k}%</span></div>
+                <div class="segment"><span class="bar" style="width: {pct_100k_plus}%"></span><span>$100K+: {pct_100k_plus}%</span></div>
+            </div>
+"""
+        
+        return f"""
+    <section class="target-customer">
+        <h2>Target Customer Profile</h2>
+        <p class="section-intro">Census-validated demographic insights for {opp.city or opp.region or 'the target market'}.</p>
+        <div class="customer-grid">
+            <div class="customer-card">
+                <span class="label">Population</span>
+                <span class="value">{pop_display}</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Primary Age Group</span>
+                <span class="value">{primary_demo}</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Median Income</span>
+                <span class="value">{income_display}</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Income Level</span>
+                <span class="value">{income_level}</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Households</span>
+                <span class="value">{hh_display}</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Purchasing Power</span>
+                <span class="value">{pp_display}</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Housing</span>
+                <span class="value">{housing_status}</span>
+            </div>
+            <div class="customer-card">
+                <span class="label">Digital Readiness</span>
+                <span class="value">{digital_ready}</span>
+            </div>
+        </div>
+        {income_segments}
+    </section>
+"""
+    
+    def _get_primary_demographic(self, age_data: Dict) -> str:
+        """Determine the primary age demographic from Census age distribution."""
+        if not age_data:
+            return "Adults 25-54"
+        
+        age_groups = [
+            ("under_18", "Youth (Under 18)"),
+            ("18_24", "Young Adults (18-24)"),
+            ("25_44", "Prime Working Age (25-44)"),
+            ("45_64", "Established Adults (45-64)"),
+            ("65_plus", "Seniors (65+)"),
+        ]
+        
+        max_group = None
+        max_count = 0
+        for key, label in age_groups:
+            count = age_data.get(key, 0) or 0
+            if count > max_count:
+                max_count = count
+                max_group = label
+        
+        return max_group or "Adults 25-54"
     
     def generate_layer2_report(self, opportunity: Opportunity, user: User, demographics: Optional[Dict] = None) -> GeneratedReport:
         """Generate Layer 2: Deep Dive Analysis report."""

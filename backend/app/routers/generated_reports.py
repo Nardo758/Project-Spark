@@ -295,7 +295,8 @@ def generate_layer1_report(
             }
         }
     
-    report = generator.generate_layer1_report(opportunity, current_user)
+    demographics = opportunity.demographics if hasattr(opportunity, 'demographics') else None
+    report = generator.generate_layer1_report(opportunity, current_user, demographics)
     
     return {
         "report_id": report.id,
