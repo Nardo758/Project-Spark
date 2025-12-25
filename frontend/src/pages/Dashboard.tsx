@@ -66,7 +66,6 @@ function formatMarketSize(size?: string | null): string {
 
 export default function Dashboard() {
   const { user, token, isAuthenticated } = useAuthStore()
-  const isPaidUser = user?.tier && user.tier.toLowerCase() !== 'free'
 
   const { data: opportunities, isLoading, isError: opportunitiesError } = useQuery({
     queryKey: ['dashboard-opportunities', { isAuthenticated }],
@@ -205,7 +204,7 @@ export default function Dashboard() {
                   return (
                     <div 
                       key={opp.id} 
-                      onClick={() => window.location.href = isPaidUser ? `/opportunity/${opp.id}/hub` : `/opportunity/${opp.id}`}
+                      onClick={() => window.location.href = `/opportunity/${opp.id}`}
                       className="bg-white p-5 rounded-xl border-2 border-stone-200 hover:border-stone-900 transition-all cursor-pointer group"
                     >
                       <div className="flex items-start justify-between mb-3">

@@ -4,8 +4,7 @@ import { useAuthStore } from '../stores/authStore'
 import { 
   Menu, 
   X, 
-  ChevronDown, 
-  FolderOpen
+  ChevronDown
 } from 'lucide-react'
 
 const guestNavItems = [
@@ -66,7 +65,6 @@ export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuthStore()
   const location = useLocation()
 
-  const paidMember = user?.tier && user.tier.toLowerCase() !== 'free'
   const navItems: NavItem[] = isAuthenticated ? paidNavItems : guestNavItems
 
   useEffect(() => {
@@ -170,18 +168,6 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
               <>
-                {paidMember && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-                    <FolderOpen className="w-4 h-4 text-gray-600" />
-                    <select 
-                      className="text-sm font-medium text-gray-700 bg-transparent border-none focus:outline-none cursor-pointer"
-                      defaultValue="default"
-                    >
-                      <option value="default">My First Project</option>
-                      <option value="new">+ New Project</option>
-                    </select>
-                  </div>
-                )}
                 <button
                   onClick={logout}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
@@ -230,18 +216,6 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-200 bg-white">
           <div className="px-4 py-3 space-y-1">
-            {isAuthenticated && paidMember && (
-              <div className="flex items-center gap-2 px-3 py-2 mb-2 bg-gray-100 rounded-lg">
-                <FolderOpen className="w-4 h-4 text-gray-600" />
-                <select 
-                  className="text-sm font-medium text-gray-700 bg-transparent border-none focus:outline-none flex-1"
-                  defaultValue="default"
-                >
-                  <option value="default">My First Project</option>
-                  <option value="new">+ New Project</option>
-                </select>
-              </div>
-            )}
             
             {navItems.map((item: NavItem) => (
               item.dropdown ? (
