@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.services.map_data_engine import MapDataEngine
+from app.services.census_service import census_service
 
 router = APIRouter(prefix="/map", tags=["map"])
 
@@ -151,3 +152,129 @@ async def get_map_sessions(
     sessions = engine.get_user_sessions(user_id=user_id, limit=limit)
     
     return {"sessions": sessions}
+
+
+@router.get("/census/population/{state_fips}/{county_fips}")
+async def get_population_dynamics(
+    state_fips: str,
+    county_fips: str,
+):
+    """
+    Get comprehensive population dynamics for a county.
+    
+    Returns current population, historical trends (2019-2024), 
+    migration patterns, and demographic data.
+    
+    Args:
+        state_fips: 2-digit state FIPS code (e.g., "48" for Texas)
+        county_fips: 3-digit county FIPS code (e.g., "015" for Austin County)
+    """
+    if not census_service.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="Census API key not configured. Please add CENSUS_API_KEY to environment variables."
+        )
+    
+    data = await census_service.get_population_dynamics(state_fips, county_fips)
+    
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No population data found for county {state_fips}-{county_fips}"
+        )
+    
+    return data
+
+
+@router.get("/census/population-estimates")
+async def get_population_estimates(
+    state_fips: Optional[str] = Query(None, description="2-digit state FIPS code"),
+    county_fips: Optional[str] = Query(None, description="3-digit county FIPS code"),
+    year: int = Query(2024, description="Data year (2019-2024)"),
+):
+    """
+    Get population estimates with migration components.
+    
+    Returns population, births, deaths, domestic/international migration.
+    If no state specified, returns all US counties (large response).
+    """
+    if not census_service.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="Census API key not configured"
+        )
+    
+    data = await census_service.fetch_population_estimates(state_fips, county_fips, year)
+    
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail="No population estimates found for the specified geography"
+        )
+    
+    return {"year": year, "data": data, "count": len(data)}
+
+
+@router.get("/census/migration/{state_fips}/{county_fips}")
+async def get_migration_flows(
+    state_fips: str,
+    county_fips: str,
+    year: int = Query(2022, description="Data year (latest: 2022)"),
+):
+    """
+    Get county-to-county migration flows.
+    
+    Returns where people are moving from (top 20 origins),
+    total moved in/out, and net migration.
+    """
+    if not census_service.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="Census API key not configured"
+        )
+    
+    data = await census_service.fetch_migration_flows(state_fips, county_fips, year)
+    
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No migration flow data found for county {state_fips}-{county_fips}"
+        )
+    
+    return data
+
+
+@router.get("/census/demographics/{state_fips}/{county_fips}")
+async def get_county_demographics(
+    state_fips: str,
+    county_fips: str,
+):
+    """
+    Get ACS 5-Year demographic data for a county.
+    
+    Returns population, income, education, housing, and economic indicators.
+    """
+    if not census_service.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="Census API key not configured"
+        )
+    
+    data = await census_service.fetch_by_county(state_fips, county_fips)
+    
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No demographic data found for county {state_fips}-{county_fips}"
+        )
+    
+    return data
+
+
+@router.get("/census/status")
+async def get_census_api_status():
+    """Check if Census API is configured and available."""
+    return {
+        "configured": census_service.is_configured,
+        "message": "Census API ready" if census_service.is_configured else "CENSUS_API_KEY not set"
+    }
