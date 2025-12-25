@@ -445,24 +445,6 @@ export default function OpportunityHub() {
           </div>
 
           <div className="flex border-b border-stone-200">
-            {workflowStages.map((stage) => {
-              const Icon = stage.icon
-              const isActive = activeTab === stage.key
-              return (
-                <button
-                  key={stage.key}
-                  onClick={() => setActiveTab(stage.key)}
-                  className={`flex-1 px-6 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                    isActive 
-                      ? 'text-violet-600 border-b-2 border-violet-600 bg-violet-50' 
-                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {stage.label}
-                </button>
-              )
-            })}
             <button
               onClick={() => {
                 if (!hasWorkspace) {
@@ -472,7 +454,7 @@ export default function OpportunityHub() {
                 }
               }}
               disabled={createWorkspaceMutation.isPending}
-              className={`px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border-l border-stone-200 ${
+              className={`ml-auto px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                 workspacePanelOpen 
                   ? 'text-violet-600 bg-violet-50' 
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
@@ -481,7 +463,10 @@ export default function OpportunityHub() {
             >
               <Briefcase className="w-4 h-4" />
               {hasWorkspace ? (
-                workspacePanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />
+                <>
+                  <span>Workspace</span>
+                  {workspacePanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+                </>
               ) : (
                 <span>{createWorkspaceMutation.isPending ? 'Creating...' : 'Workspace'}</span>
               )}
