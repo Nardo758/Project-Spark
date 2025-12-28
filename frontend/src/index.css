@@ -131,3 +131,9 @@ body {
     margin-top: 0.25in;
   }
 }
+
+@media print {
+  @page {
+    margin: 0.5in 0.5in 0.5in 0.5in;
+  }
+}
