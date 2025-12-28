@@ -11,6 +11,25 @@ from app.services.ai_engine import ai_engine_service
 router = APIRouter()
 
 
+@router.get("/brain/active")
+def get_active_brain(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Get the user's active AI brain/knowledge base configuration.
+    
+    This is a placeholder for the future Personal AI Knowledge Base feature.
+    Returns disabled state for now.
+    """
+    return {
+        "brainName": None,
+        "matchScore": None,
+        "tokensUsed": 0,
+        "estimatedCostUsd": 0.0,
+        "isEnabled": False
+    }
+
+
 @router.post("/match", response_model=MatchResponse)
 def match_opportunity(
     payload: MatchRequest,
