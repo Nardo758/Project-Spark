@@ -1335,18 +1335,54 @@ class ReportGenerator:
         return report
     
     def _build_layer3_content(self, opp: Opportunity, demographics: Optional[Dict] = None) -> str:
-        """Build Layer 3 Execution Package content."""
-        html_content = f"""
-<div class="report-layer3">
-    <header class="report-header">
-        <h1>Execution Package</h1>
-        <div class="report-meta">
-            <span class="tier-badge">ENTERPRISE</span>
-            <span class="category">{opp.category}</span>
-            <span class="date">Generated: {datetime.utcnow().strftime('%B %d, %Y')}</span>
+        """Build Layer 3 Execution Package content with AI-generated business plan and strategy."""
+        opp_dict = {
+            'title': opp.title,
+            'category': opp.category,
+            'city': opp.city,
+            'region': opp.region,
+            'description': opp.description or '',
+            'market_size': opp.ai_market_size_estimate or opp.market_size or '',
+            'target_audience': opp.ai_target_audience or '',
+            'business_models': ', '.join(opp.ai_business_model_suggestions or []) if opp.ai_business_model_suggestions else '',
+        }
+        
+        try:
+            ai_business_plan = ai_report_generator.generate_business_plan(opp_dict)
+            ai_business_plan_html = ai_business_plan.replace('\n', '<br>').replace('**', '<strong>').replace('</strong><strong>', '') if ai_business_plan else ""
+        except Exception as e:
+            logger.warning(f"Failed to generate AI business plan: {e}")
+            ai_business_plan_html = ""
+        
+        try:
+            ai_financial = ai_report_generator.generate_financial_projections(opp_dict)
+            ai_financial_html = ai_financial.replace('\n', '<br>').replace('**', '<strong>').replace('</strong><strong>', '') if ai_financial else ""
+        except Exception as e:
+            logger.warning(f"Failed to generate AI financial projections: {e}")
+            ai_financial_html = ""
+        
+        try:
+            ai_strategy = ai_report_generator.generate_strategic_recommendations(opp_dict, demographics)
+            ai_strategy_html = ai_strategy.replace('\n', '<br>').replace('**', '<strong>').replace('</strong><strong>', '') if ai_strategy else ""
+        except Exception as e:
+            logger.warning(f"Failed to generate AI strategic recommendations: {e}")
+            ai_strategy_html = ""
+        
+        expansion_map_section = self._build_expansion_map_section(opp)
+        
+        business_plan_section = ""
+        if ai_business_plan_html:
+            business_plan_section = f"""
+    <section class="ai-business-plan">
+        <h2>AI-Generated Business Plan</h2>
+        <div class="ai-badge">Powered by Claude (Business Model Canvas)</div>
+        <div class="ai-content">
+            {ai_business_plan_html}
         </div>
-    </header>
-    
+    </section>
+"""
+        else:
+            business_plan_section = f"""
     <section class="business-plan-summary">
         <h2>Business Plan Summary</h2>
         <div class="plan-overview">
@@ -1362,7 +1398,21 @@ class ReportGenerator:
             </ul>
         </div>
     </section>
-    
+"""
+        
+        strategy_section = ""
+        if ai_strategy_html:
+            strategy_section = f"""
+    <section class="ai-strategy">
+        <h2>Strategic Recommendations & Go-to-Market</h2>
+        <div class="ai-badge">Powered by Claude</div>
+        <div class="ai-content">
+            {ai_strategy_html}
+        </div>
+    </section>
+"""
+        else:
+            strategy_section = """
     <section class="go-to-market">
         <h2>Go-to-Market Strategy</h2>
         <div class="gtm-phases">
@@ -1395,7 +1445,21 @@ class ReportGenerator:
             </div>
         </div>
     </section>
-    
+"""
+        
+        financial_section = ""
+        if ai_financial_html:
+            financial_section = f"""
+    <section class="ai-financials">
+        <h2>Financial Projections (3-Year)</h2>
+        <div class="ai-badge">Powered by Claude</div>
+        <div class="ai-content">
+            {ai_financial_html}
+        </div>
+    </section>
+"""
+        else:
+            financial_section = """
     <section class="financial-projections">
         <h2>Financial Projections (3-Year)</h2>
         <table class="financials-table">
@@ -1435,6 +1499,26 @@ class ReportGenerator:
             </tbody>
         </table>
     </section>
+"""
+        
+        html_content = f"""
+<div class="report-layer3">
+    <header class="report-header">
+        <h1>Execution Package</h1>
+        <div class="report-meta">
+            <span class="tier-badge">ENTERPRISE</span>
+            <span class="category">{opp.category}</span>
+            <span class="date">Generated: {datetime.utcnow().strftime('%B %d, %Y')}</span>
+        </div>
+    </header>
+    
+    {expansion_map_section}
+    
+    {business_plan_section}
+    
+    {strategy_section}
+    
+    {financial_section}
     
     <section class="roadmap-90day">
         <h2>90-Day Action Roadmap</h2>
@@ -1477,12 +1561,52 @@ class ReportGenerator:
     </section>
     
     <footer class="report-footer">
-        <p>This comprehensive execution package was generated by OppGrid's AI-powered business intelligence engine.</p>
+        <p>This comprehensive execution package was generated by OppGrid's AI-powered business intelligence engine using Claude.</p>
         <p>For personalized strategy sessions, connect with our expert network.</p>
     </footer>
 </div>
 """
         return html_content
+    
+    def _build_expansion_map_section(self, opp: Opportunity) -> str:
+        """Build expansion map section showing regional opportunity."""
+        lat = opp.latitude
+        lng = opp.longitude
+        
+        if not lat or not lng:
+            return ""
+        
+        map_url = build_static_map_url(
+            center_lng=lng,
+            center_lat=lat,
+            zoom=8,
+            width=1000,
+            height=400,
+            markers=[
+                {"lat": lat, "lng": lng, "color": "22c55e", "label": "c"},
+            ],
+            use_satellite=True
+        )
+        
+        if not map_url:
+            return ""
+        
+        location_name = f"{opp.city}, {opp.region}" if opp.city and opp.region else opp.city or opp.region or "Target Market"
+        
+        return f"""
+    <section class="expansion-map">
+        <h2>Market Expansion Opportunity: {location_name}</h2>
+        <div class="satellite-map">
+            <img src="{map_url}" alt="Satellite expansion map of {location_name}" style="width: 100%; max-width: 1000px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" />
+        </div>
+        <div class="map-legend">
+            <span class="legend-item"><span class="dot green"></span> Primary Launch Market</span>
+        </div>
+        <div class="expansion-notes">
+            <p>This satellite view shows your primary launch market. The execution plan includes phased expansion to adjacent markets based on initial traction.</p>
+        </div>
+    </section>
+"""
 
 
 report_generator = ReportGenerator

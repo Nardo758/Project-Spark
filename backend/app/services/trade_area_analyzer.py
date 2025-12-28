@@ -269,15 +269,100 @@ class TradeAreaAnalyzer:
         lng: float,
         state: Optional[str]
     ) -> Optional[Dict[str, Any]]:
-        """Step 4: Demographic Overlay - Fetch Census data for trade area."""
-        from app.services.census_data import census_data_service
+        """Step 4: Demographic Overlay - Fetch Census data for trade area.
+        
+        Uses synchronous HTTP call to Census API since trade area analysis runs synchronously.
+        Falls back to state-level data if lat/lng lookup isn't supported.
+        """
+        import os
+        import httpx
+        
+        api_key = os.environ.get("CENSUS_API_KEY")
+        if not api_key:
+            logger.warning("CENSUS_API_KEY not configured, skipping demographics")
+            return None
+        
+        if not state:
+            logger.warning("State not provided, skipping demographics")
+            return None
+        
+        state_fips = self._get_state_fips(state)
+        if not state_fips:
+            logger.warning(f"Unknown state: {state}, skipping demographics")
+            return None
         
         try:
-            demographics = census_data_service.get_demographics_by_coordinates(lat, lng, state)
-            return demographics
+            variables = [
+                "B01003_001E",
+                "B01002_001E",
+                "B19013_001E",
+                "B11001_001E",
+                "B25077_001E",
+                "B25064_001E",
+                "B23025_005E",
+                "B23025_002E",
+            ]
+            
+            url = f"https://api.census.gov/data/2023/acs/acs5?get={','.join(variables)}&for=state:{state_fips}&key={api_key}"
+            
+            response = httpx.get(url, timeout=30.0)
+            response.raise_for_status()
+            data = response.json()
+            
+            if len(data) < 2:
+                return None
+            
+            values = data[1]
+            
+            def safe_int(val):
+                try:
+                    return int(val) if val and val != '-' else 0
+                except:
+                    return 0
+            
+            population = safe_int(values[0])
+            median_age = safe_int(values[1])
+            median_income = safe_int(values[2])
+            households = safe_int(values[3])
+            home_value = safe_int(values[4])
+            median_rent = safe_int(values[5])
+            unemployed = safe_int(values[6])
+            labor_force = safe_int(values[7])
+            
+            unemployment_rate = (unemployed / labor_force * 100) if labor_force > 0 else 0
+            
+            return {
+                'population': population,
+                'median_age': median_age,
+                'median_income': median_income,
+                'total_households': households,
+                'median_home_value': home_value,
+                'median_rent': median_rent,
+                'unemployment_rate': round(unemployment_rate, 1),
+                'state': state,
+                'data_source': 'US Census Bureau ACS 5-Year Estimates',
+            }
+            
         except Exception as e:
-            logger.warning(f"Failed to fetch demographics: {e}")
+            logger.error(f"Failed to fetch Census data: {e}")
             return None
+    
+    def _get_state_fips(self, state: str) -> Optional[str]:
+        """Convert state abbreviation to FIPS code."""
+        fips_map = {
+            'AL': '01', 'AK': '02', 'AZ': '04', 'AR': '05', 'CA': '06',
+            'CO': '08', 'CT': '09', 'DE': '10', 'FL': '12', 'GA': '13',
+            'HI': '15', 'ID': '16', 'IL': '17', 'IN': '18', 'IA': '19',
+            'KS': '20', 'KY': '21', 'LA': '22', 'ME': '23', 'MD': '24',
+            'MA': '25', 'MI': '26', 'MN': '27', 'MS': '28', 'MO': '29',
+            'MT': '30', 'NE': '31', 'NV': '32', 'NH': '33', 'NJ': '34',
+            'NM': '35', 'NY': '36', 'NC': '37', 'ND': '38', 'OH': '39',
+            'OK': '40', 'OR': '41', 'PA': '42', 'RI': '44', 'SC': '45',
+            'SD': '46', 'TN': '47', 'TX': '48', 'UT': '49', 'VT': '50',
+            'VA': '51', 'WA': '53', 'WV': '54', 'WI': '55', 'WY': '56',
+            'DC': '11', 'PR': '72',
+        }
+        return fips_map.get(state.upper())
     
     def _generate_ai_synthesis(
         self,
