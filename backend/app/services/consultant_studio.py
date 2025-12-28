@@ -474,6 +474,8 @@ class ConsultantStudioService:
                 "title": f"{business_subtype or business_type} in {city}",
                 "category": business_type,
                 "location": city,
+                "city": city,
+                "region": params.get("state") if params else None,
                 "state": params.get("state") if params else None,
                 "latitude": params.get("latitude") if params else None,
                 "longitude": params.get("longitude") if params else None,
@@ -483,6 +485,8 @@ class ConsultantStudioService:
             
             demographics = trade_area.demographics or {}
             competitors = trade_area.competitors or []
+            
+            radius_miles = trade_area.radius_km * 0.621371
             
             return {
                 "market_density": "high" if len(competitors) > 10 else "medium" if len(competitors) > 5 else "low",
@@ -496,7 +500,7 @@ class ConsultantStudioService:
                     "unemployment_rate": f"{demographics.get('unemployment_rate', 0)}%" if demographics.get("unemployment_rate") else "N/A",
                     "median_home_value": f"${demographics.get('median_home_value', 0):,}" if demographics.get("median_home_value") else "N/A",
                 },
-                "trade_area_radius_miles": trade_area.radius_miles,
+                "trade_area_radius_miles": round(radius_miles, 1),
                 "competitors": competitors[:10],
                 "ai_synthesis": trade_area.ai_synthesis,
             }
@@ -536,29 +540,28 @@ class ConsultantStudioService:
             demographics = geo_analysis.get("demographics", {})
             competitors = geo_analysis.get("competitors", [])
             
-            market_insights = await ai_report_generator.generate_market_insights(
+            market_insights = ai_report_generator.generate_market_insights(
                 opportunity_context,
                 demographics,
                 competitors
             )
             
-            competitive_analysis = await ai_report_generator.generate_competitive_analysis(
+            competitive_analysis = ai_report_generator.generate_competitive_analysis(
                 opportunity_context,
                 competitors
             )
             
             return {
-                "executive_summary": market_insights.get("market_summary", f"Market analysis for {business_type} opportunities in {city}."),
+                "executive_summary": f"Market analysis for {business_type} opportunities in {city}.",
                 "market_conditions": geo_analysis.get("market_density", "unknown"),
                 "white_space_score": geo_analysis.get("white_space_score", 50),
-                "key_factors": market_insights.get("key_drivers", [
+                "key_factors": [
                     "Local economic indicators",
                     "Competition landscape",
                     "Target demographic presence",
-                ]),
-                "market_trends": market_insights.get("trends", []),
+                ],
+                "market_insights": market_insights,
                 "competitive_analysis": competitive_analysis,
-                "recommendations": market_insights.get("recommendations", []),
             }
             
         except Exception as e:
