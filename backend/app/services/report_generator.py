@@ -16,6 +16,11 @@ from app.models.generated_report import GeneratedReport, ReportType, ReportStatu
 from app.models.user import User
 
 
+MAPBOX_STYLE_SATELLITE = "mapbox/satellite-streets-v11"
+MAPBOX_STYLE_DARK = "mapbox/dark-v11"
+MAPBOX_STYLE_LIGHT = "mapbox/light-v11"
+
+
 def build_static_map_url(
     center_lng: float,
     center_lat: float,
@@ -23,7 +28,8 @@ def build_static_map_url(
     width: int = 600,
     height: int = 300,
     markers: Optional[List[Dict]] = None,
-    style: str = "mapbox/dark-v11"
+    style: str = MAPBOX_STYLE_SATELLITE,
+    use_satellite: bool = True
 ) -> Optional[str]:
     """Build a Mapbox Static Images API URL for embedding in reports.
     
@@ -34,7 +40,8 @@ def build_static_map_url(
         width: Image width in pixels (max 1280)
         height: Image height in pixels (max 1280)
         markers: List of marker dicts with lat, lng, color keys
-        style: Mapbox style ID
+        style: Mapbox style ID (defaults to satellite-streets-v11)
+        use_satellite: If True, uses satellite imagery with labels
     
     Returns:
         Static map URL or None if MAPBOX_ACCESS_TOKEN not set
@@ -43,6 +50,9 @@ def build_static_map_url(
     if not token:
         return None
     
+    if use_satellite:
+        style = MAPBOX_STYLE_SATELLITE
+    
     overlay = ""
     if markers:
         marker_parts = []
@@ -50,8 +60,12 @@ def build_static_map_url(
             color = m.get("color", "ff5544")
             lng = m.get("lng", m.get("longitude"))
             lat = m.get("lat", m.get("latitude"))
+            label = m.get("label", "")
             if lng is not None and lat is not None:
-                marker_parts.append(f"pin-s+{color}({lng},{lat})")
+                if label:
+                    marker_parts.append(f"pin-s-{label}+{color}({lng},{lat})")
+                else:
+                    marker_parts.append(f"pin-s+{color}({lng},{lat})")
         if marker_parts:
             overlay = ",".join(marker_parts) + "/"
     
