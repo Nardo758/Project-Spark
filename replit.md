@@ -47,16 +47,19 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 2024)
 
-### Three-Revenue-Stream Pricing Model (December 28, 2024)
-*   **Pricing Page:** New `/pricing` page with "One Free Report. Professional Rates After." messaging and value anchoring vs traditional consultants
+### Updated Pricing Model (December 28, 2024)
+*   **Pricing Page:** `/pricing` page with "Consultant-Quality Reports at AI Prices" messaging and value anchoring vs traditional consultants
 *   **Subscription Tiers:** Explorer (FREE, 91+ days), Builder ($99/mo, 31+ days), Scaler ($499/mo, 8+ days), Enterprise ($2,500+/mo, real-time)
-*   **Report Pricing:** Feasibility Study FREE ($1,500-15K consultant value), Market Analysis $99, Strategic Assessment $89, PESTLE $79, Financial Model $129, Business Plan $149, Pitch Deck $79
-*   **Bundle Packages:** Starter $329 (saves $28), Professional $499 (saves $125), Consultant License $2,499/yr (25 opportunities)
-*   **Report Types:** Added PESTLE Analysis to `ReportProductType` enum in backend and frontend
-*   **Consultant Studio Hero:** Updated to "Professional Business Intelligence. AI Speed. Consultant Quality." with Browse Opportunities + View Pricing CTAs
-*   **Contextual Prompts:** Added strategic choke-point prompts after Validate Idea (FREE Feasibility + Business Plan upsell), Search Ideas (select opportunity for FREE study), Location Analysis (FREE Feasibility + Market Analysis upsell)
-*   **Navigation:** Added Pricing link after API in navbar for both guest and authenticated users
-*   **Key Files:** `frontend/src/pages/Pricing.tsx`, `frontend/src/pages/build/ReportStudio.tsx`, `backend/app/core/report_pricing.py`
+*   **Report Pricing (updated):** Feasibility Study $25, Pitch Deck $79, Strategic Assessment $89, Market Analysis $99, PESTLE Analysis $99, Financial Model $129, Business Plan $149
+*   **Bundle Packages (updated):**
+    - Strategic Analysis Bundle $229 (Market + PESTLE + Strategic = $287 value, saves $58)
+    - Starter Bundle $329 (Feasibility + Business Plan + Financial + Pitch = $382 value, saves $53)
+    - Professional Bundle $549 (all 7 reports = $669 value, saves $120)
+    - Consultant License $2,499/yr (25 opportunities)
+*   **Report Types:** PESTLE Analysis added to `ReportProductType` enum in backend and frontend
+*   **Pricing Hero:** Updated to "Professional Business Intelligence. AI Speed." with "$25 Feasibility Study" highlight
+*   **Signup Flow:** "Get Started" buttons in navbar and home page now redirect to /pricing for tier selection
+*   **Key Files:** `frontend/src/pages/Pricing.tsx`, `frontend/src/pages/build/ReportStudio.tsx`, `backend/app/core/report_pricing.py`, `frontend/src/components/Navbar.tsx`
 
 ### AI-Powered Report Framework (December 28, 2024)
 *   **AI Report Generator:** `backend/app/services/ai_report_generator.py` - 10 specialized Claude methods for executive summaries, problem analysis, market insights, competitive analysis, TAM/SAM/SOM, strategic recommendations, business plans, financial projections, feasibility studies, and pitch deck content
