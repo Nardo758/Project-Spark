@@ -41,7 +41,7 @@ const subscriptionTiers = [
     features: [
       { text: 'Browse validated opportunities', included: true },
       { text: 'Layer 1 access ($15 per unlock)', included: true },
-      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Pay-per-report access (from $25)', included: true },
       { text: 'Layer 2 Deep Dive', included: false },
       { text: 'Layer 3 Execution Package', included: false },
       { text: 'Real-time opportunity alerts', included: false },
@@ -61,7 +61,7 @@ const subscriptionTiers = [
     features: [
       { text: 'Browse validated opportunities', included: true },
       { text: 'Layer 1 unlimited access', included: true },
-      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Pay-per-report access (from $25)', included: true },
       { text: 'Layer 2 Deep Dive', included: false },
       { text: 'Layer 3 Execution Package', included: false },
       { text: 'Priority support', included: true },
@@ -81,7 +81,7 @@ const subscriptionTiers = [
     features: [
       { text: 'Browse validated opportunities', included: true },
       { text: 'Layer 1 unlimited access', included: true },
-      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Pay-per-report access (from $25)', included: true },
       { text: 'Layer 2 Deep Dive unlimited', included: true },
       { text: 'Layer 3 Execution Package (5/month)', included: true },
       { text: 'Priority support', included: true },
@@ -101,7 +101,7 @@ const subscriptionTiers = [
     features: [
       { text: 'Real-time opportunity access', included: true },
       { text: 'All layers unlimited', included: true },
-      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Pay-per-report access (from $25)', included: true },
       { text: 'Layer 2 Deep Dive unlimited', included: true },
       { text: 'Layer 3 Execution Package unlimited', included: true },
       { text: 'Dedicated success manager', included: true },
@@ -153,33 +153,46 @@ const layerDetails = [
 ]
 
 const reports = [
-  { id: 'feasibility', name: 'Feasibility Study', price: 0, priceLabel: 'FREE', description: 'Quick viability check', consultantPrice: '$1,500-$15,000', icon: Target },
-  { id: 'business-plan', name: 'Business Plan', price: 149, priceLabel: '$149', description: 'Comprehensive strategy document', consultantPrice: '$2,000-$5,000', icon: FileText },
-  { id: 'financials', name: 'Financial Model', price: 129, priceLabel: '$129', description: '5-year projections & unit economics', consultantPrice: '$3,000-$10,000', icon: BarChart3 },
-  { id: 'market-analysis', name: 'Market Analysis', price: 99, priceLabel: '$99', description: 'TAM/SAM/SOM + competitive landscape', consultantPrice: '$5,000-$50,000', icon: TrendingUp },
-  { id: 'strategic-assessment', name: 'Strategic Assessment', price: 89, priceLabel: '$89', description: 'SWOT + strategic positioning', consultantPrice: '$2,000-$8,000', icon: Lightbulb },
-  { id: 'pestle', name: 'PESTLE Analysis', price: 79, priceLabel: '$79', description: 'Political, Economic, Social, Tech, Legal, Environmental', consultantPrice: '$1,500-$5,000', icon: Globe },
+  { id: 'feasibility', name: 'Feasibility Study', price: 25, priceLabel: '$25', description: 'Quick viability check', consultantPrice: '$1,500-$15,000', icon: Target },
   { id: 'pitch-deck', name: 'Pitch Deck Assistant', price: 79, priceLabel: '$79', description: 'Investor presentation outline', consultantPrice: '$2,000-$5,000', icon: Sparkles },
+  { id: 'strategic-assessment', name: 'Strategic Assessment', price: 89, priceLabel: '$89', description: 'SWOT + strategic positioning', consultantPrice: '$2,000-$8,000', icon: Lightbulb },
+  { id: 'market-analysis', name: 'Market Analysis', price: 99, priceLabel: '$99', description: 'TAM/SAM/SOM + competitive landscape', consultantPrice: '$5,000-$50,000', icon: TrendingUp },
+  { id: 'pestle', name: 'PESTLE Analysis', price: 99, priceLabel: '$99', description: 'Macro-environmental factors affecting your opportunity', consultantPrice: '$5,000-$25,000', icon: Globe },
+  { id: 'financials', name: 'Financial Model', price: 129, priceLabel: '$129', description: '5-year projections & unit economics', consultantPrice: '$3,000-$10,000', icon: BarChart3 },
+  { id: 'business-plan', name: 'Business Plan', price: 149, priceLabel: '$149', description: 'Comprehensive strategy document', consultantPrice: '$2,000-$5,000', icon: FileText },
 ]
 
 const bundles = [
   {
+    id: 'strategic',
+    name: 'Strategic Analysis Bundle',
+    price: 229,
+    savings: 58,
+    description: 'Complete competitive and environmental intelligence',
+    includes: ['Market Analysis ($99)', 'PESTLE Analysis ($99)', 'Strategic Assessment ($89)'],
+    consultantValue: '$12,000-$83,000',
+    popular: true,
+  },
+  {
     id: 'starter',
     name: 'Starter Bundle',
     price: 329,
-    savings: 28,
+    savings: 53,
     description: 'Validation + Pitch (for fundraising)',
-    includes: ['Feasibility Study (FREE)', 'Business Plan', 'Financial Model', 'Pitch Deck'],
+    includes: ['Feasibility Study ($25)', 'Business Plan ($149)', 'Financial Model ($129)', 'Pitch Deck ($79)'],
     consultantValue: '$8,500-$35,000',
+    popular: false,
   },
   {
     id: 'professional',
     name: 'Professional Bundle',
-    price: 499,
-    savings: 125,
-    description: 'Complete execution package (replaces consultants)',
-    includes: ['All Starter Bundle reports', 'Market Analysis', 'Strategic Assessment', 'PESTLE Analysis'],
+    price: 549,
+    savings: 120,
+    description: 'Complete execution package - replaces $30,000+ in consulting',
+    includes: ['All 7 reports included ($669 value)', 'Feasibility + Business Plan + Financials', 'Pitch Deck + Market Analysis', 'PESTLE + Strategic Assessment', '30-day email support', 'One revision round per report'],
     consultantValue: '$17,000-$98,000',
+    popular: false,
+    featured: true,
   },
   {
     id: 'consultant',
@@ -190,6 +203,7 @@ const bundles = [
     description: 'White-label tool for professionals',
     includes: ['Unlimited reports (25 opps/year)', 'White-label branding', 'API access', 'Priority support'],
     consultantValue: '~$12,500 value',
+    popular: false,
   },
 ]
 
@@ -203,12 +217,16 @@ const faqs = [
     answer: "Opportunities become available to different tiers based on age. Enterprise gets real-time access (0+ days), Scaler gets 8+ day old opportunities, Builder gets 31+ days, and Explorer gets 91+ days. Earlier access = first-mover advantage.",
   },
   {
-    question: "Why is the Feasibility Study free?",
-    answer: "We prove our quality first. Every opportunity includes a FREE Feasibility Study ($1,500-$15K value from traditional consultants). Once you see our quality matches professional services, choose the reports you need to execute.",
+    question: "Why are your reports so affordable?",
+    answer: "AI automation replaces 90% of traditional consulting work. Our Feasibility Study costs $25 vs $1,500-$15K from consultants. You get the same quality analysis in minutes instead of weeks - at a fraction of the cost.",
   },
   {
     question: "Can I purchase reports without a subscription?",
     answer: "Yes! Reports can be purchased for ANY opportunity you have Layer 1 access to. Explorer users can unlock Layer 1 for $15, then purchase any reports they need.",
+  },
+  {
+    question: "What's included in the Strategic Analysis Bundle?",
+    answer: "The Strategic Analysis Bundle ($229) includes Market Analysis, PESTLE Analysis, and Strategic Assessment - $287 value with $58 savings. Perfect for comprehensive competitive and environmental intelligence.",
   },
 ]
 
@@ -399,17 +417,17 @@ export default function Pricing() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
-            One Free Report. Professional Rates After.
+            Professional Business Intelligence. AI Speed.
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            We Prove Our Quality First
+            Consultant-Quality Reports at AI Prices
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-            Every opportunity includes a <span className="font-semibold text-purple-600">FREE Feasibility Study</span>{' '}
-            ($1,500-15K value from traditional consultants).
+            Get a <span className="font-semibold text-purple-600">Feasibility Study for just $25</span>{' '}
+            (vs $1,500-15K from traditional consultants).
           </p>
           <p className="text-lg text-gray-500">
-            Once you see our quality matches professional services, choose the reports you need to execute.
+            Professional reports from $25-$149. Save 95% compared to consulting firms.
           </p>
         </div>
 
@@ -568,25 +586,26 @@ export default function Pricing() {
             <p className="text-gray-600">Transform opportunities into investor-ready documentation</p>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-8 mb-8">
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-8 mb-8">
             <div className="flex flex-col md:flex-row md:items-center gap-6">
-              <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Target className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Target className="w-8 h-8 text-purple-600" />
               </div>
               <div className="flex-1">
-                <div className="text-sm text-green-600 font-medium">INCLUDED FREE WITH EVERY OPPORTUNITY</div>
+                <div className="text-sm text-purple-600 font-medium">BEST VALUE - START HERE</div>
                 <h3 className="text-2xl font-bold text-gray-900">Feasibility Study</h3>
-                <p className="text-gray-600">Quick viability check - prove our quality before you invest</p>
+                <p className="text-gray-600">Quick viability check - prove our quality before you invest in the full suite</p>
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold text-green-600">FREE</div>
+                <div className="text-4xl font-bold text-purple-600">$25</div>
                 <div className="text-sm text-gray-500 line-through">$1,500-$15,000 from consultants</div>
+                <div className="text-xs text-purple-500 font-medium">Save 98%+</div>
               </div>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            {reports.filter(r => r.price > 0).map((report) => (
+            {reports.filter(r => r.id !== 'feasibility').map((report) => (
               <div key={report.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-purple-300 transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -746,7 +765,7 @@ export default function Pricing() {
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 md:p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-white/80 mb-8 max-w-2xl mx-auto">
-            Browse opportunities and get your FREE Feasibility Study today. No credit card required.
+            Browse opportunities and get your first Feasibility Study for just $25. No subscription required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

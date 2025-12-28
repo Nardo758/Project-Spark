@@ -20,6 +20,7 @@ class ReportProductType(str, Enum):
 
 class BundleType(str, Enum):
     STARTER = "starter"
+    STRATEGIC = "strategic"
     PROFESSIONAL = "professional"
     CONSULTANT_LICENSE = "consultant_license"
 
@@ -30,7 +31,7 @@ class ReportProduct:
     name: str
     description: str
     price_cents: int
-    included_in_tier: Optional[str]  # "pro", "business", or None (pay-only)
+    included_in_tier: Optional[str]
 
 
 @dataclass
@@ -50,7 +51,7 @@ REPORT_PRODUCTS: Dict[str, ReportProduct] = {
         id=ReportProductType.FEASIBILITY_STUDY.value,
         name="Feasibility Study",
         description="Quick viability check with market validation",
-        price_cents=0,
+        price_cents=2500,
         included_in_tier=None,
     ),
     ReportProductType.PITCH_DECK.value: ReportProduct(
@@ -59,13 +60,6 @@ REPORT_PRODUCTS: Dict[str, ReportProduct] = {
         description="Investor presentation outline and key slides",
         price_cents=7900,
         included_in_tier="pro",
-    ),
-    ReportProductType.PESTLE_ANALYSIS.value: ReportProduct(
-        id=ReportProductType.PESTLE_ANALYSIS.value,
-        name="PESTLE Analysis",
-        description="Political, Economic, Social, Technological, Legal, Environmental factors",
-        price_cents=7900,
-        included_in_tier="business",
     ),
     ReportProductType.STRATEGIC_ASSESSMENT.value: ReportProduct(
         id=ReportProductType.STRATEGIC_ASSESSMENT.value,
@@ -78,6 +72,13 @@ REPORT_PRODUCTS: Dict[str, ReportProduct] = {
         id=ReportProductType.MARKET_ANALYSIS.value,
         name="Market Analysis",
         description="TAM/SAM/SOM with competitive landscape",
+        price_cents=9900,
+        included_in_tier="business",
+    ),
+    ReportProductType.PESTLE_ANALYSIS.value: ReportProduct(
+        id=ReportProductType.PESTLE_ANALYSIS.value,
+        name="PESTLE Analysis",
+        description="Political, Economic, Social, Technological, Legal, Environmental factors",
         price_cents=9900,
         included_in_tier="business",
     ),
@@ -109,13 +110,25 @@ BUNDLES: Dict[str, Bundle] = {
             ReportProductType.FINANCIAL_MODEL.value,
             ReportProductType.PITCH_DECK.value,
         ],
-        savings_cents=2800,
+        savings_cents=5300,
+    ),
+    BundleType.STRATEGIC.value: Bundle(
+        id=BundleType.STRATEGIC.value,
+        name="Strategic Analysis Bundle",
+        description="Complete competitive and environmental intelligence",
+        price_cents=22900,
+        reports=[
+            ReportProductType.MARKET_ANALYSIS.value,
+            ReportProductType.PESTLE_ANALYSIS.value,
+            ReportProductType.STRATEGIC_ASSESSMENT.value,
+        ],
+        savings_cents=5800,
     ),
     BundleType.PROFESSIONAL.value: Bundle(
         id=BundleType.PROFESSIONAL.value,
         name="Professional Bundle",
-        description="Complete execution package - replaces consultants",
-        price_cents=49900,
+        description="Complete execution package - replaces $30,000+ in consulting",
+        price_cents=54900,
         reports=[
             ReportProductType.FEASIBILITY_STUDY.value,
             ReportProductType.BUSINESS_PLAN.value,
@@ -125,7 +138,7 @@ BUNDLES: Dict[str, Bundle] = {
             ReportProductType.STRATEGIC_ASSESSMENT.value,
             ReportProductType.PESTLE_ANALYSIS.value,
         ],
-        savings_cents=12500,
+        savings_cents=12000,
     ),
     BundleType.CONSULTANT_LICENSE.value: Bundle(
         id=BundleType.CONSULTANT_LICENSE.value,

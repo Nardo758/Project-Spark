@@ -352,7 +352,7 @@ export default function Home() {
             Join thousands of entrepreneurs discovering and validating opportunities every day.
           </p>
           <Link
-            to="/signup"
+            to="/pricing"
             className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-purple-600 bg-white hover:bg-gray-100 rounded-lg gap-2"
           >
             Get Started Free
