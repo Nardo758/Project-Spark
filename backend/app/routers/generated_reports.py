@@ -495,3 +495,178 @@ def generate_layer3_report(
             "created_at": report.created_at.isoformat() if report.created_at else None,
         }
     }
+
+
+from pydantic import BaseModel, EmailStr
+from app.services.email_service import send_email
+
+
+class SendReportEmailRequest(BaseModel):
+    email: EmailStr
+    report_type: str
+    report_title: str
+    report_id: str
+    report_content: dict
+    generated_at: str
+
+
+@router.post("/send-email")
+async def send_report_email(
+    payload: SendReportEmailRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Send a generated report to the user's email"""
+    content = payload.report_content
+    
+    sections_html = ""
+    
+    if content.get("executiveSummary"):
+        sections_html += f"""
+        <div style="margin-bottom: 24px;">
+            <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">Executive Summary</h2>
+            <p style="color: #475569; line-height: 1.6;">{content['executiveSummary']}</p>
+        </div>
+        """
+    
+    if content.get("projectDescription"):
+        sections_html += f"""
+        <div style="margin-bottom: 24px;">
+            <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">Project Description</h2>
+            <p style="color: #475569; line-height: 1.6;">{content['projectDescription']}</p>
+        </div>
+        """
+    
+    if content.get("marketAnalysis"):
+        sections_html += f"""
+        <div style="margin-bottom: 24px;">
+            <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">Market Analysis</h2>
+            <ul style="color: #475569; padding-left: 20px;">
+                {''.join(f'<li style="margin-bottom: 8px;">{item}</li>' for item in content['marketAnalysis'])}
+            </ul>
+        </div>
+        """
+    
+    if content.get("swot"):
+        swot = content['swot']
+        sections_html += f"""
+        <div style="margin-bottom: 24px;">
+            <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">SWOT Analysis</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="background: #f0fdf4; padding: 16px; border-radius: 8px;">
+                    <h3 style="color: #166534; font-size: 14px; margin-bottom: 8px;">Strengths</h3>
+                    <ul style="color: #475569; padding-left: 16px; margin: 0;">
+                        {''.join(f'<li>{s}</li>' for s in swot.get('strengths', []))}
+                    </ul>
+                </div>
+                <div style="background: #fef3c7; padding: 16px; border-radius: 8px;">
+                    <h3 style="color: #b45309; font-size: 14px; margin-bottom: 8px;">Weaknesses</h3>
+                    <ul style="color: #475569; padding-left: 16px; margin: 0;">
+                        {''.join(f'<li>{w}</li>' for w in swot.get('weaknesses', []))}
+                    </ul>
+                </div>
+                <div style="background: #dbeafe; padding: 16px; border-radius: 8px;">
+                    <h3 style="color: #1e40af; font-size: 14px; margin-bottom: 8px;">Opportunities</h3>
+                    <ul style="color: #475569; padding-left: 16px; margin: 0;">
+                        {''.join(f'<li>{o}</li>' for o in swot.get('opportunities', []))}
+                    </ul>
+                </div>
+                <div style="background: #fee2e2; padding: 16px; border-radius: 8px;">
+                    <h3 style="color: #dc2626; font-size: 14px; margin-bottom: 8px;">Threats</h3>
+                    <ul style="color: #475569; padding-left: 16px; margin: 0;">
+                        {''.join(f'<li>{t}</li>' for t in swot.get('threats', []))}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        """
+    
+    if content.get("financialProjections"):
+        fp = content['financialProjections']
+        sections_html += f"""
+        <div style="margin-bottom: 24px;">
+            <h2 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">Financial Projections</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;"><strong>Estimated Start-up Cost</strong></td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;">{fp.get('startupCost', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;"><strong>Monthly Operating Cost</strong></td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;">{fp.get('monthlyOperating', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;"><strong>Break-even Timeline</strong></td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;">{fp.get('breakeven', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;"><strong>ROI Potential</strong></td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;">{fp.get('roi', 'N/A')}</td>
+                </tr>
+            </table>
+        </div>
+        """
+    
+    if content.get("conclusion"):
+        recommendation = content.get('recommendation', 'CONDITIONAL')
+        rec_color = "#16a34a" if recommendation == "GO" else "#dc2626" if recommendation == "NO-GO" else "#d97706"
+        sections_html += f"""
+        <div style="margin-bottom: 24px; background: #1e293b; color: white; padding: 16px; border-radius: 8px;">
+            <h2 style="color: white; font-size: 18px; margin-bottom: 12px;">Conclusion & Recommendation</h2>
+            <p style="color: #cbd5e1; line-height: 1.6; margin-bottom: 16px;">{content['conclusion']}</p>
+            <div style="display: inline-block; background: {rec_color}; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold;">
+                {recommendation}
+            </div>
+        </div>
+        """
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc;">
+        <div style="max-width: 700px; margin: 0 auto; padding: 40px 20px;">
+            <div style="background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%); padding: 24px; border-radius: 12px 12px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">OppGrid</h1>
+                <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">Opportunity Intelligence Platform</p>
+            </div>
+            
+            <div style="background: white; padding: 32px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px;">
+                    <h1 style="color: #1e293b; font-size: 22px; margin: 0 0 8px 0;">{payload.report_title}</h1>
+                    <div style="color: #64748b; font-size: 14px;">
+                        <span style="background: #f0fdf4; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: 600; margin-right: 12px;">
+                            {payload.report_type}
+                        </span>
+                        <span>Report ID: {payload.report_id}</span>
+                        <span style="margin-left: 12px;">Generated: {payload.generated_at[:10]}</span>
+                    </div>
+                    <div style="color: #64748b; font-size: 14px; margin-top: 8px;">
+                        Confidence Score: <strong>{content.get('score', 75)}/100</strong>
+                    </div>
+                </div>
+                
+                {sections_html}
+                
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 24px; margin-top: 32px; text-align: center;">
+                    <p style="color: #64748b; font-size: 12px; margin: 0;">
+                        This report was generated by OppGrid AI. For questions, visit oppgrid.com
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    try:
+        result = await send_email(
+            to=payload.email,
+            subject=f"Your {payload.report_type} Report: {payload.report_title}",
+            html_content=html_content,
+        )
+        return {"success": True, "message": "Report sent successfully", "email_id": result.get("id")}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")

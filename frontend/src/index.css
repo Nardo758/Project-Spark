@@ -37,3 +37,53 @@ body {
     text-wrap: balance;
   }
 }
+
+@media print {
+  body {
+    background-color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  .report-modal {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: white !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  .report-modal > div {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  .report-header {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .report-footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .report-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+  
+  @page :first {
+    margin-top: 0.5in;
+  }
+}
