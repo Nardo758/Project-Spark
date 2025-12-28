@@ -39,13 +39,20 @@ body {
 }
 
 @media print {
-  body {
-    background-color: white !important;
+  * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
   
-  .print\\:hidden {
+  body {
+    background-color: white !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .print\:hidden {
     display: none !important;
   }
   
@@ -56,6 +63,10 @@ body {
     background: white !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
   .report-modal > div {
@@ -64,13 +75,30 @@ body {
   }
   
   .report-header {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    width: 100% !important;
+  }
+  
+  .report-header .metadata-bar {
+    background-color: #f5f5f4 !important;
+    padding: 12px 24px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  
+  .report-header .main-header-content {
+    padding: 24px !important;
+    border-bottom: 2px solid #fb923c !important;
   }
   
   .report-footer {
-    break-inside: avoid;
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    background-color: #f5f5f4 !important;
+    padding: 12px 24px !important;
+    width: 100% !important;
   }
   
   .report-section {
@@ -78,12 +106,28 @@ body {
     page-break-inside: avoid;
   }
   
+  .bg-stone-900 {
+    background-color: #1c1917 !important;
+  }
+  
+  .text-white {
+    color: white !important;
+  }
+  
+  .text-orange-500 {
+    color: #f97316 !important;
+  }
+  
+  .border-orange-400 {
+    border-color: #fb923c !important;
+  }
+  
   @page {
-    margin: 0.75in;
+    margin: 0.5in;
     size: letter;
   }
   
   @page :first {
-    margin-top: 0.5in;
+    margin-top: 0.25in;
   }
 }
