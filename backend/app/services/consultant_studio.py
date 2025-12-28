@@ -465,30 +465,54 @@ class ConsultantStudioService:
         business_subtype: Optional[str],
         params: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """DeepSeek geographic analysis"""
-        from .ai_orchestrator import ai_orchestrator, AITaskType
+        """Geographic analysis using trade area analyzer for real data"""
+        from .trade_area_analyzer import trade_area_analyzer
         
-        data = {
-            "city": city,
-            "business_type": business_type,
-            "subtype": business_subtype,
-            "params": params or {},
-        }
-        
-        result = await ai_orchestrator.process_request(
-            AITaskType.PLATFORM_COORDINATION, data
-        )
-        
-        return {
-            "market_density": "medium",
-            "competition_level": "moderate",
-            "demographics": {
-                "population_estimate": "100,000+",
-                "median_income": "$55,000",
-                "growth_trend": "positive",
-            },
-            "ai_insights": result.get("result", {}) if result.get("processed") else {},
-        }
+        try:
+            opportunity_data = {
+                "id": 0,
+                "title": f"{business_subtype or business_type} in {city}",
+                "category": business_type,
+                "location": city,
+                "state": params.get("state") if params else None,
+                "latitude": params.get("latitude") if params else None,
+                "longitude": params.get("longitude") if params else None,
+            }
+            
+            trade_area = trade_area_analyzer.analyze(opportunity_data)
+            
+            demographics = trade_area.demographics or {}
+            competitors = trade_area.competitors or []
+            
+            return {
+                "market_density": "high" if len(competitors) > 10 else "medium" if len(competitors) > 5 else "low",
+                "competition_level": "high" if trade_area.white_space_score < 30 else "moderate" if trade_area.white_space_score < 60 else "low",
+                "competitor_count": len(competitors),
+                "white_space_score": trade_area.white_space_score,
+                "demographics": {
+                    "population": demographics.get("population", "N/A"),
+                    "median_income": f"${demographics.get('median_income', 0):,}" if demographics.get("median_income") else "N/A",
+                    "median_age": demographics.get("median_age", "N/A"),
+                    "unemployment_rate": f"{demographics.get('unemployment_rate', 0)}%" if demographics.get("unemployment_rate") else "N/A",
+                    "median_home_value": f"${demographics.get('median_home_value', 0):,}" if demographics.get("median_home_value") else "N/A",
+                },
+                "trade_area_radius_miles": trade_area.radius_miles,
+                "competitors": competitors[:10],
+                "ai_synthesis": trade_area.ai_synthesis,
+            }
+            
+        except Exception as e:
+            logger.warning(f"Trade area analysis failed, using fallback: {e}")
+            return {
+                "market_density": "medium",
+                "competition_level": "moderate",
+                "demographics": {
+                    "population": "100,000+",
+                    "median_income": "$55,000",
+                    "growth_trend": "positive",
+                },
+                "ai_insights": {},
+            }
 
     async def _claude_location_report(
         self,
@@ -498,31 +522,57 @@ class ConsultantStudioService:
         geo_analysis: Dict[str, Any],
         params: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Claude generates location market report"""
-        from .ai_orchestrator import ai_orchestrator, AITaskType
+        """Claude generates comprehensive location market report"""
+        from .ai_report_generator import ai_report_generator
         
-        data = {
-            "city": city,
-            "business_type": business_type,
-            "subtype": business_subtype,
-            "geo_analysis": geo_analysis,
-            "params": params or {},
-        }
-        
-        result = await ai_orchestrator.process_request(
-            AITaskType.MARKET_RESEARCH, data
-        )
-        
-        return {
-            "executive_summary": f"Market analysis for {business_type} opportunities in {city}.",
-            "market_conditions": geo_analysis.get("market_density", "unknown"),
-            "key_factors": [
-                "Local economic indicators",
-                "Competition landscape",
-                "Target demographic presence",
-            ],
-            "ai_report": result.get("result", {}) if result.get("processed") else {},
-        }
+        try:
+            opportunity_context = {
+                "title": f"{business_subtype or business_type} in {city}",
+                "category": business_type,
+                "location": city,
+                "description": f"Market opportunity for {business_subtype or business_type} business in {city}",
+            }
+            
+            demographics = geo_analysis.get("demographics", {})
+            competitors = geo_analysis.get("competitors", [])
+            
+            market_insights = await ai_report_generator.generate_market_insights(
+                opportunity_context,
+                demographics,
+                competitors
+            )
+            
+            competitive_analysis = await ai_report_generator.generate_competitive_analysis(
+                opportunity_context,
+                competitors
+            )
+            
+            return {
+                "executive_summary": market_insights.get("market_summary", f"Market analysis for {business_type} opportunities in {city}."),
+                "market_conditions": geo_analysis.get("market_density", "unknown"),
+                "white_space_score": geo_analysis.get("white_space_score", 50),
+                "key_factors": market_insights.get("key_drivers", [
+                    "Local economic indicators",
+                    "Competition landscape",
+                    "Target demographic presence",
+                ]),
+                "market_trends": market_insights.get("trends", []),
+                "competitive_analysis": competitive_analysis,
+                "recommendations": market_insights.get("recommendations", []),
+            }
+            
+        except Exception as e:
+            logger.warning(f"AI location report failed, using fallback: {e}")
+            return {
+                "executive_summary": f"Market analysis for {business_type} opportunities in {city}.",
+                "market_conditions": geo_analysis.get("market_density", "unknown"),
+                "key_factors": [
+                    "Local economic indicators",
+                    "Competition landscape",
+                    "Target demographic presence",
+                ],
+                "ai_report": {},
+            }
 
     def _generate_site_recommendations(
         self,
