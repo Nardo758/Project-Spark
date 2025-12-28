@@ -433,7 +433,7 @@ async def get_batch_access_info(
             "is_unlocked": ent.is_unlocked,
             "can_pay_to_unlock": ent.can_pay_to_unlock,
             "unlock_price": ent.unlock_price,
-            "user_tier": current_user.tier if current_user else "free",
+            "user_tier": (current_user.subscription.tier.value if current_user and current_user.subscription and current_user.subscription.tier else "free"),
             "content_state": ent.content_state,
             "working_on_count": workspace_count
         }
@@ -512,15 +512,14 @@ async def get_opportunity_demographics(
     from app.services.google_trends_service import google_trends_service
     from datetime import datetime, timedelta
     
-    # Check user tier (Business+ required) - normalize tier value
-    user_tier = getattr(current_user, 'tier', 'free')
-    if hasattr(user_tier, 'value'):
-        user_tier = user_tier.value
-    user_tier_lower = str(user_tier).lower() if user_tier else 'free'
+    # Check user tier (Business+ required) - get tier from subscription relationship
+    user_tier = 'free'
+    if current_user.subscription and current_user.subscription.tier:
+        user_tier = current_user.subscription.tier.value.lower() if hasattr(current_user.subscription.tier, 'value') else str(current_user.subscription.tier).lower()
     
     allowed_tiers = ['business', 'enterprise']
     
-    if user_tier_lower not in allowed_tiers and not current_user.is_admin:
+    if user_tier not in allowed_tiers and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Demographics data requires Business tier or higher"

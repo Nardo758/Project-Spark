@@ -431,10 +431,10 @@ def generate_layer3_report(
             }
         )
     
-    user_tier = getattr(current_user, 'tier', 'free')
-    if hasattr(user_tier, 'value'):
-        user_tier = user_tier.value
-    user_tier = str(user_tier).lower() if user_tier else 'free'
+    user_tier = 'free'
+    if current_user.subscription and current_user.subscription.tier:
+        tier_val = current_user.subscription.tier
+        user_tier = tier_val.value.lower() if hasattr(tier_val, 'value') else str(tier_val).lower()
     
     if user_tier == 'business':
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)

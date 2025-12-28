@@ -79,10 +79,10 @@ class ReportGenerator:
     
     def check_entitlement(self, user: User, report_type: ReportType) -> Dict[str, Any]:
         """Check if user has access to generate this report type."""
-        user_tier = getattr(user, 'tier', 'free')
-        if hasattr(user_tier, 'value'):
-            user_tier = user_tier.value
-        user_tier = str(user_tier).lower() if user_tier else 'free'
+        user_tier = 'free'
+        if user.subscription and user.subscription.tier:
+            tier_val = user.subscription.tier
+            user_tier = tier_val.value.lower() if hasattr(tier_val, 'value') else str(tier_val).lower()
         
         allowed_tiers = self.TIER_REQUIREMENTS.get(report_type, [])
         
