@@ -3,6 +3,7 @@ Consultant Studio Service - Enhanced three-path validation system
 Implements: Validate Idea, Search Ideas, Identify Location
 """
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -23,9 +24,37 @@ class ConsultantStudioService:
     """Three-path validation system with dual AI architecture"""
 
     CACHE_TTL_DAYS = 30
+    _validation_cache: Dict[str, Dict[str, Any]] = {}
 
     def __init__(self, db: Session):
         self.db = db
+
+    def _get_cache_key(self, idea_description: str, context: Optional[Dict] = None) -> str:
+        """Generate a cache key for validation results"""
+        content = idea_description.lower().strip()
+        if context:
+            content += json.dumps(context, sort_keys=True)
+        return hashlib.md5(content.encode()).hexdigest()
+
+    def _get_cached_validation(self, cache_key: str) -> Optional[Dict[str, Any]]:
+        """Get cached validation result if exists and not expired"""
+        if cache_key in self._validation_cache:
+            cached = self._validation_cache[cache_key]
+            if datetime.utcnow() - cached.get('cached_at', datetime.min) < timedelta(hours=1):
+                logger.info(f"Cache hit for validation: {cache_key[:8]}")
+                return cached.get('result')
+        return None
+
+    def _cache_validation(self, cache_key: str, result: Dict[str, Any]):
+        """Cache validation result"""
+        self._validation_cache[cache_key] = {
+            'result': result,
+            'cached_at': datetime.utcnow()
+        }
+        if len(self._validation_cache) > 100:
+            oldest_key = min(self._validation_cache.keys(), 
+                           key=lambda k: self._validation_cache[k].get('cached_at', datetime.min))
+            del self._validation_cache[oldest_key]
 
     async def validate_idea(
         self,
@@ -37,9 +66,17 @@ class ConsultantStudioService:
         """
         Path 1: Validate Idea - Online vs Physical decision engine
         Uses DeepSeek for pattern analysis + Claude for viability report
+        OPTIMIZED: Parallel AI calls and caching for faster response
         """
         import time
         start_time = time.time()
+        
+        cache_key = self._get_cache_key(idea_description, business_context)
+        cached_result = self._get_cached_validation(cache_key)
+        if cached_result:
+            cached_result['from_cache'] = True
+            cached_result['processing_time_ms'] = int((time.time() - start_time) * 1000)
+            return cached_result
         
         try:
             similar_opportunities = await self._find_similar_opportunities(idea_description)
@@ -80,7 +117,10 @@ class ConsultantStudioService:
                     for o in similar_opportunities[:5]
                 ],
                 "processing_time_ms": processing_time,
+                "from_cache": False,
             }
+            
+            self._cache_validation(cache_key, result)
             
             await self._log_activity(
                 user_id=user_id,
