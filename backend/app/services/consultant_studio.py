@@ -38,11 +38,12 @@ class ConsultantStudioService:
 
     def _get_cached_validation(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """Get cached validation result if exists and not expired"""
+        import copy
         if cache_key in self._validation_cache:
             cached = self._validation_cache[cache_key]
             if datetime.utcnow() - cached.get('cached_at', datetime.min) < timedelta(hours=1):
                 logger.info(f"Cache hit for validation: {cache_key[:8]}")
-                return cached.get('result')
+                return copy.deepcopy(cached.get('result'))
         return None
 
     def _cache_validation(self, cache_key: str, result: Dict[str, Any]):
