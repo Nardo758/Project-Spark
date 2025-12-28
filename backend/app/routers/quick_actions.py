@@ -141,7 +141,7 @@ Create a detailed JSON business plan with these sections:
 Respond only with valid JSON."""
 
         response = client.messages.create(
-            model="claude-haiku-4-5-20250514",
+            model="claude-sonnet-4-20250514",
             max_tokens=3000,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -233,7 +233,7 @@ Create a comprehensive JSON financial model with:
 Use realistic numbers based on the business model. Respond only with valid JSON."""
 
         response = client.messages.create(
-            model="claude-haiku-4-5-20250514",
+            model="claude-sonnet-4-20250514",
             max_tokens=3000,
             messages=[{"role": "user", "content": prompt}]
         )
@@ -336,7 +336,7 @@ Create a comprehensive JSON pitch deck with slides:
 Make it compelling and investor-ready. Respond only with valid JSON."""
 
         response = client.messages.create(
-            model="claude-haiku-4-5-20250514",
+            model="claude-sonnet-4-20250514",
             max_tokens=3000,
             messages=[{"role": "user", "content": prompt}]
         )
