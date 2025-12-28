@@ -1,5 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { 
+  Check, 
+  X,
+  Loader2, 
+  Zap, 
+  TrendingUp, 
+  FileText,
+  BarChart3,
+  Target,
+  Lightbulb,
+  Globe,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Users,
+  Database
+} from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
@@ -12,51 +29,186 @@ type MySubscriptionResponse = {
   period_end?: string | null
 }
 
-const plans = [
+const subscriptionTiers = [
   {
+    id: 'explorer',
     name: 'Explorer',
-    price: '$0',
-    period: '/month',
-    description: 'Start free and browse the archive',
+    price: 0,
+    priceLabel: 'Free',
+    description: 'Try quality, pay for what you need',
+    accessWindow: '91+ days',
+    tier: 'explorer',
     features: [
-      'Browse 91+ day opportunities (Archive)',
-      'Basic search & filters',
-      'Save opportunities',
-      'Pay‑per‑unlock ($15 / opportunity)',
+      { text: 'Browse validated opportunities', included: true },
+      { text: 'Layer 1 access ($15 per unlock)', included: true },
+      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Layer 2 Deep Dive', included: false },
+      { text: 'Layer 3 Execution Package', included: false },
+      { text: 'Real-time opportunity alerts', included: false },
     ],
-    cta: 'Get Started',
-    highlighted: false,
+    cta: 'Get Started Free',
+    popular: false,
+    gradient: 'from-gray-500 to-gray-600',
   },
   {
+    id: 'builder',
     name: 'Builder',
-    price: '$99',
-    period: '/month',
-    description: 'Early access + AI co-founder basics',
+    price: 99,
+    priceLabel: '$99/mo',
+    description: 'Unlimited research, professional execution',
+    accessWindow: '31+ days',
+    tier: 'pro',
     features: [
-      'Unlimited access to 31+ day opportunities (Validated)',
-      'Preview 8–30 day opportunities (Fresh)',
-      'AI Co‑founder (Basic)',
-      'Deep Dive add‑on ($49 / opportunity)',
-      'CSV export + advanced filters',
+      { text: 'Browse validated opportunities', included: true },
+      { text: 'Layer 1 unlimited access', included: true },
+      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Layer 2 Deep Dive', included: false },
+      { text: 'Layer 3 Execution Package', included: false },
+      { text: 'Priority support', included: true },
     ],
-    cta: 'Start Free Trial',
-    highlighted: true,
-    badge: 'Most Popular',
+    cta: 'Start Building',
+    popular: true,
+    gradient: 'from-purple-500 to-indigo-600',
   },
   {
+    id: 'scaler',
     name: 'Scaler',
-    price: '$499',
-    period: '/month',
-    description: 'Full access to Fresh + deeper intelligence',
+    price: 499,
+    priceLabel: '$499/mo',
+    description: 'Move faster with deep intelligence',
+    accessWindow: '8+ days',
+    tier: 'business',
     features: [
-      'Full access to 8+ day opportunities (Fresh)',
-      'Full Layer 1 & 2 on all accessible opportunities',
-      'Fast Pass ($99) for HOT 0–7 day opportunities',
-      'Team-ready exports & reporting',
-      'API access (coming soon)',
+      { text: 'Browse validated opportunities', included: true },
+      { text: 'Layer 1 unlimited access', included: true },
+      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Layer 2 Deep Dive unlimited', included: true },
+      { text: 'Layer 3 Execution Package (5/month)', included: true },
+      { text: 'Priority support', included: true },
     ],
-    cta: 'Get Scaler',
-    highlighted: false,
+    cta: 'Scale Up',
+    popular: false,
+    gradient: 'from-emerald-500 to-teal-600',
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 2500,
+    priceLabel: '$2,500+/mo',
+    description: 'First-mover advantage + unlimited execution',
+    accessWindow: '0+ days (real-time)',
+    tier: 'enterprise',
+    features: [
+      { text: 'Real-time opportunity access', included: true },
+      { text: 'All layers unlimited', included: true },
+      { text: 'FREE Feasibility Study per opportunity', included: true },
+      { text: 'Layer 2 Deep Dive unlimited', included: true },
+      { text: 'Layer 3 Execution Package unlimited', included: true },
+      { text: 'Dedicated success manager', included: true },
+    ],
+    cta: 'Contact Sales',
+    popular: false,
+    gradient: 'from-amber-500 to-orange-600',
+  },
+]
+
+const layerDetails = [
+  {
+    layer: 'Layer 1',
+    name: 'Problem Overview',
+    access: 'Explorer: $15/unlock | Builder+: Unlimited',
+    features: [
+      'Problem statement and consumer pain points',
+      'Basic market size estimate',
+      'Competition level (Low/Medium/High)',
+      'Top 3 geographic markets',
+      'Source count and validation score',
+    ],
+  },
+  {
+    layer: 'Layer 2',
+    name: 'Deep Dive Analysis',
+    access: 'Scaler+ Only',
+    features: [
+      'Complete source compilation (all discussions)',
+      'TAM/SAM/SOM detailed estimates',
+      'Competitive landscape analysis',
+      'All geographic markets',
+      'Customer acquisition channel recommendations',
+      'Pricing strategy insights',
+    ],
+  },
+  {
+    layer: 'Layer 3',
+    name: 'Execution Package',
+    access: 'Scaler: 5/month | Enterprise: Unlimited',
+    features: [
+      '90-day execution playbook',
+      'MVP feature recommendations',
+      'Go-to-market timeline',
+      'Launch checklist',
+      'Initial team structure recommendations',
+    ],
+  },
+]
+
+const reports = [
+  { id: 'feasibility', name: 'Feasibility Study', price: 0, priceLabel: 'FREE', description: 'Quick viability check', consultantPrice: '$1,500-$15,000', icon: Target },
+  { id: 'business-plan', name: 'Business Plan', price: 149, priceLabel: '$149', description: 'Comprehensive strategy document', consultantPrice: '$2,000-$5,000', icon: FileText },
+  { id: 'financials', name: 'Financial Model', price: 129, priceLabel: '$129', description: '5-year projections & unit economics', consultantPrice: '$3,000-$10,000', icon: BarChart3 },
+  { id: 'market-analysis', name: 'Market Analysis', price: 99, priceLabel: '$99', description: 'TAM/SAM/SOM + competitive landscape', consultantPrice: '$5,000-$50,000', icon: TrendingUp },
+  { id: 'strategic-assessment', name: 'Strategic Assessment', price: 89, priceLabel: '$89', description: 'SWOT + strategic positioning', consultantPrice: '$2,000-$8,000', icon: Lightbulb },
+  { id: 'pestle', name: 'PESTLE Analysis', price: 79, priceLabel: '$79', description: 'Political, Economic, Social, Tech, Legal, Environmental', consultantPrice: '$1,500-$5,000', icon: Globe },
+  { id: 'pitch-deck', name: 'Pitch Deck Assistant', price: 79, priceLabel: '$79', description: 'Investor presentation outline', consultantPrice: '$2,000-$5,000', icon: Sparkles },
+]
+
+const bundles = [
+  {
+    id: 'starter',
+    name: 'Starter Bundle',
+    price: 329,
+    savings: 28,
+    description: 'Validation + Pitch (for fundraising)',
+    includes: ['Feasibility Study (FREE)', 'Business Plan', 'Financial Model', 'Pitch Deck'],
+    consultantValue: '$8,500-$35,000',
+  },
+  {
+    id: 'professional',
+    name: 'Professional Bundle',
+    price: 499,
+    savings: 125,
+    description: 'Complete execution package (replaces consultants)',
+    includes: ['All Starter Bundle reports', 'Market Analysis', 'Strategic Assessment', 'PESTLE Analysis'],
+    consultantValue: '$17,000-$98,000',
+  },
+  {
+    id: 'consultant',
+    name: 'Consultant License',
+    price: 2499,
+    savings: 0,
+    priceLabel: '$2,499/year',
+    description: 'White-label tool for professionals',
+    includes: ['Unlimited reports (25 opps/year)', 'White-label branding', 'API access', 'Priority support'],
+    consultantValue: '~$12,500 value',
+  },
+]
+
+const faqs = [
+  {
+    question: "What's the difference between subscriptions and reports?",
+    answer: "Subscriptions give you ACCESS to opportunity intelligence (discovery). Reports give you EXECUTION tools (turning opportunities into businesses). They're complementary - discover with subscriptions, execute with reports.",
+  },
+  {
+    question: "How does time-based access work?",
+    answer: "Opportunities become available to different tiers based on age. Enterprise gets real-time access (0+ days), Scaler gets 8+ day old opportunities, Builder gets 31+ days, and Explorer gets 91+ days. Earlier access = first-mover advantage.",
+  },
+  {
+    question: "Why is the Feasibility Study free?",
+    answer: "We prove our quality first. Every opportunity includes a FREE Feasibility Study ($1,500-$15K value from traditional consultants). Once you see our quality matches professional services, choose the reports you need to execute.",
+  },
+  {
+    question: "Can I purchase reports without a subscription?",
+    answer: "Yes! Reports can be purchased for ANY opportunity you have Layer 1 access to. Explorer users can unlock Layer 1 for $15, then purchase any reports they need.",
   },
 ]
 
@@ -81,6 +233,7 @@ export default function Pricing() {
   const [subPlanLabel, setSubPlanLabel] = useState<string>('')
   const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
   const [subPendingTier, setSubPendingTier] = useState<'pro' | 'business' | null>(null)
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
 
   async function startSubscription(tier: 'pro' | 'business') {
     if (!token) {
@@ -91,12 +244,10 @@ export default function Pricing() {
     setBillingSuccess(null)
     setBillingLoading(tier)
     try {
-      // 1) Stripe publishable key (public endpoint)
       const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
       const keyData = await keyRes.json().catch(() => ({}))
       if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
 
-      // 2) Create subscription PaymentIntent (in-app Elements modal)
       const res = await fetch('/api/v1/subscriptions/subscription-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -140,7 +291,6 @@ export default function Pricing() {
 
   async function confirmSubscriptionPayment(paymentIntentId: string) {
     void paymentIntentId
-    // Start polling for webhook reconciliation
     setBillingSuccess('Payment confirmed. Syncing your plan…')
     setBillingSyncing(true)
   }
@@ -172,12 +322,8 @@ export default function Pricing() {
   }
 
   useEffect(() => {
-    // Keep a snapshot of current subscription for signed-in users.
     if (!isAuthenticated || !token) return
-    fetchMySubscription().catch(() => {
-      // ignore initial load errors; user might not have billing set up yet
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchMySubscription().catch(() => {})
   }, [isAuthenticated, token])
 
   useEffect(() => {
@@ -212,7 +358,6 @@ export default function Pricing() {
         }
       } catch (e) {
         if (cancelled) return
-        // Keep polling; intermittent failures happen during deploys.
         if (Date.now() - startedAt > timeoutMs) {
           setBillingError(e instanceof Error ? e.message : 'Failed to sync subscription status')
           setBillingSyncing(false)
@@ -228,216 +373,396 @@ export default function Pricing() {
     }
   }, [billingSyncing, token, expectedTierLabel])
 
+  const handleTierClick = (tier: typeof subscriptionTiers[0]) => {
+    if (tier.id === 'explorer') {
+      navigate(isAuthenticated ? '/discover' : '/signup')
+    } else if (tier.id === 'enterprise') {
+      setEnterpriseModalOpen(true)
+    } else if (tier.tier === 'pro') {
+      if (!isAuthenticated) {
+        navigate(`/login?next=${encodeURIComponent('/pricing?plan=builder')}`)
+      } else {
+        startSubscription('pro')
+      }
+    } else if (tier.tier === 'business') {
+      if (!isAuthenticated) {
+        navigate(`/login?next=${encodeURIComponent('/pricing?plan=scaler')}`)
+      } else {
+        startSubscription('business')
+      }
+    }
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="text-center mb-16">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h1>
-        <p className="text-xl text-gray-600">Start for free, upgrade as you grow. Cancel anytime.</p>
-      </div>
-
-      {billingError && (
-        <div className="mb-10 max-w-3xl mx-auto bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
-          {billingError}
-        </div>
-      )}
-      {billingSuccess && (
-        <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
-          {billingSuccess}
-        </div>
-      )}
-      {subscriptionInfo && (
-        <div className="mb-10 max-w-3xl mx-auto bg-white border border-gray-200 text-gray-700 rounded-xl px-4 py-3 text-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <span className="font-medium">Current plan:</span>{' '}
-              <span className="font-semibold">{subscriptionInfo.tier || '—'}</span>{' '}
-              <span className="text-gray-500">({subscriptionInfo.status || '—'})</span>
-              {subscriptionInfo.period_end ? (
-                <span className="text-gray-500"> • Renews/ends {new Date(subscriptionInfo.period_end).toLocaleDateString()}</span>
-              ) : null}
-            </div>
-            {isAuthenticated && (
-              <button
-                type="button"
-                onClick={() => fetchMySubscription().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh'))}
-                className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
-                disabled={billingSyncing}
-              >
-                Refresh
-              </button>
-            )}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            One Free Report. Professional Rates After.
           </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            We Prove Our Quality First
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
+            Every opportunity includes a <span className="font-semibold text-purple-600">FREE Feasibility Study</span>{' '}
+            ($1,500-15K value from traditional consultants).
+          </p>
+          <p className="text-lg text-gray-500">
+            Once you see our quality matches professional services, choose the reports you need to execute.
+          </p>
         </div>
-      )}
 
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
-        {plans.map((plan) => (
-          <div
-            key={plan.name}
-            className={`relative rounded-2xl p-8 ${
-              plan.highlighted
-                ? 'bg-gray-900 text-white ring-4 ring-gray-900'
-                : 'bg-white border border-gray-200'
-            }`}
-          >
-            {plan.badge && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-1 rounded-full text-sm font-medium">
-                  {plan.badge}
-                </span>
-              </div>
-            )}
-            <div className="mb-6">
-              <h2 className={`text-2xl font-bold ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>
-                {plan.name}
-              </h2>
-              <div className="mt-4 flex items-baseline">
-                <span className={`text-4xl font-bold ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>
-                  {plan.price}
-                </span>
-                {plan.period && (
-                  <span className={`ml-1 ${plan.highlighted ? 'text-gray-300' : 'text-gray-500'}`}>
-                    {plan.period}
-                  </span>
+        {billingError && (
+          <div className="mb-10 max-w-3xl mx-auto bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+            {billingError}
+          </div>
+        )}
+        {billingSuccess && (
+          <div className="mb-10 max-w-3xl mx-auto bg-green-50 border border-green-200 text-green-800 rounded-xl px-4 py-3 text-sm">
+            {billingSuccess}
+          </div>
+        )}
+        {subscriptionInfo && (
+          <div className="mb-10 max-w-3xl mx-auto bg-white border border-gray-200 text-gray-700 rounded-xl px-4 py-3 text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <span className="font-medium">Current plan:</span>{' '}
+                <span className="font-semibold">{subscriptionInfo.tier || '—'}</span>{' '}
+                <span className="text-gray-500">({subscriptionInfo.status || '—'})</span>
+                {subscriptionInfo.period_end && (
+                  <span className="text-gray-500"> • Renews/ends {new Date(subscriptionInfo.period_end).toLocaleDateString()}</span>
                 )}
               </div>
-              <p className={`mt-2 ${plan.highlighted ? 'text-gray-300' : 'text-gray-600'}`}>
-                {plan.description}
-              </p>
-            </div>
-            <ul className="space-y-4 mb-8">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-3">
-                  <Check className={`w-5 h-5 flex-shrink-0 ${plan.highlighted ? 'text-green-400' : 'text-green-500'}`} />
-                  <span className={plan.highlighted ? 'text-gray-300' : 'text-gray-600'}>
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {plan.name === 'Explorer' ? (
-              <Link
-                to={isAuthenticated ? '/discover' : '/signup'}
-                className={`block w-full text-center py-3 rounded-lg font-medium ${
-                  plan.highlighted
-                    ? 'bg-white text-gray-900 hover:bg-gray-100'
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
-                }`}
-              >
-                {isAuthenticated ? 'Browse opportunities' : plan.cta}
-              </Link>
-            ) : plan.name === 'Builder' ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    navigate(`/login?next=${encodeURIComponent('/pricing?plan=builder')}`)
-                  } else {
-                    startSubscription('pro')
-                  }
-                }}
-                disabled={billingLoading !== null}
-                className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
-                  plan.highlighted
-                    ? 'bg-white text-gray-900 hover:bg-gray-100'
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
-                }`}
-              >
-                {billingLoading === 'pro' ? (
-                  <span className="inline-flex items-center justify-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Starting payment…
-                  </span>
-                ) : (
-                  plan.cta
-                )}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    navigate(`/login?next=${encodeURIComponent('/pricing?plan=scaler')}`)
-                  } else {
-                    startSubscription('business')
-                  }
-                }}
-                disabled={billingLoading !== null}
-                className={`block w-full text-center py-3 rounded-lg font-medium disabled:opacity-50 ${
-                  plan.highlighted
-                    ? 'bg-white text-gray-900 hover:bg-gray-100'
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
-                }`}
-              >
-                {billingLoading === 'business' ? (
-                  <span className="inline-flex items-center justify-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Starting payment…
-                  </span>
-                ) : (
-                  plan.cta
-                )}
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-16 text-center">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">One‑time unlock options</h3>
-        <div className="inline-flex gap-4 flex-wrap justify-center">
-          <div className="bg-white border border-gray-200 rounded-lg px-6 py-3">
-            <span className="text-gray-600">Archive:</span>
-            <span className="ml-2 font-bold text-gray-900">$15</span>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg px-6 py-3">
-            <span className="text-gray-600">Deep Dive add‑on:</span>
-            <span className="ml-2 font-bold text-gray-900">$49</span>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-lg px-6 py-3">
-            <span className="text-gray-600">Fast Pass:</span>
-            <span className="ml-2 font-bold text-gray-900">$99</span>
-          </div>
-        </div>
-        <div className="mt-6 text-sm text-gray-600">
-          Need earliest access (HOT 0–7 days)?{' '}
-          <button
-            type="button"
-            onClick={() => setEnterpriseModalOpen(true)}
-            className="text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Contact sales for Enterprise
-          </button>
-          .
-        </div>
-        {isAuthenticated && (
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={openBillingPortal}
-              disabled={billingLoading !== null}
-              className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
-            >
-              {billingLoading === 'portal' ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Opening billing portal…
-                </span>
-              ) : (
-                'Manage billing'
+              {isAuthenticated && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fetchMySubscription().catch((e) => setBillingError(e instanceof Error ? e.message : 'Failed to refresh'))}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium"
+                    disabled={billingSyncing}
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openBillingPortal}
+                    disabled={billingLoading !== null}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+                  >
+                    {billingLoading === 'portal' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Manage Billing'}
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
           </div>
         )}
-        {!isAuthenticated && (
-          <div className="mt-4 text-sm text-gray-600">
-            To subscribe,{' '}
-            <Link className="text-blue-600 hover:text-blue-700 font-medium" to={`/login?next=${encodeURIComponent('/pricing')}`}>
-              sign in
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+          {subscriptionTiers.map((tier) => (
+            <div
+              key={tier.id}
+              className={`relative bg-white rounded-2xl border-2 ${
+                tier.popular ? 'border-purple-500 shadow-xl' : 'border-gray-200'
+              } overflow-hidden`}
+            >
+              {tier.popular && (
+                <div className="absolute top-0 left-0 right-0 bg-purple-500 text-white text-center text-sm py-1 font-medium">
+                  Most Popular
+                </div>
+              )}
+              <div className={`bg-gradient-to-r ${tier.gradient} p-6 text-white ${tier.popular ? 'mt-7' : ''}`}>
+                <h3 className="text-xl font-bold">{tier.name}</h3>
+                <div className="mt-2">
+                  <span className="text-3xl font-bold">{tier.priceLabel}</span>
+                </div>
+                <p className="text-white/80 text-sm mt-2">{tier.description}</p>
+              </div>
+              <div className="p-6">
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">Access Window</div>
+                  <div className="font-medium text-gray-900 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    {tier.accessWindow}
+                  </div>
+                </div>
+                <ul className="space-y-3 mb-6">
+                  {tier.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      {feature.included ? (
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                      )}
+                      <span className={feature.included ? 'text-gray-700 text-sm' : 'text-gray-400 text-sm'}>
+                        {feature.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => handleTierClick(tier)}
+                  disabled={billingLoading !== null}
+                  className={`block w-full py-3 rounded-lg text-center font-medium transition-colors disabled:opacity-50 ${
+                    tier.popular
+                      ? 'bg-purple-600 text-white hover:bg-purple-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {(billingLoading === 'pro' && tier.tier === 'pro') || (billingLoading === 'business' && tier.tier === 'business') ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    tier.cta
+                  )}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">What's in Each Layer?</h2>
+            <p className="text-gray-600">Progressive intelligence that deepens as you commit</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {layerDetails.map((layer, i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    i === 0 ? 'bg-blue-100 text-blue-600' :
+                    i === 1 ? 'bg-purple-100 text-purple-600' :
+                    'bg-emerald-100 text-emerald-600'
+                  }`}>
+                    {i === 0 ? <Lightbulb className="w-5 h-5" /> :
+                     i === 1 ? <TrendingUp className="w-5 h-5" /> :
+                     <Zap className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500">{layer.layer}</div>
+                    <div className="font-semibold text-gray-900">{layer.name}</div>
+                  </div>
+                </div>
+                <div className="text-xs text-purple-600 font-medium mb-4 p-2 bg-purple-50 rounded-lg">
+                  {layer.access}
+                </div>
+                <ul className="space-y-2">
+                  {layer.features.map((feature, j) => (
+                    <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
+                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Execution Reports</h2>
+            <p className="text-gray-600">Transform opportunities into investor-ready documentation</p>
+          </div>
+
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-8 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Target className="w-8 h-8 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm text-green-600 font-medium">INCLUDED FREE WITH EVERY OPPORTUNITY</div>
+                <h3 className="text-2xl font-bold text-gray-900">Feasibility Study</h3>
+                <p className="text-gray-600">Quick viability check - prove our quality before you invest</p>
+              </div>
+              <div className="text-right">
+                <div className="text-4xl font-bold text-green-600">FREE</div>
+                <div className="text-sm text-gray-500 line-through">$1,500-$15,000 from consultants</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {reports.filter(r => r.price > 0).map((report) => (
+              <div key={report.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-purple-300 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <report.icon className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{report.name}</h4>
+                      <p className="text-xs text-gray-500">{report.description}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-purple-600">{report.priceLabel}</span>
+                  <span className="text-xs text-gray-400 line-through">{report.consultantPrice}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Save with Bundles</h2>
+            <p className="text-gray-600">Get everything you need at a significant discount</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {bundles.map((bundle) => (
+              <div key={bundle.id} className="bg-white rounded-xl border-2 border-gray-200 hover:border-purple-300 transition-colors overflow-hidden">
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-1">{bundle.name}</h3>
+                  <p className="text-sm text-gray-500 mb-4">{bundle.description}</p>
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-3xl font-bold text-purple-600">
+                      {bundle.priceLabel || `$${bundle.price}`}
+                    </span>
+                    {bundle.savings > 0 && (
+                      <span className="text-sm text-green-600 font-medium">Save ${bundle.savings}</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400 mb-4">
+                    <span className="line-through">{bundle.consultantValue}</span> from consultants
+                  </div>
+                  <ul className="space-y-2 mb-6">
+                    {bundle.includes.map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                        <Check className="w-4 h-4 text-green-500" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    to="/build"
+                    className="block w-full py-3 bg-purple-600 text-white rounded-lg text-center font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    Get {bundle.name}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Additional Services</h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Database className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">API Access</h3>
+                  <p className="text-sm text-gray-500">Integrate OppGrid into your systems</p>
+                </div>
+              </div>
+              <ul className="space-y-2 mb-4">
+                <li className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Opportunity data endpoint</span>
+                  <span className="font-medium">$0.10/call</span>
+                </li>
+                <li className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Report generation API</span>
+                  <span className="font-medium">$0.50/report</span>
+                </li>
+                <li className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Bulk data export</span>
+                  <span className="font-medium">$99/month</span>
+                </li>
+              </ul>
+              <Link to="/api" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                View API Documentation →
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <Users className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Leads Marketplace</h3>
+                  <p className="text-sm text-gray-500">Connect with verified business leads</p>
+                </div>
+              </div>
+              <ul className="space-y-2 mb-4">
+                <li className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Verified business leads</span>
+                  <span className="font-medium">$5-$25/lead</span>
+                </li>
+                <li className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Investor connections</span>
+                  <span className="font-medium">$50-$100/intro</span>
+                </li>
+                <li className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Expert consultations</span>
+                  <span className="font-medium">$150-$500/hour</span>
+                </li>
+              </ul>
+              <Link to="/leads" className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                Browse Leads →
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+          </div>
+          <div className="max-w-3xl mx-auto space-y-4">
+            {faqs.map((faq, i) => (
+              <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
+                  className="w-full p-6 text-left flex items-center justify-between"
+                >
+                  <span className="font-medium text-gray-900">{faq.question}</span>
+                  {expandedFaq === i ? (
+                    <ChevronUp className="w-5 h-5 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                  )}
+                </button>
+                {expandedFaq === i && (
+                  <div className="px-6 pb-6 text-gray-600">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 md:p-12 text-center text-white">
+          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+          <p className="text-white/80 mb-8 max-w-2xl mx-auto">
+            Browse opportunities and get your FREE Feasibility Study today. No credit card required.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/opportunities"
+              className="px-8 py-3 bg-white text-purple-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+            >
+              Browse Opportunities
             </Link>
-            .
+            <Link
+              to="/build"
+              className="px-8 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-400 transition-colors border border-white/20"
+            >
+              See Sample Reports
+            </Link>
           </div>
-        )}
+        </div>
       </div>
 
       {subOpen && subPublishableKey && subClientSecret && (
@@ -471,4 +796,3 @@ function isExpectedTierActive(raw: unknown, expectedTier: string | null) {
   if (!expectedTier) return isActive
   return isActive && tier === expectedTier
 }
-

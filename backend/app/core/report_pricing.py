@@ -14,6 +14,7 @@ class ReportProductType(str, Enum):
     FINANCIAL_MODEL = "financial_model"
     MARKET_ANALYSIS = "market_analysis"
     STRATEGIC_ASSESSMENT = "strategic_assessment"
+    PESTLE_ANALYSIS = "pestle_analysis"
     PITCH_DECK = "pitch_deck"
 
 
@@ -49,8 +50,8 @@ REPORT_PRODUCTS: Dict[str, ReportProduct] = {
         id=ReportProductType.FEASIBILITY_STUDY.value,
         name="Feasibility Study",
         description="Quick viability check with market validation",
-        price_cents=2500,
-        included_in_tier="pro",
+        price_cents=0,
+        included_in_tier=None,
     ),
     ReportProductType.PITCH_DECK.value: ReportProduct(
         id=ReportProductType.PITCH_DECK.value,
@@ -58,6 +59,13 @@ REPORT_PRODUCTS: Dict[str, ReportProduct] = {
         description="Investor presentation outline and key slides",
         price_cents=7900,
         included_in_tier="pro",
+    ),
+    ReportProductType.PESTLE_ANALYSIS.value: ReportProduct(
+        id=ReportProductType.PESTLE_ANALYSIS.value,
+        name="PESTLE Analysis",
+        description="Political, Economic, Social, Technological, Legal, Environmental factors",
+        price_cents=7900,
+        included_in_tier="business",
     ),
     ReportProductType.STRATEGIC_ASSESSMENT.value: ReportProduct(
         id=ReportProductType.STRATEGIC_ASSESSMENT.value,
@@ -101,7 +109,7 @@ BUNDLES: Dict[str, Bundle] = {
             ReportProductType.FINANCIAL_MODEL.value,
             ReportProductType.PITCH_DECK.value,
         ],
-        savings_cents=13300,
+        savings_cents=2800,
     ),
     BundleType.PROFESSIONAL.value: Bundle(
         id=BundleType.PROFESSIONAL.value,
@@ -115,8 +123,9 @@ BUNDLES: Dict[str, Bundle] = {
             ReportProductType.PITCH_DECK.value,
             ReportProductType.MARKET_ANALYSIS.value,
             ReportProductType.STRATEGIC_ASSESSMENT.value,
+            ReportProductType.PESTLE_ANALYSIS.value,
         ],
-        savings_cents=17100,
+        savings_cents=12500,
     ),
     BundleType.CONSULTANT_LICENSE.value: Bundle(
         id=BundleType.CONSULTANT_LICENSE.value,
@@ -130,6 +139,7 @@ BUNDLES: Dict[str, Bundle] = {
             ReportProductType.PITCH_DECK.value,
             ReportProductType.MARKET_ANALYSIS.value,
             ReportProductType.STRATEGIC_ASSESSMENT.value,
+            ReportProductType.PESTLE_ANALYSIS.value,
         ],
         savings_cents=1250000,
         is_annual=True,

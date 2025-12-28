@@ -21,6 +21,7 @@ const guestNavItems = [
     ]
   },
   { name: 'API', path: '/developers' },
+  { name: 'Pricing', path: '/pricing' },
 ]
 
 const paidNavItems = [
@@ -43,6 +44,7 @@ const paidNavItems = [
     ]
   },
   { name: 'API', path: '/developers' },
+  { name: 'Pricing', path: '/pricing' },
 ]
 
 type DropdownItem = {
