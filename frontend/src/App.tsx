@@ -36,6 +36,7 @@ import Projects from './pages/Projects'
 import MyWorkspaces from './pages/MyWorkspaces'
 import WorkspacePage from './pages/Workspace'
 import OpportunityHub from './pages/OpportunityHub'
+import AdminMarketing from './pages/AdminMarketing'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -147,6 +148,7 @@ function App() {
         <Route path="join-network/:role" element={<JoinNetwork />} />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
+        <Route path="admin/marketing" element={<AdminMarketing />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

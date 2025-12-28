@@ -1229,3 +1229,248 @@ def get_migration_flows_admin(
         ],
         "total": len(flows)
     }
+
+
+# ==================== Marketing & User Management ====================
+
+@router.get("/marketing/users")
+def get_marketing_users(
+    limit: int = Query(100, ge=1, le=1000),
+    skip: int = Query(0, ge=0),
+    tier_filter: Optional[str] = Query(None, description="free|pro|business|enterprise"),
+    verified_only: bool = Query(False),
+    has_subscription: Optional[bool] = Query(None),
+    created_after: Optional[date] = Query(None),
+    created_before: Optional[date] = Query(None),
+    search: Optional[str] = Query(None, description="Search by name or email"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Get list of users for marketing purposes with filters and pagination"""
+    from app.models.subscription import Subscription
+    from sqlalchemy.orm import joinedload
+    from datetime import datetime, timezone
+    
+    q = db.query(User).outerjoin(Subscription, User.id == Subscription.user_id).filter(User.is_banned == False)
+    
+    if verified_only:
+        q = q.filter(User.is_verified == True)
+    
+    if created_after:
+        q = q.filter(User.created_at >= datetime.combine(created_after, datetime.min.time()).replace(tzinfo=timezone.utc))
+    
+    if created_before:
+        q = q.filter(User.created_at <= datetime.combine(created_before, datetime.max.time()).replace(tzinfo=timezone.utc))
+    
+    if search:
+        search_term = f"%{search}%"
+        q = q.filter((User.name.ilike(search_term)) | (User.email.ilike(search_term)))
+    
+    if tier_filter:
+        tier_lower = tier_filter.lower()
+        if tier_lower == "free":
+            q = q.filter((Subscription.id == None) | (Subscription.tier == "free"))
+        else:
+            q = q.filter(Subscription.tier == tier_lower)
+    
+    total = q.count()
+    
+    users_with_subs = q.add_columns(Subscription.tier).order_by(desc(User.created_at)).offset(skip).limit(limit).all()
+    
+    user_list = []
+    for row in users_with_subs:
+        u = row[0]
+        sub_tier = row[1]
+        tier = sub_tier.value if sub_tier and hasattr(sub_tier, 'value') else (str(sub_tier) if sub_tier else "free")
+            
+        user_list.append({
+            "id": u.id,
+            "email": u.email,
+            "name": u.name,
+            "tier": tier,
+            "is_verified": u.is_verified,
+            "is_active": u.is_active,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+            "oauth_provider": u.oauth_provider,
+        })
+    
+    return {
+        "users": user_list,
+        "total": total,
+        "page_size": limit,
+        "skip": skip,
+    }
+
+
+@router.get("/marketing/users/export")
+def export_marketing_users(
+    tier_filter: Optional[str] = Query(None),
+    verified_only: bool = Query(False),
+    format: str = Query("json", description="json|csv"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Export all users for marketing - returns all matching users"""
+    from app.models.subscription import Subscription
+    from fastapi.responses import Response
+    import csv
+    import io
+    
+    q = db.query(User).outerjoin(Subscription, User.id == Subscription.user_id).filter(
+        User.is_banned == False, User.is_active == True
+    )
+    
+    if verified_only:
+        q = q.filter(User.is_verified == True)
+    
+    if tier_filter:
+        tier_lower = tier_filter.lower()
+        if tier_lower == "free":
+            q = q.filter((Subscription.id == None) | (Subscription.tier == "free"))
+        else:
+            q = q.filter(Subscription.tier == tier_lower)
+    
+    users_with_subs = q.add_columns(Subscription.tier).order_by(desc(User.created_at)).all()
+    
+    user_list = []
+    for row in users_with_subs:
+        u = row[0]
+        sub_tier = row[1]
+        tier = sub_tier.value if sub_tier and hasattr(sub_tier, 'value') else (str(sub_tier) if sub_tier else "free")
+            
+        user_list.append({
+            "id": u.id,
+            "email": u.email,
+            "name": u.name,
+            "tier": tier,
+            "is_verified": u.is_verified,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+            "oauth_provider": u.oauth_provider or "email",
+        })
+    
+    if format == "csv":
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=["id", "email", "name", "tier", "is_verified", "created_at", "oauth_provider"])
+        writer.writeheader()
+        writer.writerows(user_list)
+        csv_content = output.getvalue()
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=oppgrid_users.csv"}
+        )
+    
+    return {"users": user_list, "total": len(user_list)}
+
+
+@router.post("/marketing/send-campaign")
+async def send_marketing_campaign(
+    request: Request,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Send marketing email campaign to selected users via Resend"""
+    import os
+    import resend
+    
+    body = await request.json()
+    user_ids = body.get("user_ids", [])
+    subject = body.get("subject", "")
+    html_content = body.get("html_content", "")
+    text_content = body.get("text_content", "")
+    
+    if not subject or (not html_content and not text_content):
+        raise HTTPException(status_code=400, detail="Subject and content are required")
+    
+    if not user_ids:
+        raise HTTPException(status_code=400, detail="No users selected")
+    
+    resend_key = os.environ.get("RESEND_API_KEY")
+    if not resend_key:
+        raise HTTPException(status_code=500, detail="Email service not configured")
+    
+    resend.api_key = resend_key
+    
+    users = db.query(User).filter(User.id.in_(user_ids), User.is_banned == False).all()
+    
+    sent_count = 0
+    failed_count = 0
+    errors = []
+    
+    for user in users:
+        try:
+            params = {
+                "from": "OppGrid <noreply@oppgrid.com>",
+                "to": [user.email],
+                "subject": subject,
+            }
+            if html_content:
+                params["html"] = html_content.replace("{{name}}", user.name or "there")
+            if text_content:
+                params["text"] = text_content.replace("{{name}}", user.name or "there")
+            
+            resend.Emails.send(params)
+            sent_count += 1
+        except Exception as e:
+            failed_count += 1
+            errors.append({"user_id": user.id, "email": user.email, "error": str(e)})
+    
+    log_event(
+        db, 
+        "marketing_campaign_sent",
+        user_id=admin_user.id,
+        details={"sent": sent_count, "failed": failed_count, "subject": subject}
+    )
+    
+    return {
+        "sent": sent_count,
+        "failed": failed_count,
+        "errors": errors[:10] if errors else [],
+        "message": f"Campaign sent to {sent_count} users"
+    }
+
+
+@router.get("/marketing/stats")
+def get_marketing_stats(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Get marketing statistics - user growth, tier distribution, etc."""
+    from app.models.subscription import Subscription
+    from datetime import datetime, timedelta, timezone
+    
+    total_users = db.query(User).filter(User.is_banned == False).count()
+    verified_users = db.query(User).filter(User.is_verified == True, User.is_banned == False).count()
+    
+    now = datetime.now(timezone.utc)
+    last_7_days = now - timedelta(days=7)
+    last_30_days = now - timedelta(days=30)
+    
+    new_users_7d = db.query(User).filter(User.created_at >= last_7_days, User.is_banned == False).count()
+    new_users_30d = db.query(User).filter(User.created_at >= last_30_days, User.is_banned == False).count()
+    
+    tier_distribution = {"free": 0, "pro": 0, "business": 0, "enterprise": 0}
+    subscriptions = db.query(Subscription).all()
+    for sub in subscriptions:
+        tier = sub.tier.value if hasattr(sub.tier, 'value') else str(sub.tier)
+        if tier.lower() in tier_distribution:
+            tier_distribution[tier.lower()] += 1
+    
+    tier_distribution["free"] = total_users - sum([tier_distribution["pro"], tier_distribution["business"], tier_distribution["enterprise"]])
+    
+    oauth_breakdown = {}
+    users_with_oauth = db.query(User).filter(User.oauth_provider != None, User.is_banned == False).all()
+    for u in users_with_oauth:
+        provider = u.oauth_provider or "email"
+        oauth_breakdown[provider] = oauth_breakdown.get(provider, 0) + 1
+    oauth_breakdown["email"] = total_users - sum(oauth_breakdown.values())
+    
+    return {
+        "total_users": total_users,
+        "verified_users": verified_users,
+        "new_users_7d": new_users_7d,
+        "new_users_30d": new_users_30d,
+        "tier_distribution": tier_distribution,
+        "oauth_breakdown": oauth_breakdown,
+        "verification_rate": round((verified_users / total_users * 100) if total_users > 0 else 0, 1),
+    }

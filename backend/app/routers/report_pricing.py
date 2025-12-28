@@ -32,6 +32,13 @@ from app.services.audit import log_event
 router = APIRouter(prefix="/report-pricing", tags=["Report Pricing"])
 
 
+class PublicPricingResponse(BaseModel):
+    """Public pricing data - no auth required"""
+    reports: List[dict]
+    bundles: List[dict]
+    subscription_tiers: List[dict]
+
+
 class ReportPricingResponse(BaseModel):
     reports: List[dict]
     bundles: List[dict]
@@ -58,6 +65,105 @@ class PurchaseResponse(BaseModel):
 
 class ConfirmPurchaseRequest(BaseModel):
     payment_intent_id: str
+
+
+SUBSCRIPTION_TIERS = [
+    {
+        "id": "explorer",
+        "name": "Explorer",
+        "price_cents": 0,
+        "price_label": "Free",
+        "description": "Try quality, pay for what you need",
+        "access_window_days": 91,
+        "features": [
+            "Browse validated opportunities",
+            "Layer 1 access (91+ days)",
+            "FREE Feasibility Study per opportunity",
+            "Pay-per-report execution tools",
+        ],
+    },
+    {
+        "id": "builder",
+        "name": "Builder",
+        "price_cents": 9900,
+        "price_label": "$99/mo",
+        "description": "Unlimited research, professional execution",
+        "access_window_days": 31,
+        "features": [
+            "Layer 1 + 2 access (31+ days)",
+            "Unlimited Layer 1 reports",
+            "10 Layer 2 reports/month",
+            "All Explorer features",
+        ],
+        "is_popular": True,
+    },
+    {
+        "id": "scaler",
+        "name": "Scaler",
+        "price_cents": 49900,
+        "price_label": "$499/mo",
+        "description": "Move faster with deep intelligence",
+        "access_window_days": 8,
+        "features": [
+            "Full Layer 1-3 access (8+ days)",
+            "Unlimited Layer 1-2 reports",
+            "5 Layer 3 execution packages/month",
+            "Priority AI processing",
+        ],
+    },
+    {
+        "id": "enterprise",
+        "name": "Enterprise",
+        "price_cents": 250000,
+        "price_label": "$2,500+/mo",
+        "description": "First-mover advantage + unlimited execution",
+        "access_window_days": 0,
+        "features": [
+            "Real-time opportunity access (0+ days)",
+            "Unlimited all layers",
+            "API access",
+            "Dedicated support",
+        ],
+    },
+]
+
+
+@router.get("/public", response_model=PublicPricingResponse)
+def get_public_pricing():
+    """Get public pricing data - no authentication required"""
+    pricing = get_pricing_summary()
+    
+    reports_with_details = []
+    consultant_prices = {
+        "feasibility_study": "$1,500-$15,000",
+        "business_plan": "$3,000-$15,000",
+        "financial_model": "$2,500-$10,000",
+        "market_analysis": "$2,000-$8,000",
+        "strategic_assessment": "$1,500-$5,000",
+        "pestle_analysis": "$1,500-$5,000",
+        "pitch_deck": "$2,000-$5,000",
+    }
+    
+    for report in pricing["reports"]:
+        report["consultant_price"] = consultant_prices.get(report["id"], "$1,500-$5,000")
+        reports_with_details.append(report)
+    
+    bundles_with_details = []
+    bundle_consultant_values = {
+        "starter": "$8,500-$35,000",
+        "professional": "$17,000-$98,000",
+        "consultant_license": "$50,000-$250,000",
+    }
+    
+    for bundle in pricing["bundles"]:
+        bundle["consultant_value"] = bundle_consultant_values.get(bundle["id"], "$10,000+")
+        bundles_with_details.append(bundle)
+    
+    return PublicPricingResponse(
+        reports=reports_with_details,
+        bundles=bundles_with_details,
+        subscription_tiers=SUBSCRIPTION_TIERS,
+    )
 
 
 @router.get("/", response_model=ReportPricingResponse)

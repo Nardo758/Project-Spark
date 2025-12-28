@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Bookmark, Filter, FileText, ChevronRight, Lock } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Search, Bookmark, Filter, FileText, ChevronRight, Lock, Sparkles, Target, TrendingUp, Users } from 'lucide-react'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 
 const freshnessOptions = [
@@ -91,6 +91,67 @@ export default function Discover() {
   const navigate = useNavigate()
 
   const { token, isAuthenticated, user } = useAuthStore()
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 flex items-center justify-center px-4">
+        <div className="max-w-2xl text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            Free to Browse
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Discover Validated<br />Business Opportunities
+          </h1>
+          
+          <p className="text-xl text-gray-600 mb-8">
+            AI-analyzed opportunities with market validation, competition analysis, and execution roadmaps. 
+            <span className="font-semibold text-purple-700"> Sign up free to start exploring.</span>
+          </p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <Target className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-900">500+ Opportunities</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <TrendingUp className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-900">Market Validated</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <FileText className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-900">FREE Feasibility Study</p>
+            </div>
+            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+              <Users className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-900">Expert Network</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/signup"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200"
+            >
+              Sign Up Free
+              <ChevronRight className="w-5 h-5" />
+            </Link>
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-gray-700 font-semibold rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              Already have an account? Sign In
+            </Link>
+          </div>
+          
+          <p className="mt-8 text-sm text-gray-500">
+            No credit card required. Get instant access to browse all opportunities.
+          </p>
+        </div>
+      </div>
+    )
+  }
   const isPaidUser = user?.tier && user.tier.toLowerCase() !== 'free'
   const queryClient = useQueryClient()
 
