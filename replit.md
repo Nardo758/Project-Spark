@@ -47,16 +47,17 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 
 ## Recent Changes (December 2024)
 
-### Tiered Report Framework (December 25, 2024)
-*   **ReportGenerator Service:** Backend service (`backend/app/services/report_generator.py`) for generating tiered opportunity reports with tier entitlement checks
-*   **Layer 1 - Problem Overview:** Pro+ access, includes Executive Summary, Problem Statement, Market Snapshot, Validation Signals, Key Risks, Next Steps ($15 one-time or Pro subscription)
-*   **Layer 2 - Deep Dive Analysis:** Business+ access, adds TAM/SAM/SOM, Demographic Deep Dive (Census data), Competitive Landscape, Geographic Analysis
-*   **Layer 3 - Execution Package:** Business (5/mo limit) or Enterprise (unlimited), full Business Plan, Go-to-Market Strategy (3 phases), Financial Projections (3-year), 90-Day Roadmap, Risk Mitigation Plan
-*   **Report Types:** Added `LAYER_1_OVERVIEW`, `LAYER_2_DEEP_DIVE`, `LAYER_3_EXECUTION` to ReportType enum
-*   **API Endpoints:** POST `/api/v1/reports/opportunity/{id}/layer1`, `/layer2`, `/layer3` with proper entitlement checks
+### AI-Powered Report Framework (December 28, 2024)
+*   **AI Report Generator:** `backend/app/services/ai_report_generator.py` - 10 specialized Claude methods for executive summaries, problem analysis, market insights, competitive analysis, TAM/SAM/SOM, strategic recommendations, business plans, financial projections, feasibility studies, and pitch deck content
+*   **Trade Area Analyzer:** `backend/app/services/trade_area_analyzer.py` - 5-step pipeline: Signal Clustering → SerpAPI Competitor Mapping → DBSCAN White Space Analysis → Census Demographics Overlay → AI Synthesis
+*   **Satellite Map Integration:** All reports use `satellite-streets-v11` Mapbox style for visualizations with competitor markers and trade area boundaries
+*   **Layer 1 - Problem Overview:** AI-generated Executive Summary + Lean Canvas problem analysis, satellite visualization of opportunity location
+*   **Layer 2 - Deep Dive Analysis:** Full trade area visualization with competitors, Porter's Five Forces, AI market intelligence, TAM/SAM/SOM with Claude analysis
+*   **Layer 3 - Execution Package:** AI-generated Business Plan, 3-year Financial Projections, Go-to-Market Strategy (3 phases), expansion satellite map
+*   **Census API Integration:** Synchronous HTTP calls with state FIPS mapping for demographic data (population, income, age, households, home value, rent, unemployment)
+*   **API Endpoints:** POST `/api/v1/reports/opportunity/{id}/layer1`, `/layer2`, `/layer3` with tier entitlement checks
 *   **Rolling Limits:** Business tier has 5 Layer 3 reports per rolling 30-day period, Enterprise unlimited
-*   **Frontend ReportViewer:** Modal component (`frontend/src/components/ReportViewer.tsx`) with layer tabs, tier-based access, and PDF download via browser print
-*   **Pay-per-unlock Support:** Layer 1 reports accessible to Free users who paid $15 opportunity unlock
+*   **Frontend ReportViewer:** Modal component with layer tabs, tier-based access, and PDF download via browser print
 
 ### Census & Demographics Integration (December 25, 2024)
 *   **Database Schema:** Added `demographics` and `search_trends` JSONB columns to opportunities table with `demographics_fetched_at` timestamp
