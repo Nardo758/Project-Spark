@@ -47,6 +47,7 @@ from .census_demographics import (
     CensusPopulationEstimate, CensusMigrationFlow, MarketGrowthTrajectory,
     ServiceAreaBoundary, GrowthCategory
 )
+from .purchased_report import PurchasedReport, PurchasedBundle, ConsultantLicense, PurchaseType
 
 __all__ = [
     "User",
@@ -137,4 +138,8 @@ __all__ = [
     "MarketGrowthTrajectory",
     "ServiceAreaBoundary",
     "GrowthCategory",
+    "PurchasedReport",
+    "PurchasedBundle",
+    "ConsultantLicense",
+    "PurchaseType",
 ]

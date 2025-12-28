@@ -1,0 +1,547 @@
+"""
+Report Pricing Router
+Endpoints for report pricing, purchases, and access checks
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime, timedelta, timezone
+
+from app.db.database import get_db
+from app.models.user import User
+from app.models.opportunity import Opportunity
+from app.models.purchased_report import PurchasedReport, PurchasedBundle, ConsultantLicense, PurchaseType
+from app.core.dependencies import get_current_user, get_current_active_user
+from app.core.report_pricing import (
+    REPORT_PRODUCTS,
+    BUNDLES,
+    ReportProductType,
+    BundleType,
+    get_pricing_summary,
+    is_report_included_for_tier,
+    get_report_price,
+    get_bundle_price,
+)
+from app.services.stripe_service import stripe_service, get_stripe_client
+from app.services.usage_service import usage_service
+from app.services.entitlements import get_opportunity_entitlements
+from app.services.audit import log_event
+
+router = APIRouter(prefix="/report-pricing", tags=["Report Pricing"])
+
+
+class ReportPricingResponse(BaseModel):
+    reports: List[dict]
+    bundles: List[dict]
+    user_tier: Optional[str] = None
+    purchased_reports: List[dict] = []
+    has_consultant_license: bool = False
+
+
+class ReportPurchaseRequest(BaseModel):
+    opportunity_id: int
+    report_type: str
+
+
+class BundlePurchaseRequest(BaseModel):
+    opportunity_id: int
+    bundle_type: str
+
+
+class PurchaseResponse(BaseModel):
+    client_secret: str
+    amount: int
+    publishable_key: str
+
+
+class ConfirmPurchaseRequest(BaseModel):
+    payment_intent_id: str
+
+
+@router.get("/", response_model=ReportPricingResponse)
+def get_report_pricing(
+    opportunity_id: Optional[int] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get report pricing, user's tier, and purchased reports for opportunity"""
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    user_tier = subscription.tier.value if hasattr(subscription.tier, 'value') else str(subscription.tier)
+    
+    pricing = get_pricing_summary()
+    
+    for report in pricing["reports"]:
+        report["is_included"] = is_report_included_for_tier(report["id"], user_tier)
+        if report["is_included"]:
+            report["user_price"] = 0
+        else:
+            report["user_price"] = report["price"]
+    
+    for bundle in pricing["bundles"]:
+        bundle["is_available"] = True
+    
+    purchased_reports = []
+    if opportunity_id:
+        purchases = db.query(PurchasedReport).filter(
+            PurchasedReport.user_id == current_user.id,
+            PurchasedReport.opportunity_id == opportunity_id
+        ).all()
+        purchased_reports = [
+            {
+                "report_type": p.report_type,
+                "purchased_at": p.purchased_at.isoformat() if p.purchased_at else None,
+                "is_generated": p.is_generated,
+            }
+            for p in purchases
+        ]
+    
+    has_consultant_license = db.query(ConsultantLicense).filter(
+        ConsultantLicense.user_id == current_user.id,
+        ConsultantLicense.is_active == True
+    ).first() is not None
+    
+    return ReportPricingResponse(
+        reports=pricing["reports"],
+        bundles=pricing["bundles"],
+        user_tier=user_tier,
+        purchased_reports=purchased_reports,
+        has_consultant_license=has_consultant_license,
+    )
+
+
+@router.get("/check-access/{opportunity_id}")
+def check_report_access(
+    opportunity_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Check if user has Layer 1 access to opportunity (required for report purchase)"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    ent = get_opportunity_entitlements(db, opportunity, current_user)
+    
+    return {
+        "opportunity_id": opportunity_id,
+        "has_layer1_access": ent.is_accessible,
+        "user_tier": ent.user_tier.value if ent.user_tier else "free",
+        "can_purchase_reports": ent.is_accessible,
+        "message": "Layer 1 access required to purchase reports" if not ent.is_accessible else "Ready to purchase reports"
+    }
+
+
+@router.post("/purchase-report", response_model=PurchaseResponse)
+def create_report_purchase(
+    purchase_data: ReportPurchaseRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Create a payment intent for report purchase"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == purchase_data.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    ent = get_opportunity_entitlements(db, opportunity, current_user)
+    if not ent.is_accessible:
+        raise HTTPException(
+            status_code=403, 
+            detail="Layer 1 access required. Unlock this opportunity first or upgrade your subscription."
+        )
+    
+    if purchase_data.report_type not in REPORT_PRODUCTS:
+        raise HTTPException(status_code=400, detail=f"Invalid report type: {purchase_data.report_type}")
+    
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    user_tier = subscription.tier.value if hasattr(subscription.tier, 'value') else str(subscription.tier)
+    
+    if is_report_included_for_tier(purchase_data.report_type, user_tier):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"This report is included in your {user_tier} subscription. No purchase needed."
+        )
+    
+    existing = db.query(PurchasedReport).filter(
+        PurchasedReport.user_id == current_user.id,
+        PurchasedReport.opportunity_id == purchase_data.opportunity_id,
+        PurchasedReport.report_type == purchase_data.report_type
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already purchased this report for this opportunity")
+    
+    amount_cents = get_report_price(purchase_data.report_type)
+    report_product = REPORT_PRODUCTS[purchase_data.report_type]
+    
+    if not subscription.stripe_customer_id:
+        customer = stripe_service.create_customer(
+            email=current_user.email,
+            name=current_user.name,
+            metadata={"user_id": current_user.id}
+        )
+        subscription.stripe_customer_id = customer.id
+        db.commit()
+    
+    stripe_client = get_stripe_client()
+    payment_intent = stripe_client.payment_intents.create(
+        amount=amount_cents,
+        currency="usd",
+        customer=subscription.stripe_customer_id,
+        metadata={
+            "user_id": str(current_user.id),
+            "opportunity_id": str(purchase_data.opportunity_id),
+            "report_type": purchase_data.report_type,
+            "payment_type": "report_purchase",
+        },
+        description=f"OppGrid Report: {report_product.name} for Opportunity #{purchase_data.opportunity_id}",
+        automatic_payment_methods={"enabled": True},
+    )
+    
+    log_event(
+        db,
+        action="report_pricing.purchase_intent_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=purchase_data.opportunity_id,
+        metadata={
+            "payment_intent_id": payment_intent.id,
+            "report_type": purchase_data.report_type,
+            "amount_cents": amount_cents,
+        },
+    )
+    
+    from app.services.stripe_service import get_stripe_credentials
+    _, publishable_key = get_stripe_credentials()
+    
+    return PurchaseResponse(
+        client_secret=payment_intent.client_secret,
+        amount=amount_cents,
+        publishable_key=publishable_key,
+    )
+
+
+@router.post("/purchase-bundle", response_model=PurchaseResponse)
+def create_bundle_purchase(
+    purchase_data: BundlePurchaseRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Create a payment intent for bundle purchase"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == purchase_data.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    ent = get_opportunity_entitlements(db, opportunity, current_user)
+    if not ent.is_accessible:
+        raise HTTPException(
+            status_code=403, 
+            detail="Layer 1 access required. Unlock this opportunity first or upgrade your subscription."
+        )
+    
+    if purchase_data.bundle_type not in BUNDLES:
+        raise HTTPException(status_code=400, detail=f"Invalid bundle type: {purchase_data.bundle_type}")
+    
+    existing = db.query(PurchasedBundle).filter(
+        PurchasedBundle.user_id == current_user.id,
+        PurchasedBundle.opportunity_id == purchase_data.opportunity_id,
+        PurchasedBundle.bundle_type == purchase_data.bundle_type
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already purchased this bundle for this opportunity")
+    
+    bundle = BUNDLES[purchase_data.bundle_type]
+    amount_cents = bundle.price_cents
+    
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    if not subscription.stripe_customer_id:
+        customer = stripe_service.create_customer(
+            email=current_user.email,
+            name=current_user.name,
+            metadata={"user_id": current_user.id}
+        )
+        subscription.stripe_customer_id = customer.id
+        db.commit()
+    
+    stripe_client = get_stripe_client()
+    payment_intent = stripe_client.payment_intents.create(
+        amount=amount_cents,
+        currency="usd",
+        customer=subscription.stripe_customer_id,
+        metadata={
+            "user_id": str(current_user.id),
+            "opportunity_id": str(purchase_data.opportunity_id),
+            "bundle_type": purchase_data.bundle_type,
+            "payment_type": "bundle_purchase",
+            "reports": ",".join(bundle.reports),
+        },
+        description=f"OppGrid Bundle: {bundle.name} for Opportunity #{purchase_data.opportunity_id}",
+        automatic_payment_methods={"enabled": True},
+    )
+    
+    log_event(
+        db,
+        action="report_pricing.bundle_intent_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=purchase_data.opportunity_id,
+        metadata={
+            "payment_intent_id": payment_intent.id,
+            "bundle_type": purchase_data.bundle_type,
+            "amount_cents": amount_cents,
+        },
+    )
+    
+    from app.services.stripe_service import get_stripe_credentials
+    _, publishable_key = get_stripe_credentials()
+    
+    return PurchaseResponse(
+        client_secret=payment_intent.client_secret,
+        amount=amount_cents,
+        publishable_key=publishable_key,
+    )
+
+
+@router.post("/confirm-report-purchase")
+def confirm_report_purchase(
+    confirm_data: ConfirmPurchaseRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Confirm a successful report or bundle payment and grant access"""
+    stripe_client = get_stripe_client()
+    
+    try:
+        payment_intent = stripe_client.payment_intents.retrieve(confirm_data.payment_intent_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid payment intent: {str(e)}")
+    
+    if payment_intent.status != "succeeded":
+        raise HTTPException(status_code=400, detail=f"Payment not completed. Status: {payment_intent.status}")
+    
+    payment_type = payment_intent.metadata.get("payment_type")
+    user_id = int(payment_intent.metadata.get("user_id", 0))
+    opportunity_id = int(payment_intent.metadata.get("opportunity_id", 0))
+    
+    if user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Payment belongs to another user")
+    
+    if payment_type == "report_purchase":
+        report_type = payment_intent.metadata.get("report_type")
+        
+        existing = db.query(PurchasedReport).filter(
+            PurchasedReport.user_id == current_user.id,
+            PurchasedReport.opportunity_id == opportunity_id,
+            PurchasedReport.report_type == report_type,
+            PurchasedReport.stripe_payment_intent_id == confirm_data.payment_intent_id
+        ).first()
+        
+        if existing:
+            return {
+                "success": True,
+                "message": "Report already confirmed",
+                "report_type": report_type,
+                "opportunity_id": opportunity_id,
+            }
+        
+        purchased = PurchasedReport(
+            user_id=current_user.id,
+            opportunity_id=opportunity_id,
+            report_type=report_type,
+            purchase_type=PurchaseType.INDIVIDUAL,
+            amount_paid=payment_intent.amount,
+            stripe_payment_intent_id=confirm_data.payment_intent_id,
+        )
+        db.add(purchased)
+        db.commit()
+        
+        log_event(
+            db,
+            action="report_pricing.report_purchase_confirmed",
+            actor=current_user,
+            actor_type="user",
+            request=request,
+            resource_type="opportunity",
+            resource_id=opportunity_id,
+            metadata={
+                "payment_intent_id": confirm_data.payment_intent_id,
+                "report_type": report_type,
+                "amount_cents": payment_intent.amount,
+            },
+        )
+        
+        return {
+            "success": True,
+            "message": f"Report '{report_type}' unlocked successfully",
+            "report_type": report_type,
+            "opportunity_id": opportunity_id,
+        }
+    
+    elif payment_type == "bundle_purchase":
+        bundle_type = payment_intent.metadata.get("bundle_type")
+        reports_str = payment_intent.metadata.get("reports", "")
+        reports = reports_str.split(",") if reports_str else []
+        
+        existing = db.query(PurchasedBundle).filter(
+            PurchasedBundle.user_id == current_user.id,
+            PurchasedBundle.opportunity_id == opportunity_id,
+            PurchasedBundle.bundle_type == bundle_type,
+            PurchasedBundle.stripe_payment_intent_id == confirm_data.payment_intent_id
+        ).first()
+        
+        if existing:
+            return {
+                "success": True,
+                "message": "Bundle already confirmed",
+                "bundle_type": bundle_type,
+                "opportunity_id": opportunity_id,
+                "reports": reports,
+            }
+        
+        bundle_record = PurchasedBundle(
+            user_id=current_user.id,
+            opportunity_id=opportunity_id,
+            bundle_type=bundle_type,
+            amount_paid=payment_intent.amount,
+            stripe_payment_intent_id=confirm_data.payment_intent_id,
+        )
+        db.add(bundle_record)
+        
+        for report_type in reports:
+            existing_report = db.query(PurchasedReport).filter(
+                PurchasedReport.user_id == current_user.id,
+                PurchasedReport.opportunity_id == opportunity_id,
+                PurchasedReport.report_type == report_type
+            ).first()
+            
+            if not existing_report:
+                purchased = PurchasedReport(
+                    user_id=current_user.id,
+                    opportunity_id=opportunity_id,
+                    report_type=report_type,
+                    purchase_type=PurchaseType.BUNDLE,
+                    bundle_id=bundle_type,
+                    amount_paid=0,
+                    stripe_payment_intent_id=confirm_data.payment_intent_id,
+                )
+                db.add(purchased)
+        
+        db.commit()
+        
+        log_event(
+            db,
+            action="report_pricing.bundle_purchase_confirmed",
+            actor=current_user,
+            actor_type="user",
+            request=request,
+            resource_type="opportunity",
+            resource_id=opportunity_id,
+            metadata={
+                "payment_intent_id": confirm_data.payment_intent_id,
+                "bundle_type": bundle_type,
+                "reports": reports,
+                "amount_cents": payment_intent.amount,
+            },
+        )
+        
+        return {
+            "success": True,
+            "message": f"Bundle '{bundle_type}' unlocked successfully",
+            "bundle_type": bundle_type,
+            "opportunity_id": opportunity_id,
+            "reports": reports,
+        }
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid payment type")
+
+
+@router.get("/my-purchases")
+def get_my_purchases(
+    opportunity_id: Optional[int] = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Get user's purchased reports"""
+    query = db.query(PurchasedReport).filter(PurchasedReport.user_id == current_user.id)
+    
+    if opportunity_id:
+        query = query.filter(PurchasedReport.opportunity_id == opportunity_id)
+    
+    purchases = query.order_by(PurchasedReport.purchased_at.desc()).all()
+    
+    return {
+        "purchases": [
+            {
+                "id": p.id,
+                "opportunity_id": p.opportunity_id,
+                "report_type": p.report_type,
+                "purchase_type": p.purchase_type.value if p.purchase_type else "individual",
+                "bundle_id": p.bundle_id,
+                "amount_paid": p.amount_paid,
+                "is_generated": p.is_generated,
+                "purchased_at": p.purchased_at.isoformat() if p.purchased_at else None,
+            }
+            for p in purchases
+        ],
+        "total": len(purchases),
+    }
+
+
+@router.get("/can-generate/{opportunity_id}/{report_type}")
+def can_generate_report(
+    opportunity_id: int,
+    report_type: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Check if user can generate a specific report (included in tier or purchased)"""
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    user_tier = subscription.tier.value if hasattr(subscription.tier, 'value') else str(subscription.tier)
+    
+    if is_report_included_for_tier(report_type, user_tier):
+        return {
+            "can_generate": True,
+            "reason": "included_in_tier",
+            "user_tier": user_tier,
+        }
+    
+    purchased = db.query(PurchasedReport).filter(
+        PurchasedReport.user_id == current_user.id,
+        PurchasedReport.opportunity_id == opportunity_id,
+        PurchasedReport.report_type == report_type
+    ).first()
+    
+    if purchased:
+        return {
+            "can_generate": True,
+            "reason": "purchased",
+            "purchased_at": purchased.purchased_at.isoformat() if purchased.purchased_at else None,
+        }
+    
+    license_active = db.query(ConsultantLicense).filter(
+        ConsultantLicense.user_id == current_user.id,
+        ConsultantLicense.is_active == True
+    ).first()
+    
+    if license_active and license_active.opportunities_used < license_active.max_opportunities:
+        return {
+            "can_generate": True,
+            "reason": "consultant_license",
+            "opportunities_remaining": license_active.max_opportunities - license_active.opportunities_used,
+        }
+    
+    price = get_report_price(report_type)
+    return {
+        "can_generate": False,
+        "reason": "purchase_required",
+        "price": price,
+        "price_formatted": f"${price / 100:.0f}",
+    }

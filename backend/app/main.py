@@ -44,6 +44,7 @@ from app.routers import (
     profiles,
     quick_actions,
     replit_auth,
+    report_pricing,
     scraper,
     social,
     stripe_webhook,
@@ -140,6 +141,7 @@ app.include_router(google_scraping.router, prefix=f"{settings.API_V1_PREFIX}", t
 app.include_router(workspaces.router, prefix=f"{settings.API_V1_PREFIX}/workspaces", tags=["Workspaces"])
 app.include_router(ai_cofounder.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Co-Founder"])
 app.include_router(copilot.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Copilot"])
+app.include_router(report_pricing.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Report Pricing"])
 
 
 @app.get("/")

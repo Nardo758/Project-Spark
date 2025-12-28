@@ -1,0 +1,77 @@
+"""
+Purchased Report Model
+Tracks user's report purchases (individual and bundle)
+"""
+
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.db.database import Base
+import enum
+
+
+class PurchaseType(str, enum.Enum):
+    INDIVIDUAL = "individual"
+    BUNDLE = "bundle"
+
+
+class PurchasedReport(Base):
+    __tablename__ = "purchased_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False)
+    
+    report_type = Column(String(100), nullable=False)
+    purchase_type = Column(String(50), default="individual", nullable=False)
+    bundle_id = Column(String(100), nullable=True)
+    
+    amount_paid = Column(Integer, default=0)
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+    
+    is_generated = Column(Boolean, default=False)
+    generated_report_id = Column(Integer, ForeignKey("generated_reports.id", ondelete="SET NULL"), nullable=True)
+    
+    purchased_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    
+    user = relationship("User")
+    opportunity = relationship("Opportunity")
+
+
+class PurchasedBundle(Base):
+    __tablename__ = "purchased_bundles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False)
+    
+    bundle_type = Column(String(100), nullable=False)
+    amount_paid = Column(Integer, default=0)
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+    
+    purchased_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    
+    user = relationship("User")
+    opportunity = relationship("Opportunity")
+
+
+class ConsultantLicense(Base):
+    __tablename__ = "consultant_licenses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    
+    amount_paid = Column(Integer, default=0)
+    stripe_subscription_id = Column(String(255), nullable=True)
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+    
+    opportunities_used = Column(Integer, default=0)
+    max_opportunities = Column(Integer, default=25)
+    
+    is_active = Column(Boolean, default=True)
+    purchased_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    
+    user = relationship("User")
