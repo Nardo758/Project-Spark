@@ -232,7 +232,6 @@ export function LifecycleTimeline({
           const info = LIFECYCLE_STATES[state]
           const isActive = state === currentState
           const isPast = info.step < currentStep
-          const isFuture = info.step > currentStep
 
           return (
             <div key={state} className="flex items-center">
@@ -248,7 +247,7 @@ export function LifecycleTimeline({
                   style={{
                     backgroundColor: isActive || isPast ? info.color : undefined,
                     color: isActive || isPast ? 'white' : undefined,
-                    ringColor: isActive ? info.color : undefined
+                    ...(isActive ? { '--tw-ring-color': info.color } as React.CSSProperties : {})
                   }}
                 >
                   {isPast ? <Check className="w-5 h-5" /> : info.icon}

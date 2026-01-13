@@ -152,7 +152,8 @@ export default function Discover() {
       </div>
     )
   }
-  const isPaidUser = user?.tier && user.tier.toLowerCase() !== 'free'
+  const _isPaidUser = user?.tier && user.tier.toLowerCase() !== 'free'
+  void _isPaidUser
   const queryClient = useQueryClient()
 
   const categoriesQuery = useQuery({

@@ -3,7 +3,7 @@ import { Bookmark, Trash2, FolderPlus, Tag, StickyNote, Plus, X, Check } from 'l
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useState, useRef, useEffect } from 'react'
-import { LifecycleTimeline, LifecycleStateBadge, type LifecycleState } from '../components/LifecycleTimeline'
+import { LifecycleTimeline, type LifecycleState } from '../components/LifecycleTimeline'
 
 type Opportunity = {
   id: number

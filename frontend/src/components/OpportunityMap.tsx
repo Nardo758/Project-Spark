@@ -132,13 +132,14 @@ const GROWTH_COLORS: Record<string, string> = {
   unknown: '#6b7280'
 };
 
-const GROWTH_ICONS: Record<string, string> = {
+const _GROWTH_ICONS: Record<string, string> = {
   booming: '🚀',
   growing: '📈',
   stable: '➡️',
   declining: '📉',
   unknown: '❓'
 };
+void _GROWTH_ICONS;
 
 export default function OpportunityMap({
   opportunityId,
@@ -326,7 +327,7 @@ export default function OpportunityMap({
 
         map.current.on('click', 'growth-trajectory-circles', (e) => {
           if (!e.features?.[0]) return;
-          const props = e.features[0].properties;
+          const props = e.features[0].properties ?? {};
           const coords = (e.features[0].geometry as any).coordinates;
           const category = props.growth_category || 'unknown';
           const growthRate = props.population_growth_rate 

@@ -406,7 +406,7 @@ export default function OpportunityHub() {
 
   const chatHistoryQuery = useQuery({
     queryKey: ['chat-history', workspaceId],
-    enabled: Boolean(workspaceId) && workspaceId > 0 && Boolean(token),
+    enabled: Boolean(workspaceId) && (workspaceId ?? 0) > 0 && Boolean(token),
     queryFn: async (): Promise<ChatMessage[]> => {
       if (!workspaceId) return []
       const res = await fetch(`/api/v1/ai-cofounder/workspace/${workspaceId}/chat-history`, {
@@ -1749,7 +1749,7 @@ ${o.ai_next_steps?.map(s => `- ${s}`).join('\n') || '- Define immediate next ste
                       <div className="grid grid-cols-3 gap-2">
                         {canvasItemsBase.map((item) => {
                           const aiDefaults: Record<string, string | undefined> = {
-                            customers: opp.ai_target_audience,
+                            customers: opp.ai_target_audience ?? undefined,
                             advantage: opp.ai_competition_level ? `Low competition: ${opp.ai_competition_level}` : undefined,
                           }
                           const aiValue = aiDefaults[item.key]

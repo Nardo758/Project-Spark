@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { 
-  ArrowLeft, Briefcase, CheckCircle2, ChevronRight, Clock, FileText, 
-  Lightbulb, MessageSquare, MoreHorizontal, PenLine, Plus, Rocket, 
-  Send, Sparkles, Target, Trash2, Users, Loader2
+  ArrowLeft, Briefcase, CheckCircle2, ChevronRight, FileText, 
+  PenLine, Plus, 
+  Send, Sparkles, Target, Trash2, Loader2
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 
@@ -81,7 +81,6 @@ const priorityColors: Record<TaskPriority, string> = {
 export default function WorkspacePage() {
   const { id } = useParams()
   const workspaceId = Number(id)
-  const navigate = useNavigate()
   const { token } = useAuthStore()
   const queryClient = useQueryClient()
 

@@ -116,7 +116,7 @@ function ReportPurchaseInner({
     try {
       setSubmitting(true)
       const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card }
+        payment_method: { card: card as any }
       })
       
       if (result.error) {
@@ -361,7 +361,6 @@ function ReportPurchaseInner({
 }
 
 export default function ReportPurchaseModal(props: Props) {
-  const { token } = useAuthStore()
   const [publishableKey, setPublishableKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   

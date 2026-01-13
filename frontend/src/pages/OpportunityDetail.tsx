@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { 
   Bookmark, CheckCircle2, Lock, TrendingUp, Users, 
-  FileText, BarChart3, Target, 
+  FileText, Target, 
   ChevronRight, ArrowRight,
-  Zap, Download, Share2, Star, Rocket, Briefcase,
-  MapPin, AlertTriangle
+  Zap, Share2, Star, Rocket, Briefcase,
+  AlertTriangle
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
@@ -179,7 +179,7 @@ export default function OpportunityDetail() {
   })
 
   type WorkspaceCheck = { has_workspace: boolean; workspace_id: number | null }
-  const workspaceCheckQuery = useQuery({
+  const _workspaceCheckQuery = useQuery({
     queryKey: ['workspace-check', opportunityId],
     enabled: isAuthenticated && Boolean(token) && Number.isFinite(opportunityId),
     queryFn: async (): Promise<WorkspaceCheck> => {
@@ -190,6 +190,7 @@ export default function OpportunityDetail() {
       return (await res.json()) as WorkspaceCheck
     },
   })
+  void _workspaceCheckQuery
 
   const userTierFromQuery = user?.tier?.toLowerCase() || 'free'
   const isBusinessTier = userTierFromQuery === 'business' || userTierFromQuery === 'enterprise'
@@ -211,7 +212,8 @@ export default function OpportunityDetail() {
   })
 
   const demographics = demographicsQuery.data?.demographics
-  const searchTrends = demographicsQuery.data?.search_trends
+  const _searchTrends = demographicsQuery.data?.search_trends
+  void _searchTrends
 
   const myValidation = useMemo(() => {
     const uid = user?.id
