@@ -111,5 +111,20 @@ The frontend proxies `/api/*` requests to the backend via Vite's dev server conf
 *   **Access Priority:** `is_accessible` → Pay-per-unlock → Days until unlock → Upgrade prompt
 *   **CTA Text Updated:** "Ready to Deep Dive?" with contextual buttons based on user access state
 
+### Production Data Pipeline (January 2025)
+*   **Admin Pipeline Endpoints:** New admin-only endpoints for production data collection
+    - `POST /api/v1/admin/data-pipeline/trigger-scrape` - Start Apify scraper (non-blocking, returns run_id)
+    - `GET /api/v1/admin/data-pipeline/scrape-status/{run_id}` - Check scraper progress
+    - `POST /api/v1/admin/data-pipeline/import-latest` - Import data from last successful scrape
+    - `GET /api/v1/admin/data-pipeline/status` - Get pipeline stats and configuration status
+*   **Auto-Detect Backend URL:** Scheduler now auto-detects BACKEND_URL from REPLIT_DOMAINS if not explicitly set
+*   **Production Setup:** All required secrets configured (APIFY_API_TOKEN, SERPAPI_KEY, CENSUS_API_KEY, MAPBOX_ACCESS_TOKEN)
+*   **How to Run Pipeline in Production:**
+    1. Login as admin on production site
+    2. Call `POST /api/v1/admin/data-pipeline/trigger-scrape` to start scraping
+    3. Wait 5-10 minutes, check status with `GET /api/v1/admin/data-pipeline/scrape-status/{run_id}`
+    4. When status is "SUCCEEDED", call `POST /api/v1/admin/data-pipeline/import-latest`
+*   **Separate Databases:** Development and production use separate databases - run pipeline on production URL for production data
+
 ## Future Features (To Circle Back)
 *   **Personal AI Knowledge Base (Brain Dashboard):** Transform the "My AI Co-founder" section (`/brain`) into a personal knowledge repository where users can upload their own data (resume, skills, industry experience, past business plans, preferences). This data would be used to personalize AI Co-Founder responses across all opportunities the user works on. Features to build: document upload/storage, knowledge processing/indexing, AI context injection, user preference settings, daily training questions.

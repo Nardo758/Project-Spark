@@ -4,11 +4,13 @@ Admin Router
 Administrative endpoints for managing users, content, and platform
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+import os
+import httpx
 
 from app.db.database import get_db
 from app.models.user import User
@@ -1476,28 +1478,18 @@ def get_marketing_stats(
     }
 
 
-@router.post("/data-pipeline/run")
-async def run_data_pipeline(
+@router.post("/data-pipeline/trigger-scrape")
+async def trigger_scrape_pipeline(
     admin_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
 ):
     """
-    Run the full data pipeline: Trigger scraper → Fetch latest data → Run AI analysis
-    Admin-only endpoint for production data collection.
+    Trigger the Apify scraper to start a new data collection run.
+    Returns immediately with run_id. Use /data-pipeline/status to check progress.
+    After scraper completes, call /data-pipeline/import-latest to import the data.
     """
-    import httpx
-    import os
-    import asyncio
-    
     apify_token = os.getenv("APIFY_API_TOKEN", "")
     if not apify_token:
         raise HTTPException(status_code=500, detail="APIFY_API_TOKEN not configured")
-    
-    results = {
-        "scraper": {"status": "pending"},
-        "import": {"status": "pending"},
-        "ai_analysis": {"status": "pending"}
-    }
     
     actor_id = "trudax/reddit-scraper-lite"
     run_url = f"https://api.apify.com/v2/acts/{actor_id}/runs?token={apify_token}"
@@ -1528,105 +1520,76 @@ async def run_data_pipeline(
         "time": "week"
     }
     
-    async with httpx.AsyncClient(timeout=600.0) as client:
+    async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.post(run_url, json=run_input)
         
         if response.status_code != 201:
-            results["scraper"] = {
-                "status": "failed",
-                "error": f"Failed to trigger scraper: {response.status_code}"
-            }
-            return results
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to trigger scraper: {response.status_code} - {response.text}"
+            )
         
         run_data = response.json().get("data", {})
-        run_id = run_data.get("id")
-        results["scraper"] = {"status": "started", "run_id": run_id}
-        
-        for _ in range(60):
-            await asyncio.sleep(10)
-            status_url = f"https://api.apify.com/v2/actor-runs/{run_id}?token={apify_token}"
-            status_resp = await client.get(status_url)
-            
-            if status_resp.status_code == 200:
-                run_info = status_resp.json().get("data", {})
-                scraper_status = run_info.get("status")
-                
-                if scraper_status == "SUCCEEDED":
-                    dataset_id = run_info.get("defaultDatasetId")
-                    results["scraper"]["status"] = "completed"
-                    results["scraper"]["dataset_id"] = dataset_id
-                    
-                    dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?token={apify_token}&format=json"
-                    data_resp = await client.get(dataset_url)
-                    
-                    if data_resp.status_code == 200:
-                        items = data_resp.json()
-                        results["import"]["total_items"] = len(items)
-                        
-                        from app.routers.webhook import extract_opportunity_from_post
-                        
-                        created = 0
-                        skipped = 0
-                        new_opp_ids = []
-                        
-                        for item in items:
-                            if item.get("dataType") != "post":
-                                continue
-                            
-                            source_id = item.get("id")
-                            existing = db.query(Opportunity).filter(Opportunity.source_id == source_id).first()
-                            if existing:
-                                skipped += 1
-                                continue
-                            
-                            opp_data = extract_opportunity_from_post(item)
-                            
-                            opportunity = Opportunity(
-                                title=opp_data["title"],
-                                description=opp_data["description"],
-                                category=opp_data["category"],
-                                subcategory=opp_data["subcategory"],
-                                severity=opp_data["severity"],
-                                validation_count=opp_data["validation_count"],
-                                growth_rate=opp_data["growth_rate"],
-                                geographic_scope=opp_data["geographic_scope"],
-                                source_id=source_id,
-                                source_platform="apify_reddit"
-                            )
-                            
-                            db.add(opportunity)
-                            db.flush()
-                            new_opp_ids.append(opportunity.id)
-                            created += 1
-                        
-                        db.commit()
-                        results["import"] = {
-                            "status": "completed",
-                            "created": created,
-                            "skipped": skipped,
-                            "new_opportunity_ids": new_opp_ids[:10]
-                        }
-                        
-                        results["ai_analysis"] = {
-                            "status": "queued",
-                            "opportunities_to_analyze": len(new_opp_ids),
-                            "message": "AI analysis will run in background"
-                        }
-                    else:
-                        results["import"]["status"] = "failed"
-                        results["import"]["error"] = "Failed to fetch dataset"
-                    
-                    break
-                    
-                elif scraper_status in ["FAILED", "ABORTED", "TIMED-OUT"]:
-                    results["scraper"]["status"] = "failed"
-                    results["scraper"]["error"] = f"Scraper ended with status: {scraper_status}"
-                    break
-        else:
-            results["scraper"]["status"] = "timeout"
-            results["scraper"]["error"] = "Scraper did not complete within 10 minutes"
+        return {
+            "status": "started",
+            "run_id": run_data.get("id"),
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "next_steps": [
+                "Wait 5-10 minutes for scraper to complete",
+                "Call GET /api/v1/admin/data-pipeline/scrape-status/{run_id} to check progress",
+                "Call POST /api/v1/admin/data-pipeline/import-latest to import results"
+            ]
+        }
+
+
+@router.get("/data-pipeline/scrape-status/{run_id}")
+async def get_scrape_status(
+    run_id: str,
+    admin_user: User = Depends(get_current_admin_user),
+):
+    """Check the status of an Apify scraper run"""
+    apify_token = os.getenv("APIFY_API_TOKEN", "")
+    if not apify_token:
+        raise HTTPException(status_code=500, detail="APIFY_API_TOKEN not configured")
     
-    return results
+    status_url = f"https://api.apify.com/v2/actor-runs/{run_id}?token={apify_token}"
+    
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(status_url)
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=404, detail="Run not found")
+        
+        run_info = response.json().get("data", {})
+        return {
+            "run_id": run_id,
+            "status": run_info.get("status"),
+            "dataset_id": run_info.get("defaultDatasetId"),
+            "started_at": run_info.get("startedAt"),
+            "finished_at": run_info.get("finishedAt"),
+        }
+
+
+@router.post("/data-pipeline/import-latest")
+async def import_latest_data(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Import the latest scraped data from Apify into the database.
+    Uses the existing webhook import logic for consistency.
+    """
+    from app.routers.webhook import fetch_latest_apify_data
+    
+    try:
+        result = await fetch_latest_apify_data(db=db)
+        return {
+            "status": "completed",
+            "result": result,
+            "message": "Import completed using existing pipeline"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
 
 
 @router.get("/data-pipeline/status")
@@ -1635,8 +1598,6 @@ def get_pipeline_status(
     db: Session = Depends(get_db)
 ):
     """Get current data pipeline status and recent import stats"""
-    from datetime import timezone
-    
     total_opportunities = db.query(Opportunity).count()
     
     last_24h = datetime.now(timezone.utc) - timedelta(hours=24)
