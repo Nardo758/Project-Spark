@@ -23,12 +23,14 @@ class ReportReason(str, enum.Enum):
     OTHER = "other"
 
 
-class ReportStatus(str, enum.Enum):
+class ModerationReportStatus(str, enum.Enum):
     """Status of a moderation report"""
     PENDING = "pending"
     REVIEWING = "reviewing"
     RESOLVED = "resolved"
     DISMISSED = "dismissed"
+
+ReportStatus = ModerationReportStatus
 
 
 class Report(Base):
@@ -48,7 +50,7 @@ class Report(Base):
     description = Column(Text, nullable=True)
 
     # Status
-    status = Column(Enum(ReportStatus), default=ReportStatus.PENDING, nullable=False)
+    status = Column(Enum(ModerationReportStatus, name='moderationreportstatus'), default=ModerationReportStatus.PENDING, nullable=False)
 
     # Moderation action
     moderator_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
