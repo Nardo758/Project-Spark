@@ -12,7 +12,20 @@ from datetime import datetime, timedelta
 
 APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN", "")
 APIFY_ACTOR_ID = "trudax/reddit-scraper-lite"
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
+def get_backend_url():
+    """Get the backend URL, auto-detecting from Replit environment if not set"""
+    backend_url = os.getenv("BACKEND_URL")
+    if backend_url:
+        return backend_url
+    
+    replit_domains = os.getenv("REPLIT_DOMAINS")
+    if replit_domains:
+        return f"https://{replit_domains.split(',')[0]}"
+    
+    return "http://localhost:8000"
+
+BACKEND_URL = get_backend_url()
 
 async def trigger_apify_scraper():
     """Trigger the Apify Reddit scraper to run"""
