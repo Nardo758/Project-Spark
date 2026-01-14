@@ -48,7 +48,7 @@ FRONTEND_PORT = get_frontend_port()
 # Global flag to track backend readiness
 backend_ready = False
 
-def wait_for_backend(timeout=60):
+def wait_for_backend(timeout=90):
     """Wait for backend to be ready by checking health endpoint"""
     global backend_ready
     start_time = time.time()
@@ -63,7 +63,7 @@ def wait_for_backend(timeout=60):
                     return True
         except Exception:
             pass
-        time.sleep(0.5)
+        time.sleep(1)
     
     print(f"[Server] Warning: Backend not responding after {timeout}s, continuing anyway...")
     backend_ready = True  # Allow requests to proceed, they'll get proper errors
@@ -290,14 +290,17 @@ if __name__ == '__main__':
     
     print("Waiting for backend to start...")
     
-    # Wait for backend to be ready in a separate thread so frontend can start
-    def wait_and_mark_ready():
-        wait_for_backend(timeout=30)
-    
-    wait_thread = threading.Thread(target=wait_and_mark_ready, daemon=True)
-    wait_thread.start()
-    
-    # Give backend a few seconds head start
-    time.sleep(5)
+    # In production, wait for backend to be fully ready before accepting requests
+    is_production = os.getenv("REPLIT_DEPLOYMENT") == "1"
+    if is_production:
+        # Block until backend is ready in production to avoid cold-start errors
+        wait_for_backend(timeout=90)
+    else:
+        # In development, wait in background thread for faster startup
+        def wait_and_mark_ready():
+            wait_for_backend(timeout=30)
+        wait_thread = threading.Thread(target=wait_and_mark_ready, daemon=True)
+        wait_thread.start()
+        time.sleep(5)
     
     run_frontend()
