@@ -26,6 +26,7 @@ import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import BrainDashboard from './pages/brain/BrainDashboard'
 import AuthCallback from './pages/AuthCallback'
+import OAuthCallback from './pages/OAuthCallback'
 import MagicLinkCallback from './pages/MagicLinkCallback'
 import Saved from './pages/Saved'
 import OpportunityDetail from './pages/OpportunityDetail'
@@ -147,6 +148,7 @@ function App() {
         <Route path="network/lender" element={<Network />} />
         <Route path="join-network/:role" element={<JoinNetwork />} />
         <Route path="auth/callback" element={<AuthCallback />} />
+        <Route path="auth/oauth-callback" element={<OAuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="admin/marketing" element={<AdminMarketing />} />
         <Route path="*" element={<Navigate to="/" replace />} />

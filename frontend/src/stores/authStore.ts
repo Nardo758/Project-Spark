@@ -22,6 +22,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string) => Promise<void>
   startReplitAuth: (next?: string) => void
+  startGoogleAuth: (next?: string) => Promise<void>
   consumeReplitAuthCookies: () => boolean
   sendMagicLink: (email: string) => Promise<string>
   verifyMagicLink: (token: string) => Promise<void>
@@ -232,6 +233,23 @@ export const useAuthStore = create<AuthState>()(
         const dest = next || '/dashboard'
         const redirectUrl = `/auth/callback?next=${encodeURIComponent(dest)}`
         window.location.href = `/auth/login?redirect_url=${encodeURIComponent(redirectUrl)}`
+      },
+
+      startGoogleAuth: async (next?: string) => {
+        const dest = next || '/dashboard'
+        const callbackUrl = `${window.location.origin}/auth/oauth-callback?next=${encodeURIComponent(dest)}`
+        try {
+          const res = await fetch(`/api/v1/oauth/google/login?redirect_uri=${encodeURIComponent(callbackUrl)}`)
+          const data = await res.json()
+          if (data.authorization_url) {
+            window.location.href = data.authorization_url
+          } else {
+            throw new Error('Failed to get authorization URL')
+          }
+        } catch (error) {
+          console.error('Google auth error:', error)
+          throw error
+        }
       },
 
       consumeReplitAuthCookies: () => {

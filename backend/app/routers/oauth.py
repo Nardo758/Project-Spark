@@ -32,12 +32,22 @@ def add_query_params(url: str, params: dict) -> str:
 
 def get_base_url(request: Request) -> str:
     """Get the base URL from the request, handling proxies and production"""
+    # Priority 1: Use FRONTEND_URL if set (supports custom domains like oppgrid.com)
+    frontend_url = os.getenv("FRONTEND_URL")
+    if frontend_url:
+        base = frontend_url.strip().rstrip("/")
+        if not (base.startswith("http://") or base.startswith("https://")):
+            base = f"https://{base}"
+        return base
+    
+    # Priority 2: Check forwarded headers
     forwarded_proto = request.headers.get("x-forwarded-proto", "https")
     forwarded_host = request.headers.get("x-forwarded-host")
     
     if forwarded_host:
         return f"{forwarded_proto}://{forwarded_host}"
     
+    # Priority 3: Fall back to REPLIT_DOMAINS
     replit_domains = os.getenv("REPLIT_DOMAINS")
     if replit_domains:
         domain = replit_domains.split(",")[0]
