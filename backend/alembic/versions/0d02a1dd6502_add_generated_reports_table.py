@@ -58,5 +58,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_generated_reports_id'), table_name='generated_reports')
     op.drop_index(op.f('ix_generated_reports_created_at'), table_name='generated_reports')
     op.drop_table('generated_reports')
-    op.execute("DROP TYPE IF EXISTS reporttype")
-    op.execute("DROP TYPE IF EXISTS reportstatus")
+    # NOTE:
+    # These enum types may be shared with other tables in long-lived environments
+    # (e.g., legacy moderation reports). Dropping them can fail with:
+    # "cannot drop type ... because other objects depend on it".
+    #
+    # We intentionally do NOT drop enum types in downgrade for safety.
