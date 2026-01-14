@@ -4,7 +4,7 @@ import logging
 from urllib.parse import urlencode
 from datetime import datetime, timedelta, timezone
 import httpx
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -29,10 +29,38 @@ oauth_states: dict[str, dict] = {}
 auth_codes: dict[str, dict] = {}
 
 
-def get_redirect_uri():
-    domain = os.environ.get("REPLIT_DEV_DOMAIN", "localhost:8000")
-    protocol = "https" if "replit" in domain else "http"
-    return f"{protocol}://{domain}/api/v1/auth/linkedin/callback"
+def get_public_base_url(request: Request) -> str:
+    """
+    Best-effort public base URL for redirects.
+    Prefer FRONTEND_URL (custom domains), then forwarded headers, then Host, then REPLIT_DOMAINS.
+    """
+    frontend_url = os.environ.get("FRONTEND_URL", "")
+    if frontend_url:
+        base = frontend_url.strip().rstrip("/")
+        if not (base.startswith("http://") or base.startswith("https://")):
+            base = f"https://{base}"
+        return base
+
+    forwarded_proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+    forwarded_host = request.headers.get("x-forwarded-host")
+    if forwarded_host:
+        return f"{forwarded_proto}://{forwarded_host}"
+
+    host = request.headers.get("host")
+    if host:
+        return f"{forwarded_proto}://{host}"
+
+    replit_domains = os.environ.get("REPLIT_DOMAINS", "")
+    if replit_domains:
+        primary = replit_domains.split(",")[0].strip()
+        return f"https://{primary}"
+
+    return "http://localhost:5000"
+
+
+def get_redirect_uri(request: Request) -> str:
+    base = get_public_base_url(request)
+    return f"{base}/api/v1/auth/linkedin/callback"
 
 
 def cleanup_expired_states():
@@ -49,6 +77,7 @@ def cleanup_expired_states():
 
 @router.get("/login")
 async def linkedin_login(
+    request: Request,
     role: str = Query(..., description="Role to join: expert, investor, partner, lender")
 ):
     if not LINKEDIN_CLIENT_ID:
@@ -66,7 +95,7 @@ async def linkedin_login(
     params = {
         "response_type": "code",
         "client_id": LINKEDIN_CLIENT_ID,
-        "redirect_uri": get_redirect_uri(),
+        "redirect_uri": get_redirect_uri(request),
         "state": state,
         "scope": "openid profile email"
     }
@@ -77,15 +106,14 @@ async def linkedin_login(
 
 @router.get("/callback")
 async def linkedin_callback(
+    request: Request,
     code: str = Query(None),
     state: str = Query(None),
     error: str = Query(None),
     error_description: str = Query(None),
     db: Session = Depends(get_db)
 ):
-    frontend_domain = os.environ.get("REPLIT_DEV_DOMAIN", "localhost:5000")
-    frontend_protocol = "https" if "replit" in frontend_domain else "http"
-    frontend_base = f"{frontend_protocol}://{frontend_domain}"
+    frontend_base = get_public_base_url(request)
     
     if error:
         return RedirectResponse(
@@ -116,7 +144,7 @@ async def linkedin_callback(
             data={
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": get_redirect_uri(),
+                "redirect_uri": get_redirect_uri(request),
                 "client_id": LINKEDIN_CLIENT_ID,
                 "client_secret": LINKEDIN_CLIENT_SECRET
             },

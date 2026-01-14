@@ -4,6 +4,7 @@ OAuth Authentication Router
 Endpoints for OAuth login with Google and GitHub
 """
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -21,6 +22,7 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 def add_query_params(url: str, params: dict) -> str:
     """Safely add/replace query params on a URL."""
@@ -41,11 +43,16 @@ def get_base_url(request: Request) -> str:
         return base
     
     # Priority 2: Check forwarded headers
-    forwarded_proto = request.headers.get("x-forwarded-proto", "https")
+    forwarded_proto = request.headers.get("x-forwarded-proto") or request.url.scheme
     forwarded_host = request.headers.get("x-forwarded-host")
     
     if forwarded_host:
         return f"{forwarded_proto}://{forwarded_host}"
+
+    # Priority 2.5: Fall back to Host header (works for local dev and many proxies)
+    host = request.headers.get("host")
+    if host:
+        return f"{forwarded_proto}://{host}"
     
     # Priority 3: Fall back to REPLIT_DOMAINS
     replit_domains = os.getenv("REPLIT_DOMAINS")
@@ -103,11 +110,15 @@ async def oauth_login(
     backend_callback = f"{base_url}/api/v1/oauth/{provider}/callback"
 
     # Get authorization URL
-    auth_url = oauth_service.get_authorization_url(
-        provider=provider,
-        redirect_uri=backend_callback,
-        state=state
-    )
+    try:
+        auth_url = oauth_service.get_authorization_url(
+            provider=provider,
+            redirect_uri=backend_callback,
+            state=state
+        )
+    except ValueError as e:
+        # Usually missing client_id / misconfigured environment
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
     return {"authorization_url": auth_url}
 
@@ -142,11 +153,15 @@ async def oauth_callback(
     backend_callback = f"{base_url}/api/v1/oauth/{provider}/callback"
 
     # Complete OAuth flow
-    user_info = await oauth_service.complete_oauth_flow(
-        provider=provider,
-        code=code,
-        redirect_uri=backend_callback
-    )
+    try:
+        user_info = await oauth_service.complete_oauth_flow(
+            provider=provider,
+            code=code,
+            redirect_uri=backend_callback
+        )
+    except Exception as e:
+        logger.exception("OAuth callback failure for provider=%s", provider)
+        user_info = None
 
     if not user_info or not user_info.get("email"):
         # Redirect to frontend with error

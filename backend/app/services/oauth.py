@@ -32,6 +32,8 @@ class OAuthService:
             Authorization URL to redirect user to
         """
         config = get_oauth_config(provider, redirect_uri)
+        if not config.get("client_id"):
+            raise ValueError(f"{provider} OAuth not configured (missing client_id)")
 
         params = {
             "client_id": config["client_id"],
@@ -65,6 +67,8 @@ class OAuthService:
             Access token or None if exchange fails
         """
         config = get_oauth_config(provider, redirect_uri)
+        if not config.get("client_id") or not config.get("client_secret"):
+            raise ValueError(f"{provider} OAuth not configured (missing client_id/client_secret)")
 
         data = {
             "client_id": config["client_id"],
@@ -74,7 +78,7 @@ class OAuthService:
             "grant_type": "authorization_code",
         }
 
-        headers = {"Accept": "application/json"}
+        headers = {"Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded"}
 
         async with httpx.AsyncClient() as client:
             try:
@@ -88,7 +92,13 @@ class OAuthService:
                 token_data = response.json()
                 return token_data.get("access_token")
             except Exception as e:
-                print(f"Token exchange error for {provider}: {e}")
+                # Best-effort logging without leaking secrets.
+                try:
+                    status = response.status_code  # type: ignore[name-defined]
+                    body = response.text  # type: ignore[name-defined]
+                    print(f"Token exchange error for {provider}: HTTP {status} {body}")
+                except Exception:
+                    print(f"Token exchange error for {provider}: {e}")
                 return None
 
     @staticmethod
@@ -126,7 +136,12 @@ class OAuthService:
                 # Normalize user data across providers
                 return OAuthService._normalize_user_data(provider, user_data)
             except Exception as e:
-                print(f"User info fetch error for {provider}: {e}")
+                try:
+                    status = response.status_code  # type: ignore[name-defined]
+                    body = response.text  # type: ignore[name-defined]
+                    print(f"User info fetch error for {provider}: HTTP {status} {body}")
+                except Exception:
+                    print(f"User info fetch error for {provider}: {e}")
                 return None
 
     @staticmethod
