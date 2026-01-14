@@ -72,13 +72,15 @@ def get_callback_url() -> str:
     """Get the callback URL for OAuth"""
     callback_path = "/__repl_auth_callback"
     
+    # Priority 1: Use FRONTEND_URL if set (supports custom domains like oppgrid.com)
     frontend_url = os.environ.get('FRONTEND_URL', '')
-    if frontend_url and '.repl.co' in frontend_url:
+    if frontend_url:
         base = frontend_url.strip().rstrip("/")
         if not (base.startswith("http://") or base.startswith("https://")):
             base = f"https://{base}"
         return f"{base}{callback_path}"
     
+    # Priority 2: Fall back to REPLIT_DOMAINS for development
     replit_domains = os.environ.get('REPLIT_DOMAINS', '')
     if replit_domains:
         primary_domain = replit_domains.split(',')[0].strip()
