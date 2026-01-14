@@ -200,6 +200,15 @@ class OAuthService:
                 "avatar_url": raw_data.get("avatar_url"),
                 "email_verified": True,  # GitHub emails are always verified
             }
+        elif provider == "linkedin":
+            return {
+                "provider": "linkedin",
+                "provider_user_id": raw_data.get("sub"),
+                "email": raw_data.get("email"),
+                "name": raw_data.get("name"),
+                "avatar_url": raw_data.get("picture"),
+                "email_verified": raw_data.get("email_verified", False),
+            }
         else:
             return {}
 

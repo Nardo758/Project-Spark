@@ -24,6 +24,15 @@ OAUTH_PROVIDERS = {
         "userinfo_url": "https://api.github.com/user",
         "scopes": ["user:email"],
         "redirect_uri": None,  # Will be set dynamically
+    },
+    "linkedin": {
+        "client_id": os.getenv("LINKEDIN_CLIENT_ID"),
+        "client_secret": os.getenv("LINKEDIN_CLIENT_SECRET"),
+        "authorize_url": "https://www.linkedin.com/oauth/v2/authorization",
+        "access_token_url": "https://www.linkedin.com/oauth/v2/accessToken",
+        "userinfo_url": "https://api.linkedin.com/v2/userinfo",
+        "scopes": ["openid", "profile", "email"],
+        "redirect_uri": None,  # Will be set dynamically
     }
 }
 

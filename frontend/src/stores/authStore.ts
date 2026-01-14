@@ -23,6 +23,7 @@ interface AuthState {
   signup: (email: string, password: string, name: string) => Promise<void>
   startReplitAuth: (next?: string) => void
   startGoogleAuth: (next?: string) => Promise<void>
+  startLinkedInAuth: (next?: string) => Promise<void>
   consumeReplitAuthCookies: () => boolean
   sendMagicLink: (email: string) => Promise<string>
   verifyMagicLink: (token: string) => Promise<void>
@@ -248,6 +249,23 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           console.error('Google auth error:', error)
+          throw error
+        }
+      },
+
+      startLinkedInAuth: async (next?: string) => {
+        const dest = next || '/dashboard'
+        const callbackUrl = `${window.location.origin}/auth/oauth-callback?next=${encodeURIComponent(dest)}`
+        try {
+          const res = await fetch(`/api/v1/oauth/linkedin/login?redirect_uri=${encodeURIComponent(callbackUrl)}`)
+          const data = await res.json()
+          if (data.authorization_url) {
+            window.location.href = data.authorization_url
+          } else {
+            throw new Error('Failed to get authorization URL')
+          }
+        } catch (error) {
+          console.error('LinkedIn auth error:', error)
           throw error
         }
       },

@@ -89,7 +89,7 @@ async def oauth_login(
         provider: OAuth provider ('google' or 'github')
         redirect_uri: Frontend URL to redirect after authentication
     """
-    if provider not in ["google", "github"]:
+    if provider not in ["google", "github", "linkedin"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported OAuth provider"
@@ -207,7 +207,7 @@ async def connect_oauth_account(
 
     This allows users to link their Google/GitHub account to their existing account
     """
-    if provider not in ["google", "github"]:
+    if provider not in ["google", "github", "linkedin"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported OAuth provider"
