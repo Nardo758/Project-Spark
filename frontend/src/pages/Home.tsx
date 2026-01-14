@@ -78,7 +78,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-6 hover:bg-emerald-200 transition-colors"
               >
                 <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                {loading ? '...' : `${stats?.validated_ideas || 176}+ Validated Opportunities`}
+                {loading ? '...' : `${stats?.validated_ideas ?? 323}+ Validated Opportunities`}
               </Link>
 
               {/* Headline */}
@@ -127,25 +127,25 @@ export default function Home() {
               <div className="flex gap-10 -mt-4">
                 <div>
                   <div className="text-2xl font-bold text-emerald-500">
-                    {loading ? '...' : stats?.validated_ideas || 176}
+                    {loading ? '...' : stats?.validated_ideas ?? 323}
                   </div>
                   <div className="text-xs text-gray-500">Validated Ideas</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900">
-                    {loading ? '...' : stats?.total_market_opportunity || '$463B+'}
+                    {loading ? '...' : stats?.total_market_opportunity ?? '$3.9T+'}
                   </div>
                   <div className="text-xs text-gray-500">Market Opportunity</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900">
-                    {loading ? '...' : stats?.global_markets || 5}
+                    {loading ? '...' : stats?.global_markets ?? 18}
                   </div>
                   <div className="text-xs text-gray-500">Global Markets</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-emerald-500">
-                    {loading ? '...' : stats?.reports_generated || 50}
+                    {loading ? '...' : stats?.reports_generated ?? 50}
                   </div>
                   <div className="text-xs text-gray-500">Reports Generated</div>
                 </div>
