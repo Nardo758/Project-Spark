@@ -11,7 +11,11 @@ import {
   Calendar,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Target,
+  Globe,
+  FileText,
+  DollarSign
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { Navigate } from 'react-router-dom'
@@ -37,6 +41,13 @@ type MarketingStats = {
   verification_rate: number
 }
 
+type PlatformStats = {
+  validated_ideas: number
+  total_market_opportunity: string
+  global_markets: number
+  reports_generated: number
+}
+
 export default function AdminMarketing() {
   const { token, user, isAuthenticated } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState('')
@@ -59,6 +70,15 @@ export default function AdminMarketing() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to load stats')
+      return res.json()
+    },
+  })
+
+  const platformStatsQuery = useQuery({
+    queryKey: ['platform-stats'],
+    queryFn: async (): Promise<PlatformStats> => {
+      const res = await fetch('/api/v1/opportunities/stats/platform')
+      if (!res.ok) throw new Error('Failed to load platform stats')
       return res.json()
     },
   })
@@ -141,6 +161,7 @@ export default function AdminMarketing() {
   }
 
   const stats = statsQuery.data
+  const platformStats = platformStatsQuery.data
   const users = usersQuery.data?.users || []
 
   return (
@@ -207,6 +228,60 @@ export default function AdminMarketing() {
               <div>
                 <p className="text-sm text-gray-500">New (30 days)</p>
                 <p className="text-2xl font-bold text-gray-900">{stats?.new_users_30d || 0}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Platform Stats Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Platform Stats</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-emerald-100 rounded-lg">
+                  <Target className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Validated Opportunities</p>
+                  <p className="text-2xl font-bold text-gray-900">{platformStats?.validated_ideas ?? 0}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-indigo-100 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Market Opportunity</p>
+                  <p className="text-2xl font-bold text-gray-900">{platformStats?.total_market_opportunity ?? '$0'}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-cyan-100 rounded-lg">
+                  <Globe className="w-6 h-6 text-cyan-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Global Markets</p>
+                  <p className="text-2xl font-bold text-gray-900">{platformStats?.global_markets ?? 0}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-rose-100 rounded-lg">
+                  <FileText className="w-6 h-6 text-rose-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Reports Generated</p>
+                  <p className="text-2xl font-bold text-gray-900">{platformStats?.reports_generated ?? 0}</p>
+                </div>
               </div>
             </div>
           </div>
