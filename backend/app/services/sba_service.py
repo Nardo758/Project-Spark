@@ -139,6 +139,77 @@ class SBAService:
     async def get_lender_match_url(self) -> str:
         return SBA_LENDER_MATCH_URL
 
+    async def get_top_sba_lenders(self) -> List[Dict]:
+        return TOP_SBA_LENDERS
+
+
+TOP_SBA_LENDERS = [
+    {
+        "id": "1",
+        "name": "Wells Fargo",
+        "description": "One of the largest SBA lenders in the nation, offering 7(a) and 504 loans.",
+        "loan_types": ["7(a) Loans", "504 Loans", "SBA Express"],
+        "website": "https://www.wellsfargo.com/biz/loans-and-lines/sba-loans",
+        "national": True
+    },
+    {
+        "id": "2", 
+        "name": "JPMorgan Chase",
+        "description": "Major national bank with comprehensive SBA lending programs for small businesses.",
+        "loan_types": ["7(a) Loans", "SBA Express"],
+        "website": "https://www.chase.com/business/loans/sba-loans",
+        "national": True
+    },
+    {
+        "id": "3",
+        "name": "U.S. Bank",
+        "description": "Offers SBA loans including 7(a), CDC/504, and Express programs nationwide.",
+        "loan_types": ["7(a) Loans", "504 Loans", "SBA Express"],
+        "website": "https://www.usbank.com/business-banking/business-loans/sba-loans.html",
+        "national": True
+    },
+    {
+        "id": "4",
+        "name": "Bank of America",
+        "description": "Provides SBA 7(a) loans for working capital, equipment, and real estate.",
+        "loan_types": ["7(a) Loans"],
+        "website": "https://www.bankofamerica.com/smallbusiness/business-financing/sba-loans/",
+        "national": True
+    },
+    {
+        "id": "5",
+        "name": "Live Oak Bank",
+        "description": "Top SBA 7(a) lender specializing in small business lending across industries.",
+        "loan_types": ["7(a) Loans", "USDA Loans"],
+        "website": "https://www.liveoakbank.com/",
+        "national": True
+    },
+    {
+        "id": "6",
+        "name": "Celtic Bank",
+        "description": "National SBA lender focused on small business financing with fast processing.",
+        "loan_types": ["7(a) Loans", "SBA Express"],
+        "website": "https://www.celticbank.com/",
+        "national": True
+    },
+    {
+        "id": "7",
+        "name": "Byline Bank",
+        "description": "One of the top SBA lenders, offering various SBA loan programs.",
+        "loan_types": ["7(a) Loans", "504 Loans"],
+        "website": "https://www.bylinebank.com/business/sba-loans/",
+        "national": True
+    },
+    {
+        "id": "8",
+        "name": "Huntington National Bank",
+        "description": "Leading SBA lender with strong presence in the Midwest and beyond.",
+        "loan_types": ["7(a) Loans", "504 Loans", "SBA Express"],
+        "website": "https://www.huntington.com/business/loans-and-lines-of-credit/sba-loans",
+        "national": True
+    }
+]
+
 
 US_STATES = [
     {"code": "AL", "name": "Alabama"},

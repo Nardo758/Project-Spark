@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { 
   DollarSign, Building2, Users, Landmark, Gift, FileText,
   ExternalLink, ChevronRight, Search, Filter, Sparkles,
-  GraduationCap, Loader2, BookOpen, CheckCircle, Clock
+  GraduationCap, Loader2, BookOpen, CheckCircle, Clock,
+  MapPin, Globe
 } from 'lucide-react'
 
 const fundingSources = [
@@ -98,10 +99,11 @@ interface SBACourse {
   image?: { url: string; alt: string }
 }
 
+
 export default function Funding() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedType, setSelectedType] = useState('All')
-  const [activeTab, setActiveTab] = useState<'overview' | 'programs' | 'courses'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'programs' | 'courses' | 'lenders'>('overview')
 
   const { data: loanPrograms = [], isLoading: loadingPrograms } = useQuery({
     queryKey: ['sba-loan-programs'],
@@ -121,6 +123,16 @@ export default function Funding() {
       return res.json()
     },
     enabled: activeTab === 'courses'
+  })
+
+  const { data: topLenders = [], isLoading: loadingLenders } = useQuery({
+    queryKey: ['sba-top-lenders'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/sba/top-lenders')
+      if (!res.ok) throw new Error('Failed to fetch lenders')
+      return res.json()
+    },
+    enabled: activeTab === 'lenders'
   })
 
   const filteredSources = fundingSources.filter(source => {
@@ -171,6 +183,17 @@ export default function Funding() {
         >
           <GraduationCap className="w-4 h-4 inline-block mr-2" />
           Financing Courses
+        </button>
+        <button
+          onClick={() => setActiveTab('lenders')}
+          className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
+            activeTab === 'lenders'
+              ? 'border-green-600 text-green-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <MapPin className="w-4 h-4 inline-block mr-2" />
+          Find Lenders
         </button>
       </div>
 
@@ -470,6 +493,112 @@ export default function Funding() {
                 </div>
               ))}
             </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'lenders' && (
+        <>
+          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-2xl p-6 mb-6 border border-teal-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-semibold text-gray-900 mb-1">Find SBA-Approved Lenders</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Connect with SBA-approved lenders who can help you apply for 7(a), 504, and Microloan programs. Use the SBA's official Lender Match tool to find lenders near you.
+                </p>
+                <a
+                  href="https://www.sba.gov/funding-programs/loans/lender-match"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors"
+                >
+                  <Search className="w-4 h-4" />
+                  Find Lenders Near You
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Top SBA Lenders</h3>
+            <p className="text-sm text-gray-500">Major national banks and lenders with active SBA lending programs</p>
+          </div>
+
+          {loadingLenders ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+              <span className="ml-3 text-gray-600">Loading lenders...</span>
+            </div>
+          ) : (
+            <>
+              <div className="grid md:grid-cols-2 gap-4">
+                {topLenders.map((lender: { id: string; name: string; description: string; loan_types: string[]; website: string; national: boolean }) => (
+                  <div key={lender.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-teal-300 hover:shadow-md transition-all">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-5 h-5 text-teal-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900">{lender.name}</h3>
+                        {lender.national && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                            Nationwide
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600 mb-3">{lender.description}</p>
+
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {lender.loan_types.map((type, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full">
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+
+                    <a
+                      href={lender.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 hover:text-teal-700"
+                    >
+                      <Globe className="w-4 h-4" />
+                      Visit SBA Loan Page
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Landmark className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Looking for local lenders?</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      The SBA's Lender Match tool connects you with SBA-approved lenders in your area who are interested in working with businesses like yours.
+                    </p>
+                    <a
+                      href="https://www.sba.gov/funding-programs/loans/lender-match"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-sm"
+                    >
+                      Get Matched with Local Lenders
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </>
       )}

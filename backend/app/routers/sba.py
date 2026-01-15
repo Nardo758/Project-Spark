@@ -36,3 +36,8 @@ async def get_states() -> List[Dict]:
 @router.get("/loan-categories")
 async def get_loan_categories() -> List[str]:
     return LOAN_CATEGORIES
+
+
+@router.get("/top-lenders")
+async def get_top_lenders() -> List[Dict]:
+    return await sba_service.get_top_sba_lenders()
