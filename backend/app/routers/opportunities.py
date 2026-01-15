@@ -23,7 +23,8 @@ def get_categories(db: Session = Depends(get_db)):
     """Get all distinct categories from opportunities"""
     categories = db.query(Opportunity.category).filter(
         Opportunity.category.isnot(None),
-        Opportunity.status == "active"
+        Opportunity.status == "active",
+        Opportunity.moderation_status == 'approved'
     ).distinct().order_by(Opportunity.category).all()
     return [c[0] for c in categories if c[0]]
 
@@ -118,7 +119,10 @@ async def get_opportunity(
     """Get a single opportunity by ID with gated content based on subscription and time-decay access"""
     from app.models.subscription import SubscriptionTier
     
-    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    opportunity = db.query(Opportunity).filter(
+        Opportunity.id == opportunity_id,
+        Opportunity.moderation_status == 'approved'
+    ).first()
 
     if not opportunity:
         raise HTTPException(
@@ -313,6 +317,7 @@ def search_opportunities(
     """Search opportunities by title or description"""
     search_term = f"%{q}%"
     query = db.query(Opportunity).filter(
+        Opportunity.moderation_status == 'approved',
         (Opportunity.title.ilike(search_term)) |
         (Opportunity.description.ilike(search_term))
     )
@@ -333,13 +338,15 @@ def get_platform_stats(db: Session = Depends(get_db)):
     """Get platform statistics for the landing page"""
     validated_count = db.query(Opportunity).filter(
         Opportunity.status == "active",
+        Opportunity.moderation_status == 'approved',
         Opportunity.ai_analyzed == True
     ).count()
     
     import re
     total_market_value = 0
     opportunities_with_market = db.query(Opportunity).filter(
-        Opportunity.ai_market_size_estimate.isnot(None)
+        Opportunity.ai_market_size_estimate.isnot(None),
+        Opportunity.moderation_status == 'approved'
     ).all()
     
     for opp in opportunities_with_market:
@@ -353,10 +360,13 @@ def get_platform_stats(db: Session = Depends(get_db)):
     
     unique_countries = db.query(func.count(func.distinct(Opportunity.country))).filter(
         Opportunity.country.isnot(None),
-        Opportunity.country != ""
+        Opportunity.country != "",
+        Opportunity.moderation_status == 'approved'
     ).scalar() or 0
     
-    unique_scopes = db.query(func.count(func.distinct(Opportunity.geographic_scope))).scalar() or 0
+    unique_scopes = db.query(func.count(func.distinct(Opportunity.geographic_scope))).filter(
+        Opportunity.moderation_status == 'approved'
+    ).scalar() or 0
     markets = max(unique_countries, unique_scopes, 1)
     
     from app.models.generated_report import GeneratedReport
@@ -381,6 +391,7 @@ def get_featured_opportunity(db: Session = Depends(get_db)):
     """Get the top featured opportunity for the landing page"""
     opportunity = db.query(Opportunity).filter(
         Opportunity.status == "active",
+        Opportunity.moderation_status == 'approved',
         Opportunity.ai_analyzed == True,
         Opportunity.ai_opportunity_score.isnot(None)
     ).order_by(
@@ -390,7 +401,8 @@ def get_featured_opportunity(db: Session = Depends(get_db)):
     
     if not opportunity:
         opportunity = db.query(Opportunity).filter(
-            Opportunity.status == "active"
+            Opportunity.status == "active",
+            Opportunity.moderation_status == 'approved'
         ).order_by(desc(Opportunity.created_at)).first()
     
     if not opportunity:
@@ -419,7 +431,10 @@ async def get_batch_access_info(
     
     result = {}
     for opp_id in opportunity_ids[:50]:  # Limit to 50 at a time
-        opportunity = db.query(Opportunity).filter(Opportunity.id == opp_id).first()
+        opportunity = db.query(Opportunity).filter(
+            Opportunity.id == opp_id,
+            Opportunity.moderation_status == 'approved'
+        ).first()
         if not opportunity:
             continue
         
