@@ -141,6 +141,68 @@ def check_workspace(
     )
 
 
+@router.post("/get-or-create/{opportunity_id}", response_model=WorkspaceSchema, status_code=status.HTTP_200_OK)
+def get_or_create_workspace(
+    opportunity_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get existing workspace or create a new one for an opportunity"""
+    existing = db.query(UserWorkspace).filter(
+        UserWorkspace.user_id == current_user.id,
+        UserWorkspace.opportunity_id == opportunity_id
+    ).options(
+        joinedload(UserWorkspace.opportunity),
+        joinedload(UserWorkspace.notes),
+        joinedload(UserWorkspace.tasks),
+        joinedload(UserWorkspace.documents)
+    ).first()
+    
+    if existing:
+        return existing
+    
+    opportunity = db.query(Opportunity).filter(
+        Opportunity.id == opportunity_id
+    ).first()
+    
+    if not opportunity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Opportunity not found"
+        )
+    
+    new_workspace = UserWorkspace(
+        user_id=current_user.id,
+        opportunity_id=opportunity_id,
+        custom_title=opportunity.title,
+        status=WorkspaceStatus.RESEARCHING
+    )
+    
+    default_tasks = [
+        WorkspaceTask(title="Review opportunity details", priority=TaskPriority.HIGH, sort_order=0),
+        WorkspaceTask(title="Validate market demand", priority=TaskPriority.HIGH, sort_order=1),
+        WorkspaceTask(title="Analyze competition", priority=TaskPriority.MEDIUM, sort_order=2),
+        WorkspaceTask(title="Identify target audience", priority=TaskPriority.MEDIUM, sort_order=3),
+        WorkspaceTask(title="Create business model", priority=TaskPriority.MEDIUM, sort_order=4),
+        WorkspaceTask(title="Connect with an expert", priority=TaskPriority.LOW, sort_order=5),
+    ]
+    new_workspace.tasks = default_tasks
+    
+    watchlist_item = db.query(WatchlistItem).filter(
+        WatchlistItem.user_id == current_user.id,
+        WatchlistItem.opportunity_id == opportunity_id
+    ).first()
+    if watchlist_item:
+        watchlist_item.lifecycle_state = LifecycleState.ANALYZING
+        watchlist_item.state_changed_at = func.now()
+    
+    db.add(new_workspace)
+    db.commit()
+    db.refresh(new_workspace)
+    
+    return new_workspace
+
+
 @router.get("/{workspace_id}", response_model=WorkspaceSchema)
 def get_workspace(
     workspace_id: int,

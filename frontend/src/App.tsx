@@ -40,6 +40,7 @@ import Projects from './pages/Projects'
 import MyWorkspaces from './pages/MyWorkspaces'
 import WorkspacePage from './pages/Workspace'
 import OpportunityHub from './pages/OpportunityHub'
+import WorkHub from './pages/WorkHub'
 import AdminMarketing from './pages/AdminMarketing'
 import AdminExperts from './pages/AdminExperts'
 
@@ -58,6 +59,14 @@ function App() {
         <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route
           path="opportunity/:id/hub"
+          element={
+            <RequireAuth>
+              <WorkHub />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="opportunity/:id/hub-legacy"
           element={
             <RequireAuth>
               <OpportunityHub />

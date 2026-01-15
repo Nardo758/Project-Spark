@@ -15,8 +15,10 @@ from app.models.opportunity import Opportunity
 from app.core.dependencies import get_current_user
 from app.services.ai_cofounder import (
     chat_with_cofounder,
+    chat_with_cofounder_enhanced,
     get_tool_recommendations,
     get_business_formation_guide,
+    web_search,
     TOOL_RECOMMENDATIONS,
     BUSINESS_FORMATION_GUIDE
 )
@@ -26,6 +28,7 @@ router = APIRouter(prefix="/ai-cofounder", tags=["AI Co-Founder"])
 
 class ChatRequest(BaseModel):
     message: str
+    stage: Optional[str] = None
 
     @property
     def sanitized_message(self) -> str:
@@ -105,6 +108,14 @@ async def chat_with_ai_cofounder(
         for msg in existing_messages
     ]
     
+    valid_stages = ['researching', 'validating', 'planning', 'building', 'launched', 'paused', 'archived']
+    current_stage = workspace.status.value if workspace.status else "researching"
+    
+    if request.stage and request.stage in valid_stages and request.stage != current_stage:
+        from app.models.workspace import WorkspaceStatus
+        workspace.status = WorkspaceStatus(request.stage)
+        current_stage = request.stage
+    
     opportunity_dict = {
         "title": opportunity.title,
         "description": opportunity.description,
@@ -116,18 +127,20 @@ async def chat_with_ai_cofounder(
     }
     
     workspace_dict = {
-        "status": workspace.status.value if workspace.status else "researching",
+        "status": current_stage,
         "progress_percent": workspace.progress_percent or 0,
     }
     
     try:
-        ai_response = await chat_with_cofounder(
+        result = await chat_with_cofounder_enhanced(
             message=message,
-            stage=workspace_dict["status"],
+            stage=current_stage,
             opportunity=opportunity_dict,
             workspace=workspace_dict,
-            chat_history=chat_history
+            chat_history=chat_history,
+            enable_web_search=True
         )
+        ai_response = result["response"]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
     
@@ -255,3 +268,25 @@ async def get_business_formation_by_type(entity_type: str):
             detail=f"Invalid entity type. Valid options: {', '.join(valid_types)}"
         )
     return get_business_formation_guide(entity_type)
+
+
+class WebSearchRequest(BaseModel):
+    query: str
+    num_results: int = 5
+
+
+@router.post("/web-search")
+async def perform_web_search(
+    request: WebSearchRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Perform a web search and return results."""
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+    
+    results = web_search(request.query.strip(), request.num_results)
+    
+    if results.get("error"):
+        raise HTTPException(status_code=503, detail=results["error"])
+    
+    return results

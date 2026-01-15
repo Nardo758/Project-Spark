@@ -5,10 +5,14 @@ Uses Replit's AI Integrations for Anthropic-compatible API access.
 """
 
 import os
+import re
 from anthropic import Anthropic
+from app.services.serpapi_service import SerpAPIService
 
 AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
 AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
+
+serpapi_service = SerpAPIService()
 
 client = Anthropic(
     api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
@@ -287,3 +291,117 @@ def get_business_formation_guide(entity_type: str = None) -> dict:
     if entity_type and entity_type in BUSINESS_FORMATION_GUIDE:
         return {entity_type: BUSINESS_FORMATION_GUIDE[entity_type]}
     return BUSINESS_FORMATION_GUIDE
+
+
+def detect_search_intent(message: str) -> tuple[bool, str]:
+    """Detect if user wants to search the web and extract query."""
+    search_patterns = [
+        r"search (?:the web|online|internet|google) for (.+)",
+        r"look up (.+) online",
+        r"find (?:information|info|news|articles) (?:about|on) (.+)",
+        r"what's the latest (?:on|about) (.+)",
+        r"recent news (?:on|about) (.+)",
+        r"search for (.+)",
+    ]
+    
+    lower_msg = message.lower()
+    for pattern in search_patterns:
+        match = re.search(pattern, lower_msg)
+        if match:
+            return True, match.group(1).strip()
+    
+    if any(kw in lower_msg for kw in ["search the web", "search online", "look it up", "google it"]):
+        return True, message
+    
+    return False, ""
+
+
+def web_search(query: str, num_results: int = 5) -> dict:
+    """Perform a web search and return formatted results."""
+    if not serpapi_service.is_configured:
+        return {"error": "Web search is not configured", "results": []}
+    
+    try:
+        results = serpapi_service.google_search(query, num=num_results)
+        organic_results = results.get("organic_results", [])
+        
+        formatted = []
+        for r in organic_results[:num_results]:
+            formatted.append({
+                "title": r.get("title", ""),
+                "snippet": r.get("snippet", ""),
+                "link": r.get("link", ""),
+                "source": r.get("source", "")
+            })
+        
+        return {
+            "query": query,
+            "results": formatted,
+            "search_info": results.get("search_information", {})
+        }
+    except Exception as e:
+        return {"error": str(e), "results": []}
+
+
+async def chat_with_cofounder_enhanced(
+    message: str,
+    stage: str,
+    opportunity: dict,
+    workspace: dict,
+    chat_history: list[dict] = None,
+    enable_web_search: bool = True
+) -> dict:
+    """
+    Enhanced chat with web search capability.
+    
+    Returns:
+        Dict with 'response' and optionally 'web_search_results'
+    """
+    web_results = None
+    
+    if enable_web_search:
+        should_search, query = detect_search_intent(message)
+        if should_search:
+            category = opportunity.get('category', '')
+            title = opportunity.get('title', '')
+            enhanced_query = f"{query} {category} business opportunity" if len(query) < 30 else query
+            web_results = web_search(enhanced_query)
+    
+    system_prompt = get_stage_prompt(stage)
+    context = build_context(opportunity, workspace)
+    
+    web_context = ""
+    if web_results and web_results.get("results"):
+        web_context = "\n\n---\nWEB SEARCH RESULTS:\n"
+        for i, r in enumerate(web_results["results"], 1):
+            web_context += f"{i}. **{r['title']}**\n   {r['snippet']}\n   Source: {r['source']}\n\n"
+        web_context += "---\nUse these search results to inform your response. Cite sources when relevant."
+    
+    full_system = f"""{system_prompt}
+
+---
+CURRENT CONTEXT:
+{context}
+{web_context}
+---
+
+Remember: Be helpful, specific, and actionable. Guide them step by step toward success."""
+
+    messages = []
+    if chat_history:
+        messages.extend(chat_history[-20:])
+    
+    messages.append({"role": "user", "content": message})
+    
+    response = client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=2048,
+        system=full_system,
+        messages=messages
+    )
+    
+    return {
+        "response": response.content[0].text,
+        "web_search_performed": web_results is not None,
+        "web_search_query": web_results.get("query") if web_results else None
+    }
