@@ -28,6 +28,9 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
 *   **Leads Marketplace & Network Hub:** Dedicated platforms for a leads marketplace and connecting users with experts, investors, partners, and lenders.
 *   **Expert Recommendation Engine:** An intelligent matching system recommends experts using a weighted scoring algorithm based on category, skills, success metrics, availability, and rating.
 *   **Expert Collaboration System:** Facilitates interactions between clients and verified experts through structured engagements, milestones, in-platform messaging, session scheduling, and post-engagement reviews, supporting various engagement types and permission levels.
+    - **Stripe Connect Integration:** 85/15 revenue split with automatic expert payouts via Stripe Connect. Platform fee calculated via `calculate_platform_split()`, stored in engagement records. Expert onboarding flow with account creation, status tracking, and earnings dashboard.
+    - **Expert Dashboard:** Comprehensive view at `/expert/dashboard` with earnings summary, client management, and Stripe Connect status. Three-tab interface (Overview, Clients, Earnings) with callback handling for Connect onboarding completion.
+    - **Rating & Review System:** Post-engagement review modal with 5-star ratings (overall, expertise, communication, responsiveness, value), text review, and recommendation toggles. Reviews update expert `avg_rating` and `total_reviews` for matching algorithm.
 *   **Email Automation:** Utilizes an email service for transactional emails, welcome sequences, and status updates with a template system.
 
 ## External Dependencies
