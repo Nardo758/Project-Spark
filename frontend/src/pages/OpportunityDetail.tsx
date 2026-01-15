@@ -686,7 +686,26 @@ export default function OpportunityDetail() {
                 <FileText className="w-4 h-4" />
                 Generate Report
               </button>
-              <button className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50">
+              <button 
+                onClick={async () => {
+                  const shareUrl = window.location.href;
+                  const shareTitle = opportunityQuery.data?.title || 'Business Opportunity';
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ title: shareTitle, url: shareUrl });
+                    } catch (e) {
+                      if ((e as Error).name !== 'AbortError') {
+                        navigator.clipboard.writeText(shareUrl);
+                        alert('Link copied to clipboard!');
+                      }
+                    }
+                  } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    alert('Link copied to clipboard!');
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 border border-stone-200 rounded-lg text-sm font-medium text-stone-700 hover:bg-stone-50"
+              >
                 <Share2 className="w-4 h-4" />
                 Share
               </button>
