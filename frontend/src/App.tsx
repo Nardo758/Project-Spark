@@ -53,6 +53,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={isAuthenticated ? <Dashboard /> : <Home />} />
+        <Route path="welcome" element={<Home />} />
         <Route path="discover" element={<Discover />} />
         <Route path="idea-engine" element={<IdeaEngine />} />
         <Route path="services" element={<Services />} />

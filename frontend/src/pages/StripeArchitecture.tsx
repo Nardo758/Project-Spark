@@ -7,7 +7,7 @@ export default function StripeArchitecture() {
       <div className="max-w-7xl mx-auto">
         {/* Clickable Logo Header */}
         <div className="flex items-center justify-between mb-8">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/welcome" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center group-hover:bg-emerald-400 transition-colors">
               <span className="text-slate-900 font-bold text-lg">OG</span>
             </div>
@@ -16,7 +16,7 @@ export default function StripeArchitecture() {
               <span className="text-[10px] text-slate-400 leading-tight">The Opportunity Intelligence Platform</span>
             </div>
           </Link>
-          <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+          <Link to="/welcome" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to Home</span>
           </Link>
