@@ -221,6 +221,14 @@ async def linkedin_callback(
     
     from urllib.parse import quote
     encoded_name = quote(name or "")
+    encoded_email = quote(email or "")
+    encoded_picture = quote(picture or "")
+    
+    if role == "expert":
+        return RedirectResponse(
+            url=f"{frontend_base}/expert/apply?code={exchange_code}&name={encoded_name}&email={encoded_email}&picture={encoded_picture}",
+            status_code=302
+        )
     
     return RedirectResponse(
         url=f"{frontend_base}/join-network/{role}?code={exchange_code}&name={encoded_name}",

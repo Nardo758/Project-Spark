@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom'
 import { 
   Search, Star, Clock, DollarSign, CheckCircle, Loader2, 
   User, Briefcase, Calendar, X, MapPin, Award, Users,
-  MessageSquare, ChevronDown, Filter, Building2
+  MessageSquare, ChevronDown, Filter, Building2, ExternalLink
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 
 type ExpertProfile = {
   id: number
-  user_id: number
+  user_id: number | null
   title: string | null
   location: string | null
   timezone: string | null
@@ -38,6 +38,11 @@ type ExpertProfile = {
   user_name: string | null
   user_avatar: string | null
   created_at: string
+  external_id: string | null
+  external_source: string | null
+  external_url: string | null
+  external_name: string | null
+  skills: string[]
 }
 
 type ExpertCategory = {
@@ -286,19 +291,39 @@ export default function ExpertMarketplace() {
             >
               <div className="p-6">
                 <div className="flex items-start gap-4 mb-4">
-                  {expert.user_avatar ? (
+                  {(expert.user_avatar) ? (
                     <img 
                       src={expert.user_avatar} 
-                      alt={expert.user_name || ''} 
+                      alt={expert.external_name || expert.user_name || ''} 
                       className="w-16 h-16 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                      {(expert.user_name || 'E').charAt(0)}
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold ${
+                      expert.external_source 
+                        ? 'bg-gradient-to-br from-green-500 to-teal-600' 
+                        : 'bg-gradient-to-br from-purple-500 to-indigo-600'
+                    }`}>
+                      {(expert.external_name || expert.user_name || 'E').charAt(0)}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-gray-900 truncate">{expert.user_name || 'Expert'}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-lg text-gray-900 truncate">
+                        {expert.external_name || expert.user_name || 'Expert'}
+                      </h3>
+                      {expert.external_source === 'upwork' && expert.external_url && (
+                        <a
+                          href={expert.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full hover:bg-green-200 transition-colors"
+                          title="View on Upwork"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Upwork
+                        </a>
+                      )}
+                    </div>
                     {expert.title && (
                       <p className="text-purple-600 font-medium text-sm line-clamp-1">{expert.title}</p>
                     )}
@@ -307,6 +332,12 @@ export default function ExpertMarketplace() {
                         <span className="flex items-center gap-1 text-xs text-green-600">
                           <CheckCircle className="w-3.5 h-3.5" />
                           Verified
+                        </span>
+                      )}
+                      {expert.external_source && !expert.is_verified && (
+                        <span className="flex items-center gap-1 text-xs text-blue-600">
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          External
                         </span>
                       )}
                       {expert.avg_rating && (

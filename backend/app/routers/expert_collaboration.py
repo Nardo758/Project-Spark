@@ -187,13 +187,26 @@ class ReviewCreate(BaseModel):
 
 def serialize_expert_profile(profile: ExpertProfile, user: User = None) -> dict:
     """Convert ExpertProfile to response dict"""
+    user_name = None
+    user_avatar = None
+    
+    if user:
+        user_name = user.name
+        user_avatar = user.avatar_url
+    elif profile.user:
+        user_name = profile.user.name
+        user_avatar = profile.user.avatar_url
+    elif profile.external_name:
+        user_name = profile.external_name
+        user_avatar = profile.avatar_url
+    
     return {
         "id": profile.id,
         "user_id": profile.user_id,
         "title": profile.title,
         "location": profile.location,
         "timezone": profile.timezone,
-        "primary_category": profile.primary_category.value.lower() if profile.primary_category else None,
+        "primary_category": profile.primary_category.value.lower() if profile.primary_category else (profile.category.value.lower() if profile.category else None),
         "specializations": json.loads(profile.specializations) if profile.specializations else [],
         "industries": json.loads(profile.industries) if profile.industries else [],
         "stage_expertise": json.loads(profile.stage_expertise) if profile.stage_expertise else [],
@@ -214,9 +227,14 @@ def serialize_expert_profile(profile: ExpertProfile, user: User = None) -> dict:
         "projects_completed": profile.projects_completed,
         "avg_rating": profile.avg_rating,
         "total_reviews": profile.total_reviews,
-        "user_name": user.name if user else (profile.user.name if profile.user else None),
-        "user_avatar": user.avatar_url if user else (profile.user.avatar_url if profile.user else None),
+        "user_name": user_name,
+        "user_avatar": user_avatar,
         "created_at": profile.created_at,
+        "external_id": profile.external_id,
+        "external_source": profile.external_source,
+        "external_url": profile.external_url,
+        "external_name": profile.external_name,
+        "skills": json.loads(profile.skills) if profile.skills else [],
     }
 
 
@@ -233,14 +251,29 @@ async def list_experts(
     limit: int = 20,
     db: Session = Depends(get_db)
 ):
-    """List all verified expert profiles with optional filtering"""
-    query = db.query(ExpertProfile).filter(ExpertProfile.is_verified == True)
+    """List all verified expert profiles and external experts with optional filtering"""
+    query = db.query(ExpertProfile).filter(
+        or_(
+            ExpertProfile.is_verified == True,
+            ExpertProfile.external_source.isnot(None)
+        )
+    )
     
     if is_accepting:
-        query = query.filter(ExpertProfile.is_accepting_clients == True)
+        query = query.filter(
+            or_(
+                ExpertProfile.is_accepting_clients == True,
+                ExpertProfile.external_source.isnot(None)
+            )
+        )
     
     if category:
-        query = query.filter(ExpertProfile.primary_category == category)
+        query = query.filter(
+            or_(
+                ExpertProfile.primary_category == category,
+                ExpertProfile.category == category
+            )
+        )
     
     if specialization:
         query = query.filter(ExpertProfile.specializations.contains(specialization))
@@ -256,12 +289,14 @@ async def list_experts(
     
     if search:
         search_term = f"%{search}%"
-        query = query.join(User, ExpertProfile.user_id == User.id).filter(
+        query = query.outerjoin(User, ExpertProfile.user_id == User.id).filter(
             or_(
                 User.name.ilike(search_term),
                 ExpertProfile.title.ilike(search_term),
                 ExpertProfile.specializations.ilike(search_term),
-                ExpertProfile.industries.ilike(search_term)
+                ExpertProfile.industries.ilike(search_term),
+                ExpertProfile.external_name.ilike(search_term),
+                ExpertProfile.skills.ilike(search_term)
             )
         )
     

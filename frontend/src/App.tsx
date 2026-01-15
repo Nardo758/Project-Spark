@@ -12,6 +12,7 @@ import Signup from './pages/Signup'
 import Services from './pages/Services'
 import Network from './pages/Network'
 import JoinNetwork from './pages/JoinNetwork'
+import ExpertApplication from './pages/ExpertApplication'
 import Leads from './pages/Leads'
 import Funding from './pages/Funding'
 import Tools from './pages/Tools'
@@ -40,6 +41,7 @@ import MyWorkspaces from './pages/MyWorkspaces'
 import WorkspacePage from './pages/Workspace'
 import OpportunityHub from './pages/OpportunityHub'
 import AdminMarketing from './pages/AdminMarketing'
+import AdminExperts from './pages/AdminExperts'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -181,10 +183,12 @@ function App() {
         <Route path="network/investor" element={<Network />} />
         <Route path="network/lender" element={<Network />} />
         <Route path="join-network/:role" element={<JoinNetwork />} />
+        <Route path="expert/apply" element={<ExpertApplication />} />
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/oauth-callback" element={<OAuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
         <Route path="admin/marketing" element={<AdminMarketing />} />
+        <Route path="admin/experts" element={<AdminExperts />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
