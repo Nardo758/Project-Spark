@@ -100,7 +100,7 @@ class OpportunityProcessor:
         return Opportunity(
             title=analysis.get("professional_title", "Untitled Opportunity")[:500],
             description=analysis.get("professional_description", "")[:5000],
-            category=analysis.get("category", "General")[:100],
+            category=analysis.get("category", "Other")[:100],
             subcategory=analysis.get("subcategory"),
             severity=analysis.get("severity", 3),
             market_size=analysis.get("market_size"),
@@ -156,7 +156,7 @@ class OpportunityProcessor:
         opportunity = Opportunity(
             title=analysis.get("professional_title", "Untitled Opportunity")[:500],
             description=analysis.get("professional_description", raw_text)[:5000],
-            category=analysis.get("category", "General")[:100],
+            category=analysis.get("category", "Other")[:100],
             subcategory=analysis.get("subcategory"),
             severity=analysis.get("severity", 3),
             market_size=analysis.get("market_size"),
@@ -300,7 +300,7 @@ Important:
             "professional_description": raw_text[:1000],
             "one_line_summary": raw_text[:200],
             "problem_statement": raw_text[:500],
-            "category": "Other",
+            "category": "Other",  # Default fallback category
             "severity": 3,
             "opportunity_score": 50,
             "feasibility_score": 50,

@@ -1940,3 +1940,210 @@ async def reprocess_google_maps_opportunities(
         "updated": updated_count,
         "results": results
     }
+
+
+@router.post("/data-pipeline/reprocess-general-category")
+async def reprocess_general_category_opportunities(
+    limit: int = Query(20, ge=1, le=100, description="Number of opportunities to reprocess"),
+    dry_run: bool = Query(False, description="If true, only preview changes without saving"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Re-analyze opportunities with category 'General' to assign proper categories.
+    This will use AI to determine the correct category and update descriptions.
+    Raw source data will be preserved.
+    """
+    import asyncio
+    
+    MAX_CONCURRENT_CALLS = 5
+    
+    AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
+    AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
+    
+    if not AI_INTEGRATIONS_ANTHROPIC_API_KEY:
+        return {"status": "error", "message": "AI client not configured - missing API key"}
+    
+    opportunities = db.query(Opportunity).filter(
+        Opportunity.category == 'General'
+    ).order_by(desc(Opportunity.created_at)).limit(limit).all()
+    
+    if not opportunities:
+        return {"status": "no_opportunities", "message": "No opportunities with 'General' category found", "count": 0}
+    
+    client = Anthropic(
+        api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
+        base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL
+    )
+    
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT_CALLS)
+    
+    def extract_text_from_raw_data(raw_data_str: str) -> str:
+        """Extract readable text from raw_source_data JSON string."""
+        try:
+            raw_data = json.loads(raw_data_str)
+            if isinstance(raw_data, dict):
+                parts = []
+                for key in ['title', 'original_title', 'name', 'text', 'content', 'full_text', 'rawContent', 'body', 'selftext', 'original_description']:
+                    if key in raw_data and raw_data[key]:
+                        parts.append(str(raw_data[key]))
+                if parts:
+                    return "\n".join(parts)
+                return str(raw_data)[:2000]
+            return str(raw_data)[:2000]
+        except (json.JSONDecodeError, TypeError):
+            return raw_data_str[:2000] if raw_data_str else ""
+    
+    async def reprocess_single(opp: Opportunity):
+        async with semaphore:
+            try:
+                if opp.raw_source_data:
+                    raw_text = extract_text_from_raw_data(opp.raw_source_data)
+                else:
+                    raw_text = opp.description or opp.title or ""
+                
+                if not raw_text or len(raw_text) < 20:
+                    return {
+                        "id": opp.id,
+                        "title": opp.title,
+                        "status": "skipped",
+                        "reason": "insufficient_content"
+                    }
+                
+                prompt = f"""Analyze this opportunity content and determine if it's a valid business opportunity. Provide proper categorization and professional rewrite.
+
+CURRENT DATA:
+Title: {opp.title}
+Content: {raw_text[:2500]}
+
+Respond with a valid JSON object:
+{{
+    "is_valid_opportunity": true/false,
+    "category": "One of: Technology, Healthcare, Finance, Education, Retail, Food & Beverage, Real Estate, Transportation, Entertainment, B2B Services, Consumer Services, Manufacturing, Health & Wellness, Home & Living, Pet Care, Creator Economy, Gaming & Esports, Personal Development, Work & Productivity, Other",
+    "subcategory": "More specific subcategory",
+    "professional_title": "A clear, professional title (50-100 chars)",
+    "professional_description": "Professional business description. 2-3 paragraphs.",
+    "one_line_summary": "One compelling sentence summarizing this opportunity"
+}}
+
+Important:
+- If content is spam, ads, or not a business opportunity, set is_valid_opportunity to false
+- Choose the most appropriate category based on the content
+- Rewrite informal language to sound professional
+- Keep the core meaning but make it business-ready"""
+
+                def sync_call():
+                    return client.messages.create(
+                        model="claude-haiku-4-5",
+                        max_tokens=1500,
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+                
+                message = await asyncio.to_thread(sync_call)
+                response_text = message.content[0].text
+                
+                if "```json" in response_text:
+                    response_text = response_text.split("```json")[1].split("```")[0]
+                elif "```" in response_text:
+                    response_text = response_text.split("```")[1].split("```")[0]
+                
+                analysis = json.loads(response_text.strip())
+                
+                if not analysis.get("is_valid_opportunity", True):
+                    return {
+                        "id": opp.id,
+                        "title": opp.title,
+                        "status": "skipped",
+                        "reason": "not_valid_opportunity"
+                    }
+                
+                old_category = opp.category
+                old_title = opp.title
+                old_description = opp.description
+                new_category = analysis.get("category", "Other")
+                new_title = analysis.get("professional_title", opp.title)
+                new_description = analysis.get("professional_description", opp.description)
+                
+                if not dry_run:
+                    preserved_data = {
+                        "previous_title": old_title,
+                        "previous_description": old_description[:5000] if old_description else None,
+                        "previous_category": old_category,
+                        "reprocessed_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    
+                    if opp.raw_source_data:
+                        try:
+                            existing_raw = json.loads(opp.raw_source_data)
+                            if isinstance(existing_raw, dict):
+                                existing_raw["reprocess_history"] = existing_raw.get("reprocess_history", [])
+                                existing_raw["reprocess_history"].append(preserved_data)
+                                opp.raw_source_data = json.dumps(existing_raw)
+                            else:
+                                opp.raw_source_data = json.dumps({
+                                    "original_raw": existing_raw,
+                                    "reprocess_history": [preserved_data]
+                                })
+                        except json.JSONDecodeError:
+                            opp.raw_source_data = json.dumps({
+                                "original_raw": opp.raw_source_data,
+                                "reprocess_history": [preserved_data]
+                            })
+                    else:
+                        opp.raw_source_data = json.dumps({
+                            "original_title": old_title,
+                            "original_description": old_description,
+                            "reprocess_history": [preserved_data]
+                        })
+                    
+                    opp.category = new_category[:100]
+                    opp.title = new_title[:500]
+                    opp.description = new_description[:5000]
+                    opp.ai_summary = analysis.get("one_line_summary", "")[:500]
+                    opp.subcategory = analysis.get("subcategory")
+                    opp.ai_analyzed = True
+                    opp.ai_analyzed_at = datetime.now(timezone.utc)
+                
+                return {
+                    "id": opp.id,
+                    "old_category": old_category,
+                    "new_category": new_category,
+                    "old_title": old_title,
+                    "new_title": new_title,
+                    "status": "updated" if not dry_run else "preview"
+                }
+                
+            except json.JSONDecodeError as e:
+                return {
+                    "id": opp.id,
+                    "title": opp.title,
+                    "status": "error",
+                    "error": f"JSON parse error: {str(e)}"
+                }
+            except Exception as e:
+                return {
+                    "id": opp.id,
+                    "title": opp.title,
+                    "status": "error",
+                    "error": str(e)
+                }
+    
+    results = await asyncio.gather(*[reprocess_single(opp) for opp in opportunities])
+    
+    if not dry_run:
+        db.commit()
+    
+    updated_count = sum(1 for r in results if r.get("status") in ["updated", "preview"])
+    error_count = sum(1 for r in results if r.get("status") == "error")
+    skipped_count = sum(1 for r in results if r.get("status") == "skipped")
+    
+    return {
+        "status": "completed" if not dry_run else "preview",
+        "dry_run": dry_run,
+        "total_found": len(opportunities),
+        "total_processed": len(results),
+        "updated": updated_count,
+        "skipped": skipped_count,
+        "errors": error_count,
+        "results": results
+    }
