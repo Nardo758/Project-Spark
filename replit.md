@@ -22,7 +22,13 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
 *   **Opportunity Analysis & Reporting:** AI generates opportunity scores, market size estimates, and business model suggestions. A Consultant Studio offers a three-path validation system, and a report tracking system logs usage.
 *   **Design Thinking Report Framework:** Opportunity Detail pages are structured in tiers (FREE, PRO, BUSINESS) based on the Design Thinking process, incorporating AI-generated content across problem detail, research dashboard, and deep dive sections. Reports integrate satellite maps, Census data, and Google Trends via AI-powered generation methods.
 *   **Unified Opportunity Hub:** For paid users, combines Research and Workspace capabilities with a visual journey timeline, stage-specific guidance, and automatic workspace creation.
-*   **AI Co-Founder:** A conversational AI assistant integrated into the Opportunity Hub provides stage-aware guidance with persistent chat history.
+*   **AI Co-Founder (WorkHub):** A chat-first conversational AI assistant with 4-stage workflow (Validate/Research/Plan/Execute). Features include:
+    - Left collapsible context panel with opportunity summary, tasks, and expert recommendations
+    - Stage-aware quick actions and toolkit panels (Formation Guide, Tool Stack, Funding, Expert Connect)
+    - Inline card rendering for checklists and structured AI responses
+    - Paid report CTAs that auto-trigger on keywords
+    - Mobile responsive with drawer-style left panel
+    - **BYOK (Bring Your Own Key):** Users can connect their own Anthropic Claude API key via settings modal. Keys are validated and stored encrypted (Fernet/PBKDF2). AI requests use user's key when available, falling back to platform key. Response includes `key_source` for tracking.
 *   **Tool Recommendations Engine:** A curated database of execution tools categorized for various business functions.
 *   **Business Formation Guide:** Comprehensive guidance for launching a real business, covering entity types, formation instructions, legal compliance, and financial setup.
 *   **Leads Marketplace & Network Hub:** Dedicated platforms for a leads marketplace and connecting users with experts, investors, partners, and lenders.
