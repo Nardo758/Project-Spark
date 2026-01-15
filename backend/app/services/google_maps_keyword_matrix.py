@@ -614,22 +614,104 @@ def classify_business_category(business_name: str, business_type: str = None) ->
     # Direct category mapping from Google Maps API
     if business_type:
         category_map = {
+            # Real Estate / Housing
             "apartment_complex": "apartment",
             "housing": "apartment",
             "real_estate": "apartment",
+            "property": "apartment",
+            "rental": "apartment",
+            # Childcare / Education
             "daycare": "childcare",
             "preschool": "childcare",
-            "school": "childcare",
+            "school": "education",
+            "university": "education",
+            "college": "education",
+            "tutoring": "education",
+            "learning": "education",
+            # Food & Beverage
             "restaurant": "restaurant",
             "cafe": "restaurant",
             "food": "restaurant",
+            "bakery": "restaurant",
+            "bar": "restaurant",
+            "coffee": "restaurant",
+            "diner": "restaurant",
+            # Healthcare
             "doctor": "healthcare",
             "clinic": "healthcare",
             "hospital": "healthcare",
             "dentist": "healthcare",
+            "pharmacy": "healthcare",
+            "medical": "healthcare",
+            "veterinary": "healthcare",
+            "therapy": "healthcare",
+            "chiropractor": "healthcare",
+            # Home Services
             "plumber": "home_services",
             "electrician": "home_services",
             "contractor": "home_services",
+            "hvac": "home_services",
+            "roofing": "home_services",
+            "landscaping": "home_services",
+            "cleaning": "home_services",
+            "pest": "home_services",
+            "moving": "home_services",
+            # Retail / Shopping
+            "store": "retail",
+            "shop": "retail",
+            "retail": "retail",
+            "supermarket": "retail",
+            "grocery": "retail",
+            "mall": "retail",
+            "boutique": "retail",
+            # Fitness & Wellness
+            "gym": "fitness",
+            "fitness": "fitness",
+            "yoga": "fitness",
+            "spa": "fitness",
+            "wellness": "fitness",
+            "pilates": "fitness",
+            "crossfit": "fitness",
+            # Beauty & Personal Care
+            "salon": "beauty",
+            "barbershop": "beauty",
+            "beauty": "beauty",
+            "nail": "beauty",
+            "hair": "beauty",
+            # Automotive
+            "auto": "automotive",
+            "car": "automotive",
+            "mechanic": "automotive",
+            "dealership": "automotive",
+            "tire": "automotive",
+            "car_wash": "automotive",
+            "gas_station": "automotive",
+            # Professional Services
+            "lawyer": "professional",
+            "attorney": "professional",
+            "accountant": "professional",
+            "insurance": "professional",
+            "bank": "financial",
+            "financial": "financial",
+            "tax": "financial",
+            # Entertainment
+            "entertainment": "entertainment",
+            "theater": "entertainment",
+            "cinema": "entertainment",
+            "museum": "entertainment",
+            "amusement": "entertainment",
+            "bowling": "entertainment",
+            # Travel / Transportation
+            "hotel": "travel",
+            "motel": "travel",
+            "airport": "transportation",
+            "parking": "transportation",
+            "transit": "transportation",
+            # Pet Services
+            "pet": "pet_services",
+            "veterinarian": "pet_services",
+            "grooming": "pet_services",
+            "kennel": "pet_services",
         }
         
         for key, industry in category_map.items():
@@ -639,18 +721,36 @@ def classify_business_category(business_name: str, business_type: str = None) ->
     # Fallback: keyword matching in business name
     business_lower = business_name.lower()
     
-    if any(word in business_lower for word in ["apartment", "residences", "living", "lofts"]):
+    if any(word in business_lower for word in ["apartment", "residences", "living", "lofts", "realty", "properties"]):
         return "apartment"
-    elif any(word in business_lower for word in ["childcare", "daycare", "preschool", "montessori"]):
+    elif any(word in business_lower for word in ["childcare", "daycare", "preschool", "montessori", "nursery"]):
         return "childcare"
-    elif any(word in business_lower for word in ["restaurant", "cafe", "bistro", "grill", "pizza"]):
+    elif any(word in business_lower for word in ["restaurant", "cafe", "bistro", "grill", "pizza", "sushi", "diner", "eatery"]):
         return "restaurant"
-    elif any(word in business_lower for word in ["medical", "clinic", "doctor", "dental", "health"]):
+    elif any(word in business_lower for word in ["medical", "clinic", "doctor", "dental", "health", "hospital", "pharmacy"]):
         return "healthcare"
-    elif any(word in business_lower for word in ["plumbing", "electric", "repair", "services"]):
+    elif any(word in business_lower for word in ["plumbing", "electric", "repair", "contractor", "hvac", "roofing", "landscap"]):
         return "home_services"
+    elif any(word in business_lower for word in ["gym", "fitness", "yoga", "crossfit", "workout", "pilates"]):
+        return "fitness"
+    elif any(word in business_lower for word in ["salon", "barber", "beauty", "nail", "spa", "hair"]):
+        return "beauty"
+    elif any(word in business_lower for word in ["auto", "car", "mechanic", "tire", "motor", "vehicle"]):
+        return "automotive"
+    elif any(word in business_lower for word in ["store", "shop", "mart", "retail", "boutique", "outlet"]):
+        return "retail"
+    elif any(word in business_lower for word in ["school", "academy", "university", "college", "tutor", "learning"]):
+        return "education"
+    elif any(word in business_lower for word in ["bank", "credit", "finance", "insurance", "invest", "tax"]):
+        return "financial"
+    elif any(word in business_lower for word in ["law", "attorney", "legal", "accountant", "consult"]):
+        return "professional"
+    elif any(word in business_lower for word in ["hotel", "motel", "inn", "resort", "lodge"]):
+        return "travel"
+    elif any(word in business_lower for word in ["pet", "vet", "animal", "groom", "kennel"]):
+        return "pet_services"
     
-    return "general"
+    return "retail"
 
 # ============================================================================
 # PATTERN MATCHER
@@ -664,8 +764,20 @@ def get_industry_patterns(industry: str) -> dict:
         "restaurant": RESTAURANT_PATTERNS,
         "healthcare": HEALTHCARE_PATTERNS,
         "home_services": HOME_SERVICES_PATTERNS,
+        # Map new categories to similar existing patterns
+        "fitness": HEALTHCARE_PATTERNS,
+        "beauty": HOME_SERVICES_PATTERNS,
+        "automotive": HOME_SERVICES_PATTERNS,
+        "retail": RESTAURANT_PATTERNS,
+        "education": CHILDCARE_PATTERNS,
+        "financial": HOME_SERVICES_PATTERNS,
+        "professional": HOME_SERVICES_PATTERNS,
+        "travel": RESTAURANT_PATTERNS,
+        "entertainment": RESTAURANT_PATTERNS,
+        "pet_services": HEALTHCARE_PATTERNS,
+        "transportation": HOME_SERVICES_PATTERNS,
     }
-    return pattern_map.get(industry, APARTMENT_PATTERNS)  # Default to apartment
+    return pattern_map.get(industry, HOME_SERVICES_PATTERNS)
 
 # ============================================================================
 # USAGE EXAMPLE

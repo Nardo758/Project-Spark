@@ -71,6 +71,16 @@ CATEGORY_PENETRATION = {
     'service_marketplace': 0.25,
     'apartment': 0.30,
     'retail': 0.35,
+    'fitness': 0.20,
+    'beauty': 0.25,
+    'automotive': 0.30,
+    'education': 0.15,
+    'financial': 0.25,
+    'professional': 0.20,
+    'entertainment': 0.30,
+    'travel': 0.25,
+    'pet_services': 0.15,
+    'technology': 0.35,
 }
 
 DEFAULT_PRICES = {
@@ -83,6 +93,16 @@ DEFAULT_PRICES = {
     'apartment': 200,
     'healthcare': 150,
     'retail': 75,
+    'fitness': 100,
+    'beauty': 80,
+    'automotive': 250,
+    'education': 200,
+    'financial': 300,
+    'professional': 250,
+    'entertainment': 50,
+    'travel': 200,
+    'pet_services': 75,
+    'technology': 150,
 }
 
 
@@ -297,14 +317,26 @@ class SignalToOpportunityProcessor:
         text_lower = text.lower()
         existing_lower = existing_category.lower() if existing_category else ''
         
+        if existing_lower in ['general', 'other', 'unknown', '']:
+            existing_lower = ''
+        
         category_keywords = {
-            'restaurant': ['restaurant', 'food', 'dining', 'pizza', 'cafe', 'bar', 'grill', 'kitchen', 'deli', 'bakery'],
-            'apartment': ['apartment', 'rental', 'lease', 'tenant', 'landlord', 'property management'],
-            'childcare': ['daycare', 'childcare', 'preschool', 'nursery', 'kids', 'children'],
-            'healthcare': ['doctor', 'medical', 'clinic', 'hospital', 'dental', 'health', 'pharmacy'],
-            'home_services': ['plumber', 'electrician', 'hvac', 'contractor', 'repair', 'cleaning'],
-            'retail': ['store', 'shop', 'retail', 'mall', 'boutique', 'supermarket', 'grocery'],
-            'transportation': ['parking', 'transit', 'uber', 'taxi', 'car', 'auto', 'mechanic'],
+            'restaurant': ['restaurant', 'food', 'dining', 'pizza', 'cafe', 'bar', 'grill', 'kitchen', 'deli', 'bakery', 'sushi', 'bistro'],
+            'apartment': ['apartment', 'rental', 'lease', 'tenant', 'landlord', 'property management', 'residences', 'housing', 'realty'],
+            'childcare': ['daycare', 'childcare', 'preschool', 'nursery', 'kids', 'children', 'montessori'],
+            'healthcare': ['doctor', 'medical', 'clinic', 'hospital', 'dental', 'health', 'pharmacy', 'therapy', 'chiropractor'],
+            'home_services': ['plumber', 'electrician', 'hvac', 'contractor', 'repair', 'cleaning', 'landscaping', 'roofing', 'pest'],
+            'retail': ['store', 'shop', 'retail', 'mall', 'boutique', 'supermarket', 'grocery', 'outlet'],
+            'transportation': ['parking', 'transit', 'uber', 'taxi', 'commute', 'train', 'bus', 'subway'],
+            'fitness': ['gym', 'fitness', 'yoga', 'crossfit', 'workout', 'pilates', 'wellness'],
+            'beauty': ['salon', 'barber', 'beauty', 'nail', 'spa', 'hair', 'grooming'],
+            'automotive': ['auto', 'car', 'mechanic', 'tire', 'motor', 'vehicle', 'dealership', 'car wash'],
+            'education': ['school', 'academy', 'university', 'college', 'tutor', 'learning', 'training'],
+            'financial': ['bank', 'credit', 'finance', 'insurance', 'invest', 'tax', 'loan'],
+            'professional': ['law', 'attorney', 'legal', 'accountant', 'consult', 'advisor'],
+            'entertainment': ['theater', 'cinema', 'museum', 'amusement', 'bowling', 'arcade', 'entertainment'],
+            'travel': ['hotel', 'motel', 'inn', 'resort', 'lodge', 'airbnb'],
+            'pet_services': ['pet', 'vet', 'animal', 'groom', 'kennel', 'veterinary'],
         }
         
         for category, keywords in category_keywords.items():
@@ -313,7 +345,7 @@ class SignalToOpportunityProcessor:
             if any(kw in text_lower for kw in keywords):
                 return category
         
-        return 'general'
+        return 'retail'
     
     def _cluster_signals(self, signals: List[Dict]) -> List[List[Dict]]:
         """Group similar signals into clusters"""
@@ -453,8 +485,13 @@ class SignalToOpportunityProcessor:
         keyword_freq = Counter(keywords)
         top_keywords = [kw for kw, _ in keyword_freq.most_common(15)]
         
-        category = cluster[0].get('detected_category', 'general')
+        detected_category = cluster[0].get('detected_category', 'general')
         location = cluster[0].get('city', 'Unknown')
+        
+        ai_analysis = self._ai_analyze_cluster_category(cluster, detected_category)
+        category = ai_analysis.get('category', self._map_to_opportunity_category(detected_category))
+        ai_title = ai_analysis.get('ai_title')
+        primary_problem = ai_analysis.get('primary_problem')
         
         theme_keywords = {
             'apartment': ['rental', 'lease', 'tenant', 'landlord', 'maintenance', 'amenities', 'move', 'housing', 'rent', 'unit'],
@@ -498,10 +535,12 @@ class SignalToOpportunityProcessor:
             'primary_keyword': primary_keyword,
             'top_keywords': top_keywords[:5],
             'location': location,
-            'problem_statement': problem_statement,
+            'problem_statement': primary_problem or problem_statement,
             'solution_statement': solution_statement,
             'sample_titles': titles[:3],
-            'signal_count': len(cluster)
+            'signal_count': len(cluster),
+            'ai_title': ai_title,
+            'detected_category': detected_category
         }
     
     def _validate_location(self, cluster: List[Dict]) -> Dict:
@@ -762,6 +801,108 @@ class SignalToOpportunityProcessor:
         
         return market_size
     
+    def _ai_analyze_cluster_category(self, cluster: List[Dict], detected_category: str) -> Dict[str, Any]:
+        """Use Claude AI to analyze cluster signals and determine proper category and opportunity details"""
+        
+        if not self.client:
+            logger.warning("Claude client not available, using keyword-based category")
+            return {
+                'category': self._map_to_opportunity_category(detected_category),
+                'ai_title': None,
+                'ai_description': None,
+                'is_valid': True
+            }
+        
+        sample_texts = []
+        for s in cluster[:5]:
+            text = s.get('text', s.get('content', ''))[:500]
+            title = s.get('title', '')
+            business_type = s.get('category', '')
+            if text or title:
+                sample_texts.append(f"Business: {title}\nType: {business_type}\nReview: {text}")
+        
+        combined_text = "\n\n---\n\n".join(sample_texts)[:3000]
+        
+        try:
+            prompt = f"""Analyze these Google Maps reviews/signals and determine the business opportunity.
+
+SIGNALS:
+{combined_text}
+
+DETECTED CATEGORY (from keywords): {detected_category}
+
+Analyze the signals and return a JSON object:
+{{
+    "category": "One of: Technology, Health & Wellness, Money & Finance, Education & Learning, Shopping & Services, Home & Living, Transportation, Entertainment & Social, Work & Productivity, Food & Beverage, Real Estate, B2B Services, Other",
+    "professional_title": "A clear, specific opportunity title (60-100 chars) describing what business could solve these pain points",
+    "one_line_summary": "One sentence summary of the opportunity",
+    "primary_problem": "The main pain point consumers are experiencing",
+    "is_valid_opportunity": true/false (Is this a genuine business opportunity?)
+}}
+
+IMPORTANT:
+- Category must match one of the listed categories exactly
+- Don't use generic categories like 'general' or 'local services'
+- Focus on the underlying consumer problem, not the business being reviewed
+- Be specific about what opportunity exists"""
+
+            response = self.client.messages.create(
+                model="claude-haiku-4-5",
+                max_tokens=500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = response.content[0].text.strip()
+            
+            if response_text.startswith('```'):
+                response_text = re.sub(r'^```(?:json)?\n?', '', response_text)
+                response_text = re.sub(r'\n?```$', '', response_text)
+            
+            result = json.loads(response_text)
+            
+            return {
+                'category': result.get('category', self._map_to_opportunity_category(detected_category)),
+                'ai_title': result.get('professional_title'),
+                'ai_description': result.get('one_line_summary'),
+                'primary_problem': result.get('primary_problem'),
+                'is_valid': result.get('is_valid_opportunity', True)
+            }
+            
+        except Exception as e:
+            logger.warning(f"AI cluster analysis failed: {e}")
+            return {
+                'category': self._map_to_opportunity_category(detected_category),
+                'ai_title': None,
+                'ai_description': None,
+                'is_valid': True
+            }
+    
+    def _map_to_opportunity_category(self, google_maps_category: str) -> str:
+        """Map Google Maps industry categories to opportunity categories"""
+        category_mapping = {
+            'apartment': 'Real Estate',
+            'restaurant': 'Food & Beverage',
+            'healthcare': 'Health & Wellness',
+            'childcare': 'Education & Learning',
+            'home_services': 'Home & Living',
+            'transportation': 'Transportation',
+            'retail': 'Shopping & Services',
+            'fitness': 'Health & Wellness',
+            'beauty': 'Shopping & Services',
+            'automotive': 'Transportation',
+            'professional': 'B2B Services',
+            'financial': 'Money & Finance',
+            'entertainment': 'Entertainment & Social',
+            'education': 'Education & Learning',
+            'travel': 'Transportation',
+            'pet_services': 'Shopping & Services',
+            'general': 'Shopping & Services',
+            'technology': 'Technology',
+            'work': 'Work & Productivity',
+            'other': 'Other',
+        }
+        return category_mapping.get(google_maps_category.lower(), 'Shopping & Services')
+
     def _ai_polish_opportunity(
         self,
         title: str,
@@ -860,6 +1001,62 @@ Return ONLY valid JSON:
             logger.warning(f"AI polish failed, using template: {e}")
             return title, description
     
+    def _normalize_category_for_internal_use(self, ai_category: str) -> str:
+        """Convert AI-generated category to internal category key for pricing/penetration lookups"""
+        if not ai_category:
+            return 'retail'
+        
+        ai_lower = ai_category.lower().strip()
+        
+        category_normalization = {
+            'technology': 'technology',
+            'health & wellness': 'healthcare',
+            'health and wellness': 'healthcare',
+            'healthcare': 'healthcare',
+            'health': 'healthcare',
+            'money & finance': 'financial',
+            'money and finance': 'financial',
+            'finance': 'financial',
+            'financial': 'financial',
+            'education & learning': 'education',
+            'education and learning': 'education',
+            'education': 'education',
+            'shopping & services': 'retail',
+            'shopping and services': 'retail',
+            'shopping': 'retail',
+            'retail': 'retail',
+            'home & living': 'home_services',
+            'home and living': 'home_services',
+            'home': 'home_services',
+            'transportation': 'transportation',
+            'transport': 'transportation',
+            'entertainment & social': 'entertainment',
+            'entertainment and social': 'entertainment',
+            'entertainment': 'entertainment',
+            'work & productivity': 'professional',
+            'work and productivity': 'professional',
+            'productivity': 'professional',
+            'food & beverage': 'restaurant',
+            'food and beverage': 'restaurant',
+            'food': 'restaurant',
+            'real estate': 'apartment',
+            'realestate': 'apartment',
+            'property': 'apartment',
+            'b2b services': 'professional',
+            'b2b': 'professional',
+            'business services': 'professional',
+            'professional': 'professional',
+            'other': 'retail',
+            'general': 'retail',
+            'fitness': 'fitness',
+            'beauty': 'beauty',
+            'automotive': 'automotive',
+            'travel': 'travel',
+            'pet services': 'pet_services',
+            'pets': 'pet_services',
+        }
+        return category_normalization.get(ai_lower, 'retail')
+
     def _create_opportunity(
         self,
         business_idea: Dict,
@@ -872,11 +1069,14 @@ Return ONLY valid JSON:
     ) -> Optional[Opportunity]:
         """Create opportunity record from processed data with professional copy"""
         
-        category = business_idea.get('category', 'general')
+        ai_category = business_idea.get('category', 'Shopping & Services')
+        category = self._normalize_category_for_internal_use(ai_category)
         primary_keyword = business_idea.get('primary_keyword', 'service')
         city = location_data.get('city', 'Unknown')
         signal_count = len(cluster)
         confidence = validation.get('confidence_tier', 'WEAK_SIGNAL')
+        
+        ai_title = business_idea.get('ai_title')
         
         actionable_keywords = {
             'apartment': ['property management', 'tenant services', 'rental solutions', 'housing access', 'lease services'],
@@ -886,6 +1086,16 @@ Return ONLY valid JSON:
             'home_services': ['home repair', 'maintenance services', 'contractor coordination', 'property upkeep', 'renovation services'],
             'transportation': ['ride services', 'parking solutions', 'commuter services', 'delivery logistics', 'mobility access'],
             'retail': ['shopping convenience', 'product availability', 'customer service', 'inventory access', 'local commerce'],
+            'fitness': ['workout programs', 'gym access', 'personal training', 'wellness coaching', 'fitness classes'],
+            'beauty': ['salon services', 'spa treatments', 'grooming appointments', 'beauty consultations', 'personal care'],
+            'automotive': ['auto repair', 'vehicle service', 'maintenance scheduling', 'parts availability', 'car care'],
+            'education': ['tutoring services', 'course access', 'skill development', 'learning programs', 'academic support'],
+            'financial': ['financial planning', 'banking services', 'investment advice', 'tax preparation', 'money management'],
+            'professional': ['consulting services', 'business support', 'legal assistance', 'advisory services', 'corporate solutions'],
+            'entertainment': ['event booking', 'leisure activities', 'recreation access', 'entertainment venues', 'experience discovery'],
+            'travel': ['accommodation booking', 'travel planning', 'hospitality services', 'tourism support', 'trip coordination'],
+            'pet_services': ['pet care', 'grooming services', 'veterinary access', 'pet boarding', 'animal wellness'],
+            'technology': ['tech support', 'software services', 'digital solutions', 'IT coordination', 'tech consulting'],
             'general': ['local services', 'consumer solutions', 'marketplace services', 'community needs', 'business services']
         }
         
@@ -927,6 +1137,56 @@ Return ONLY valid JSON:
                 f"Local Retail and Shopping Convenience Service in {city}",
                 f"Product Availability and Commerce Platform for {city}",
                 f"Consumer Shopping Solutions and Services in {city}"
+            ],
+            'fitness': [
+                f"Fitness and Wellness Booking Platform for {city}",
+                f"Gym and Personal Training Coordination Service in {city}",
+                f"Health and Fitness Access Solutions for {city}"
+            ],
+            'beauty': [
+                f"Beauty and Personal Care Booking Platform for {city}",
+                f"Salon and Spa Appointment Coordination in {city}",
+                f"Personal Grooming Services Marketplace for {city}"
+            ],
+            'automotive': [
+                f"Auto Service and Repair Coordination Platform in {city}",
+                f"Vehicle Maintenance and Care Services for {city}",
+                f"Automotive Service Booking and Comparison in {city}"
+            ],
+            'education': [
+                f"Education and Tutoring Services Platform for {city}",
+                f"Learning and Skill Development Marketplace in {city}",
+                f"Academic Support and Enrichment Services for {city}"
+            ],
+            'financial': [
+                f"Financial Services and Advisory Platform for {city}",
+                f"Personal Finance Solutions and Tools for {city}",
+                f"Money Management and Planning Services in {city}"
+            ],
+            'professional': [
+                f"Professional Services Marketplace for {city}",
+                f"B2B Service Coordination Platform in {city}",
+                f"Business Services and Consulting Finder for {city}"
+            ],
+            'entertainment': [
+                f"Entertainment and Events Discovery Platform for {city}",
+                f"Leisure Activities Booking Service in {city}",
+                f"Local Entertainment and Recreation Guide for {city}"
+            ],
+            'travel': [
+                f"Travel and Accommodation Booking Platform for {city}",
+                f"Hospitality Services Coordination in {city}",
+                f"Local Tourism and Visitor Services for {city}"
+            ],
+            'pet_services': [
+                f"Pet Care and Services Platform for {city}",
+                f"Pet Grooming and Veterinary Coordination in {city}",
+                f"Animal Care Services Marketplace for {city}"
+            ],
+            'technology': [
+                f"Tech Services and Solutions Platform for {city}",
+                f"Technology Support and Coordination in {city}",
+                f"Digital Services Marketplace for {city}"
             ]
         }
         
@@ -936,8 +1196,11 @@ Return ONLY valid JSON:
             f"Community Service Matching Platform for {city}"
         ]
         
-        templates = title_templates.get(category, default_titles)
-        title = random.choice(templates)
+        if ai_title and len(ai_title) >= 20:
+            title = ai_title
+        else:
+            templates = title_templates.get(category, default_titles)
+            title = random.choice(templates)
         
         market_size_cat = market_estimate.get('market_size_category', 'Unknown')
         potential_customers = market_estimate.get('potential_customers', 0)
