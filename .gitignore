@@ -10,6 +10,7 @@ ENV/
 *.egg-info/
 dist/
 build/
+.pythonlibs/
 
 # Database
 *.db
@@ -45,3 +46,19 @@ logs/
 
 # PostgreSQL data
 postgres_data/
+
+# Replit-specific
+.cache/
+.config/
+.upm/
+.tmp/
+.replit.nix
+*.replit.nix
+replit.nix
+
+# Temporary files
+*.tmp
+*.temp
+sedpmy7KN
+tmp/
+temp/
