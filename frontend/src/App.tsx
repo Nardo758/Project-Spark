@@ -19,6 +19,7 @@ import Learn from './pages/Learn'
 import AIRoadmap from './pages/AIRoadmap'
 import AIMatch from './pages/AIMatch'
 import ExpertMarketplace from './pages/ExpertMarketplace'
+import MyEngagements from './pages/MyEngagements'
 import About from './pages/About'
 import Blog from './pages/Blog'
 import Contact from './pages/Contact'
@@ -109,6 +110,14 @@ function App() {
         <Route path="build/financials" element={<ReportStudio />} />
         <Route path="build/pitch-deck" element={<ReportStudio />} />
         <Route path="build/experts" element={<ExpertMarketplace />} />
+        <Route
+          path="build/engagements"
+          element={
+            <RequireAuth>
+              <MyEngagements />
+            </RequireAuth>
+          }
+        />
         <Route path="build/funding" element={<Funding />} />
         <Route
           path="settings"

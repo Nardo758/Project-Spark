@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/authStore'
 import { useMemo } from 'react'
 import { 
-  Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight
+  Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight, Briefcase
 } from 'lucide-react'
 
 type AccessInfo = {
@@ -23,6 +23,7 @@ const quickActions = [
   { icon: Users, label: 'Generate Leads', path: '/leads', color: 'bg-green-500' },
   { icon: FileText, label: 'Business Plan', path: '/build/business-plan', color: 'bg-purple-500' },
   { icon: Users, label: 'Find Expert Help', path: '/build/experts', color: 'bg-pink-500' },
+  { icon: Briefcase, label: 'My Engagements', path: '/build/engagements', color: 'bg-violet-500' },
   { icon: DollarSign, label: 'Find Money', path: '/build/funding', color: 'bg-orange-500' },
 ]
 
