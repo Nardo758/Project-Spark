@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   MessageSquare, Clock, CheckCircle, XCircle, Loader2,
   User, Calendar, DollarSign, ChevronRight, ArrowLeft, Send,
@@ -102,7 +102,6 @@ function getEngagementTypeLabel(type: string): string {
 
 export default function MyEngagements() {
   const { token, isAuthenticated } = useAuthStore()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [selectedEngagement, setSelectedEngagement] = useState<number | null>(null)
   const [messageInput, setMessageInput] = useState('')

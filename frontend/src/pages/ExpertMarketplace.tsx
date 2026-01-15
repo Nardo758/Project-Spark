@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { 
   Search, Star, Clock, DollarSign, CheckCircle, Loader2, 
-  User, Briefcase, Calendar, X, MapPin, Award, Users,
+  User, Briefcase, X, MapPin, Award, Users,
   MessageSquare, ChevronDown, Filter, Building2, ExternalLink
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
