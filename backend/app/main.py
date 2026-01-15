@@ -22,6 +22,7 @@ from app.routers import (
     consultant,
     contact,
     copilot,
+    expert_collaboration,
     experts,
     follows,
     generated_reports,
@@ -142,6 +143,7 @@ app.include_router(workspaces.router, prefix=f"{settings.API_V1_PREFIX}/workspac
 app.include_router(ai_cofounder.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Co-Founder"])
 app.include_router(copilot.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Copilot"])
 app.include_router(report_pricing.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Report Pricing"])
+app.include_router(expert_collaboration.router, prefix=f"{settings.API_V1_PREFIX}/expert-network", tags=["Expert Collaboration"])
 
 
 @app.get("/")

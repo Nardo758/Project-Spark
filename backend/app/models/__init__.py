@@ -48,6 +48,12 @@ from .census_demographics import (
     ServiceAreaBoundary, GrowthCategory
 )
 from .purchased_report import PurchasedReport, PurchasedBundle, ConsultantLicense, PurchaseType
+from .expert_collaboration import (
+    ExpertCategory, ExpertSpecialization, ExpertStageExpertise,
+    EngagementType, EngagementStatus, ExpertPermissionLevel,
+    ExpertProfile, ExpertEngagement, EngagementMilestone,
+    ExpertMessage, ExpertReview, ExpertScheduledSession
+)
 
 __all__ = [
     "User",
@@ -143,4 +149,16 @@ __all__ = [
     "PurchasedBundle",
     "ConsultantLicense",
     "PurchaseType",
+    "ExpertCategory",
+    "ExpertSpecialization",
+    "ExpertStageExpertise",
+    "EngagementType",
+    "EngagementStatus",
+    "ExpertPermissionLevel",
+    "ExpertProfile",
+    "ExpertEngagement",
+    "EngagementMilestone",
+    "ExpertMessage",
+    "ExpertReview",
+    "ExpertScheduledSession",
 ]
