@@ -133,6 +133,10 @@ class ExpertProfile(Base):
     
     response_time = Column(String(100), nullable=True)
     
+    stripe_connect_account_id = Column(String(255), nullable=True)
+    stripe_connect_onboarding_complete = Column(Boolean, default=False)
+    stripe_connect_payouts_enabled = Column(Boolean, default=False)
+    
     is_verified = Column(Boolean, default=False)
     verification_date = Column(DateTime(timezone=True), nullable=True)
     verified_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

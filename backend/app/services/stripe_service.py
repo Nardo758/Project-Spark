@@ -491,4 +491,177 @@ class StripeService:
         return current_exports + batch_size <= export_limit
 
 
+    # ==============================
+    # Stripe Connect for Expert Payouts
+    # ==============================
+    
+    PLATFORM_FEE_PERCENTAGE = 15  # 15% platform fee, 85% to expert
+    
+    @staticmethod
+    def create_connect_account(email: str, expert_profile_id: int):
+        """
+        Create a Stripe Connect Express account for an expert.
+        
+        Args:
+            email: Expert's email address
+            expert_profile_id: Internal expert profile ID
+            
+        Returns:
+            Stripe Account object
+        """
+        client = get_stripe_client()
+        return client.Account.create(
+            type="express",
+            email=email,
+            metadata={
+                "expert_profile_id": str(expert_profile_id)
+            },
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True}
+            }
+        )
+    
+    @staticmethod
+    def create_connect_account_link(account_id: str, refresh_url: str, return_url: str):
+        """
+        Create an account link for Stripe Connect onboarding.
+        
+        Args:
+            account_id: Stripe Connect account ID
+            refresh_url: URL to redirect if link expires
+            return_url: URL to redirect after onboarding
+            
+        Returns:
+            Stripe AccountLink object with URL
+        """
+        client = get_stripe_client()
+        return client.AccountLink.create(
+            account=account_id,
+            refresh_url=refresh_url,
+            return_url=return_url,
+            type="account_onboarding"
+        )
+    
+    @staticmethod
+    def get_connect_account(account_id: str):
+        """
+        Retrieve a Stripe Connect account to check status.
+        
+        Args:
+            account_id: Stripe Connect account ID
+            
+        Returns:
+            Stripe Account object
+        """
+        client = get_stripe_client()
+        return client.Account.retrieve(account_id)
+    
+    @staticmethod
+    def create_payment_intent_with_transfer(
+        amount_cents: int,
+        customer_id: str,
+        expert_connect_account_id: str,
+        engagement_id: int,
+        user_id: int
+    ):
+        """
+        Create a PaymentIntent for an engagement with automatic transfer to expert.
+        Uses 85/15 split - 15% platform fee, 85% to expert.
+        
+        Args:
+            amount_cents: Total amount in cents
+            customer_id: Stripe customer ID (client paying)
+            expert_connect_account_id: Expert's Stripe Connect account ID
+            engagement_id: Internal engagement ID
+            user_id: Internal user ID
+            
+        Returns:
+            Stripe PaymentIntent object
+        """
+        client = get_stripe_client()
+        
+        platform_fee_cents = int(amount_cents * (StripeService.PLATFORM_FEE_PERCENTAGE / 100))
+        expert_payout_cents = amount_cents - platform_fee_cents
+        
+        return client.PaymentIntent.create(
+            amount=amount_cents,
+            currency="usd",
+            customer=customer_id,
+            metadata={
+                "type": "expert_engagement",
+                "engagement_id": str(engagement_id),
+                "user_id": str(user_id),
+                "platform_fee_cents": str(platform_fee_cents),
+                "expert_payout_cents": str(expert_payout_cents)
+            },
+            transfer_data={
+                "destination": expert_connect_account_id,
+                "amount": expert_payout_cents
+            },
+            automatic_payment_methods={"enabled": True}
+        )
+    
+    @staticmethod
+    def create_transfer_to_expert(
+        amount_cents: int,
+        expert_connect_account_id: str,
+        engagement_id: int,
+        description: Optional[str] = None
+    ):
+        """
+        Create a direct transfer to an expert's Connect account.
+        Used for manual payouts after payment is captured.
+        
+        Args:
+            amount_cents: Amount to transfer in cents
+            expert_connect_account_id: Expert's Stripe Connect account ID
+            engagement_id: Internal engagement ID
+            description: Optional transfer description
+            
+        Returns:
+            Stripe Transfer object
+        """
+        client = get_stripe_client()
+        return client.Transfer.create(
+            amount=amount_cents,
+            currency="usd",
+            destination=expert_connect_account_id,
+            metadata={
+                "engagement_id": str(engagement_id),
+                "type": "expert_payout"
+            },
+            description=description or f"Expert payout for engagement #{engagement_id}"
+        )
+    
+    @staticmethod
+    def get_connect_account_balance(account_id: str):
+        """
+        Get the balance for a Stripe Connect account.
+        
+        Args:
+            account_id: Stripe Connect account ID
+            
+        Returns:
+            Stripe Balance object
+        """
+        client = get_stripe_client()
+        return client.Balance.retrieve(stripe_account=account_id)
+    
+    @staticmethod
+    def calculate_platform_split(amount_cents: int) -> tuple:
+        """
+        Calculate the platform fee and expert payout.
+        
+        Args:
+            amount_cents: Total amount in cents
+            
+        Returns:
+            Tuple of (platform_fee_cents, expert_payout_cents)
+        """
+        platform_fee_cents = int(amount_cents * (StripeService.PLATFORM_FEE_PERCENTAGE / 100))
+        expert_payout_cents = amount_cents - platform_fee_cents
+        return platform_fee_cents, expert_payout_cents
+
+
 stripe_service = StripeService()

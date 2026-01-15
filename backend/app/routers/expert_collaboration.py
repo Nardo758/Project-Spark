@@ -864,3 +864,228 @@ async def get_matched_experts_for_opportunity(
         "total_matches": len(experts),
         "ai_insights": None
     }
+
+
+# ==============================
+# Stripe Connect for Expert Payouts
+# ==============================
+
+@router.post("/connect/onboarding", response_model=dict)
+async def start_connect_onboarding(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Start Stripe Connect onboarding for an expert.
+    Creates a Connect Express account and returns onboarding URL.
+    """
+    from app.services.stripe_service import StripeService
+    import os
+    
+    expert_profile = db.query(ExpertProfile).filter(
+        ExpertProfile.user_id == current_user.id
+    ).first()
+    
+    if not expert_profile:
+        raise HTTPException(status_code=404, detail="Expert profile not found")
+    
+    base_url = os.getenv("REPLIT_DOMAINS", "").split(",")[0]
+    if base_url:
+        base_url = f"https://{base_url}"
+    else:
+        base_url = "http://localhost:5000"
+    
+    if not expert_profile.stripe_connect_account_id:
+        account = StripeService.create_connect_account(
+            email=current_user.email,
+            expert_profile_id=expert_profile.id
+        )
+        expert_profile.stripe_connect_account_id = account.id
+        db.commit()
+    
+    account_link = StripeService.create_connect_account_link(
+        account_id=expert_profile.stripe_connect_account_id,
+        refresh_url=f"{base_url}/expert/connect/refresh",
+        return_url=f"{base_url}/expert/connect/complete"
+    )
+    
+    return {
+        "url": account_link.url,
+        "account_id": expert_profile.stripe_connect_account_id
+    }
+
+
+@router.get("/connect/status", response_model=dict)
+async def get_connect_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get Stripe Connect account status for an expert.
+    """
+    from app.services.stripe_service import StripeService
+    
+    expert_profile = db.query(ExpertProfile).filter(
+        ExpertProfile.user_id == current_user.id
+    ).first()
+    
+    if not expert_profile:
+        raise HTTPException(status_code=404, detail="Expert profile not found")
+    
+    if not expert_profile.stripe_connect_account_id:
+        return {
+            "connected": False,
+            "onboarding_complete": False,
+            "payouts_enabled": False,
+            "account_id": None
+        }
+    
+    try:
+        account = StripeService.get_connect_account(expert_profile.stripe_connect_account_id)
+        
+        details_submitted = account.details_submitted
+        payouts_enabled = account.payouts_enabled
+        
+        if details_submitted != expert_profile.stripe_connect_onboarding_complete:
+            expert_profile.stripe_connect_onboarding_complete = details_submitted
+        if payouts_enabled != expert_profile.stripe_connect_payouts_enabled:
+            expert_profile.stripe_connect_payouts_enabled = payouts_enabled
+        db.commit()
+        
+        return {
+            "connected": True,
+            "onboarding_complete": details_submitted,
+            "payouts_enabled": payouts_enabled,
+            "account_id": expert_profile.stripe_connect_account_id,
+            "charges_enabled": account.charges_enabled
+        }
+    except Exception as e:
+        logger.error(f"Error checking Connect status: {e}")
+        return {
+            "connected": True,
+            "onboarding_complete": expert_profile.stripe_connect_onboarding_complete,
+            "payouts_enabled": expert_profile.stripe_connect_payouts_enabled,
+            "account_id": expert_profile.stripe_connect_account_id,
+            "error": str(e)
+        }
+
+
+@router.post("/engagements/{engagement_id}/pay", response_model=dict)
+async def create_engagement_payment(
+    engagement_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a payment for an accepted engagement.
+    Uses Stripe Connect to transfer funds to the expert (85/15 split).
+    """
+    from app.services.stripe_service import StripeService
+    
+    engagement = db.query(ExpertEngagement).filter(ExpertEngagement.id == engagement_id).first()
+    
+    if not engagement:
+        raise HTTPException(status_code=404, detail="Engagement not found")
+    
+    if engagement.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the client can pay for the engagement")
+    
+    if engagement.status != EngagementStatus.ACCEPTED:
+        raise HTTPException(status_code=400, detail="Engagement must be accepted before payment")
+    
+    if engagement.stripe_payment_intent_id:
+        raise HTTPException(status_code=400, detail="Payment already initiated")
+    
+    expert_profile = engagement.expert_profile
+    if not expert_profile or not expert_profile.stripe_connect_account_id:
+        raise HTTPException(
+            status_code=400, 
+            detail="Expert has not completed payment setup"
+        )
+    
+    if not expert_profile.stripe_connect_payouts_enabled:
+        raise HTTPException(
+            status_code=400,
+            detail="Expert's payment account is not yet ready for payouts"
+        )
+    
+    if not current_user.stripe_customer_id:
+        from app.services.stripe_service import get_stripe_client
+        client = get_stripe_client()
+        customer = client.Customer.create(
+            email=current_user.email,
+            name=current_user.name,
+            metadata={"user_id": str(current_user.id)}
+        )
+        current_user.stripe_customer_id = customer.id
+        db.commit()
+    
+    amount_cents = engagement.final_amount_cents or engagement.proposed_amount_cents
+    if not amount_cents:
+        raise HTTPException(status_code=400, detail="No payment amount set")
+    
+    platform_fee_cents, expert_payout_cents = StripeService.calculate_platform_split(amount_cents)
+    
+    engagement.final_amount_cents = amount_cents
+    engagement.platform_fee_cents = platform_fee_cents
+    engagement.expert_payout_cents = expert_payout_cents
+    
+    payment_intent = StripeService.create_payment_intent_with_transfer(
+        amount_cents=amount_cents,
+        customer_id=current_user.stripe_customer_id,
+        expert_connect_account_id=expert_profile.stripe_connect_account_id,
+        engagement_id=engagement.id,
+        user_id=current_user.id
+    )
+    
+    engagement.stripe_payment_intent_id = payment_intent.id
+    engagement.escrow_status = "pending"
+    db.commit()
+    
+    return {
+        "client_secret": payment_intent.client_secret,
+        "payment_intent_id": payment_intent.id,
+        "amount_cents": amount_cents,
+        "platform_fee_cents": platform_fee_cents,
+        "expert_payout_cents": expert_payout_cents
+    }
+
+
+@router.get("/connect/earnings", response_model=dict)
+async def get_expert_earnings(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get earnings summary for an expert.
+    """
+    expert_profile = db.query(ExpertProfile).filter(
+        ExpertProfile.user_id == current_user.id
+    ).first()
+    
+    if not expert_profile:
+        raise HTTPException(status_code=404, detail="Expert profile not found")
+    
+    completed_engagements = db.query(ExpertEngagement).filter(
+        ExpertEngagement.expert_profile_id == expert_profile.id,
+        ExpertEngagement.status == EngagementStatus.COMPLETED
+    ).all()
+    
+    total_earned_cents = sum(e.expert_payout_cents or 0 for e in completed_engagements)
+    total_platform_fees_cents = sum(e.platform_fee_cents or 0 for e in completed_engagements)
+    
+    pending_engagements = db.query(ExpertEngagement).filter(
+        ExpertEngagement.expert_profile_id == expert_profile.id,
+        ExpertEngagement.status.in_([EngagementStatus.IN_PROGRESS, EngagementStatus.ACCEPTED])
+    ).all()
+    
+    pending_earnings_cents = sum(e.expert_payout_cents or 0 for e in pending_engagements)
+    
+    return {
+        "total_earned_cents": total_earned_cents,
+        "total_platform_fees_cents": total_platform_fees_cents,
+        "pending_earnings_cents": pending_earnings_cents,
+        "completed_engagements": len(completed_engagements),
+        "active_engagements": len(pending_engagements),
+        "payouts_enabled": expert_profile.stripe_connect_payouts_enabled
+    }
