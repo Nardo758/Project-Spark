@@ -147,39 +147,39 @@ TOP_SBA_LENDERS = [
     {
         "id": "1",
         "name": "Wells Fargo",
-        "description": "One of the largest SBA lenders in the nation, offering 7(a) and 504 loans.",
+        "description": "Top-5 SBA-preferred lender offering 7(a) and 504 loans with competitive rates and up to 25-year terms.",
         "loan_types": ["7(a) Loans", "504 Loans", "SBA Express"],
-        "website": "https://www.wellsfargo.com/biz/loans-and-lines/sba-loans",
+        "website": "https://www.wellsfargo.com/biz/sba/",
         "national": True
     },
     {
         "id": "2", 
         "name": "JPMorgan Chase",
-        "description": "Major national bank with comprehensive SBA lending programs for small businesses.",
-        "loan_types": ["7(a) Loans", "SBA Express"],
-        "website": "https://www.chase.com/business/loans/sba-loans",
+        "description": "SBA Preferred Lender with faster processing. Offers 7(a), Express, and 504 loans for business growth.",
+        "loan_types": ["7(a) Loans", "SBA Express", "504 Loans"],
+        "website": "https://www.chase.com/business/banking/loans/sba-financing",
         "national": True
     },
     {
         "id": "3",
         "name": "U.S. Bank",
-        "description": "Offers SBA loans including 7(a), CDC/504, and Express programs nationwide.",
+        "description": "6th nationally in SBA lending with no processing fees. Preferred Lender status for faster approvals.",
         "loan_types": ["7(a) Loans", "504 Loans", "SBA Express"],
-        "website": "https://www.usbank.com/business-banking/business-loans/sba-loans.html",
+        "website": "https://www.usbank.com/business-banking/banking-products/business-lending/business-loans/sba-loan.html",
         "national": True
     },
     {
         "id": "4",
         "name": "Bank of America",
-        "description": "Provides SBA 7(a) loans for working capital, equipment, and real estate.",
-        "loan_types": ["7(a) Loans"],
-        "website": "https://www.bankofamerica.com/smallbusiness/business-financing/sba-loans/",
+        "description": "SBA Preferred Lender processing loans in about 2 weeks. Up to 90% financing with longer terms.",
+        "loan_types": ["7(a) Loans", "504 Loans", "SBA Express"],
+        "website": "https://www.bankofamerica.com/smallbusiness/business-financing/sba-financing/",
         "national": True
     },
     {
         "id": "5",
         "name": "Live Oak Bank",
-        "description": "Top SBA 7(a) lender specializing in small business lending across industries.",
+        "description": "#1 SBA 7(a) lender nationally, specializing in small business lending across various industries.",
         "loan_types": ["7(a) Loans", "USDA Loans"],
         "website": "https://www.liveoakbank.com/",
         "national": True
@@ -187,7 +187,7 @@ TOP_SBA_LENDERS = [
     {
         "id": "6",
         "name": "Celtic Bank",
-        "description": "National SBA lender focused on small business financing with fast processing.",
+        "description": "National SBA lender focused on small business financing with streamlined processing.",
         "loan_types": ["7(a) Loans", "SBA Express"],
         "website": "https://www.celticbank.com/",
         "national": True
@@ -195,17 +195,17 @@ TOP_SBA_LENDERS = [
     {
         "id": "7",
         "name": "Byline Bank",
-        "description": "One of the top SBA lenders, offering various SBA loan programs.",
-        "loan_types": ["7(a) Loans", "504 Loans"],
-        "website": "https://www.bylinebank.com/business/sba-loans/",
+        "description": "Illinois SBA Lender of the Year for 16 consecutive years. Top 10 lender in 10 states.",
+        "loan_types": ["7(a) Loans", "504 Loans", "CAPLines"],
+        "website": "https://www.bylinebank.com/small-business-capital/",
         "national": True
     },
     {
         "id": "8",
         "name": "Huntington National Bank",
-        "description": "Leading SBA lender with strong presence in the Midwest and beyond.",
+        "description": "#1 SBA 7(a) lender nationally by volume for 7 consecutive years. Over $1.8B in 7(a) loans.",
         "loan_types": ["7(a) Loans", "504 Loans", "SBA Express"],
-        "website": "https://www.huntington.com/business/loans-and-lines-of-credit/sba-loans",
+        "website": "https://www.huntington.com/SmallBusiness/loans/sba-guarantee-business-loans",
         "national": True
     }
 ]
