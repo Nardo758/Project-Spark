@@ -741,7 +741,7 @@ export default function WorkHub() {
                   <ExternalLink className="w-4 h-4" />
                   Opportunity Details
                 </Link>
-                <Link to="/funding" className="flex items-center gap-2 p-2 text-sm text-stone-600 hover:bg-stone-50 rounded-lg">
+                <Link to="/build/funding" className="flex items-center gap-2 p-2 text-sm text-stone-600 hover:bg-stone-50 rounded-lg">
                   <DollarSign className="w-4 h-4" />
                   Funding Discovery
                 </Link>
@@ -841,7 +841,7 @@ export default function WorkHub() {
                 </button>
                 
                 <Link
-                  to="/funding"
+                  to="/build/funding"
                   className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border border-amber-200 hover:border-amber-300 hover:shadow-sm transition-all group"
                 >
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center group-hover:from-emerald-200 group-hover:to-green-200">
