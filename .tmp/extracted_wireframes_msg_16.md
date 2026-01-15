@@ -1,1 +1,0 @@
-I need a fronend user flow showing the updated design that shows what user see on the landing page vs when the log in

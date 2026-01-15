@@ -1,1 +1,0 @@
-Some of the verticals should be visible to non-subscribers, since we can sell one-off reports or services. The content vertical should be called service.  Also network should allow non-users to sign up or see

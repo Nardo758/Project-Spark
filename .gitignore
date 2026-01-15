@@ -54,5 +54,7 @@ Thumbs.db
 logs/
 
 # Temporary files
-sedpmy7KN
+sed*
 *.tmp
+*.bak
+*.orig
