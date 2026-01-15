@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
-  ArrowLeft, BarChart3, BookOpen, Briefcase, CheckCircle, 
+  ArrowLeft, BarChart3, BookOpen, Briefcase, CheckCircle, CheckCircle2,
   ChevronRight, DollarSign, ExternalLink, FileText, 
   Loader2, PanelLeftClose, PanelLeftOpen,
   Rocket, Search, Send, Settings, Sparkles, Target, 
@@ -256,6 +256,10 @@ export default function WorkHub() {
       return 'Atlas'
     }
   })
+  const [claudeApiKey, setClaudeApiKey] = useState('')
+  const [keyStatus, setKeyStatus] = useState<{has_key: boolean, is_valid: boolean} | null>(null)
+  const [savingKey, setSavingKey] = useState(false)
+  const [keyError, setKeyError] = useState('')
 
   const opportunityQuery = useQuery({
     queryKey: ['opportunity', opportunityId, isAuthenticated, token?.slice(-8)],
@@ -427,6 +431,64 @@ export default function WorkHub() {
     } catch {}
     setShowSettings(false)
   }
+
+  const fetchKeyStatus = async () => {
+    if (!token) return
+    try {
+      const res = await fetch('/api/byok/status', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setKeyStatus(data.keys?.claude || null)
+      }
+    } catch {}
+  }
+
+  const saveClaudeKey = async () => {
+    if (!claudeApiKey.trim()) return
+    setSavingKey(true)
+    setKeyError('')
+    try {
+      const res = await fetch('/api/byok/set', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ provider: 'claude', api_key: claudeApiKey.trim() }),
+      })
+      if (res.ok) {
+        setClaudeApiKey('')
+        fetchKeyStatus()
+      } else {
+        const data = await res.json()
+        setKeyError(data.detail || 'Failed to save key')
+      }
+    } catch (e) {
+      setKeyError('Failed to connect')
+    } finally {
+      setSavingKey(false)
+    }
+  }
+
+  const removeClaudeKey = async () => {
+    try {
+      const res = await fetch('/api/byok/claude', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        setKeyStatus(null)
+      }
+    } catch {}
+  }
+
+  useEffect(() => {
+    if (showSettings && token) {
+      fetchKeyStatus()
+    }
+  }, [showSettings, token])
 
   const opp = opportunityQuery.data
   const workspace = workspaceQuery.data
@@ -943,24 +1005,61 @@ export default function WorkHub() {
                 />
               </div>
 
-              <div className="bg-stone-50 rounded-lg p-4 border border-stone-200">
+              <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-4 border border-violet-200">
                 <h3 className="font-medium text-stone-900 mb-2 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-violet-600" />
                   Bring Your Own Claude Key
                 </h3>
                 <p className="text-sm text-stone-600 mb-3">
-                  Connect your Anthropic API key for enhanced features and reduced subscription costs.
+                  Use your own Anthropic API key for AI chats. Save on subscription costs and pay only for what you use.
                 </p>
-                <a
-                  href="https://console.anthropic.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1"
-                >
-                  Get API Key from Anthropic
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-                <p className="text-xs text-stone-400 mt-2">Coming soon: BYOK integration</p>
+                
+                {keyStatus?.has_key ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span className="text-emerald-700 font-medium">Claude API key connected</span>
+                    </div>
+                    <p className="text-xs text-stone-500">Your API key is securely encrypted and stored.</p>
+                    <button
+                      onClick={removeClaudeKey}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Remove Key
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        value={claudeApiKey}
+                        onChange={(e) => setClaudeApiKey(e.target.value)}
+                        placeholder="sk-ant-..."
+                        className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none focus:border-violet-400"
+                      />
+                      <button
+                        onClick={saveClaudeKey}
+                        disabled={!claudeApiKey.trim() || savingKey}
+                        className="px-3 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50"
+                      >
+                        {savingKey ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                    {keyError && (
+                      <p className="text-xs text-red-600">{keyError}</p>
+                    )}
+                    <a
+                      href="https://console.anthropic.com/settings/keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1"
+                    >
+                      Get API Key from Anthropic
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
 

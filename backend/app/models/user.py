@@ -37,6 +37,10 @@ class User(Base):
     otp_enabled = Column(Boolean, default=False)
     backup_codes = Column(Text, nullable=True)  # Comma-separated encrypted backup codes
 
+    # BYOK (Bring Your Own Key) - Encrypted API keys
+    encrypted_claude_api_key = Column(Text, nullable=True)  # Fernet-encrypted Claude API key
+    claude_key_validated_at = Column(DateTime(timezone=True), nullable=True)  # When key was last validated
+
     # Account settings
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)

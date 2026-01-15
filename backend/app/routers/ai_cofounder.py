@@ -1,6 +1,7 @@
 """
 AI Co-Founder API Router
 Provides chat functionality with stage-aware AI assistant.
+Supports BYOK (Bring Your Own Key) for users with their own Claude API keys.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -22,6 +23,7 @@ from app.services.ai_cofounder import (
     TOOL_RECOMMENDATIONS,
     BUSINESS_FORMATION_GUIDE
 )
+from app.services.encryption_service import encryption_service
 
 router = APIRouter(prefix="/ai-cofounder", tags=["AI Co-Founder"])
 
@@ -48,6 +50,7 @@ class ChatMessage(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     chat_history: List[ChatMessage]
+    key_source: Optional[str] = None
 
 
 class ToolRecommendation(BaseModel):
@@ -131,6 +134,10 @@ async def chat_with_ai_cofounder(
         "progress_percent": workspace.progress_percent or 0,
     }
     
+    user_api_key = None
+    if current_user.encrypted_claude_api_key:
+        user_api_key = encryption_service.decrypt(current_user.encrypted_claude_api_key)
+    
     try:
         result = await chat_with_cofounder_enhanced(
             message=message,
@@ -138,9 +145,11 @@ async def chat_with_ai_cofounder(
             opportunity=opportunity_dict,
             workspace=workspace_dict,
             chat_history=chat_history,
-            enable_web_search=True
+            enable_web_search=True,
+            user_api_key=user_api_key
         )
         ai_response = result["response"]
+        key_source = result.get("key_source", "platform")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
     
@@ -176,7 +185,8 @@ async def chat_with_ai_cofounder(
                 created_at=msg.created_at.isoformat()
             )
             for msg in all_messages
-        ]
+        ],
+        key_source=key_source
     )
 
 

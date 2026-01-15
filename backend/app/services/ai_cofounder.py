@@ -2,6 +2,7 @@
 AI Co-Founder Service
 Stage-aware conversational AI assistant that guides users through their opportunity journey.
 Uses Replit's AI Integrations for Anthropic-compatible API access.
+Supports BYOK (Bring Your Own Key) for users with their own Claude API keys.
 """
 
 import os
@@ -13,6 +14,21 @@ AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_AP
 AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
 
 serpapi_service = SerpAPIService()
+
+def get_anthropic_client(user_api_key: str = None) -> tuple[Anthropic, str]:
+    """
+    Get an Anthropic client, preferring user's BYOK key if provided.
+    
+    Returns:
+        tuple: (Anthropic client, key_source: "byok" | "platform")
+    """
+    if user_api_key:
+        return Anthropic(api_key=user_api_key), "byok"
+    
+    return Anthropic(
+        api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
+        base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL
+    ), "platform"
 
 client = Anthropic(
     api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
@@ -349,13 +365,17 @@ async def chat_with_cofounder_enhanced(
     opportunity: dict,
     workspace: dict,
     chat_history: list[dict] = None,
-    enable_web_search: bool = True
+    enable_web_search: bool = True,
+    user_api_key: str = None
 ) -> dict:
     """
-    Enhanced chat with web search capability.
+    Enhanced chat with web search capability and BYOK support.
+    
+    Args:
+        user_api_key: User's own Claude API key (BYOK). If provided, uses this instead of platform key.
     
     Returns:
-        Dict with 'response' and optionally 'web_search_results'
+        Dict with 'response', 'key_source' ("byok" | "platform"), and optionally 'web_search_results'
     """
     web_results = None
     
@@ -393,7 +413,9 @@ Remember: Be helpful, specific, and actionable. Guide them step by step toward s
     
     messages.append({"role": "user", "content": message})
     
-    response = client.messages.create(
+    ai_client, key_source = get_anthropic_client(user_api_key)
+    
+    response = ai_client.messages.create(
         model="claude-sonnet-4-5",
         max_tokens=2048,
         system=full_system,
@@ -402,6 +424,7 @@ Remember: Be helpful, specific, and actionable. Guide them step by step toward s
     
     return {
         "response": response.content[0].text,
+        "key_source": key_source,
         "web_search_performed": web_results is not None,
         "web_search_query": web_results.get("query") if web_results else None
     }

@@ -60,6 +60,7 @@ from app.routers import (
     webhooks,
     websocket_router,
     workspaces,
+    byok,
 )
 
 logger = logging.getLogger(__name__)
@@ -147,6 +148,7 @@ app.include_router(report_pricing.router, prefix=f"{settings.API_V1_PREFIX}", ta
 app.include_router(expert_collaboration.router, prefix=f"{settings.API_V1_PREFIX}/expert-network", tags=["Expert Collaboration"])
 app.include_router(upwork.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Upwork Integration"])
 app.include_router(sba.router, prefix=f"{settings.API_V1_PREFIX}/sba", tags=["SBA Funding"])
+app.include_router(byok.router, tags=["BYOK"])
 
 
 @app.get("/")
