@@ -385,7 +385,35 @@ export default function ExpertMarketplace() {
               </div>
 
               <div className="px-6 pb-6">
-                {isAuthenticated ? (
+                {expert.external_source === 'upwork' && expert.external_url ? (
+                  <div className="space-y-2">
+                    <a
+                      href={expert.external_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-xl font-semibold hover:from-green-600 hover:to-teal-600 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg"
+                    >
+                      <ExternalLink className="w-5 h-5" />
+                      Contact on Upwork
+                    </a>
+                    <p className="text-xs text-center text-gray-500">
+                      This expert is available through Upwork
+                    </p>
+                  </div>
+                ) : expert.external_source === 'sample' ? (
+                  <div className="space-y-2">
+                    <button
+                      disabled
+                      className="w-full py-3 bg-gray-100 text-gray-400 rounded-xl font-semibold cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                      Coming Soon
+                    </button>
+                    <p className="text-xs text-center text-gray-500">
+                      This expert profile is for demonstration
+                    </p>
+                  </div>
+                ) : isAuthenticated ? (
                   <button
                     onClick={() => openEngagement(expert)}
                     className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg"
