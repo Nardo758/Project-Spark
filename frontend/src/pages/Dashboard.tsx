@@ -20,7 +20,6 @@ type AccessInfo = {
 const quickActions = [
   { icon: Target, label: 'Find Opportunity', path: '/discover', color: 'bg-blue-500' },
   { icon: Lightbulb, label: 'My Projects', path: '/projects', color: 'bg-yellow-500' },
-  { icon: Users, label: 'Generate Leads', path: '/leads', color: 'bg-green-500' },
   { icon: FileText, label: 'Business Plan', path: '/build/business-plan', color: 'bg-purple-500' },
   { icon: Users, label: 'Find Expert Help', path: '/build/experts', color: 'bg-pink-500' },
   { icon: Briefcase, label: 'My Engagements', path: '/build/engagements', color: 'bg-violet-500' },
