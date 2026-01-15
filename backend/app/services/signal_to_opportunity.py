@@ -81,6 +81,13 @@ CATEGORY_PENETRATION = {
     'travel': 0.25,
     'pet_services': 0.15,
     'technology': 0.35,
+    # Niche categories
+    'gaming_esports': 0.15,
+    'creator_economy': 0.12,
+    'coaching_consulting': 0.10,
+    'community_social': 0.18,
+    'personal_development': 0.12,
+    'hobbies_crafts': 0.08,
 }
 
 DEFAULT_PRICES = {
@@ -103,6 +110,13 @@ DEFAULT_PRICES = {
     'travel': 200,
     'pet_services': 75,
     'technology': 150,
+    # Niche categories
+    'gaming_esports': 75,
+    'creator_economy': 100,
+    'coaching_consulting': 150,
+    'community_social': 25,
+    'personal_development': 100,
+    'hobbies_crafts': 50,
 }
 
 
@@ -337,6 +351,13 @@ class SignalToOpportunityProcessor:
             'entertainment': ['theater', 'cinema', 'museum', 'amusement', 'bowling', 'arcade', 'entertainment'],
             'travel': ['hotel', 'motel', 'inn', 'resort', 'lodge', 'airbnb'],
             'pet_services': ['pet', 'vet', 'animal', 'groom', 'kennel', 'veterinary'],
+            # Niche categories
+            'gaming_esports': ['game', 'gaming', 'esports', 'twitch', 'stream', 'build', 'pokemon', 'console', 'playstation', 'xbox', 'nintendo', 'mmorpg', 'rpg', 'fps', 'madden', 'fifa', 'league', 'fortnite', 'valorant', 'discord'],
+            'creator_economy': ['content', 'creator', 'youtube', 'influencer', 'podcast', 'streaming', 'monetize', 'subscribers', 'followers', 'tiktok', 'instagram', 'patreon', 'onlyfans', 'substack'],
+            'coaching_consulting': ['coach', 'coaching', 'mentor', 'mentoring', 'consulting', 'advice', 'guidance', 'counseling', 'therapist', 'life coach', 'career coach'],
+            'community_social': ['community', 'forum', 'subreddit', 'discord', 'slack', 'members', 'group', 'club', 'meetup', 'network', 'social'],
+            'personal_development': ['self-improvement', 'productivity', 'habits', 'mindset', 'motivation', 'goals', 'success', 'growth', 'meditation', 'journaling', 'body image', 'confidence'],
+            'hobbies_crafts': ['hobby', 'craft', 'diy', 'knitting', 'sewing', 'woodworking', 'collecting', 'vintage', 'antique', 'model', 'miniature', 'tabletop', 'board game', 'card game', 'magic gathering'],
         }
         
         for category, keywords in category_keywords.items():
@@ -824,7 +845,7 @@ class SignalToOpportunityProcessor:
         combined_text = "\n\n---\n\n".join(sample_texts)[:3000]
         
         try:
-            prompt = f"""Analyze these Google Maps reviews/signals and determine the business opportunity.
+            prompt = f"""Analyze these signals and determine the business opportunity. Look for BOTH traditional AND niche/alternative markets.
 
 SIGNALS:
 {combined_text}
@@ -833,18 +854,26 @@ DETECTED CATEGORY (from keywords): {detected_category}
 
 Analyze the signals and return a JSON object:
 {{
-    "category": "One of: Technology, Health & Wellness, Money & Finance, Education & Learning, Shopping & Services, Home & Living, Transportation, Entertainment & Social, Work & Productivity, Food & Beverage, Real Estate, B2B Services, Other",
+    "category": "One of: Technology, Health & Wellness, Money & Finance, Education & Learning, Shopping & Services, Home & Living, Transportation, Entertainment & Social, Work & Productivity, Food & Beverage, Real Estate, B2B Services, Gaming & Esports, Creator Economy, Coaching & Consulting, Community & Social, Personal Development, Hobbies & Crafts",
     "professional_title": "A clear, specific opportunity title (60-100 chars) describing what business could solve these pain points",
     "one_line_summary": "One sentence summary of the opportunity",
     "primary_problem": "The main pain point consumers are experiencing",
-    "is_valid_opportunity": true/false (Is this a genuine business opportunity?)
+    "is_valid_opportunity": true (Always true - every frustrated user represents a potential customer)
 }}
+
+NICHE OPPORTUNITY RECOGNITION:
+- Gaming complaints = coaching/optimization/community management services
+- Content creator struggles = creator tools, monetization help, editing services
+- Personal/relationship questions = coaching, counseling, advisory services
+- Community management issues = moderation tools, engagement platforms
+- Hobby frustrations = specialized equipment, repair services, marketplaces
+- Technical setup issues = tech support, consulting services
 
 IMPORTANT:
 - Category must match one of the listed categories exactly
 - Don't use generic categories like 'general' or 'local services'
-- Focus on the underlying consumer problem, not the business being reviewed
-- Be specific about what opportunity exists"""
+- Every pain point is a business opportunity - find the angle
+- Frame opportunities professionally for entrepreneurs/investors"""
 
             response = self.client.messages.create(
                 model="claude-haiku-4-5",
@@ -900,6 +929,22 @@ IMPORTANT:
             'technology': 'Technology',
             'work': 'Work & Productivity',
             'other': 'Other',
+            # Niche categories
+            'gaming_esports': 'Gaming & Esports',
+            'gaming': 'Gaming & Esports',
+            'esports': 'Gaming & Esports',
+            'creator_economy': 'Creator Economy',
+            'content_creation': 'Creator Economy',
+            'coaching_consulting': 'Coaching & Consulting',
+            'coaching': 'Coaching & Consulting',
+            'consulting': 'Coaching & Consulting',
+            'community_social': 'Community & Social',
+            'community': 'Community & Social',
+            'personal_development': 'Personal Development',
+            'self_improvement': 'Personal Development',
+            'hobbies_crafts': 'Hobbies & Crafts',
+            'hobbies': 'Hobbies & Crafts',
+            'crafts': 'Hobbies & Crafts',
         }
         return category_mapping.get(google_maps_category.lower(), 'Shopping & Services')
 
@@ -1054,6 +1099,26 @@ Return ONLY valid JSON:
             'travel': 'travel',
             'pet services': 'pet_services',
             'pets': 'pet_services',
+            # Niche categories
+            'gaming & esports': 'gaming_esports',
+            'gaming and esports': 'gaming_esports',
+            'gaming': 'gaming_esports',
+            'esports': 'gaming_esports',
+            'creator economy': 'creator_economy',
+            'content creation': 'creator_economy',
+            'coaching & consulting': 'coaching_consulting',
+            'coaching and consulting': 'coaching_consulting',
+            'coaching': 'coaching_consulting',
+            'consulting': 'coaching_consulting',
+            'community & social': 'community_social',
+            'community and social': 'community_social',
+            'community': 'community_social',
+            'personal development': 'personal_development',
+            'self-improvement': 'personal_development',
+            'hobbies & crafts': 'hobbies_crafts',
+            'hobbies and crafts': 'hobbies_crafts',
+            'hobbies': 'hobbies_crafts',
+            'crafts': 'hobbies_crafts',
         }
         return category_normalization.get(ai_lower, 'retail')
 
@@ -1096,7 +1161,14 @@ Return ONLY valid JSON:
             'travel': ['accommodation booking', 'travel planning', 'hospitality services', 'tourism support', 'trip coordination'],
             'pet_services': ['pet care', 'grooming services', 'veterinary access', 'pet boarding', 'animal wellness'],
             'technology': ['tech support', 'software services', 'digital solutions', 'IT coordination', 'tech consulting'],
-            'general': ['local services', 'consumer solutions', 'marketplace services', 'community needs', 'business services']
+            'general': ['local services', 'consumer solutions', 'marketplace services', 'community needs', 'business services'],
+            # Niche categories
+            'gaming_esports': ['gaming coaching', 'build optimization', 'esports training', 'community management', 'streaming services'],
+            'creator_economy': ['content creation', 'monetization tools', 'audience growth', 'editing services', 'creator platforms'],
+            'coaching_consulting': ['life coaching', 'career guidance', 'relationship coaching', 'personal mentoring', 'advisory services'],
+            'community_social': ['community building', 'moderation tools', 'engagement platforms', 'member management', 'event coordination'],
+            'personal_development': ['self-improvement', 'habit coaching', 'productivity tools', 'mindset training', 'goal setting'],
+            'hobbies_crafts': ['hobby supplies', 'craft services', 'collector platforms', 'repair services', 'enthusiast marketplaces']
         }
         
         category_keywords = actionable_keywords.get(category, actionable_keywords['general'])
@@ -1187,6 +1259,37 @@ Return ONLY valid JSON:
                 f"Tech Services and Solutions Platform for {city}",
                 f"Technology Support and Coordination in {city}",
                 f"Digital Services Marketplace for {city}"
+            ],
+            # Niche categories
+            'gaming_esports': [
+                f"Gaming Coaching and Optimization Services",
+                f"Esports Training and Build Consulting Platform",
+                f"Gaming Community Management and Streaming Services"
+            ],
+            'creator_economy': [
+                f"Content Creator Tools and Monetization Platform",
+                f"Creator Economy Services and Audience Growth",
+                f"Digital Content Creation and Editing Services"
+            ],
+            'coaching_consulting': [
+                f"Life Coaching and Personal Development Services",
+                f"Career and Relationship Coaching Platform",
+                f"Personal Mentoring and Advisory Services"
+            ],
+            'community_social': [
+                f"Community Building and Moderation Platform",
+                f"Online Community Management Services",
+                f"Social Engagement and Event Coordination Tools"
+            ],
+            'personal_development': [
+                f"Self-Improvement and Productivity Coaching",
+                f"Personal Growth and Goal Setting Platform",
+                f"Mindset Training and Habit Formation Services"
+            ],
+            'hobbies_crafts': [
+                f"Hobby Enthusiast Marketplace and Services",
+                f"Craft Supplies and Repair Services Platform",
+                f"Collector and Enthusiast Community Services"
             ]
         }
         
