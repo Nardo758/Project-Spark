@@ -824,3 +824,38 @@ async def list_specializations():
         {"value": s.value, "label": s.name.replace("_", " ").title()}
         for s in ExpertSpecialization
     ]
+
+
+@router.get("/match/opportunity/{opportunity_id}", response_model=dict)
+async def get_matched_experts_for_opportunity(
+    opportunity_id: int,
+    limit: int = 5,
+    ai_enhanced: bool = False,
+    db: Session = Depends(get_db)
+):
+    """
+    Get experts matched to a specific opportunity.
+    
+    Uses weighted scoring algorithm based on:
+    - Category alignment (30%)
+    - Specialization overlap (25%)
+    - Industry match (20%)
+    - Success metrics (15%)
+    - Availability (5%)
+    - Rating (5%)
+    
+    Set ai_enhanced=true for AI-powered insights about each match.
+    """
+    from app.services.expert_matcher import get_recommended_experts, get_ai_enhanced_matches
+    
+    if ai_enhanced:
+        result = await get_ai_enhanced_matches(db, opportunity_id, limit=limit)
+        return result
+    
+    experts = get_recommended_experts(db, opportunity_id, limit=limit)
+    
+    return {
+        "experts": experts,
+        "total_matches": len(experts),
+        "ai_insights": None
+    }

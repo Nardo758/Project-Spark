@@ -76,15 +76,26 @@ type Workspace = {
 
 type RecommendedExpert = {
   id: number
-  name: string
-  headline: string | null
+  user_id: number
+  name: string | null
+  title: string | null
   avatar_url: string | null
-  skills: string[]
-  specialization: string[]
+  location: string | null
+  primary_category: string | null
+  specializations: string[]
+  industries: string[]
+  years_experience: number | null
+  portfolio_highlights: string | null
+  hourly_rate_cents: number | null
+  project_rate_min_cents: number | null
+  project_rate_max_cents: number | null
+  retainer_rate_cents: number | null
+  response_time: string | null
+  is_verified: boolean
+  is_accepting_clients: boolean
   avg_rating: number | null
   total_reviews: number
-  is_available: boolean
-  hourly_rate_cents: number | null
+  projects_completed: number
   match_score: number
   match_reason: string
 }
@@ -250,13 +261,11 @@ export default function OpportunityHub() {
   })
 
   const expertsQuery = useQuery({
-    queryKey: ['opportunity-experts', opportunityId, isAuthenticated],
+    queryKey: ['opportunity-experts', opportunityId],
     enabled: Number.isFinite(opportunityId),
-    queryFn: async (): Promise<{ experts: RecommendedExpert[]; total: number }> => {
-      const headers: Record<string, string> = {}
-      if (token) headers.Authorization = `Bearer ${token}`
-      const res = await fetch(`/api/v1/opportunities/${opportunityId}/experts?limit=3`, { headers })
-      if (!res.ok) return { experts: [], total: 0 }
+    queryFn: async (): Promise<{ experts: RecommendedExpert[]; total_matches: number; ai_insights: string | null }> => {
+      const res = await fetch(`/api/v1/expert-network/match/opportunity/${opportunityId}?limit=5`)
+      if (!res.ok) return { experts: [], total_matches: 0, ai_insights: null }
       return await res.json()
     },
   })
@@ -1610,23 +1619,48 @@ ${o.ai_next_steps?.map(s => `- ${s}`).join('\n') || '- Define immediate next ste
                       {experts.length > 0 ? (
                         <div className="space-y-3">
                           {experts.slice(0, 3).map((expert) => (
-                            <div key={expert.id} className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-medium">
-                                {expert.name.charAt(0)}
-                              </div>
+                            <div key={expert.id} className="flex items-center gap-3 p-3 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer group">
+                              {expert.avatar_url ? (
+                                <img src={expert.avatar_url} alt={expert.name || ''} className="w-10 h-10 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white font-medium">
+                                  {(expert.name || 'E').charAt(0)}
+                                </div>
+                              )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-stone-900 truncate">{expert.name}</p>
-                                <p className="text-xs text-stone-500 truncate">{expert.headline}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-stone-900 truncate">{expert.name || 'Expert'}</p>
+                                  {expert.is_verified && <CheckCircle className="w-3.5 h-3.5 text-green-500" />}
+                                </div>
+                                <p className="text-xs text-violet-600 truncate">{expert.title}</p>
+                                <p className="text-xs text-stone-400 truncate">{expert.match_reason}</p>
                               </div>
-                              <span className="text-xs font-medium text-emerald-600">{expert.match_score}%</span>
+                              <div className="text-right">
+                                <span className="text-sm font-bold text-emerald-600">{Math.round(expert.match_score)}%</span>
+                                <p className="text-xs text-stone-400">match</p>
+                              </div>
                             </div>
                           ))}
-                          <Link to="/network/experts" className="block text-center text-sm text-violet-600 font-medium hover:text-violet-700 mt-2">
-                            View all experts
+                          <Link 
+                            to="/build/experts" 
+                            className="flex items-center justify-center gap-2 p-3 bg-violet-50 rounded-lg text-sm text-violet-600 font-medium hover:bg-violet-100 transition-colors mt-2"
+                          >
+                            <Users className="w-4 h-4" />
+                            Find Expert Help
                           </Link>
                         </div>
                       ) : (
-                        <p className="text-sm text-stone-500 p-4 bg-stone-50 rounded-lg text-center">No expert matches found yet.</p>
+                        <div className="text-center py-6">
+                          <Users className="w-10 h-10 text-stone-300 mx-auto mb-2" />
+                          <p className="text-sm text-stone-500 mb-3">No expert matches found</p>
+                          <Link 
+                            to="/build/experts" 
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors"
+                          >
+                            <Users className="w-4 h-4" />
+                            Browse Experts
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>
