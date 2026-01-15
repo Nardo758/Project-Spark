@@ -46,6 +46,9 @@ class Opportunity(Base):
 
     # Status
     status = Column(String(50), default="active")  # active, resolved, archived
+    
+    # Moderation Status (for admin quality control)
+    moderation_status = Column(String(50), default="approved")  # pending_review, approved, rejected, needs_edit
 
     # Source Tracking (for scraped data)
     source_id = Column(String(255), nullable=True, unique=True, index=True)  # External ID from source

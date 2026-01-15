@@ -753,6 +753,170 @@ def delete_opportunity(
     return {"message": "Opportunity deleted successfully"}
 
 
+# ===== MODERATION ENDPOINTS =====
+
+@router.get("/moderation/stats")
+def get_moderation_stats(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get moderation queue statistics"""
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    pending_review = db.query(Opportunity).filter(
+        Opportunity.moderation_status == 'pending_review'
+    ).count()
+    
+    needs_edit = db.query(Opportunity).filter(
+        Opportunity.moderation_status == 'needs_edit'
+    ).count()
+    
+    approved_today = db.query(Opportunity).filter(
+        Opportunity.moderation_status == 'approved',
+        Opportunity.updated_at >= today_start
+    ).count()
+    
+    rejected_today = db.query(Opportunity).filter(
+        Opportunity.moderation_status == 'rejected',
+        Opportunity.updated_at >= today_start
+    ).count()
+    
+    return {
+        "pending_review": pending_review,
+        "needs_edit": needs_edit,
+        "approved_today": approved_today,
+        "rejected_today": rejected_today
+    }
+
+
+@router.get("/moderation/queue")
+def get_moderation_queue(
+    moderation_status: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get opportunities in the moderation queue"""
+    query = db.query(Opportunity)
+    
+    if moderation_status:
+        query = query.filter(Opportunity.moderation_status == moderation_status)
+    
+    opportunities = query.order_by(desc(Opportunity.created_at)).offset(skip).limit(limit).all()
+    
+    return [
+        {
+            "id": opp.id,
+            "title": opp.title,
+            "category": opp.category,
+            "moderation_status": opp.moderation_status,
+            "source_platform": opp.source_platform,
+            "created_at": opp.created_at,
+            "updated_at": opp.updated_at
+        }
+        for opp in opportunities
+    ]
+
+
+@router.get("/opportunities/{opportunity_id}")
+def get_opportunity_detail(
+    opportunity_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get full opportunity details for moderation review"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    
+    if not opportunity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Opportunity not found"
+        )
+    
+    return {
+        "id": opportunity.id,
+        "title": opportunity.title,
+        "description": opportunity.description,
+        "category": opportunity.category,
+        "subcategory": opportunity.subcategory,
+        "moderation_status": opportunity.moderation_status,
+        "status": opportunity.status,
+        "source_platform": opportunity.source_platform,
+        "source_url": opportunity.source_url,
+        "raw_source_data": opportunity.raw_source_data,
+        "ai_summary": opportunity.ai_summary,
+        "ai_analyzed": opportunity.ai_analyzed,
+        "created_at": opportunity.created_at,
+        "updated_at": opportunity.updated_at
+    }
+
+
+from pydantic import BaseModel
+
+class ModerationUpdateRequest(BaseModel):
+    moderation_status: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+
+@router.patch("/moderation/{opportunity_id}")
+def update_moderation_status(
+    opportunity_id: int,
+    body: ModerationUpdateRequest,
+    request: Request,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Update opportunity moderation status and/or content"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+    
+    if not opportunity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Opportunity not found"
+        )
+    
+    updated_fields = []
+    
+    if body.moderation_status:
+        if body.moderation_status not in ['pending_review', 'approved', 'rejected', 'needs_edit']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid moderation status"
+            )
+        opportunity.moderation_status = body.moderation_status
+        updated_fields.append('moderation_status')
+    
+    if body.title:
+        opportunity.title = body.title[:500]
+        updated_fields.append('title')
+    
+    if body.description:
+        opportunity.description = body.description[:5000]
+        updated_fields.append('description')
+    
+    if body.category:
+        opportunity.category = body.category[:100]
+        updated_fields.append('category')
+    
+    opportunity.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    
+    log_event(
+        db,
+        action="admin.moderation.update",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="opportunity",
+        resource_id=opportunity_id,
+        metadata={"updated_fields": updated_fields, "new_status": body.moderation_status},
+    )
+    
+    return {"message": "Opportunity updated successfully", "updated_fields": updated_fields}
+
+
 @router.post("/opportunities/recategorize")
 async def recategorize_opportunities(
     request: Request,
@@ -2103,6 +2267,7 @@ Important:
                     opp.subcategory = analysis.get("subcategory")
                     opp.ai_analyzed = True
                     opp.ai_analyzed_at = datetime.now(timezone.utc)
+                    opp.moderation_status = 'pending_review'
                 
                 return {
                     "id": opp.id,

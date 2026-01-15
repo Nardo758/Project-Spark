@@ -739,6 +739,14 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#moderation" data-section="moderation">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Moderation
+                    </a>
+                </li>
+                <li>
                     <a href="#subscriptions" data-section="subscriptions">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                         Subscriptions
@@ -1024,6 +1032,144 @@
                     </table>
                 </div>
             </section>
+
+            <section id="section-moderation" class="hidden">
+                <div class="page-header">
+                    <h1 class="spektral">Opportunity Moderation</h1>
+                    <p>Review and approve opportunities before they go live</p>
+                </div>
+
+                <div class="stats-grid" id="moderation-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Review</div>
+                        <div class="stat-value" id="mod-pending">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Needs Edit</div>
+                        <div class="stat-value" id="mod-needs-edit">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Approved Today</div>
+                        <div class="stat-value" id="mod-approved-today">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Rejected Today</div>
+                        <div class="stat-value" id="mod-rejected-today">--</div>
+                    </div>
+                </div>
+
+                <div class="content-section" style="margin-bottom: 24px;">
+                    <div class="section-header">
+                        <h2>Reprocess General Category</h2>
+                        <div class="section-actions">
+                            <button class="btn-sm btn-primary" id="reprocess-general-btn" onclick="reprocessGeneralCategory(false)">Reprocess (20 items)</button>
+                            <button class="btn-sm" onclick="reprocessGeneralCategory(true)">Preview Only</button>
+                        </div>
+                    </div>
+                    <p style="color: var(--stone-500); font-size: 14px;">Re-analyze opportunities with 'General' category to assign proper categories using AI.</p>
+                    <div id="reprocess-results" style="margin-top: 16px; display: none;">
+                        <div class="alert" id="reprocess-alert"></div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Moderation Queue</h2>
+                        <div class="section-actions">
+                            <select class="filter-select" id="mod-status-filter" onchange="loadModerationQueue()">
+                                <option value="pending_review">Pending Review</option>
+                                <option value="needs_edit">Needs Edit</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="approved">Approved</option>
+                                <option value="">All</option>
+                            </select>
+                            <button class="btn-sm btn-primary" onclick="loadModerationQueue()">Refresh</button>
+                        </div>
+                    </div>
+                    <div id="moderation-queue-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30%">Title</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Source</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="moderation-table-body">
+                                <tr><td colspan="6" class="loading">Loading moderation queue...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Moderation Review Modal -->
+            <div id="moderation-modal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 1000px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Review Opportunity</h2>
+                        <button class="modal-close" onclick="closeModerationModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <div>
+                                <h3 style="margin-bottom: 12px; color: var(--stone-600);">Current Content</h3>
+                                <div style="background: var(--stone-50); padding: 16px; border-radius: 8px; border: 1px solid var(--stone-200);">
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="font-weight: 600; font-size: 12px; color: var(--stone-500);">TITLE</label>
+                                        <input type="text" id="mod-edit-title" class="form-input" style="width: 100%; margin-top: 4px;">
+                                    </div>
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="font-weight: 600; font-size: 12px; color: var(--stone-500);">CATEGORY</label>
+                                        <select id="mod-edit-category" class="form-input" style="width: 100%; margin-top: 4px;">
+                                            <option value="Technology">Technology</option>
+                                            <option value="Healthcare">Healthcare</option>
+                                            <option value="Finance">Finance</option>
+                                            <option value="Education">Education</option>
+                                            <option value="Retail">Retail</option>
+                                            <option value="Food & Beverage">Food & Beverage</option>
+                                            <option value="Real Estate">Real Estate</option>
+                                            <option value="Transportation">Transportation</option>
+                                            <option value="Entertainment">Entertainment</option>
+                                            <option value="B2B Services">B2B Services</option>
+                                            <option value="Consumer Services">Consumer Services</option>
+                                            <option value="Manufacturing">Manufacturing</option>
+                                            <option value="Health & Wellness">Health & Wellness</option>
+                                            <option value="Home & Living">Home & Living</option>
+                                            <option value="Pet Care">Pet Care</option>
+                                            <option value="Creator Economy">Creator Economy</option>
+                                            <option value="Gaming & Esports">Gaming & Esports</option>
+                                            <option value="Personal Development">Personal Development</option>
+                                            <option value="Work & Productivity">Work & Productivity</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="font-weight: 600; font-size: 12px; color: var(--stone-500);">DESCRIPTION</label>
+                                        <textarea id="mod-edit-description" class="form-input" rows="10" style="width: 100%; margin-top: 4px; resize: vertical;"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 style="margin-bottom: 12px; color: var(--stone-600);">Raw Source Data</h3>
+                                <div style="background: var(--stone-100); padding: 16px; border-radius: 8px; border: 1px solid var(--stone-200); max-height: 400px; overflow-y: auto;">
+                                    <pre id="mod-raw-data" style="white-space: pre-wrap; font-size: 12px; font-family: monospace; color: var(--stone-700);"></pre>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="mod-edit-id">
+                    </div>
+                    <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--stone-200);">
+                        <button class="btn-sm" onclick="closeModerationModal()">Cancel</button>
+                        <button class="btn-sm" style="background: var(--red-500); color: white;" onclick="rejectOpportunity()">Reject</button>
+                        <button class="btn-sm" style="background: var(--amber-500); color: white;" onclick="markNeedsEdit()">Needs Edit</button>
+                        <button class="btn-sm btn-primary" onclick="approveOpportunity()">Approve</button>
+                    </div>
+                </div>
+            </div>
 
             <section id="section-subscriptions" class="hidden">
                 <div class="page-header">
@@ -2054,6 +2200,7 @@
                 case 'ops': loadOps(); break;
                 case 'users': loadUsers(); break;
                 case 'opportunities': loadOpportunities(); break;
+                case 'moderation': loadModerationQueue(); loadModerationStats(); break;
                 case 'subscriptions': loadSubscriptions(); break;
                 case 'partners': loadPartners(); break;
                 case 'leads': loadLeads(); loadLeadStats(); break;
@@ -2329,6 +2476,184 @@
                 console.error('Failed to load opportunities:', error);
                 tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load opportunities</td></tr>';
             }
+        }
+
+        // ===== MODERATION FUNCTIONS =====
+        async function loadModerationStats() {
+            try {
+                const response = await fetchWithAuth('/api/v1/admin/moderation/stats');
+                const stats = await response.json();
+                document.getElementById('mod-pending').textContent = stats.pending_review || 0;
+                document.getElementById('mod-needs-edit').textContent = stats.needs_edit || 0;
+                document.getElementById('mod-approved-today').textContent = stats.approved_today || 0;
+                document.getElementById('mod-rejected-today').textContent = stats.rejected_today || 0;
+            } catch (error) {
+                console.error('Failed to load moderation stats:', error);
+            }
+        }
+
+        async function loadModerationQueue() {
+            const status = document.getElementById('mod-status-filter').value;
+            const tbody = document.getElementById('moderation-table-body');
+            
+            try {
+                let url = '/api/v1/admin/moderation/queue?limit=50';
+                if (status) url += `&moderation_status=${status}`;
+
+                const response = await fetchWithAuth(url);
+                const opportunities = await response.json();
+
+                if (opportunities.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No opportunities in queue</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = opportunities.map(opp => `
+                    <tr>
+                        <td>
+                            <span style="font-weight: 500;">${escapeHtml((opp.title || '').substring(0, 60))}${(opp.title || '').length > 60 ? '...' : ''}</span>
+                        </td>
+                        <td><span class="badge">${escapeHtml(opp.category || 'N/A')}</span></td>
+                        <td><span class="badge badge-${opp.moderation_status === 'approved' ? 'active' : opp.moderation_status === 'rejected' ? 'banned' : 'pending'}">${opp.moderation_status || 'pending_review'}</span></td>
+                        <td>${escapeHtml(opp.source_platform || 'manual')}</td>
+                        <td>${formatDate(opp.created_at)}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-sm btn-primary" onclick="openModerationModal(${opp.id})">Review</button>
+                                ${opp.moderation_status !== 'approved' ? `<button class="btn-sm btn-success" onclick="quickApprove(${opp.id})">Approve</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load moderation queue:', error);
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load queue</td></tr>';
+            }
+        }
+
+        async function openModerationModal(oppId) {
+            try {
+                const response = await fetchWithAuth(`/api/v1/admin/opportunities/${oppId}`);
+                const opp = await response.json();
+                
+                document.getElementById('mod-edit-id').value = opp.id;
+                document.getElementById('mod-edit-title').value = opp.title || '';
+                document.getElementById('mod-edit-category').value = opp.category || 'Other';
+                document.getElementById('mod-edit-description').value = opp.description || '';
+                
+                // Parse and display raw source data
+                let rawDisplay = 'No raw data available';
+                if (opp.raw_source_data) {
+                    try {
+                        const rawData = JSON.parse(opp.raw_source_data);
+                        rawDisplay = JSON.stringify(rawData, null, 2);
+                    } catch (e) {
+                        rawDisplay = opp.raw_source_data;
+                    }
+                }
+                document.getElementById('mod-raw-data').textContent = rawDisplay;
+                
+                document.getElementById('moderation-modal').style.display = 'flex';
+            } catch (error) {
+                console.error('Failed to load opportunity:', error);
+                alert('Failed to load opportunity details');
+            }
+        }
+
+        function closeModerationModal() {
+            document.getElementById('moderation-modal').style.display = 'none';
+        }
+
+        async function approveOpportunity() {
+            const id = document.getElementById('mod-edit-id').value;
+            await updateModerationStatus(id, 'approved');
+        }
+
+        async function rejectOpportunity() {
+            const id = document.getElementById('mod-edit-id').value;
+            await updateModerationStatus(id, 'rejected');
+        }
+
+        async function markNeedsEdit() {
+            const id = document.getElementById('mod-edit-id').value;
+            await updateModerationStatus(id, 'needs_edit');
+        }
+
+        async function quickApprove(oppId) {
+            await updateModerationStatus(oppId, 'approved');
+        }
+
+        async function updateModerationStatus(oppId, status) {
+            try {
+                const body = { moderation_status: status };
+                
+                // If we're in the modal, also update content
+                if (document.getElementById('moderation-modal').style.display === 'flex') {
+                    body.title = document.getElementById('mod-edit-title').value;
+                    body.category = document.getElementById('mod-edit-category').value;
+                    body.description = document.getElementById('mod-edit-description').value;
+                }
+                
+                const response = await fetchWithAuth(`/api/v1/admin/moderation/${oppId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) throw new Error('Failed to update');
+                
+                closeModerationModal();
+                loadModerationQueue();
+                loadModerationStats();
+            } catch (error) {
+                console.error('Failed to update moderation status:', error);
+                alert('Failed to update opportunity');
+            }
+        }
+
+        async function reprocessGeneralCategory(dryRun) {
+            const btn = document.getElementById('reprocess-general-btn');
+            const resultsDiv = document.getElementById('reprocess-results');
+            const alertDiv = document.getElementById('reprocess-alert');
+            
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            resultsDiv.style.display = 'block';
+            alertDiv.className = 'alert';
+            alertDiv.innerHTML = 'Processing opportunities... This may take a moment.';
+            
+            try {
+                const response = await fetchWithAuth(`/api/v1/admin/data-pipeline/reprocess-general-category?limit=20&dry_run=${dryRun}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.status === 'error') {
+                    alertDiv.className = 'alert alert-error';
+                    alertDiv.innerHTML = `Error: ${result.message}`;
+                } else if (result.status === 'no_opportunities') {
+                    alertDiv.className = 'alert alert-info';
+                    alertDiv.innerHTML = 'No opportunities with "General" category found.';
+                } else {
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.innerHTML = `
+                        <strong>${dryRun ? 'Preview' : 'Completed'}:</strong> 
+                        ${result.updated} updated, ${result.skipped || 0} skipped, ${result.errors} errors
+                        <br><small>Total processed: ${result.total_processed} of ${result.total_found}</small>
+                    `;
+                    if (!dryRun) {
+                        loadModerationQueue();
+                        loadModerationStats();
+                    }
+                }
+            } catch (error) {
+                console.error('Reprocess failed:', error);
+                alertDiv.className = 'alert alert-error';
+                alertDiv.innerHTML = 'Failed to reprocess opportunities. Check console for details.';
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Reprocess (20 items)';
         }
 
         async function loadSubscriptions() {

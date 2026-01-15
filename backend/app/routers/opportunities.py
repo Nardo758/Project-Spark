@@ -65,7 +65,10 @@ def get_opportunities(
     db: Session = Depends(get_db)
 ):
     """Get list of opportunities with filtering and pagination"""
-    query = db.query(Opportunity).filter(Opportunity.status == status)
+    query = db.query(Opportunity).filter(
+        Opportunity.status == status,
+        Opportunity.moderation_status == 'approved'
+    )
 
     # Filter by category
     if category:
