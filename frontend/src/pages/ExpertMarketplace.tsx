@@ -15,6 +15,7 @@ type ExpertProfile = {
   location: string | null
   timezone: string | null
   primary_category: string | null
+  category: string | null
   specializations: string[]
   industries: string[]
   stage_expertise: string[]
@@ -355,51 +356,23 @@ export default function ExpertMarketplace() {
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
                     <MapPin className="w-4 h-4" />
                     {expert.location}
-                    {expert.response_time && (
-                      <>
-                        <span className="text-gray-300">|</span>
-                        <Clock className="w-4 h-4" />
-                        {expert.response_time}
-                      </>
-                    )}
                   </div>
                 )}
 
-                {expert.primary_category && (
+                {(expert.primary_category || expert.category) && (
                   <div className="flex items-center gap-2 mb-3">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-medium">
-                      {getCategoryIcon(expert.primary_category)}
-                      {expert.primary_category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      {getCategoryIcon(expert.primary_category || expert.category || '')}
+                      {(expert.primary_category || expert.category || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </span>
                   </div>
                 )}
 
-                {(expert.specializations.length > 0 || expert.industries.length > 0) && (
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {[...expert.specializations, ...expert.industries].slice(0, 4).map((item, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                        {item.replace(/_/g, ' ')}
-                      </span>
-                    ))}
-                    {[...expert.specializations, ...expert.industries].length > 4 && (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">
-                        +{[...expert.specializations, ...expert.industries].length - 4}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap gap-3 text-sm mb-4">
+                <div className="flex flex-wrap gap-3 text-sm">
                   {expert.hourly_rate_cents && (
                     <div className="flex items-center gap-1 text-gray-600">
                       <Clock className="w-4 h-4 text-gray-400" />
                       {formatCents(expert.hourly_rate_cents)}/hr
-                    </div>
-                  )}
-                  {(expert.project_rate_min_cents || expert.project_rate_max_cents) && (
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Briefcase className="w-4 h-4 text-gray-400" />
-                      {formatCentsRange(expert.project_rate_min_cents, expert.project_rate_max_cents)}
                     </div>
                   )}
                   {expert.projects_completed > 0 && (
@@ -409,12 +382,6 @@ export default function ExpertMarketplace() {
                     </div>
                   )}
                 </div>
-
-                {expert.portfolio_highlights && (
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                    {expert.portfolio_highlights}
-                  </p>
-                )}
               </div>
 
               <div className="px-6 pb-6">
