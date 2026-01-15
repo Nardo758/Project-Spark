@@ -37,6 +37,11 @@ from app.schemas.admin import (
 )
 from app.core.dependencies import get_current_admin_user
 from app.services.audit import log_event
+from anthropic import Anthropic
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -746,6 +751,221 @@ def delete_opportunity(
     )
 
     return {"message": "Opportunity deleted successfully"}
+
+
+@router.post("/opportunities/recategorize")
+async def recategorize_opportunities(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    limit: int = Query(100, ge=1, le=500, description="Max opportunities to process"),
+    only_general: bool = Query(True, description="Only update opportunities with 'general' category"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Batch recategorize opportunities using AI analysis"""
+    
+    query = db.query(Opportunity)
+    
+    if only_general:
+        query = query.filter(
+            (Opportunity.category.ilike('%general%')) | 
+            (Opportunity.category == None) |
+            (Opportunity.category == '')
+        )
+    
+    opportunities = query.order_by(Opportunity.created_at.desc()).limit(limit).all()
+    
+    if not opportunities:
+        return {"message": "No opportunities to recategorize", "processed": 0}
+    
+    client = Anthropic()
+    updated_count = 0
+    skipped_count = 0
+    errors = []
+    
+    valid_categories = {
+        'technology': 'Technology',
+        'health & wellness': 'Health & Wellness',
+        'health and wellness': 'Health & Wellness',
+        'healthcare': 'Health & Wellness',
+        'money & finance': 'Money & Finance',
+        'money and finance': 'Money & Finance',
+        'finance': 'Money & Finance',
+        'financial': 'Money & Finance',
+        'education & learning': 'Education & Learning',
+        'education and learning': 'Education & Learning',
+        'education': 'Education & Learning',
+        'shopping & services': 'Shopping & Services',
+        'shopping and services': 'Shopping & Services',
+        'retail': 'Shopping & Services',
+        'home & living': 'Home & Living',
+        'home and living': 'Home & Living',
+        'home services': 'Home & Living',
+        'transportation': 'Transportation',
+        'entertainment & social': 'Entertainment & Social',
+        'entertainment and social': 'Entertainment & Social',
+        'entertainment': 'Entertainment & Social',
+        'food & beverage': 'Food & Beverage',
+        'food and beverage': 'Food & Beverage',
+        'restaurant': 'Food & Beverage',
+        'real estate': 'Real Estate',
+        'b2b services': 'B2B Services',
+        'b2b': 'B2B Services',
+        'professional': 'B2B Services',
+        'fitness': 'Health & Wellness',
+        'beauty': 'Shopping & Services',
+        'automotive': 'Transportation',
+        'travel': 'Transportation',
+        'pet services': 'Shopping & Services',
+    }
+    
+    for opp in opportunities:
+        try:
+            context = f"""
+Title: {opp.title or 'Unknown'}
+Description: {opp.description or 'No description'}
+Current Category: {opp.category or 'None'}
+City: {opp.city or 'Unknown'}
+"""
+            
+            prompt = f"""Analyze this business opportunity and determine the best category and improved title.
+
+{context}
+
+Categories to choose from:
+- Technology
+- Health & Wellness
+- Money & Finance
+- Education & Learning
+- Shopping & Services
+- Home & Living
+- Transportation
+- Entertainment & Social
+- Food & Beverage
+- Real Estate
+- B2B Services
+
+Respond in JSON format:
+{{
+  "category": "Best matching category from list above",
+  "title": "Professional, descriptive title (20-60 chars)",
+  "reason": "Brief explanation"
+}}"""
+
+            message = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=300,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            response = message.content[0].text if message.content else ""
+            
+            try:
+                import re
+                json_match = re.search(r'\{[\s\S]*?\}', response)
+                if json_match:
+                    result = json.loads(json_match.group())
+                    
+                    new_category = result.get('category', '').strip()
+                    new_title = result.get('title', '').strip()
+                    
+                    updated = False
+                    category_key = new_category.lower()
+                    
+                    if category_key in valid_categories:
+                        normalized_category = valid_categories[category_key]
+                        opp.category = normalized_category
+                        updated = True
+                    else:
+                        errors.append(f"Opportunity {opp.id}: Invalid category '{new_category}'")
+                        skipped_count += 1
+                    
+                    if new_title and len(new_title) >= 20:
+                        opp.title = new_title[:500]
+                        updated = True
+                    
+                    if updated:
+                        opp.ai_analyzed = True
+                        opp.ai_analyzed_at = datetime.utcnow()
+                        updated_count += 1
+                else:
+                    errors.append(f"Opportunity {opp.id}: No JSON in response")
+                    skipped_count += 1
+                    
+            except json.JSONDecodeError as e:
+                errors.append(f"Opportunity {opp.id}: JSON parse error - {str(e)[:50]}")
+                skipped_count += 1
+                
+        except Exception as e:
+            errors.append(f"Opportunity {opp.id}: {str(e)[:100]}")
+            logger.warning(f"Failed to recategorize opportunity {opp.id}: {e}")
+    
+    db.commit()
+    
+    log_event(
+        db,
+        action="admin.opportunities.recategorize",
+        actor=admin_user,
+        actor_type="admin",
+        request=request,
+        resource_type="opportunity",
+        metadata={"processed": updated_count, "total": len(opportunities), "errors": len(errors)},
+    )
+    
+    return {
+        "message": f"Recategorized {updated_count} opportunities",
+        "processed": updated_count,
+        "skipped": skipped_count,
+        "total": len(opportunities),
+        "errors": errors[:20] if errors else []
+    }
+
+
+@router.post("/signals/reprocess")
+async def reprocess_signals(
+    request: Request,
+    limit: int = Query(100, ge=1, le=500, description="Max signals to reprocess"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Reprocess existing Google Maps signals through updated categorization pipeline"""
+    from app.services.signal_to_opportunity import SignalToOpportunityService
+    from app.models.scraped_data import ScrapedData
+    
+    unprocessed = db.query(ScrapedData).filter(
+        ScrapedData.source_platform == 'apify_google_maps',
+        ScrapedData.processed == False
+    ).limit(limit).all()
+    
+    if not unprocessed:
+        return {"message": "No unprocessed signals found", "processed": 0}
+    
+    service = SignalToOpportunityService(db)
+    
+    try:
+        batch_id = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        result = service.process_batch(batch_id=batch_id, limit=limit)
+        
+        log_event(
+            db,
+            action="admin.signals.reprocess",
+            actor=admin_user,
+            actor_type="admin",
+            request=request,
+            resource_type="signal",
+            metadata={"batch_id": batch_id, "result": result},
+        )
+        
+        return {
+            "message": f"Reprocessed signals",
+            "batch_id": batch_id,
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Signal reprocessing failed: {e}")
+        return {
+            "message": f"Reprocessing failed: {str(e)[:200]}",
+            "processed": 0
+        }
 
 
 @router.delete("/comments/{comment_id}")
