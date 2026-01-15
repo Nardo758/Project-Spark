@@ -461,6 +461,7 @@ async def list_my_engagements(
     for eng in engagements:
         expert_profile = eng.expert_profile
         expert_user = expert_profile.user if expert_profile else None
+        client_user = eng.user
         results.append({
             "id": eng.id,
             "user_id": eng.user_id,
@@ -474,11 +475,17 @@ async def list_my_engagements(
             "proposal_message": eng.proposal_message,
             "proposed_amount_cents": eng.proposed_amount_cents,
             "final_amount_cents": eng.final_amount_cents,
+            "platform_fee_cents": eng.platform_fee_cents,
+            "expert_payout_cents": eng.expert_payout_cents,
             "created_at": eng.created_at,
+            "accepted_at": eng.accepted_at,
+            "completed_at": eng.completed_at,
             "is_reviewed": eng.is_reviewed,
             "expert_name": expert_user.name if expert_user else None,
             "expert_title": expert_profile.title if expert_profile else None,
             "expert_avatar": expert_user.avatar_url if expert_user else None,
+            "client_name": client_user.name if client_user else None,
+            "client_email": client_user.email if client_user else None,
         })
     
     return results
