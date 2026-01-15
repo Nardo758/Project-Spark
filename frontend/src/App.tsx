@@ -53,7 +53,7 @@ function App() {
         <Route path="discover" element={<Discover />} />
         <Route path="idea-engine" element={<IdeaEngine />} />
         <Route path="services" element={<Services />} />
-        <Route path="network" element={<Network />} />
+        <Route path="network" element={<Navigate to="/network/experts" replace />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route
@@ -67,7 +67,6 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
         <Route path="leads" element={<Leads />} />
-        <Route path="funding" element={<Funding />} />
         <Route path="tools" element={<Tools />} />
         <Route path="learn" element={<Learn />} />
         <Route path="ai-roadmap" element={<AIRoadmap />} />
