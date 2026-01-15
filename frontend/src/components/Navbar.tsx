@@ -14,13 +14,13 @@ const guestNavItems = [
   { 
     name: 'Join Our Network',
     dropdown: [
-      { name: 'As an Expert/Consultant', path: '/network/expert', description: 'Offer your expertise to entrepreneurs' },
+      { name: 'As an Expert/Consultant', path: '/network/experts', description: 'Offer your expertise to entrepreneurs' },
       { name: 'Find Partners', path: '/network/partners', description: 'Connect with potential business partners' },
-      { name: 'Investor', path: '/network/investor', description: 'Discover investment opportunities' },
-      { name: 'Lender', path: '/network/lender', description: 'Provide funding to startups' },
+      { name: 'Investor', path: '/network/investors', description: 'Discover investment opportunities' },
+      { name: 'Lender', path: '/network/lenders', description: 'Provide funding to startups' },
     ]
   },
-  { name: 'API', path: '/developers' },
+  { name: 'API', path: '/api' },
   { name: 'Pricing', path: '/pricing' },
 ]
 
@@ -43,7 +43,7 @@ const paidNavItems = [
       { name: 'Leads', path: '/leads', description: 'Generate and manage leads' },
     ]
   },
-  { name: 'API', path: '/developers' },
+  { name: 'API', path: '/api' },
   { name: 'Pricing', path: '/pricing' },
 ]
 

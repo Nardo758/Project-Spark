@@ -121,10 +121,9 @@ app.include_router(idea_engine.router, prefix=f"{settings.API_V1_PREFIX}/idea-en
 app.include_router(idea_validations.router, prefix=f"{settings.API_V1_PREFIX}/idea-validations", tags=["Idea Validations"])
 app.include_router(webhook.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Webhooks"])
 app.include_router(scraper.router, prefix=f"{settings.API_V1_PREFIX}/scraper", tags=["Scraper"])
-app.include_router(replit_auth.router, prefix=f"{settings.API_V1_PREFIX}/replit-auth", tags=["Replit Auth"])
-# Also mount at /auth for Replit Auth compatibility
+# Mount at /auth for Replit Auth user-facing flow (login, callback)
 app.include_router(replit_auth.router, prefix="/auth", tags=["Replit Auth"])
-# Mount callback at root level for standard Replit Auth callback path
+# Mount callback at root level for /__repl_auth_callback endpoint
 app.include_router(replit_auth.router, prefix="", tags=["Replit Auth Callback"])
 app.include_router(magic_link.router, prefix=f"{settings.API_V1_PREFIX}/magic-link", tags=["Magic Link Auth"])
 app.include_router(contact.router, prefix=f"{settings.API_V1_PREFIX}/contact", tags=["Contact"])

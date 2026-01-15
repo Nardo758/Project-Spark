@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { 
   Search, 
   Users, 
@@ -110,12 +110,35 @@ const sampleLenders = [
   },
 ]
 
+const tabMapping: Record<string, string> = {
+  'expert': 'experts',
+  'experts': 'experts',
+  'investor': 'investors',
+  'investors': 'investors',
+  'partner': 'partners',
+  'partners': 'partners',
+  'lender': 'lenders',
+  'lenders': 'lenders',
+}
+
 export default function Network() {
   const { isAuthenticated } = useAuthStore()
-  const [activeTab, setActiveTab] = useState('experts')
+  const { tab } = useParams<{ tab?: string }>()
+  
+  const initialTab = tab ? (tabMapping[tab] || 'experts') : 'experts'
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [searchQuery, setSearchQuery] = useState('')
   const [experts, setExperts] = useState<Expert[]>([])
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (tab) {
+      const mappedTab = tabMapping[tab] || 'experts'
+      if (mappedTab !== activeTab) {
+        setActiveTab(mappedTab)
+      }
+    }
+  }, [tab])
 
   useEffect(() => {
     if (activeTab === 'experts') {

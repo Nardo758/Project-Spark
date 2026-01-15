@@ -72,12 +72,7 @@ function App() {
         <Route path="learn" element={<Learn />} />
         <Route path="ai-roadmap" element={<AIRoadmap />} />
         <Route path="ai-match" element={<AIMatch />} />
-        <Route path="expert-marketplace" element={<ExpertMarketplace />} />
-        <Route path="find-expert-help" element={<ExpertMarketplace />} />
-        <Route path="find-money" element={<Funding />} />
-        <Route path="developers" element={<ApiPortal />} />
         <Route path="api" element={<ApiPortal />} />
-        <Route path="content" element={<Navigate to="/services" replace />} />
         <Route path="about" element={<About />} />
         <Route path="blog" element={<Blog />} />
         <Route path="contact" element={<Contact />} />
@@ -178,10 +173,7 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route path="network/expert" element={<Network />} />
-        <Route path="network/partners" element={<Network />} />
-        <Route path="network/investor" element={<Network />} />
-        <Route path="network/lender" element={<Network />} />
+        <Route path="network/:tab" element={<Network />} />
         <Route path="join-network/:role" element={<JoinNetwork />} />
         <Route path="expert/apply" element={<ExpertApplication />} />
         <Route path="auth/callback" element={<AuthCallback />} />
