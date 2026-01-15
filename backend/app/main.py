@@ -51,6 +51,7 @@ from app.routers import (
     stripe_webhook,
     subscriptions,
     two_factor,
+    upwork,
     users,
     validations,
     watchlist,
@@ -144,6 +145,7 @@ app.include_router(ai_cofounder.router, prefix=f"{settings.API_V1_PREFIX}", tags
 app.include_router(copilot.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Copilot"])
 app.include_router(report_pricing.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Report Pricing"])
 app.include_router(expert_collaboration.router, prefix=f"{settings.API_V1_PREFIX}/expert-network", tags=["Expert Collaboration"])
+app.include_router(upwork.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Upwork Integration"])
 
 
 @app.get("/")

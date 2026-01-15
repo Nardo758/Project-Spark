@@ -99,7 +99,7 @@ class ExpertProfile(Base):
     __tablename__ = "expert_profiles"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=True, index=True)
     expert_id = Column(Integer, ForeignKey("experts.id", ondelete="SET NULL"), nullable=True, index=True)
     
     title = Column(String(255), nullable=True)
@@ -150,6 +150,17 @@ class ExpertProfile(Base):
     total_reviews = Column(Integer, default=0)
     response_rate = Column(Float, nullable=True)
     member_since = Column(DateTime(timezone=True), nullable=True)
+    
+    external_id = Column(String(255), nullable=True, index=True)
+    external_source = Column(String(50), nullable=True)
+    external_url = Column(String(1000), nullable=True)
+    external_name = Column(String(255), nullable=True)
+    
+    bio = Column(Text, nullable=True)
+    skills = Column(Text, nullable=True)
+    avatar_url = Column(String(1000), nullable=True)
+    category = Column(Enum(ExpertCategory), nullable=True)
+    is_available = Column(Boolean, default=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

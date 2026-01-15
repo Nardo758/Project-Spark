@@ -95,3 +95,5 @@ pytest
 pytest-asyncio
 httpx==0.25.2
 tenacity
+gql
+aiohttp
