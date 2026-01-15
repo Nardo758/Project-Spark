@@ -13,11 +13,11 @@ class AdminUserListItem(BaseModel):
     id: int
     email: EmailStr
     name: str
-    is_active: bool
-    is_verified: bool
-    is_admin: bool
-    is_banned: bool
-    impact_points: int
+    is_active: bool = False
+    is_verified: bool = False
+    is_admin: bool = False
+    is_banned: bool = False
+    impact_points: int = 0
     created_at: datetime
 
     class Config:
@@ -29,19 +29,19 @@ class AdminUserDetail(BaseModel):
     id: int
     email: EmailStr
     name: str
-    bio: Optional[str]
-    avatar_url: Optional[str]
-    oauth_provider: Optional[str]
-    impact_points: int
-    badges: Optional[str]
-    is_active: bool
-    is_verified: bool
-    is_admin: bool
-    is_banned: bool
-    ban_reason: Optional[str]
-    otp_enabled: bool
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    oauth_provider: Optional[str] = None
+    impact_points: int = 0
+    badges: Optional[str] = None
+    is_active: bool = False
+    is_verified: bool = False
+    is_admin: bool = False
+    is_banned: bool = False
+    ban_reason: Optional[str] = None
+    otp_enabled: bool = False
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
 
     # Computed fields
     opportunity_count: int = 0

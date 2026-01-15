@@ -475,9 +475,7 @@ def get_opportunity_experts(
     - Availability (10%)
     - Rating (5%)
     """
-    from app.services.expert_matcher import get_recommended_experts, seed_demo_experts
-    
-    seed_demo_experts(db)
+    from app.services.expert_matcher import get_recommended_experts
     
     experts = get_recommended_experts(db, opportunity_id, limit=limit)
     
