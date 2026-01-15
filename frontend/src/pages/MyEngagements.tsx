@@ -7,6 +7,7 @@ import {
   FileText, Star, Briefcase
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import ReviewModal from '../components/ReviewModal'
 
 type EngagementStatus = 'request_sent' | 'proposal_sent' | 'negotiating' | 'accepted' | 'in_progress' | 'paused' | 'completed' | 'declined' | 'cancelled'
 
@@ -106,6 +107,7 @@ export default function MyEngagements() {
   const [selectedEngagement, setSelectedEngagement] = useState<number | null>(null)
   const [messageInput, setMessageInput] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [showReviewModal, setShowReviewModal] = useState(false)
 
   const { data: engagements, isLoading } = useQuery({
     queryKey: ['my-engagements', filterStatus],
@@ -335,7 +337,7 @@ export default function MyEngagements() {
                     </div>
                   </div>
                   <button
-                    onClick={() => navigate(`/build/engagements/${selectedEngagement}/review`)}
+                    onClick={() => setShowReviewModal(true)}
                     className="px-4 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700"
                   >
                     Leave Review
@@ -497,6 +499,14 @@ export default function MyEngagements() {
           ))}
         </div>
       </div>
+
+      {showReviewModal && engagementDetail && (
+        <ReviewModal
+          engagementId={engagementDetail.id}
+          expertName={engagementDetail.expert_name || 'Expert'}
+          onClose={() => setShowReviewModal(false)}
+        />
+      )}
     </div>
   )
 }
