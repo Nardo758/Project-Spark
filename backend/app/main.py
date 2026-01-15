@@ -61,6 +61,7 @@ from app.routers import (
     websocket_router,
     workspaces,
     byok,
+    affiliate_tools,
 )
 
 logger = logging.getLogger(__name__)
@@ -149,6 +150,7 @@ app.include_router(expert_collaboration.router, prefix=f"{settings.API_V1_PREFIX
 app.include_router(upwork.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Upwork Integration"])
 app.include_router(sba.router, prefix=f"{settings.API_V1_PREFIX}/sba", tags=["SBA Funding"])
 app.include_router(byok.router, tags=["BYOK"])
+app.include_router(affiliate_tools.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Affiliate Tools"])
 
 
 @app.get("/")
