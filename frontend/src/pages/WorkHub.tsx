@@ -178,7 +178,7 @@ function PaidReportCard({ opportunityId }: { opportunityId: number }) {
   )
 }
 
-function InlineCardsDisplay({ cards, onToolClick }: { cards: InlineCards | null; onToolClick?: (toolId: number, url: string) => void }) {
+function InlineCardsDisplay({ cards, opportunityId, workspaceId, onToolClick }: { cards: InlineCards | null; opportunityId?: number; workspaceId?: number; onToolClick?: (toolId: number, url: string) => void }) {
   if (!cards) return null
 
   const trackClick = async (toolId: number) => {
@@ -186,7 +186,12 @@ function InlineCardsDisplay({ cards, onToolClick }: { cards: InlineCards | null;
       await fetch('/api/v1/affiliate-tools/track-click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tool_id: toolId, source: 'workhub' }),
+        body: JSON.stringify({ 
+          tool_id: toolId, 
+          source: 'workhub',
+          opportunity_id: opportunityId || null,
+          workspace_id: workspaceId || null
+        }),
       })
     } catch {}
   }
@@ -1052,7 +1057,7 @@ export default function WorkHub() {
                   {isLastAssistantMessage && latestInlineCards && (
                     <div className="flex justify-start mt-2">
                       <div className="max-w-2xl w-full">
-                        <InlineCardsDisplay cards={latestInlineCards} />
+                        <InlineCardsDisplay cards={latestInlineCards} opportunityId={opportunityId} workspaceId={workspace?.id} />
                       </div>
                     </div>
                   )}

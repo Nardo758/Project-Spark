@@ -41,6 +41,7 @@ class ToolCreateRequest(BaseModel):
     best_for: str | None = None
     logo_url: str | None = None
     priority: int = 0
+    is_active: bool = True
 
 
 class ToolUpdateRequest(BaseModel):
@@ -249,7 +250,7 @@ async def admin_create_tool(
         best_for=request.best_for,
         logo_url=request.logo_url,
         priority=request.priority,
-        is_active=True
+        is_active=request.is_active
     )
     db.add(tool)
     db.commit()
