@@ -463,7 +463,21 @@ def list_users(
     # Order by created_at desc and paginate
     users = query.order_by(desc(User.created_at)).offset(skip).limit(limit).all()
 
-    return users
+    # Convert to dict with coalesced NULL values
+    return [
+        {
+            "id": u.id,
+            "email": u.email,
+            "name": u.name,
+            "is_active": u.is_active if u.is_active is not None else False,
+            "is_verified": u.is_verified if u.is_verified is not None else False,
+            "is_admin": u.is_admin if u.is_admin is not None else False,
+            "is_banned": u.is_banned if u.is_banned is not None else False,
+            "impact_points": u.impact_points if u.impact_points is not None else 0,
+            "created_at": u.created_at
+        }
+        for u in users
+    ]
 
 
 @router.get("/users/{user_id}", response_model=AdminUserDetail)
@@ -486,9 +500,24 @@ def get_user_detail(
     validation_count = db.query(Validation).filter(Validation.user_id == user_id).count()
     comment_count = db.query(Comment).filter(Comment.user_id == user_id).count()
 
-    # Add computed fields
+    # Add computed fields with coalesced NULL values
     user_dict = {
-        **user.__dict__,
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "bio": user.bio,
+        "avatar_url": user.avatar_url,
+        "oauth_provider": user.oauth_provider,
+        "impact_points": user.impact_points if user.impact_points is not None else 0,
+        "badges": user.badges,
+        "is_active": user.is_active if user.is_active is not None else False,
+        "is_verified": user.is_verified if user.is_verified is not None else False,
+        "is_admin": user.is_admin if user.is_admin is not None else False,
+        "is_banned": user.is_banned if user.is_banned is not None else False,
+        "ban_reason": user.ban_reason,
+        "otp_enabled": user.otp_enabled if user.otp_enabled is not None else False,
+        "created_at": user.created_at,
+        "updated_at": user.updated_at,
         "opportunity_count": opportunity_count,
         "validation_count": validation_count,
         "comment_count": comment_count
@@ -533,8 +562,24 @@ def update_user(
     validation_count = db.query(Validation).filter(Validation.user_id == user_id).count()
     comment_count = db.query(Comment).filter(Comment.user_id == user_id).count()
 
+    # Coalesce NULL values
     user_dict = {
-        **user.__dict__,
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "bio": user.bio,
+        "avatar_url": user.avatar_url,
+        "oauth_provider": user.oauth_provider,
+        "impact_points": user.impact_points if user.impact_points is not None else 0,
+        "badges": user.badges,
+        "is_active": user.is_active if user.is_active is not None else False,
+        "is_verified": user.is_verified if user.is_verified is not None else False,
+        "is_admin": user.is_admin if user.is_admin is not None else False,
+        "is_banned": user.is_banned if user.is_banned is not None else False,
+        "ban_reason": user.ban_reason,
+        "otp_enabled": user.otp_enabled if user.otp_enabled is not None else False,
+        "created_at": user.created_at,
+        "updated_at": user.updated_at,
         "opportunity_count": opportunity_count,
         "validation_count": validation_count,
         "comment_count": comment_count
