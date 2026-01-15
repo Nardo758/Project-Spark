@@ -22,16 +22,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 CATEGORY_SEARCH_TERMS = [
-    {"query": "business strategy consultant", "category": ExpertCategory.STRATEGY_CONSULTANT, "upwork_category": "531770282580668429"},
-    {"query": "market research analyst", "category": ExpertCategory.MARKET_RESEARCHER, "upwork_category": "531770282580668425"},
-    {"query": "startup legal advisor", "category": ExpertCategory.LEGAL_ADVISOR, "upwork_category": "531770282580668428"},
+    {"query": "business strategy consultant", "category": ExpertCategory.BUSINESS_CONSULTANT, "upwork_category": "531770282580668429"},
+    {"query": "market research analyst", "category": ExpertCategory.INDUSTRY_SPECIALIST, "upwork_category": "531770282580668425"},
+    {"query": "startup legal advisor", "category": ExpertCategory.LEGAL_COMPLIANCE, "upwork_category": "531770282580668428"},
     {"query": "financial consultant CFO", "category": ExpertCategory.FINANCIAL_ADVISOR, "upwork_category": "531770282580668429"},
     {"query": "software architect", "category": ExpertCategory.TECHNICAL_ADVISOR, "upwork_category": "531770282580668418"},
-    {"query": "digital marketing strategist", "category": ExpertCategory.MARKETING_SPECIALIST, "upwork_category": "531770282580668422"},
-    {"query": "product manager", "category": ExpertCategory.PRODUCT_STRATEGIST, "upwork_category": "531770282580668418"},
-    {"query": "sales consultant B2B", "category": ExpertCategory.SALES_ADVISOR, "upwork_category": "531770282580668431"},
-    {"query": "operations consultant", "category": ExpertCategory.OPERATIONS_EXPERT, "upwork_category": "531770282580668429"},
-    {"query": "data scientist analytics", "category": ExpertCategory.DATA_ANALYST, "upwork_category": "531770282580668425"},
+    {"query": "digital marketing strategist", "category": ExpertCategory.GROWTH_MARKETING, "upwork_category": "531770282580668422"},
+    {"query": "product manager", "category": ExpertCategory.TECHNICAL_ADVISOR, "upwork_category": "531770282580668418"},
+    {"query": "sales consultant B2B", "category": ExpertCategory.BUSINESS_CONSULTANT, "upwork_category": "531770282580668431"},
+    {"query": "operations consultant", "category": ExpertCategory.BUSINESS_CONSULTANT, "upwork_category": "531770282580668429"},
+    {"query": "data scientist analytics", "category": ExpertCategory.TECHNICAL_ADVISOR, "upwork_category": "531770282580668425"},
 ]
 
 SAMPLE_EXPERTS = [
@@ -42,7 +42,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 250,
         "skills": ["Business Strategy", "Market Analysis", "Growth Planning", "M&A Advisory", "Due Diligence"],
         "location": "San Francisco, CA",
-        "category": ExpertCategory.STRATEGY_CONSULTANT,
+        "category": ExpertCategory.BUSINESS_CONSULTANT,
         "avg_rating": 4.9,
         "projects_completed": 47,
         "avatar_url": None
@@ -54,7 +54,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 175,
         "skills": ["Market Research", "Consumer Insights", "Competitive Analysis", "Survey Design", "Data Analysis"],
         "location": "New York, NY",
-        "category": ExpertCategory.MARKET_RESEARCHER,
+        "category": ExpertCategory.INDUSTRY_SPECIALIST,
         "avg_rating": 4.8,
         "projects_completed": 63,
         "avatar_url": None
@@ -66,7 +66,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 350,
         "skills": ["Startup Law", "Fundraising", "IP Protection", "Corporate Governance", "M&A"],
         "location": "Palo Alto, CA",
-        "category": ExpertCategory.LEGAL_ADVISOR,
+        "category": ExpertCategory.LEGAL_COMPLIANCE,
         "avg_rating": 5.0,
         "projects_completed": 89,
         "avatar_url": None
@@ -102,7 +102,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 225,
         "skills": ["Growth Marketing", "Paid Acquisition", "Content Strategy", "Brand Building", "Analytics"],
         "location": "Austin, TX",
-        "category": ExpertCategory.MARKETING_SPECIALIST,
+        "category": ExpertCategory.GROWTH_MARKETING,
         "avg_rating": 4.8,
         "projects_completed": 58,
         "avatar_url": None
@@ -114,7 +114,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 250,
         "skills": ["Product Strategy", "User Research", "Roadmapping", "Product-Market Fit", "Agile"],
         "location": "Los Angeles, CA",
-        "category": ExpertCategory.PRODUCT_STRATEGIST,
+        "category": ExpertCategory.TECHNICAL_ADVISOR,
         "avg_rating": 4.9,
         "projects_completed": 44,
         "avatar_url": None
@@ -126,7 +126,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 200,
         "skills": ["B2B Sales", "Enterprise Sales", "Sales Process", "Team Training", "Pipeline Development"],
         "location": "Chicago, IL",
-        "category": ExpertCategory.SALES_ADVISOR,
+        "category": ExpertCategory.BUSINESS_CONSULTANT,
         "avg_rating": 4.7,
         "projects_completed": 39,
         "avatar_url": None
@@ -138,7 +138,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 225,
         "skills": ["Operations Management", "Supply Chain", "Process Optimization", "Logistics", "Inventory Management"],
         "location": "Denver, CO",
-        "category": ExpertCategory.OPERATIONS_EXPERT,
+        "category": ExpertCategory.BUSINESS_CONSULTANT,
         "avg_rating": 4.8,
         "projects_completed": 33,
         "avatar_url": None
@@ -150,7 +150,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 275,
         "skills": ["Data Science", "Machine Learning", "Analytics", "Python", "Data Strategy"],
         "location": "San Jose, CA",
-        "category": ExpertCategory.DATA_ANALYST,
+        "category": ExpertCategory.TECHNICAL_ADVISOR,
         "avg_rating": 4.9,
         "projects_completed": 41,
         "avatar_url": None
@@ -186,7 +186,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 200,
         "skills": ["E-commerce", "DTC Strategy", "Customer Acquisition", "Retention", "Shopify"],
         "location": "Miami, FL",
-        "category": ExpertCategory.MARKETING_SPECIALIST,
+        "category": ExpertCategory.GROWTH_MARKETING,
         "avg_rating": 4.7,
         "projects_completed": 48,
         "avatar_url": None
@@ -198,7 +198,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 225,
         "skills": ["Talent Strategy", "HR", "Compensation", "Culture Building", "Org Design"],
         "location": "New York, NY",
-        "category": ExpertCategory.OPERATIONS_EXPERT,
+        "category": ExpertCategory.BUSINESS_CONSULTANT,
         "avg_rating": 4.9,
         "projects_completed": 35,
         "avatar_url": None
@@ -210,7 +210,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 400,
         "skills": ["FDA Regulations", "Clinical Trials", "Healthcare Compliance", "Medical Devices", "Biotech"],
         "location": "Washington, DC",
-        "category": ExpertCategory.LEGAL_ADVISOR,
+        "category": ExpertCategory.LEGAL_COMPLIANCE,
         "avg_rating": 4.9,
         "projects_completed": 29,
         "avatar_url": None
@@ -222,7 +222,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 225,
         "skills": ["Brand Strategy", "Creative Direction", "Visual Identity", "Storytelling", "Launch Campaigns"],
         "location": "Brooklyn, NY",
-        "category": ExpertCategory.MARKETING_SPECIALIST,
+        "category": ExpertCategory.GROWTH_MARKETING,
         "avg_rating": 4.8,
         "projects_completed": 42,
         "avatar_url": None
@@ -246,7 +246,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 250,
         "skills": ["International Expansion", "Go-to-Market", "Localization", "Cross-border Operations", "Market Entry"],
         "location": "San Francisco, CA",
-        "category": ExpertCategory.STRATEGY_CONSULTANT,
+        "category": ExpertCategory.BUSINESS_CONSULTANT,
         "avg_rating": 4.8,
         "projects_completed": 31,
         "avatar_url": None
@@ -258,7 +258,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 275,
         "skills": ["SaaS Metrics", "Pricing Strategy", "Churn Reduction", "Revenue Optimization", "Subscription Models"],
         "location": "Salt Lake City, UT",
-        "category": ExpertCategory.STRATEGY_CONSULTANT,
+        "category": ExpertCategory.BUSINESS_CONSULTANT,
         "avg_rating": 4.9,
         "projects_completed": 45,
         "avatar_url": None
@@ -270,7 +270,7 @@ SAMPLE_EXPERTS = [
         "hourly_rate": 200,
         "skills": ["Public Relations", "Communications", "Media Strategy", "Crisis Management", "Thought Leadership"],
         "location": "Philadelphia, PA",
-        "category": ExpertCategory.MARKETING_SPECIALIST,
+        "category": ExpertCategory.GROWTH_MARKETING,
         "avg_rating": 4.7,
         "projects_completed": 53,
         "avatar_url": None
