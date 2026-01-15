@@ -1,9 +1,27 @@
-import { ArrowDown, CreditCard, Users, FileText, Zap, Database, Webhook, CheckCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowDown, CreditCard, Users, FileText, Zap, Database, Webhook, CheckCircle, ArrowLeft } from 'lucide-react'
 
 export default function StripeArchitecture() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Clickable Logo Header */}
+        <div className="flex items-center justify-between mb-8">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center group-hover:bg-emerald-400 transition-colors">
+              <span className="text-slate-900 font-bold text-lg">OG</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-xl text-white leading-tight group-hover:text-emerald-400 transition-colors">OppGrid</span>
+              <span className="text-[10px] text-slate-400 leading-tight">The Opportunity Intelligence Platform</span>
+            </div>
+          </Link>
+          <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back to Home</span>
+          </Link>
+        </div>
+
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">OppGrid Stripe Payment Architecture</h1>
           <p className="text-slate-400 text-lg">Three Revenue Streams: Subscriptions, Pay-Per-Report, Expert Services</p>
