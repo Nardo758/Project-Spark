@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Check } from 'lucide-react'
 
 export default function Signup() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
   const { signup, isLoading } = useAuthStore()
   const navigate = useNavigate()
@@ -14,6 +15,11 @@ export default function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    
+    if (!acceptedTerms) {
+      setError('You must accept the Terms of Service and Privacy Policy to continue.')
+      return
+    }
     
     try {
       await signup(email, password, name)
@@ -84,6 +90,43 @@ export default function Signup() {
                 placeholder="••••••••"
               />
               <p className="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <button
+                type="button"
+                onClick={() => setAcceptedTerms(!acceptedTerms)}
+                className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                  acceptedTerms 
+                    ? 'bg-purple-600 border-purple-600' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                {acceptedTerms && <Check className="w-3 h-3 text-white" />}
+              </button>
+              <label 
+                onClick={() => setAcceptedTerms(!acceptedTerms)}
+                className="text-sm text-gray-600 cursor-pointer select-none"
+              >
+                I agree to the{' '}
+                <Link 
+                  to="/terms" 
+                  target="_blank"
+                  className="text-purple-600 hover:text-purple-700 font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link 
+                  to="/privacy" 
+                  target="_blank"
+                  className="text-purple-600 hover:text-purple-700 font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Privacy Policy
+                </Link>
+              </label>
             </div>
 
             <button
