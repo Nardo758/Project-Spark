@@ -15,6 +15,13 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
 *   **Authentication:** Uses Replit's OIDC patterns with database-backed user authentication, supporting various providers including LinkedIn OAuth.
 *   **User Interface:** Features a professional dark-themed design with a deep dive console, dynamic navigation, and interactive mapping (Leaflet.js/Mapbox).
 *   **Admin Panel:** Provides comprehensive tools for user, subscription, opportunity, and lead management, along with platform statistics.
+*   **Content Moderation System:** Quality control workflow requiring admin approval before opportunities are publicly visible. Features include:
+    - Moderation statuses: pending_review, approved, rejected, needs_edit
+    - Admin moderation queue with filtering by status
+    - Side-by-side comparison of AI-processed content vs raw source data
+    - Inline editing for title, description, and category corrections
+    - All public endpoints filter by moderation_status == 'approved'
+    - Reprocessed opportunities automatically enter pending_review state
 *   **Automated Data Pipeline:** A daily scheduler automates data scraping, import, and AI analysis. Includes a webhook-driven data ingestion pipeline for external sources.
 *   **Signal-to-Opportunity Algorithm:** An 8-stage processing pipeline converts raw signals into validated business opportunities, categorized into confidence tiers based on pattern matching, clustering, validation scoring, and market size estimation.
 *   **Data Lifecycle Management:** Ensures complete signal traceability and indefinite data retention for historical pattern discovery.
