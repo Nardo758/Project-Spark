@@ -423,7 +423,16 @@ class SignalToOpportunityProcessor:
             'store', 'shop', 'location', 'address', 'phone', 'website', 'hours', 'open', 'closed',
             'york', 'brooklyn', 'manhattan', 'queens', 'bronx', 'staten', 'island', 'city', 'area', 'street',
             'avenue', 'road', 'drive', 'lane', 'place', 'floor', 'suite', 'unit', 'building',
-            'inc', 'llc', 'corp', 'company', 'business', 'enterprise', 'group', 'services', 'service'
+            'inc', 'llc', 'corp', 'company', 'business', 'enterprise', 'group', 'services', 'service',
+            'highstyle', 'style', 'high', 'home', 'long', 'away', 'okay', 'thank', 'thanks', 'please',
+            'sorry', 'help', 'helped', 'helpful', 'amazing', 'awesome', 'terrible', 'horrible', 'awful',
+            'definitely', 'absolutely', 'totally', 'completely', 'extremely', 'highly', 'super', 'pretty',
+            'owner', 'manager', 'staff', 'team', 'employee', 'employees', 'worker', 'workers',
+            'experience', 'experiences', 'visit', 'visited', 'visiting', 'went', 'been', 'tried',
+            'recommend', 'recommended', 'recommends', 'suggest', 'suggested', 'love', 'loved', 'loves',
+            'hate', 'hated', 'hates', 'enjoy', 'enjoyed', 'enjoys', 'felt', 'feel', 'feels', 'feeling',
+            'event', 'events', 'rentals', 'rental', 'furniture', 'items', 'item', 'stuff', 'products',
+            'friends', 'friend', 'family', 'families', 'everyone', 'anyone', 'someone', 'nobody'
         }
         
         words = re.findall(r'\b[a-z]+\b', all_text.lower())
@@ -777,33 +786,47 @@ class SignalToOpportunityProcessor:
             potential_customers = market_estimate.get('potential_customers', 0)
             competition = market_estimate.get('competition_level', 'Medium')
             
+            sample_reviews = business_idea.get('sample_titles', [])[:3]
+            reviews_context = "\n".join([f"- {r}" for r in sample_reviews]) if sample_reviews else "No sample reviews available"
+            
             prompt = f"""You are a professional business analyst writing opportunity briefs for entrepreneurs and investors.
 
-Rewrite this business opportunity to sound professional, compelling, and actionable. The output should read like a market research report summary.
+Analyze the underlying market signals and write a compelling business opportunity summary. Transform raw review/signal data into an actionable market opportunity.
 
-CURRENT TITLE: {title}
-CURRENT DESCRIPTION: {description}
+SOURCE DATA TYPE: Consumer reviews and local business signals from {city}
+CATEGORY: {category}
+SIGNAL COUNT: {signal_count} data points analyzed
+SAMPLE SIGNALS:
+{reviews_context}
 
-CONTEXT:
-- Category: {category}
-- Location: {city}
-- Primary theme: {primary_keyword}
-- Signal count: {signal_count}
-- Confidence: {confidence}
+CURRENT DRAFT:
+Title: {title}
+Description: {description}
+
+MARKET CONTEXT:
+- Confidence tier: {confidence}
 - Market size: {market_size}
 - Potential customers: {potential_customers:,}
 - Competition level: {competition}
 
-REQUIREMENTS:
-1. Title: 8-15 words, professional, specific to the opportunity (no generic buzzwords)
-2. Description: 150-250 words, structured with clear sections
-3. NO business names, brand names, or proper nouns except city names
-4. Use professional business terminology
-5. Focus on the market gap and opportunity, not problems
-6. Include specific numbers where available
+YOUR TASK:
+1. Identify the core consumer PAIN POINT or unmet need from the signals
+2. Transform this into a clear BUSINESS OPPORTUNITY (what service/product could address this)
+3. Write it like a professional market research brief
 
-Return ONLY valid JSON in this exact format:
-{{"title": "Your professional title here", "description": "Your professional description here"}}"""
+REQUIREMENTS:
+1. Title: 8-12 words describing the SPECIFIC opportunity (e.g., "On-Demand Equipment Rental Service for Small Contractors in Brooklyn")
+2. Description: 150-250 words with these sections:
+   - Opening paragraph: What demand/pain point was identified and why it matters
+   - Market Gap: What's missing in the current market
+   - Opportunity: What business could fill this gap
+   - Key Metrics: Include the numbers (signal count, potential customers, market size)
+3. NO business names, brand names, or generic terms like "gap" or "demand" in the title
+4. Be SPECIFIC about what the opportunity IS, not vague category labels
+5. Write as if presenting to investors
+
+Return ONLY valid JSON:
+{{"title": "Your specific opportunity title here", "description": "Your professional description here"}}"""
 
             response = self.client.messages.create(
                 model="claude-3-5-sonnet-20241022",
@@ -855,43 +878,62 @@ Return ONLY valid JSON in this exact format:
         signal_count = len(cluster)
         confidence = validation.get('confidence_tier', 'WEAK_SIGNAL')
         
+        actionable_keywords = {
+            'apartment': ['property management', 'tenant services', 'rental solutions', 'housing access', 'lease services'],
+            'restaurant': ['dining experience', 'food delivery', 'reservation services', 'meal prep', 'catering solutions'],
+            'healthcare': ['patient care', 'appointment access', 'medical services', 'health coordination', 'wellness programs'],
+            'childcare': ['daycare services', 'after-school programs', 'child supervision', 'family support', 'early education'],
+            'home_services': ['home repair', 'maintenance services', 'contractor coordination', 'property upkeep', 'renovation services'],
+            'transportation': ['ride services', 'parking solutions', 'commuter services', 'delivery logistics', 'mobility access'],
+            'retail': ['shopping convenience', 'product availability', 'customer service', 'inventory access', 'local commerce'],
+            'general': ['local services', 'consumer solutions', 'marketplace services', 'community needs', 'business services']
+        }
+        
+        category_keywords = actionable_keywords.get(category, actionable_keywords['general'])
+        service_type = category_keywords[hash(primary_keyword) % len(category_keywords)]
+        
         title_templates = {
             'apartment': [
-                f"Underserved {primary_keyword.title()} Demand in {city} Residential Market",
-                f"{city} Housing: {primary_keyword.title()} Service Gap Identified",
-                f"Multi-Family {primary_keyword.title()} Opportunity in {city}"
+                f"Property Management and Tenant Services Platform for {city}",
+                f"Residential Rental Coordination Service in {city}",
+                f"Housing Solutions and Lease Management for {city} Renters"
             ],
             'restaurant': [
-                f"{city} Dining Market: {primary_keyword.title()} Experience Gap",
-                f"Food Service Innovation Opportunity in {city}",
-                f"Unmet {primary_keyword.title()} Demand in {city} Restaurant Scene"
+                f"Restaurant Discovery and Reservation Platform for {city}",
+                f"Food Service Booking and Delivery Coordination in {city}",
+                f"Dining Experience Enhancement Service for {city} Consumers"
             ],
             'healthcare': [
-                f"{city} Healthcare: {primary_keyword.title()} Access Opportunity",
-                f"Medical Services Gap in {city} - {primary_keyword.title()} Focus",
-                f"Healthcare {primary_keyword.title()} Innovation Needed in {city}"
+                f"Healthcare Appointment and Access Coordination in {city}",
+                f"Patient Care Navigation Service for {city} Residents",
+                f"Medical Services Booking Platform for {city}"
             ],
             'childcare': [
-                f"{city} Childcare Market: {primary_keyword.title()} Service Demand",
-                f"Family Services Opportunity in {city}",
-                f"Underserved {primary_keyword.title()} Needs in {city} Childcare Sector"
+                f"Childcare Discovery and Booking Service in {city}",
+                f"Family Support and Daycare Coordination for {city}",
+                f"Early Education and After-School Program Finder in {city}"
             ],
             'home_services': [
-                f"{city} Home Services: {primary_keyword.title()} Demand Gap",
-                f"Residential {primary_keyword.title()} Services Opportunity in {city}",
-                f"Home Improvement Market Gap in {city}"
+                f"Home Repair and Maintenance Coordination Service in {city}",
+                f"Residential Contractor Matching Platform for {city}",
+                f"Property Maintenance and Renovation Services in {city}"
             ],
             'transportation': [
-                f"{city} Mobility: {primary_keyword.title()} Solution Opportunity",
-                f"Transportation {primary_keyword.title()} Gap in {city}",
-                f"Urban Mobility Innovation in {city} - {primary_keyword.title()} Focus"
+                f"Urban Mobility and Ride Coordination Service in {city}",
+                f"Commuter Solutions and Parking Services for {city}",
+                f"Transportation Access Platform for {city} Residents"
+            ],
+            'retail': [
+                f"Local Retail and Shopping Convenience Service in {city}",
+                f"Product Availability and Commerce Platform for {city}",
+                f"Consumer Shopping Solutions and Services in {city}"
             ]
         }
         
         default_titles = [
-            f"Emerging {primary_keyword.title()} Opportunity in {city}",
-            f"{city} Market Gap: {primary_keyword.title()} Services",
-            f"Local {primary_keyword.title()} Demand Identified in {city}"
+            f"Local Service Coordination Platform for {city} Consumers",
+            f"Consumer Solutions and Services Marketplace in {city}",
+            f"Community Service Matching Platform for {city}"
         ]
         
         templates = title_templates.get(category, default_titles)
