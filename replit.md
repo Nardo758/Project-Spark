@@ -45,3 +45,4 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
 *   **LinkedIn OAuth:** Integrated for professional network authentication.
 *   **Census Bureau ACS 5-Year API:** Provides demographic data for opportunity analysis.
 *   **Mapbox:** Used for map visualizations.
+*   **SBA (Small Business Administration):** Curated SBA loan program data and financing course information for the Funding Discovery feature at `/funding`.

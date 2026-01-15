@@ -46,6 +46,7 @@ from app.routers import (
     quick_actions,
     replit_auth,
     report_pricing,
+    sba,
     scraper,
     social,
     stripe_webhook,
@@ -146,6 +147,7 @@ app.include_router(copilot.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI
 app.include_router(report_pricing.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Report Pricing"])
 app.include_router(expert_collaboration.router, prefix=f"{settings.API_V1_PREFIX}/expert-network", tags=["Expert Collaboration"])
 app.include_router(upwork.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Upwork Integration"])
+app.include_router(sba.router, prefix=f"{settings.API_V1_PREFIX}/sba", tags=["SBA Funding"])
 
 
 @app.get("/")
