@@ -31,6 +31,8 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
     - **Stripe Connect Integration:** 85/15 revenue split with automatic expert payouts via Stripe Connect. Platform fee calculated via `calculate_platform_split()`, stored in engagement records. Expert onboarding flow with account creation, status tracking, and earnings dashboard.
     - **Expert Dashboard:** Comprehensive view at `/expert/dashboard` with earnings summary, client management, and Stripe Connect status. Three-tab interface (Overview, Clients, Earnings) with callback handling for Connect onboarding completion.
     - **Rating & Review System:** Post-engagement review modal with 5-star ratings (overall, expertise, communication, responsiveness, value), text review, and recommendation toggles. Reviews update expert `avg_rating` and `total_reviews` for matching algorithm.
+    - **LinkedIn Expert Onboarding:** Expert application flow at `/expert/apply` with LinkedIn OAuth auto-population. Form pre-fills name, email, and avatar from LinkedIn profile, allowing experts to complete category selection, specializations, skills, hourly rate, and availability before submission.
+    - **External Expert Integration:** Admin tool at `/admin/experts` for importing Upwork freelancers via API. Supports search by category/keyword, individual import, and bulk sync. External experts display with "Upwork" badge in marketplace and link to external profiles.
 *   **Email Automation:** Utilizes an email service for transactional emails, welcome sequences, and status updates with a template system.
 
 ## External Dependencies
