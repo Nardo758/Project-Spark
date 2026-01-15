@@ -1628,3 +1628,95 @@ def get_pipeline_status(
             "census": census_configured
         }
     }
+
+
+@router.post("/data-pipeline/reprocess-google-maps")
+async def reprocess_google_maps_opportunities(
+    limit: int = Query(10, ge=1, le=50, description="Number of opportunities to reprocess"),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Re-analyze Google Maps opportunities with improved AI processing.
+    This will regenerate titles and descriptions using the updated AI prompts.
+    """
+    from app.services.signal_to_opportunity import SignalToOpportunityProcessor
+    import json
+    
+    opportunities = db.query(Opportunity).filter(
+        Opportunity.source_platform == 'apify_google_maps'
+    ).order_by(desc(Opportunity.created_at)).limit(limit).all()
+    
+    if not opportunities:
+        return {"status": "no_opportunities", "message": "No Google Maps opportunities found"}
+    
+    processor = SignalToOpportunityProcessor(db)
+    
+    if not processor.client:
+        return {"status": "error", "message": "AI client not configured"}
+    
+    results = []
+    for opp in opportunities:
+        try:
+            business_idea = {
+                'category': opp.category or 'general',
+                'primary_keyword': 'services',
+                'signal_count': opp.validation_count or 1,
+                'sample_titles': [],
+                'location': opp.city or 'Unknown'
+            }
+            
+            validation = {
+                'confidence_tier': 'VALIDATED' if (opp.ai_opportunity_score or 0) >= 60 else 'WEAK_SIGNAL',
+                'validation_score': (opp.ai_opportunity_score or 50) / 100,
+                'green_flags': [],
+                'red_flags': []
+            }
+            
+            market_estimate = {
+                'market_size_category': opp.market_size or 'MEDIUM',
+                'potential_customers': 50000,
+                'competition_level': opp.ai_competition_level or 'Medium'
+            }
+            
+            old_title = opp.title
+            old_description = opp.description[:100] if opp.description else ""
+            
+            new_title, new_description = processor._ai_polish_opportunity(
+                opp.title,
+                opp.description or "",
+                business_idea,
+                validation,
+                market_estimate,
+                opp.city or 'Unknown'
+            )
+            
+            opp.title = new_title
+            opp.description = new_description
+            opp.ai_analyzed_at = datetime.now(timezone.utc)
+            
+            results.append({
+                "id": opp.id,
+                "old_title": old_title,
+                "new_title": new_title,
+                "status": "updated"
+            })
+            
+        except Exception as e:
+            results.append({
+                "id": opp.id,
+                "old_title": opp.title,
+                "status": "error",
+                "error": str(e)
+            })
+    
+    db.commit()
+    
+    updated_count = sum(1 for r in results if r.get("status") == "updated")
+    
+    return {
+        "status": "completed",
+        "total_processed": len(results),
+        "updated": updated_count,
+        "results": results
+    }
