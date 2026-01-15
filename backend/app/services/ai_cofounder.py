@@ -309,6 +309,70 @@ def get_business_formation_guide(entity_type: str = None) -> dict:
     return BUSINESS_FORMATION_GUIDE
 
 
+def detect_tool_intent(message: str) -> tuple[bool, list[str]]:
+    """
+    Detect if user is asking about tools and which categories.
+    
+    Returns:
+        tuple: (should_show_tools, list of relevant categories)
+    """
+    lower_msg = message.lower()
+    
+    tool_triggers = [
+        "tool", "software", "app", "platform", "build", "create", "design",
+        "develop", "code", "website", "marketing", "accounting", "freelancer",
+        "hire", "automation", "no-code", "nocode", "payment", "invoice",
+        "project management", "manage", "what should i use", "recommend"
+    ]
+    
+    if not any(trigger in lower_msg for trigger in tool_triggers):
+        return False, []
+    
+    category_mapping = {
+        "design": ["design", "logo", "graphics", "ui", "ux", "branding", "visual", "figma", "canva"],
+        "development": ["develop", "code", "programming", "app", "website", "backend", "frontend", "deploy", "host"],
+        "talent": ["hire", "freelancer", "developer", "designer", "contractor", "talent", "outsource", "team"],
+        "nocode": ["no-code", "nocode", "no code", "bubble", "webflow", "zapier", "automate", "without coding"],
+        "marketing": ["market", "email", "social media", "seo", "ads", "advertis", "promote", "growth"],
+        "project": ["project", "manage", "task", "organize", "track", "collaborate", "team", "notion", "trello"],
+        "financial": ["finance", "account", "invoice", "payment", "bank", "money", "tax", "bookkeep", "stripe"]
+    }
+    
+    matched_categories = []
+    for category, keywords in category_mapping.items():
+        if any(kw in lower_msg for kw in keywords):
+            matched_categories.append(category)
+    
+    if not matched_categories:
+        matched_categories = ["development", "nocode"]
+    
+    return True, matched_categories
+
+
+def detect_funding_intent(message: str) -> bool:
+    """Detect if user is asking about funding or financing."""
+    lower_msg = message.lower()
+    
+    funding_triggers = [
+        "fund", "loan", "invest", "capital", "money", "financing", "grant",
+        "sba", "venture", "angel", "bootstrap", "crowdfund", "raise"
+    ]
+    
+    return any(trigger in lower_msg for trigger in funding_triggers)
+
+
+def detect_expert_intent(message: str) -> bool:
+    """Detect if user is asking about finding experts."""
+    lower_msg = message.lower()
+    
+    expert_triggers = [
+        "expert", "consultant", "advisor", "mentor", "coach", "specialist",
+        "professional", "help from", "talk to", "hire someone", "get advice"
+    ]
+    
+    return any(trigger in lower_msg for trigger in expert_triggers)
+
+
 def detect_search_intent(message: str) -> tuple[bool, str]:
     """Detect if user wants to search the web and extract query."""
     search_patterns = [
@@ -366,18 +430,57 @@ async def chat_with_cofounder_enhanced(
     workspace: dict,
     chat_history: list[dict] = None,
     enable_web_search: bool = True,
-    user_api_key: str = None
+    user_api_key: str = None,
+    db_tools: list[dict] = None
 ) -> dict:
     """
-    Enhanced chat with web search capability and BYOK support.
+    Enhanced chat with web search capability, BYOK support, and inline card detection.
     
     Args:
         user_api_key: User's own Claude API key (BYOK). If provided, uses this instead of platform key.
+        db_tools: Tools from database to use for recommendations (optional, falls back to hardcoded).
     
     Returns:
-        Dict with 'response', 'key_source' ("byok" | "platform"), and optionally 'web_search_results'
+        Dict with 'response', 'key_source', inline_cards, and optionally 'web_search_results'
     """
     web_results = None
+    inline_cards = {}
+    
+    should_show_tools, tool_categories = detect_tool_intent(message)
+    should_show_funding = detect_funding_intent(message)
+    should_show_experts = detect_expert_intent(message)
+    
+    if should_show_tools:
+        tool_recs = {}
+        for cat in tool_categories[:3]:
+            if db_tools:
+                cat_tools = [t for t in db_tools if t.get("category") == cat][:3]
+                if cat_tools:
+                    tool_recs[cat] = cat_tools
+            elif cat in TOOL_RECOMMENDATIONS:
+                tool_recs[cat] = TOOL_RECOMMENDATIONS[cat][:3]
+        if tool_recs:
+            inline_cards["tools"] = {
+                "type": "tools",
+                "title": "Recommended Tools",
+                "categories": tool_recs
+            }
+    
+    if should_show_funding:
+        inline_cards["funding"] = {
+            "type": "funding",
+            "title": "Funding Options",
+            "cta_url": "/build/funding",
+            "description": "Explore SBA loans, grants, and financing options"
+        }
+    
+    if should_show_experts:
+        inline_cards["experts"] = {
+            "type": "experts",
+            "title": "Find an Expert",
+            "cta_url": "/network/experts",
+            "description": "Connect with vetted consultants and advisors"
+        }
     
     if enable_web_search:
         should_search, query = detect_search_intent(message)
@@ -397,6 +500,10 @@ async def chat_with_cofounder_enhanced(
             web_context += f"{i}. **{r['title']}**\n   {r['snippet']}\n   Source: {r['source']}\n\n"
         web_context += "---\nUse these search results to inform your response. Cite sources when relevant."
     
+    inline_hint = ""
+    if inline_cards:
+        inline_hint = "\n\nNote: The UI will display relevant tool/funding/expert cards alongside your response. Reference them naturally but don't list all details - the cards will show specifics."
+    
     full_system = f"""{system_prompt}
 
 ---
@@ -404,7 +511,7 @@ CURRENT CONTEXT:
 {context}
 {web_context}
 ---
-
+{inline_hint}
 Remember: Be helpful, specific, and actionable. Guide them step by step toward success."""
 
     messages = []
@@ -426,5 +533,6 @@ Remember: Be helpful, specific, and actionable. Guide them step by step toward s
         "response": response.content[0].text,
         "key_source": key_source,
         "web_search_performed": web_results is not None,
-        "web_search_query": web_results.get("query") if web_results else None
+        "web_search_query": web_results.get("query") if web_results else None,
+        "inline_cards": inline_cards if inline_cards else None
     }

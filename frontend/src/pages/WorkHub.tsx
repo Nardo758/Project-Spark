@@ -58,6 +58,36 @@ type ChatMessage = {
   created_at: string
 }
 
+type InlineTool = {
+  id: number
+  name: string
+  category: string
+  description: string
+  url: string
+  price: string
+  best_for: string
+}
+
+type InlineCards = {
+  tools?: {
+    type: 'tools'
+    title: string
+    categories: Record<string, InlineTool[]>
+  }
+  funding?: {
+    type: 'funding'
+    title: string
+    cta_url: string
+    description: string
+  }
+  experts?: {
+    type: 'experts'
+    title: string
+    cta_url: string
+    description: string
+  }
+}
+
 type RecommendedExpert = {
   id: number
   user_id: number
@@ -144,6 +174,103 @@ function PaidReportCard({ opportunityId }: { opportunityId: number }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function InlineCardsDisplay({ cards, onToolClick }: { cards: InlineCards | null; onToolClick?: (toolId: number, url: string) => void }) {
+  if (!cards) return null
+
+  const trackClick = async (toolId: number) => {
+    try {
+      await fetch('/api/v1/affiliate-tools/track-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool_id: toolId, source: 'workhub' }),
+      })
+    } catch {}
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      {cards.tools && (
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Wrench className="w-4 h-4 text-emerald-600" />
+            <h4 className="text-sm font-semibold text-stone-900">{cards.tools.title}</h4>
+          </div>
+          <div className="space-y-3">
+            {Object.entries(cards.tools.categories).map(([category, tools]) => (
+              <div key={category}>
+                <p className="text-xs font-medium text-stone-500 uppercase mb-2 capitalize">{category}</p>
+                <div className="flex flex-wrap gap-2">
+                  {tools.map((tool) => (
+                    <a
+                      key={tool.id}
+                      href={tool.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => {
+                        trackClick(tool.id)
+                        onToolClick?.(tool.id, tool.url)
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:border-emerald-400 hover:shadow-sm transition-all group"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-stone-900 group-hover:text-emerald-700">{tool.name}</p>
+                        <p className="text-xs text-stone-500">{tool.price}</p>
+                      </div>
+                      <ExternalLink className="w-3 h-3 text-stone-400 group-hover:text-emerald-600" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {cards.funding && (
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-stone-900 mb-1">{cards.funding.title}</h4>
+              <p className="text-xs text-stone-600 mb-3">{cards.funding.description}</p>
+              <Link 
+                to={cards.funding.cta_url}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                <TrendingUp className="w-3 h-3" />
+                Explore Funding
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cards.experts && (
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-stone-900 mb-1">{cards.experts.title}</h4>
+              <p className="text-xs text-stone-600 mb-3">{cards.experts.description}</p>
+              <Link 
+                to={cards.experts.cta_url}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Briefcase className="w-3 h-3" />
+                Find Experts
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -247,6 +374,7 @@ export default function WorkHub() {
   const [leftPanelOpen, setLeftPanelOpen] = useState(true)
   const [chatMessage, setChatMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [latestInlineCards, setLatestInlineCards] = useState<InlineCards | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [agentName, setAgentName] = useState(() => {
@@ -327,7 +455,7 @@ export default function WorkHub() {
   })
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (message: string): Promise<{ response: string; chat_history: ChatMessage[] }> => {
+    mutationFn: async (message: string): Promise<{ response: string; chat_history: ChatMessage[]; inline_cards?: InlineCards }> => {
       if (!workspaceId) throw new Error('No workspace')
       const res = await fetch(`/api/v1/ai-cofounder/workspace/${workspaceId}/chat`, {
         method: 'POST',
@@ -339,6 +467,7 @@ export default function WorkHub() {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['chat-history', workspaceId], data.chat_history)
+      setLatestInlineCards(data.inline_cards || null)
       setIsTyping(false)
     },
     onError: () => {
@@ -901,23 +1030,35 @@ export default function WorkHub() {
               </div>
             )}
 
-            {chatMessages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-2xl rounded-2xl px-4 py-3 ${
-                  msg.role === 'user' 
-                    ? 'bg-violet-600 text-white' 
-                    : 'bg-white border border-stone-200 text-stone-900'
-                }`}>
-                  {msg.role === 'assistant' && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="w-3 h-3 text-violet-600" />
-                      <span className="text-xs font-medium text-violet-600">{agentName}</span>
+            {chatMessages.map((msg, idx) => {
+              const isLastAssistantMessage = msg.role === 'assistant' && idx === chatMessages.length - 1
+              return (
+                <div key={msg.id}>
+                  <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-2xl rounded-2xl px-4 py-3 ${
+                      msg.role === 'user' 
+                        ? 'bg-violet-600 text-white' 
+                        : 'bg-white border border-stone-200 text-stone-900'
+                    }`}>
+                      {msg.role === 'assistant' && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="w-3 h-3 text-violet-600" />
+                          <span className="text-xs font-medium text-violet-600">{agentName}</span>
+                        </div>
+                      )}
+                      <MessageContent content={msg.content} isUser={msg.role === 'user'} opportunityId={opportunityId} />
+                    </div>
+                  </div>
+                  {isLastAssistantMessage && latestInlineCards && (
+                    <div className="flex justify-start mt-2">
+                      <div className="max-w-2xl w-full">
+                        <InlineCardsDisplay cards={latestInlineCards} />
+                      </div>
                     </div>
                   )}
-                  <MessageContent content={msg.content} isUser={msg.role === 'user'} opportunityId={opportunityId} />
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {isTyping && (
               <div className="flex justify-start">

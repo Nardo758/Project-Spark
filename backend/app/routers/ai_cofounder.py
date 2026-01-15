@@ -13,6 +13,7 @@ from app.db.database import get_db
 from app.models.user import User
 from app.models.workspace import UserWorkspace, WorkspaceChatMessage
 from app.models.opportunity import Opportunity
+from app.models.affiliate_tool import AffiliateTool
 from app.core.dependencies import get_current_user
 from app.services.ai_cofounder import (
     chat_with_cofounder,
@@ -51,6 +52,7 @@ class ChatResponse(BaseModel):
     response: str
     chat_history: List[ChatMessage]
     key_source: Optional[str] = None
+    inline_cards: Optional[dict] = None
 
 
 class ToolRecommendation(BaseModel):
@@ -138,6 +140,20 @@ async def chat_with_ai_cofounder(
     if current_user.encrypted_claude_api_key:
         user_api_key = encryption_service.decrypt(current_user.encrypted_claude_api_key)
     
+    db_tools = db.query(AffiliateTool).filter(AffiliateTool.is_active == True).all()
+    tools_list = [
+        {
+            "id": t.id,
+            "name": t.name,
+            "category": t.category,
+            "description": t.description,
+            "url": t.affiliate_url or t.base_url,
+            "price": t.price_display,
+            "best_for": t.best_for
+        }
+        for t in db_tools
+    ] if db_tools else None
+    
     try:
         result = await chat_with_cofounder_enhanced(
             message=message,
@@ -146,10 +162,12 @@ async def chat_with_ai_cofounder(
             workspace=workspace_dict,
             chat_history=chat_history,
             enable_web_search=True,
-            user_api_key=user_api_key
+            user_api_key=user_api_key,
+            db_tools=tools_list
         )
         ai_response = result["response"]
         key_source = result.get("key_source", "platform")
+        inline_cards = result.get("inline_cards")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
     
@@ -186,7 +204,8 @@ async def chat_with_ai_cofounder(
             )
             for msg in all_messages
         ],
-        key_source=key_source
+        key_source=key_source,
+        inline_cards=inline_cards
     )
 
 
