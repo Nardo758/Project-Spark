@@ -256,8 +256,8 @@ async def deep_clone_analysis(
     user = db.query(User).filter(User.id == user_id).first()
     has_premium_access = False
     
-    if user:
-        has_premium_access = user.subscription_tier in ['builder', 'scaler', 'enterprise']
+    if user and user.subscription:
+        has_premium_access = user.subscription.tier in ['growth', 'pro', 'team', 'business', 'enterprise']
     
     if not has_premium_access and not paid:
         return DeepCloneResponse(
