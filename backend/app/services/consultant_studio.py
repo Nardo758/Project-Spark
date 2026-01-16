@@ -362,16 +362,19 @@ class ConsultantStudioService:
         start_time = time.time()
         
         try:
+            import asyncio
+            
             source_analysis = await self._analyze_source_business(
                 source_business_name, source_business_address, 3
             )
             
-            three_mile = await self._analyze_target_city_radius(
-                target_city, source_analysis.get("category", "retail"), 3
-            )
-            
-            five_mile = await self._analyze_target_city_radius(
-                target_city, source_analysis.get("category", "retail"), 5
+            three_mile, five_mile = await asyncio.gather(
+                self._analyze_target_city_radius(
+                    target_city, source_analysis.get("category", "retail"), 3
+                ),
+                self._analyze_target_city_radius(
+                    target_city, source_analysis.get("category", "retail"), 5
+                )
             )
             
             match_score = self._calculate_match_score(source_analysis, three_mile, five_mile)
@@ -658,6 +661,7 @@ class ConsultantStudioService:
     ) -> List[Dict[str, Any]]:
         """Get real neighborhood locations within a specific city using SerpAPI for accurate coordinates"""
         import random
+        import asyncio
         from .serpapi_service import serpapi_service
         
         neighborhoods = []
@@ -670,18 +674,29 @@ class ConsultantStudioService:
         
         if serpapi_service.is_configured:
             try:
-                for search_term in search_terms:
-                    if len(neighborhoods) >= 5:
-                        break
-                    
-                    result = serpapi_service.google_maps_search(
+                async def fetch_serpapi(search_term: str):
+                    return await asyncio.to_thread(
+                        serpapi_service.google_maps_search,
                         query=search_term,
                         location=f"{city}, {state}"
                     )
+                
+                results = await asyncio.gather(
+                    *[fetch_serpapi(term) for term in search_terms],
+                    return_exceptions=True
+                )
+                
+                for result in results:
+                    if isinstance(result, (Exception, BaseException)):
+                        continue
+                    if not isinstance(result, dict):
+                        continue
                     
                     local_results = result.get("local_results", [])
                     
                     for place in local_results[:3]:
+                        if len(neighborhoods) >= 5:
+                            break
                         gps = place.get("gps_coordinates", {})
                         if gps and "latitude" in gps and "longitude" in gps:
                             address = place.get("address", "")
@@ -699,9 +714,9 @@ class ConsultantStudioService:
                                 "address": address,
                                 "base_score": random.randint(65, 92),
                             })
-                            
-                            if len(neighborhoods) >= 5:
-                                break
+                    
+                    if len(neighborhoods) >= 5:
+                        break
                 
                 if neighborhoods:
                     logger.info(f"Found {len(neighborhoods)} real locations in {city}, {state}")
