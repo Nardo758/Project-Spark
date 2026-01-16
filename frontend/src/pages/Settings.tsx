@@ -143,7 +143,7 @@ export default function Settings() {
     }
   }
 
-  function formatTierName(tier: string | null): string {
+  function formatTierName(tier: string | null | undefined): string {
     if (!tier) return 'Free'
     const tierMap: Record<string, string> = {
       'explorer': 'Explorer (Free)',
