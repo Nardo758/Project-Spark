@@ -58,6 +58,10 @@ from .expert_collaboration import (
     ExpertProfile, ExpertEngagement, EngagementMilestone,
     ExpertMessage, ExpertReview, ExpertScheduledSession
 )
+from .team import (
+    Team, TeamMember, TeamInvitation, TeamApiKey,
+    TeamRole, InviteStatus
+)
 
 __all__ = [
     "User",
@@ -173,4 +177,10 @@ __all__ = [
     "ExpertMessage",
     "ExpertReview",
     "ExpertScheduledSession",
+    "Team",
+    "TeamMember",
+    "TeamInvitation",
+    "TeamApiKey",
+    "TeamRole",
+    "InviteStatus",
 ]

@@ -16,6 +16,7 @@ from app.models.opportunity import Opportunity
 from app.models.generated_report import GeneratedReport, ReportType, ReportStatus
 from app.models.user import User
 from app.services.ai_report_generator import ai_report_generator
+from app.services.branding_service import get_user_team_branding, inject_branding_into_report
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +135,10 @@ class ReportGenerator:
         
         content = self._build_layer1_content(opportunity, demographics)
         summary = self._build_layer1_summary(opportunity)
+        
+        branding = get_user_team_branding(user, self.db)
+        if branding:
+            content = inject_branding_into_report(content, branding)
         
         report.content = content
         report.summary = summary

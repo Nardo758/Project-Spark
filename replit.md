@@ -17,6 +17,8 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
     - **Gate 2 - Opportunity Slots:** Monthly credits with exclusivity caps (3-10 users per opportunity). Additional slots purchasable at tier-specific prices ($20-$50).
     - **Gate 3 - Execution Reports:** 20 AI-generated report types with tier-based discounts (0%/10%/15%/20%/50%). Business track includes white-label reports and commercial use rights.
     - Report bundles: Marketing ($599), Launch ($899), Complete Starter ($1,299) with 20-30% savings.
+*   **Team Seats Management:** Business Track subscribers can manage team members with role-based access (owner/admin/member). Seat limits enforced by tier (Team: 3, Business: 10, Enterprise: unlimited). Includes invitation system with token-based acceptance and member management.
+*   **White-Label Reports:** Business Track users can customize report branding with team logo, company name, primary color, and website. Branding is automatically injected into all AI-generated reports via `branding_service.py`. Endpoints: `GET/PATCH /api/teams/{team_id}/branding`, `GET /api/teams/{team_id}/branding/preview`.
 *   **AI Engine:** Integrates with Large Language Models (LLMs) for idea generation, validation, expert matching, and detailed opportunity analysis, orchestrated by an AI service.
 *   **Authentication:** Uses Replit's OIDC patterns with database-backed user authentication, supporting various providers including LinkedIn OAuth.
 *   **User Interface:** Features a professional dark-themed design with a deep dive console, dynamic navigation, and interactive mapping (Leaflet.js/Mapbox).

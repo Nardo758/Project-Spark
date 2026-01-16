@@ -52,6 +52,7 @@ from app.routers import (
     social,
     stripe_webhook,
     subscriptions,
+    teams,
     two_factor,
     upwork,
     users,
@@ -153,6 +154,7 @@ app.include_router(sba.router, prefix=f"{settings.API_V1_PREFIX}/sba", tags=["SB
 app.include_router(byok.router, tags=["BYOK"])
 app.include_router(affiliate_tools.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Affiliate Tools"])
 app.include_router(reports.router, tags=["Report Templates"])
+app.include_router(teams.router, prefix=f"{settings.API_V1_PREFIX}/teams", tags=["Teams"])
 
 
 @app.get("/")
