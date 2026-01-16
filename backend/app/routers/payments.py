@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 import json
+import os
+from pydantic import BaseModel
+from typing import Optional
 
 from app.core.dependencies import get_current_active_user
 from app.db.database import get_db
@@ -20,6 +23,13 @@ from app.models.opportunity import Opportunity
 from app.models.subscription import UnlockedOpportunity, SubscriptionTier
 from app.services.usage_service import usage_service
 from app.services.audit import log_event
+
+
+class CreateCloneCheckoutRequest(BaseModel):
+    email: str
+    source_business: str
+    target_city: str
+    target_state: str
 
 
 router = APIRouter()
@@ -329,3 +339,99 @@ def create_fast_pass_payment_intent(
     )
     
     return CreatePaymentIntentResponse(client_secret=intent.client_secret, payment_intent_id=intent.id, transaction_id=tx.id)
+
+
+@router.post("/create-clone-checkout")
+def create_clone_checkout_session(
+    payload: CreateCloneCheckoutRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Create a Stripe Checkout session for guest Clone Analysis purchase ($49).
+    No authentication required - email is collected for receipt and results.
+    """
+    try:
+        stripe = get_stripe_client()
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment service not configured")
+    
+    domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if domain:
+        base_url = f"https://{domain}"
+    else:
+        base_url = "http://localhost:5000"
+    
+    success_url = f"{base_url}/build/reports?path=clone&unlock=success&session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{base_url}/build/reports?path=clone&unlock=cancelled"
+    
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {
+                        "name": "Clone Success Analysis - Full Unlock",
+                        "description": f"Detailed demographics, competition, and market data for locations matching {payload.source_business} in {payload.target_city}, {payload.target_state}",
+                    },
+                    "unit_amount": 4900,
+                },
+                "quantity": 1,
+            }],
+            mode="payment",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            customer_email=payload.email,
+            metadata={
+                "type": "clone_analysis",
+                "email": payload.email,
+                "source_business": payload.source_business,
+                "target_city": payload.target_city,
+                "target_state": payload.target_state,
+            },
+        )
+        
+        return {"checkout_url": checkout_session.url, "session_id": checkout_session.id}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create checkout session: {str(e)}")
+
+
+@router.get("/verify-clone-checkout")
+def verify_clone_checkout_session(
+    session_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Verify a Stripe Checkout session for Clone Analysis and confirm payment was successful.
+    Returns success status and session metadata.
+    """
+    try:
+        stripe = get_stripe_client()
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment service not configured")
+    
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        if session.payment_status == "paid":
+            metadata = session.metadata or {}
+            return {
+                "success": True,
+                "payment_status": session.payment_status,
+                "email": session.customer_email,
+                "source_business": metadata.get("source_business", ""),
+                "target_city": metadata.get("target_city", ""),
+                "target_state": metadata.get("target_state", ""),
+                "amount_total": session.amount_total,
+            }
+        else:
+            return {
+                "success": False,
+                "payment_status": session.payment_status,
+                "message": "Payment not completed"
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid session: {str(e)}")
