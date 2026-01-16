@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { Loader2, Check, Zap, Crown } from 'lucide-react'
+import { Loader2, Check, Crown } from 'lucide-react'
 
 const planDetails: Record<string, { name: string; price: string; color: string }> = {
   'pro': { name: 'Builder', price: '$99/mo', color: 'purple' },
@@ -21,7 +21,7 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
-  const { signup, isLoading } = useAuthStore()
+  const { signup, isLoading, startReplitAuth, startGoogleAuth, startLinkedInAuth } = useAuthStore()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,13 +204,25 @@ export default function Signup() {
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-3">
-              <button className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700">
+              <button 
+                type="button"
+                onClick={() => startGoogleAuth(selectedPlan ? `/pricing?checkout=${selectedPlan}` : '/dashboard')}
+                className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700"
+              >
                 Google
               </button>
-              <button className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700">
-                GitHub
+              <button 
+                type="button"
+                onClick={() => startReplitAuth(selectedPlan ? `/pricing?checkout=${selectedPlan}` : '/dashboard')}
+                className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700"
+              >
+                Replit
               </button>
-              <button className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700">
+              <button 
+                type="button"
+                onClick={() => startLinkedInAuth(selectedPlan ? `/pricing?checkout=${selectedPlan}` : '/dashboard')}
+                className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700"
+              >
                 LinkedIn
               </button>
             </div>
