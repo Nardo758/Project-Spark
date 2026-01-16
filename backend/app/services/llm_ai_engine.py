@@ -25,50 +25,26 @@ logger = logging.getLogger(__name__)
 
 
 def get_anthropic_client():
-    """Get Anthropic client with credentials from Replit connector or environment."""
-    hostname = os.getenv("REPLIT_CONNECTORS_HOSTNAME")
-    repl_identity = os.getenv("REPL_IDENTITY")
-    web_repl_renewal = os.getenv("WEB_REPL_RENEWAL")
+    """Get Anthropic client with credentials from Replit AI Integrations or environment."""
+    api_key = os.getenv("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
+    base_url = os.getenv("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
     
-    api_key = None
-    
-    if hostname and (repl_identity or web_repl_renewal):
+    if api_key and base_url:
         try:
-            import requests
-            x_replit_token = f"repl {repl_identity}" if repl_identity else f"depl {web_repl_renewal}"
-            is_production = os.getenv("REPLIT_DEPLOYMENT") == "1"
-            target_env = "production" if is_production else "development"
-            
-            response = requests.get(
-                f"https://{hostname}/api/v2/connection?include_secrets=true&connector_names=anthropic-ai&environment={target_env}",
-                headers={
-                    "Accept": "application/json",
-                    "X_REPLIT_TOKEN": x_replit_token
-                },
-                timeout=10
-            )
-            response.raise_for_status()
-            data = response.json()
-            items = data.get("items", [])
-            if items:
-                settings_data = items[0].get("settings", {})
-                api_key = settings_data.get("api_key")
+            import anthropic
+            logger.info("Using Replit AI Integrations for Anthropic")
+            return anthropic.Anthropic(api_key=api_key, base_url=base_url)
         except Exception as e:
-            logger.warning(f"Failed to get Anthropic credentials from connector: {e}")
+            logger.error(f"Failed to create Anthropic client with AI Integrations: {e}")
     
-    if not api_key:
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-    
-    if not api_key:
-        api_key = os.getenv("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
-    
+    api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         api_key = os.getenv("CLAUDE_API_KEY")
-    
     if not api_key:
         api_key = os.getenv("CLAUDE_API")
     
     if not api_key:
+        logger.warning("No Anthropic API key found")
         return None
     
     try:
@@ -91,8 +67,8 @@ class LLMAIEngineService:
     """
     
     def __init__(self):
-        self.model = "claude-sonnet-4-20250514"
-        self.fast_model = "claude-3-5-haiku-20241022"
+        self.model = "claude-sonnet-4-5"
+        self.fast_model = "claude-haiku-4-5"
     
     def _get_success_patterns_context(self, db: Session, opportunity_type: str = None, limit: int = 5) -> str:
         """Get relevant success patterns for context."""
