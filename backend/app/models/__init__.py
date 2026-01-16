@@ -3,7 +3,10 @@ from .validation import Validation
 from .comment import Comment
 from .watchlist import WatchlistItem, UserCollection, UserTag, OpportunityNote
 from .notification import Notification
-from .subscription import Subscription, UsageRecord
+from .subscription import (
+    Subscription, UsageRecord, SubscriptionTier, SubscriptionStatus,
+    UnlockMethod, UserSlotBalance, OpportunityClaimLimit, UnlockedOpportunity
+)
 from .user_profile import UserProfile
 from .expert import Expert
 from .transaction import Transaction
@@ -67,7 +70,13 @@ __all__ = [
     "OpportunityNote",
     "Notification",
     "Subscription",
+    "SubscriptionTier",
+    "SubscriptionStatus",
     "UsageRecord",
+    "UnlockMethod",
+    "UserSlotBalance",
+    "OpportunityClaimLimit",
+    "UnlockedOpportunity",
     "UserProfile",
     "Expert",
     "Transaction",

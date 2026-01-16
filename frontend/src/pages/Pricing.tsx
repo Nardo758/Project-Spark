@@ -29,82 +29,146 @@ type MySubscriptionResponse = {
   period_end?: string | null
 }
 
-const subscriptionTiers = [
+const individualTiers = [
   {
-    id: 'explorer',
-    name: 'Explorer',
-    price: 0,
-    priceLabel: 'Free',
-    description: 'Try quality, pay for what you need',
-    accessWindow: '91+ days',
-    tier: 'explorer',
+    id: 'starter',
+    name: 'Starter',
+    price: 20,
+    priceLabel: '$20/mo',
+    description: 'Start exploring opportunities',
+    tier: 'starter',
+    slots: 1,
+    seats: 1,
+    reportDiscount: 0,
+    extraSlotPrice: 50,
     features: [
-      { text: 'Browse validated opportunities', included: true },
-      { text: 'Layer 1 access ($15 per unlock)', included: true },
-      { text: 'Pay-per-report access (from $25)', included: true },
-      { text: 'Layer 2 Deep Dive', included: false },
-      { text: 'Layer 3 Execution Package', included: false },
-      { text: 'Real-time opportunity alerts', included: false },
+      { text: '1 opportunity slot/month', included: true },
+      { text: 'Full platform access', included: true },
+      { text: 'AI execution reports (full price)', included: true },
+      { text: 'Additional slots: $50 each', included: true },
+      { text: 'Report discounts', included: false },
+      { text: 'Commercial use', included: false },
     ],
-    cta: 'Get Started Free',
+    cta: 'Get Started',
     popular: false,
     gradient: 'from-gray-500 to-gray-600',
   },
   {
-    id: 'builder',
-    name: 'Builder',
-    price: 99,
-    priceLabel: '$99/mo',
-    description: 'Unlimited research, professional execution',
-    accessWindow: '31+ days',
-    tier: 'pro',
+    id: 'growth',
+    name: 'Growth',
+    price: 50,
+    priceLabel: '$50/mo',
+    description: 'Explore more opportunities',
+    tier: 'growth',
+    slots: 3,
+    seats: 1,
+    reportDiscount: 10,
+    extraSlotPrice: 40,
     features: [
-      { text: 'Browse validated opportunities', included: true },
-      { text: 'Layer 1 unlimited access', included: true },
-      { text: 'Pay-per-report access (from $25)', included: true },
-      { text: 'Layer 2 Deep Dive', included: false },
-      { text: 'Layer 3 Execution Package', included: false },
+      { text: '3 opportunity slots/month', included: true },
+      { text: 'Full platform access', included: true },
+      { text: '10% off all reports', included: true },
+      { text: 'Additional slots: $40 each', included: true },
       { text: 'Priority support', included: true },
+      { text: 'Commercial use', included: false },
     ],
-    cta: 'Start Building',
+    cta: 'Start Growing',
     popular: true,
     gradient: 'from-purple-500 to-indigo-600',
   },
   {
-    id: 'scaler',
-    name: 'Scaler',
-    price: 499,
-    priceLabel: '$499/mo',
-    description: 'Move faster with deep intelligence',
-    accessWindow: '8+ days',
-    tier: 'business',
+    id: 'pro',
+    name: 'Pro',
+    price: 99,
+    priceLabel: '$99/mo',
+    description: 'Maximum individual power',
+    tier: 'pro',
+    slots: 5,
+    seats: 1,
+    reportDiscount: 15,
+    extraSlotPrice: 35,
     features: [
-      { text: 'Browse validated opportunities', included: true },
-      { text: 'Layer 1 unlimited access', included: true },
-      { text: 'Pay-per-report access (from $25)', included: true },
-      { text: 'Layer 2 Deep Dive unlimited', included: true },
-      { text: 'Layer 3 Execution Package (5/month)', included: true },
+      { text: '5 opportunity slots/month', included: true },
+      { text: 'Full platform access', included: true },
+      { text: '15% off all reports', included: true },
+      { text: 'Additional slots: $35 each', included: true },
+      { text: 'Priority support', included: true },
+      { text: 'Commercial use', included: false },
+    ],
+    cta: 'Go Pro',
+    popular: false,
+    gradient: 'from-emerald-500 to-teal-600',
+  },
+]
+
+const businessTiers = [
+  {
+    id: 'team',
+    name: 'Team',
+    price: 250,
+    priceLabel: '$250/mo',
+    description: 'For small teams and consultants',
+    tier: 'team',
+    slots: 5,
+    seats: 3,
+    reportDiscount: 0,
+    extraSlotPrice: 30,
+    whiteLabel: true,
+    features: [
+      { text: '5 opportunity slots/month', included: true },
+      { text: '3 team seats', included: true },
+      { text: 'White-label reports', included: true },
+      { text: 'Full commercial use', included: true },
+      { text: 'Additional slots: $30 each', included: true },
+      { text: 'Team collaboration', included: true },
+    ],
+    cta: 'Start Team',
+    popular: false,
+    gradient: 'from-blue-500 to-cyan-600',
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    price: 750,
+    priceLabel: '$750/mo',
+    description: 'Scale your consulting practice',
+    tier: 'business',
+    slots: 15,
+    seats: 10,
+    reportDiscount: 20,
+    extraSlotPrice: 25,
+    whiteLabel: true,
+    features: [
+      { text: '15 opportunity slots/month', included: true },
+      { text: '10 team seats', included: true },
+      { text: 'White-label + 20% off reports', included: true },
+      { text: 'API access', included: true },
+      { text: 'Additional slots: $25 each', included: true },
       { text: 'Priority support', included: true },
     ],
     cta: 'Scale Up',
-    popular: false,
-    gradient: 'from-emerald-500 to-teal-600',
+    popular: true,
+    gradient: 'from-purple-600 to-indigo-700',
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     price: 2500,
     priceLabel: '$2,500+/mo',
-    description: 'First-mover advantage + unlimited execution',
-    accessWindow: '0+ days (real-time)',
+    description: 'Unlimited power for agencies',
     tier: 'enterprise',
+    slots: 30,
+    seats: -1,
+    reportDiscount: 50,
+    extraSlotPrice: 20,
+    whiteLabel: true,
     features: [
-      { text: 'Real-time opportunity access', included: true },
-      { text: 'All layers unlimited', included: true },
-      { text: 'Pay-per-report access (from $25)', included: true },
-      { text: 'Layer 2 Deep Dive unlimited', included: true },
-      { text: 'Layer 3 Execution Package unlimited', included: true },
-      { text: 'Dedicated success manager', included: true },
+      { text: '30 opportunity slots/month', included: true },
+      { text: 'Unlimited team seats', included: true },
+      { text: 'White-label + 50% off reports', included: true },
+      { text: 'Full API access', included: true },
+      { text: 'Additional slots: $20 each', included: true },
+      { text: 'Dedicated account manager', included: true },
     ],
     cta: 'Contact Sales',
     popular: false,
@@ -112,11 +176,13 @@ const subscriptionTiers = [
   },
 ]
 
+const subscriptionTiers = [...individualTiers, ...businessTiers]
+
 const layerDetails = [
   {
     layer: 'Layer 1',
     name: 'Problem Overview',
-    access: 'Explorer: $15/unlock | Builder+: Unlimited',
+    access: 'All paid tiers (uses 1 slot)',
     features: [
       'Problem statement and consumer pain points',
       'Basic market size estimate',
@@ -128,7 +194,7 @@ const layerDetails = [
   {
     layer: 'Layer 2',
     name: 'Deep Dive Analysis',
-    access: 'Scaler+ Only',
+    access: 'Growth+ tiers (included with slot)',
     features: [
       'Complete source compilation (all discussions)',
       'TAM/SAM/SOM detailed estimates',
@@ -141,7 +207,7 @@ const layerDetails = [
   {
     layer: 'Layer 3',
     name: 'Execution Package',
-    access: 'Scaler: 5/month | Enterprise: Unlimited',
+    access: 'Via AI reports (tier discounts apply)',
     features: [
       '90-day execution playbook',
       'MVP feature recommendations',
@@ -164,69 +230,61 @@ const reports = [
 
 const bundles = [
   {
-    id: 'strategic',
-    name: 'Strategic Analysis Bundle',
-    price: 229,
-    savings: 58,
-    description: 'Complete competitive and environmental intelligence',
-    includes: ['Market Analysis ($99)', 'PESTLE Analysis ($99)', 'Strategic Assessment ($89)'],
-    consultantValue: '$12,000-$83,000',
+    id: 'marketing',
+    name: 'Marketing Bundle',
+    price: 599,
+    businessPrice: 999,
+    savings: 146,
+    description: 'Complete marketing foundation for launch',
+    includes: ['Content Calendar ($129)', 'Email Funnel System ($179)', 'Lead Magnet ($89)', 'Sales Funnel ($149)', 'User Personas ($99)'],
+    totalValue: 645,
     popular: true,
   },
   {
-    id: 'starter',
-    name: 'Starter Bundle',
-    price: 329,
-    savings: 53,
-    description: 'Validation + Pitch (for fundraising)',
-    includes: ['Feasibility Study ($25)', 'Business Plan ($149)', 'Financial Model ($129)', 'Pitch Deck ($79)'],
-    consultantValue: '$8,500-$35,000',
+    id: 'launch',
+    name: 'Launch Bundle',
+    price: 899,
+    businessPrice: 1499,
+    savings: 228,
+    description: 'Coordinated product launch with tracking',
+    includes: ['GTM Strategy ($189)', 'GTM Launch Calendar ($159)', 'MVP Roadmap ($179)', 'KPI Dashboard ($119)'],
+    totalValue: 646,
     popular: false,
   },
   {
-    id: 'professional',
-    name: 'Professional Bundle',
-    price: 549,
-    savings: 120,
-    description: 'Complete execution package - replaces $30,000+ in consulting',
-    includes: ['All 7 reports included ($669 value)', 'Feasibility + Business Plan + Financials', 'Pitch Deck + Market Analysis', 'PESTLE + Strategic Assessment', '30-day email support', 'One revision round per report'],
-    consultantValue: '$17,000-$98,000',
+    id: 'complete-starter',
+    name: 'Complete Starter Bundle',
+    price: 1299,
+    businessPrice: 2299,
+    savings: 400,
+    description: 'Everything you need to launch from zero to one',
+    includes: ['Brand Package ($149)', 'Landing Page ($99)', 'Ad Creatives ($79)', 'Email Sequence ($79)', 'User Personas ($99)', 'MVP Roadmap ($179)', 'GTM Strategy ($189)', 'KPI Dashboard ($119)', 'Competitive Analysis ($149)', 'Pricing Strategy ($139)'],
+    totalValue: 1280,
     popular: false,
     featured: true,
-  },
-  {
-    id: 'consultant',
-    name: 'Consultant License',
-    price: 2499,
-    savings: 0,
-    priceLabel: '$2,499/year',
-    description: 'White-label tool for professionals',
-    includes: ['Unlimited reports (25 opps/year)', 'White-label branding', 'API access', 'Priority support'],
-    consultantValue: '~$12,500 value',
-    popular: false,
   },
 ]
 
 const faqs = [
   {
-    question: "What's the difference between subscriptions and reports?",
-    answer: "Subscriptions give you ACCESS to opportunity intelligence (discovery). Reports give you EXECUTION tools (turning opportunities into businesses). They're complementary - discover with subscriptions, execute with reports.",
+    question: "What are opportunity slots?",
+    answer: "Slots give you exclusive access to claim opportunities. Each tier includes a monthly slot allowance. Only 3-10 people can claim each opportunity, ensuring real exclusivity. You can purchase additional slots anytime.",
   },
   {
-    question: "How does time-based access work?",
-    answer: "Opportunities become available to different tiers based on age. Enterprise gets real-time access (0+ days), Scaler gets 8+ day old opportunities, Builder gets 31+ days, and Explorer gets 91+ days. Earlier access = first-mover advantage.",
+    question: "What's the difference between Individual and Business tracks?",
+    answer: "Individual track ($20-$99/mo) is for solo entrepreneurs exploring opportunities. Business track ($250-$2,500+/mo) adds team seats, white-label reports for client deliverables, commercial use rights, and API access.",
   },
   {
-    question: "Why are your reports so affordable?",
-    answer: "AI automation replaces 90% of traditional consulting work. Our Feasibility Study costs $25 vs $1,500-$15K from consultants. You get the same quality analysis in minutes instead of weeks - at a fraction of the cost.",
+    question: "How do report discounts work?",
+    answer: "Higher tiers get report discounts: Growth 10% off, Pro 15% off, Business 20% off, Enterprise 50% off. Business track tiers also get white-label rights to rebrand reports for clients.",
   },
   {
-    question: "Can I purchase reports without a subscription?",
-    answer: "Yes! Reports can be purchased for ANY opportunity you have Layer 1 access to. Explorer users can unlock Layer 1 for $15, then purchase any reports they need.",
+    question: "Can I upgrade my plan anytime?",
+    answer: "Yes! You can upgrade at any time and we'll prorate your billing. Your slot allowance updates immediately, and any unused purchased slots carry over.",
   },
   {
-    question: "What's included in the Strategic Analysis Bundle?",
-    answer: "The Strategic Analysis Bundle ($229) includes Market Analysis, PESTLE Analysis, and Strategic Assessment - $287 value with $58 savings. Perfect for comprehensive competitive and environmental intelligence.",
+    question: "What's included in the Complete Starter Bundle?",
+    answer: "The Complete Starter Bundle ($1,299 individual / $2,299 business) includes 10 essential reports: Brand Package, Landing Page, Ad Creatives, Email Sequence, User Personas, MVP Roadmap, GTM Strategy, KPI Dashboard, Competitive Analysis, and Pricing Strategy. Save $400+ vs buying separately.",
   },
 ]
 
@@ -237,7 +295,8 @@ export default function Pricing() {
   const autoCheckout = searchParams.get('checkout')
   const [autoCheckoutTriggered, setAutoCheckoutTriggered] = useState(false)
 
-  const [billingLoading, setBillingLoading] = useState<'pro' | 'business' | 'portal' | null>(null)
+  type TierType = 'starter' | 'growth' | 'pro' | 'team' | 'business' | 'enterprise'
+  const [billingLoading, setBillingLoading] = useState<TierType | 'portal' | null>(null)
   const [billingError, setBillingError] = useState<string | null>(null)
   const [billingSuccess, setBillingSuccess] = useState<string | null>(null)
   const [billingSyncing, setBillingSyncing] = useState(false)
@@ -253,10 +312,19 @@ export default function Pricing() {
   const [subPublishableKey, setSubPublishableKey] = useState<string | null>(null)
   const [subPlanLabel, setSubPlanLabel] = useState<string>('')
   const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
-  const [subPendingTier, setSubPendingTier] = useState<'pro' | 'business' | null>(null)
+  const [subPendingTier, setSubPendingTier] = useState<TierType | null>(null)
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
 
-  async function startSubscription(tier: 'pro' | 'business') {
+  const tierPriceLabels: Record<TierType, string> = {
+    starter: '$20/mo',
+    growth: '$50/mo',
+    pro: '$99/mo',
+    team: '$250/mo',
+    business: '$750/mo',
+    enterprise: '$2,500+/mo'
+  }
+
+  async function startSubscription(tier: TierType) {
     if (!token) {
       navigate(`/login?next=${encodeURIComponent('/pricing')}`)
       return
@@ -280,7 +348,7 @@ export default function Pricing() {
 
       setSubPublishableKey(String(keyData.publishable_key))
       setSubClientSecret(String(data.client_secret))
-      setSubPlanLabel(tier === 'pro' ? '$99/mo' : '$499/mo')
+      setSubPlanLabel(tierPriceLabels[tier])
       setSubPendingTier(tier)
       setSubOpen(true)
     } catch (e) {
@@ -291,9 +359,7 @@ export default function Pricing() {
   }
 
   const expectedTierLabel = useMemo(() => {
-    if (subPendingTier === 'pro') return 'pro'
-    if (subPendingTier === 'business') return 'business'
-    return null
+    return subPendingTier || null
   }, [subPendingTier])
 
   async function fetchMySubscription() {
@@ -349,19 +415,14 @@ export default function Pricing() {
 
   useEffect(() => {
     if (!autoCheckout || autoCheckoutTriggered || !isAuthenticated || !token) return
-    const tier = autoCheckout.toLowerCase()
-    if (tier === 'pro' || tier === 'builder') {
+    const tier = autoCheckout.toLowerCase() as TierType
+    const validTiers: TierType[] = ['starter', 'growth', 'pro', 'team', 'business', 'enterprise']
+    if (validTiers.includes(tier) && tier !== 'enterprise') {
       setAutoCheckoutTriggered(true)
       const newParams = new URLSearchParams(searchParams)
       newParams.delete('checkout')
       setSearchParams(newParams, { replace: true })
-      startSubscription('pro')
-    } else if (tier === 'business' || tier === 'scaler') {
-      setAutoCheckoutTriggered(true)
-      const newParams = new URLSearchParams(searchParams)
-      newParams.delete('checkout')
-      setSearchParams(newParams, { replace: true })
-      startSubscription('business')
+      startSubscription(tier)
     }
   }, [autoCheckout, autoCheckoutTriggered, isAuthenticated, token, searchParams, setSearchParams])
 
@@ -415,22 +476,19 @@ export default function Pricing() {
   const hasActiveSubscription = subscriptionInfo && 
     subscriptionInfo.is_active && 
     subscriptionInfo.tier && 
-    subscriptionInfo.tier.toLowerCase() !== 'free' && 
-    subscriptionInfo.tier.toLowerCase() !== 'explorer'
+    subscriptionInfo.tier.toLowerCase() !== 'free'
 
   const handleTierClick = (tier: typeof subscriptionTiers[0]) => {
-    if (tier.id === 'explorer') {
-      navigate(isAuthenticated ? '/discover' : '/signup')
-    } else if (tier.id === 'enterprise') {
+    const tierName = tier.tier as TierType
+    if (tierName === 'enterprise') {
       setEnterpriseModalOpen(true)
-    } else if (tier.tier === 'pro' || tier.tier === 'business') {
+    } else {
       if (!isAuthenticated) {
-        const plan = tier.tier === 'pro' ? 'builder' : 'scaler'
-        navigate(`/login?next=${encodeURIComponent(`/pricing?plan=${plan}`)}`)
+        navigate(`/login?next=${encodeURIComponent(`/pricing?checkout=${tierName}`)}`)
       } else if (hasActiveSubscription) {
         setBillingError(`You already have an active ${subscriptionInfo?.tier} subscription. Use "Manage Billing" to change your plan.`)
       } else {
-        startSubscription(tier.tier)
+        startSubscription(tierName)
       }
     }
   }
@@ -444,14 +502,14 @@ export default function Pricing() {
             Professional Business Intelligence. AI Speed.
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Consultant-Quality Reports at AI Prices
+            Discover. Claim. Execute.
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-            Get a <span className="font-semibold text-purple-600">Feasibility Study for just $25</span>{' '}
-            (vs $1,500-15K from traditional consultants).
+            Start at <span className="font-semibold text-purple-600">$20/month</span>{' '}
+            - 10x more accessible than competitors. Pay to play, not to browse.
           </p>
           <p className="text-lg text-gray-500">
-            Professional reports from $25-$149. Save 95% compared to consulting firms.
+            Exclusive opportunity slots. AI execution reports. Real business intelligence.
           </p>
         </div>
 
@@ -500,69 +558,153 @@ export default function Pricing() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-          {subscriptionTiers.map((tier) => (
-            <div
-              key={tier.id}
-              className={`relative bg-white rounded-2xl border-2 ${
-                tier.popular ? 'border-purple-500 shadow-xl' : 'border-gray-200'
-              } overflow-hidden`}
-            >
-              {tier.popular && (
-                <div className="absolute top-0 left-0 right-0 bg-purple-500 text-white text-center text-sm py-1 font-medium">
-                  Most Popular
-                </div>
-              )}
-              <div className={`bg-gradient-to-r ${tier.gradient} p-6 text-white ${tier.popular ? 'mt-7' : ''}`}>
-                <h3 className="text-xl font-bold">{tier.name}</h3>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold">{tier.priceLabel}</span>
-                </div>
-                <p className="text-white/80 text-sm mt-2">{tier.description}</p>
-              </div>
-              <div className="p-6">
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">Access Window</div>
-                  <div className="font-medium text-gray-900 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    {tier.accessWindow}
+        <div className="mb-20">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Individual Track</h2>
+            <p className="text-gray-600">For solo entrepreneurs and side hustlers</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {individualTiers.map((tier) => (
+              <div
+                key={tier.id}
+                className={`relative bg-white rounded-2xl border-2 ${
+                  tier.popular ? 'border-purple-500 shadow-xl' : 'border-gray-200'
+                } overflow-hidden`}
+              >
+                {tier.popular && (
+                  <div className="absolute top-0 left-0 right-0 bg-purple-500 text-white text-center text-sm py-1 font-medium">
+                    Most Popular
                   </div>
+                )}
+                <div className={`bg-gradient-to-r ${tier.gradient} p-6 text-white ${tier.popular ? 'mt-7' : ''}`}>
+                  <h3 className="text-xl font-bold">{tier.name}</h3>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold">{tier.priceLabel}</span>
+                  </div>
+                  <p className="text-white/80 text-sm mt-2">{tier.description}</p>
                 </div>
-                <ul className="space-y-3 mb-6">
-                  {tier.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      {feature.included ? (
-                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                      )}
-                      <span className={feature.included ? 'text-gray-700 text-sm' : 'text-gray-400 text-sm'}>
-                        {feature.text}
+                <div className="p-6">
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="text-xs text-gray-500 uppercase tracking-wider">Monthly Slots</div>
+                    <div className="font-medium text-gray-900 flex items-center gap-2">
+                      <Database className="w-4 h-4 text-gray-400" />
+                      {tier.slots} {tier.slots === 1 ? 'opportunity' : 'opportunities'}
+                    </div>
+                  </div>
+                  <ul className="space-y-3 mb-6">
+                    {tier.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        {feature.included ? (
+                          <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={feature.included ? 'text-gray-700 text-sm' : 'text-gray-400 text-sm'}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => handleTierClick(tier)}
+                    disabled={billingLoading !== null}
+                    className={`block w-full py-3 rounded-lg text-center font-medium transition-colors disabled:opacity-50 ${
+                      tier.popular
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {billingLoading === tier.tier ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
                       </span>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => handleTierClick(tier)}
-                  disabled={billingLoading !== null}
-                  className={`block w-full py-3 rounded-lg text-center font-medium transition-colors disabled:opacity-50 ${
-                    tier.popular
-                      ? 'bg-purple-600 text-white hover:bg-purple-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {(billingLoading === 'pro' && tier.tier === 'pro') || (billingLoading === 'business' && tier.tier === 'business') ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing...
-                    </span>
-                  ) : (
-                    tier.cta
-                  )}
-                </button>
+                    ) : (
+                      tier.cta
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Business Track</h2>
+            <p className="text-gray-600">For teams, consultants, and agencies</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {businessTiers.map((tier) => (
+              <div
+                key={tier.id}
+                className={`relative bg-white rounded-2xl border-2 ${
+                  tier.popular ? 'border-purple-500 shadow-xl' : 'border-gray-200'
+                } overflow-hidden`}
+              >
+                {tier.popular && (
+                  <div className="absolute top-0 left-0 right-0 bg-purple-500 text-white text-center text-sm py-1 font-medium">
+                    Most Popular
+                  </div>
+                )}
+                <div className={`bg-gradient-to-r ${tier.gradient} p-6 text-white ${tier.popular ? 'mt-7' : ''}`}>
+                  <h3 className="text-xl font-bold">{tier.name}</h3>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold">{tier.priceLabel}</span>
+                  </div>
+                  <p className="text-white/80 text-sm mt-2">{tier.description}</p>
+                </div>
+                <div className="p-6">
+                  <div className="mb-4 grid grid-cols-2 gap-2">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-500 uppercase tracking-wider">Slots/Mo</div>
+                      <div className="font-medium text-gray-900 flex items-center gap-1">
+                        <Database className="w-4 h-4 text-gray-400" />
+                        {tier.slots}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-500 uppercase tracking-wider">Team Seats</div>
+                      <div className="font-medium text-gray-900 flex items-center gap-1">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        {tier.seats === -1 ? 'Unlimited' : tier.seats}
+                      </div>
+                    </div>
+                  </div>
+                  <ul className="space-y-3 mb-6">
+                    {tier.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        {feature.included ? (
+                          <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className={feature.included ? 'text-gray-700 text-sm' : 'text-gray-400 text-sm'}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => handleTierClick(tier)}
+                    disabled={billingLoading !== null}
+                    className={`block w-full py-3 rounded-lg text-center font-medium transition-colors disabled:opacity-50 ${
+                      tier.popular
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {billingLoading === tier.tier ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      tier.cta
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mb-20">

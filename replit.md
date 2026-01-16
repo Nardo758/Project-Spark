@@ -10,7 +10,13 @@ I want iterative development, with a focus on delivering core features quickly a
 OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, TailwindCSS) on Port 5000 and a Python FastAPI backend (SQLAlchemy ORM) on Port 8000, backed by a Replit PostgreSQL database. Client-side state is managed with Zustand, and routing with React Router v6. The frontend proxies `/api/*` requests to the backend.
 
 **Key Architectural Decisions & Features:**
-*   **Monetization & Access Control:** Implements a tiered subscription model (Explorer, Builder, Scaler, Enterprise) with time-decay access control, content gating, and one-time purchases (pay-per-unlock, add-ons).
+*   **Monetization & Access Control:** Implements a 3-gate revenue model:
+    - **Gate 1 - Platform Access (Subscription):** 6-tier dual-track pricing:
+      - Individual Track: Starter ($20/mo, 1 slot), Growth ($50/mo, 3 slots), Pro ($99/mo, 5 slots)
+      - Business Track: Team ($250/mo, 5 slots, 3 seats), Business ($750/mo, 15 slots, 10 seats), Enterprise ($2,500+/mo, 30 slots, unlimited seats)
+    - **Gate 2 - Opportunity Slots:** Monthly credits with exclusivity caps (3-10 users per opportunity). Additional slots purchasable at tier-specific prices ($20-$50).
+    - **Gate 3 - Execution Reports:** 20 AI-generated report types with tier-based discounts (0%/10%/15%/20%/50%). Business track includes white-label reports and commercial use rights.
+    - Report bundles: Marketing ($599), Launch ($899), Complete Starter ($1,299) with 20-30% savings.
 *   **AI Engine:** Integrates with Large Language Models (LLMs) for idea generation, validation, expert matching, and detailed opportunity analysis, orchestrated by an AI service.
 *   **Authentication:** Uses Replit's OIDC patterns with database-backed user authentication, supporting various providers including LinkedIn OAuth.
 *   **User Interface:** Features a professional dark-themed design with a deep dive console, dynamic navigation, and interactive mapping (Leaflet.js/Mapbox).

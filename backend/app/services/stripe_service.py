@@ -103,67 +103,233 @@ init_stripe()
 class StripeService:
     """Service for Stripe payment operations"""
 
-    # Time-decay access windows (days)
+    # New 6-Tier Pricing Model (January 2026)
+    # Individual Track: Starter ($20), Growth ($50), Pro ($99)
+    # Business Track: Team ($250), Business ($750), Enterprise ($2500)
+    
+    # Time-decay access windows (legacy - all tiers now get full access)
     TIER_ACCESS_WINDOWS = {
-        SubscriptionTier.FREE: 91,       # Archive: 91+ days old
-        SubscriptionTier.PRO: 31,        # Validated: 31+ days old  
-        SubscriptionTier.BUSINESS: 8,    # Fresh: 8+ days old
-        SubscriptionTier.ENTERPRISE: 0,  # Real-time: all opportunities
+        SubscriptionTier.FREE: 999,       # No access (gated platform)
+        SubscriptionTier.STARTER: 0,      # Full access with slot limit
+        SubscriptionTier.GROWTH: 0,       # Full access with slot limit
+        SubscriptionTier.PRO: 0,          # Full access with slot limit
+        SubscriptionTier.TEAM: 0,         # Full access with slot limit
+        SubscriptionTier.BUSINESS: 0,     # Full access with slot limit
+        SubscriptionTier.ENTERPRISE: 0,   # Full access with slot limit
+    }
+    
+    # Tier configuration with slots, seats, discounts
+    TIER_CONFIG = {
+        SubscriptionTier.FREE: {
+            "price": 0,
+            "monthly_slots": 0,
+            "seats": 1,
+            "report_discount": 0,
+            "white_label": False,
+            "commercial_use": False,
+            "api_access": False,
+            "extra_slot_price": 0,  # Cannot buy slots
+            "track": "none",
+        },
+        SubscriptionTier.STARTER: {
+            "price": 20,
+            "monthly_slots": 1,
+            "seats": 1,
+            "report_discount": 0,
+            "white_label": False,
+            "commercial_use": False,
+            "api_access": False,
+            "extra_slot_price": 5000,  # $50
+            "track": "individual",
+        },
+        SubscriptionTier.GROWTH: {
+            "price": 50,
+            "monthly_slots": 3,
+            "seats": 1,
+            "report_discount": 10,
+            "white_label": False,
+            "commercial_use": False,
+            "api_access": False,
+            "extra_slot_price": 4000,  # $40
+            "track": "individual",
+        },
+        SubscriptionTier.PRO: {
+            "price": 99,
+            "monthly_slots": 5,
+            "seats": 1,
+            "report_discount": 15,
+            "white_label": False,
+            "commercial_use": False,
+            "api_access": False,
+            "extra_slot_price": 3500,  # $35
+            "track": "individual",
+        },
+        SubscriptionTier.TEAM: {
+            "price": 250,
+            "monthly_slots": 5,
+            "seats": 3,
+            "report_discount": 0,  # Uses white-label pricing
+            "white_label": True,
+            "commercial_use": True,
+            "api_access": False,
+            "extra_slot_price": 3000,  # $30
+            "track": "business",
+        },
+        SubscriptionTier.BUSINESS: {
+            "price": 750,
+            "monthly_slots": 15,
+            "seats": 10,
+            "report_discount": 20,
+            "white_label": True,
+            "commercial_use": True,
+            "api_access": True,
+            "extra_slot_price": 2500,  # $25
+            "track": "business",
+        },
+        SubscriptionTier.ENTERPRISE: {
+            "price": 2500,
+            "monthly_slots": 30,
+            "seats": -1,  # Unlimited
+            "report_discount": 50,
+            "white_label": True,
+            "commercial_use": True,
+            "api_access": True,
+            "extra_slot_price": 2000,  # $20
+            "track": "business",
+        },
     }
 
-    # Pay-per-unlock pricing
+    # Pay-per-unlock pricing (legacy - may be deprecated)
     PAY_PER_UNLOCK_PRICE = 1500  # $15.00 in cents
-    FAST_PASS_PRICE = 9900  # $99.00 in cents (Business HOT fast-pass)
-    DEEP_DIVE_PRICE = 4900  # $49.00 in cents (Layer 2 add-on for Pro tier)
+    FAST_PASS_PRICE = 9900  # $99.00 in cents
+    DEEP_DIVE_PRICE = 4900  # $49.00 in cents
 
-    # Subscription tier limits (updated per pricing strategy)
+    # Legacy tier limits for backward compatibility
     TIER_LIMITS = {
         SubscriptionTier.FREE: {
-            "monthly_views": 10,
-            "monthly_unlocks": 0,  # Must pay per unlock
+            "monthly_views": 0,
+            "monthly_unlocks": 0,
             "export_limit": 0,
             "export_batch_size": 0,
             "api_access": False,
             "price": 0,
-            "access_window_days": 91,
-            "daily_unlock_limit": 5,  # Max pay-per-unlocks per day
+            "access_window_days": 999,  # No access
         },
-        SubscriptionTier.PRO: {
-            "monthly_views": -1,  # Unlimited for 31+ day opportunities
-            "monthly_unlocks": -1,  # Unlimited for 31+ day opportunities
-            "export_limit": 100,
+        SubscriptionTier.STARTER: {
+            "monthly_views": -1,
+            "monthly_unlocks": 1,
+            "export_limit": 10,
             "export_batch_size": 1,
             "api_access": False,
+            "price": 20,
+            "access_window_days": 0,
+        },
+        SubscriptionTier.GROWTH: {
+            "monthly_views": -1,
+            "monthly_unlocks": 3,
+            "export_limit": 30,
+            "export_batch_size": 5,
+            "api_access": False,
+            "price": 50,
+            "access_window_days": 0,
+        },
+        SubscriptionTier.PRO: {
+            "monthly_views": -1,
+            "monthly_unlocks": 5,
+            "export_limit": 100,
+            "export_batch_size": 10,
+            "api_access": False,
             "price": 99,
-            "access_window_days": 31,
+            "access_window_days": 0,
+        },
+        SubscriptionTier.TEAM: {
+            "monthly_views": -1,
+            "monthly_unlocks": 5,
+            "export_limit": 200,
+            "export_batch_size": 20,
+            "api_access": False,
+            "price": 250,
+            "access_window_days": 0,
         },
         SubscriptionTier.BUSINESS: {
-            "monthly_views": -1,  # Unlimited for 8+ day opportunities
-            "monthly_unlocks": -1,  # Unlimited
+            "monthly_views": -1,
+            "monthly_unlocks": 15,
             "export_limit": 500,
             "export_batch_size": 50,
             "api_access": True,
-            "price": 499,
-            "access_window_days": 8,
-            "execution_packages_monthly": 5,
+            "price": 750,
+            "access_window_days": 0,
         },
         SubscriptionTier.ENTERPRISE: {
-            "monthly_views": -1,  # Unlimited
-            "monthly_unlocks": -1,  # Unlimited
-            "export_limit": -1,  # Unlimited
-            "export_batch_size": -1,  # Unlimited
+            "monthly_views": -1,
+            "monthly_unlocks": 30,
+            "export_limit": -1,
+            "export_batch_size": -1,
             "api_access": True,
-            "price": 2500,  # Starting price
+            "price": 2500,
             "access_window_days": 0,
         }
     }
 
-    # Stripe Price IDs (set these in environment variables)
+    # Stripe Price IDs (set in environment variables)
     STRIPE_PRICES = {
+        SubscriptionTier.STARTER: os.getenv("STRIPE_PRICE_STARTER"),
+        SubscriptionTier.GROWTH: os.getenv("STRIPE_PRICE_GROWTH"),
         SubscriptionTier.PRO: os.getenv("STRIPE_PRICE_PRO"),
+        SubscriptionTier.TEAM: os.getenv("STRIPE_PRICE_TEAM"),
         SubscriptionTier.BUSINESS: os.getenv("STRIPE_PRICE_BUSINESS"),
         # Enterprise is custom, handled separately
     }
+    
+    # Helper methods for new tier system
+    @classmethod
+    def get_tier_config(cls, tier: SubscriptionTier) -> dict:
+        """Get configuration for a tier"""
+        return cls.TIER_CONFIG.get(tier, cls.TIER_CONFIG[SubscriptionTier.FREE])
+    
+    @classmethod
+    def get_report_discount(cls, tier: SubscriptionTier) -> int:
+        """Get report discount percentage for a tier"""
+        config = cls.get_tier_config(tier)
+        return config.get("report_discount", 0)
+    
+    @classmethod
+    def is_business_track(cls, tier: SubscriptionTier) -> bool:
+        """Check if tier is on the business track (white-label eligible)"""
+        config = cls.get_tier_config(tier)
+        return config.get("track") == "business"
+    
+    @classmethod
+    def has_white_label(cls, tier: SubscriptionTier) -> bool:
+        """Check if tier has white-label access"""
+        config = cls.get_tier_config(tier)
+        return config.get("white_label", False)
+    
+    @classmethod
+    def get_monthly_slots(cls, tier: SubscriptionTier) -> int:
+        """Get number of monthly opportunity slots for a tier"""
+        config = cls.get_tier_config(tier)
+        return config.get("monthly_slots", 0)
+    
+    @classmethod
+    def get_extra_slot_price(cls, tier: SubscriptionTier) -> int:
+        """Get price in cents for an extra slot purchase"""
+        config = cls.get_tier_config(tier)
+        return config.get("extra_slot_price", 5000)
+    
+    @classmethod
+    def calculate_report_price(cls, base_price_cents: int, tier: SubscriptionTier, is_business_report: bool = False) -> int:
+        """Calculate final report price with tier discount.
+        
+        Uses pricing from report_pricing.py which handles tier discounts and 
+        business vs individual pricing. This method applies the tier discount
+        to any base price provided.
+        """
+        config = cls.get_tier_config(tier)
+        discount = config.get("report_discount", 0)
+        
+        discounted_price = int(base_price_cents * (100 - discount) / 100)
+        return discounted_price
 
     @staticmethod
     def create_customer(email: str, name: str, metadata: Optional[Dict] = None) -> stripe.Customer:
