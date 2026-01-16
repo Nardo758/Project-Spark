@@ -81,9 +81,18 @@ function formatMarketSize(size?: string | null): string {
 }
 
 
+const BUNDLE_NAMES: Record<string, string> = {
+  strategic: 'Strategic Analysis Bundle',
+  starter: 'Starter Bundle',
+  professional: 'Professional Bundle',
+  consultant: 'Consultant License',
+}
+
 export default function Discover() {
   const [searchParams] = useSearchParams()
   const initialQuery = searchParams.get('q') || ''
+  const bundleParam = searchParams.get('bundle')
+  const bundleName = bundleParam ? BUNDLE_NAMES[bundleParam] || bundleParam : null
   const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedFreshness, setSelectedFreshness] = useState('All')
@@ -346,6 +355,33 @@ export default function Discover() {
           Filters
         </button>
       </div>
+
+      {/* Bundle Purchase Guidance Banner */}
+      {bundleName && isAuthenticated && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <FileText className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">
+                  Ready to purchase the <span className="text-emerald-600 font-bold">{bundleName}</span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Select an opportunity below to purchase reports for. Click on any opportunity to view details and buy the bundle.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/pricing#bundles"
+              className="px-4 py-2 border border-emerald-300 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-colors"
+            >
+              View All Bundles
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Subscription Status Banner */}
       {isAuthenticated && isFreeTier && (
