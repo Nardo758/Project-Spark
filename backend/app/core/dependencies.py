@@ -104,9 +104,12 @@ class RequireSubscription:
         self.min_tier = min_tier
         self.tier_hierarchy = {
             SubscriptionTier.FREE: 0,
-            SubscriptionTier.PRO: 1,
-            SubscriptionTier.BUSINESS: 2,
-            SubscriptionTier.ENTERPRISE: 3
+            SubscriptionTier.STARTER: 1,
+            SubscriptionTier.GROWTH: 2,
+            SubscriptionTier.PRO: 3,
+            SubscriptionTier.TEAM: 4,
+            SubscriptionTier.BUSINESS: 5,
+            SubscriptionTier.ENTERPRISE: 6
         }
     
     async def __call__(
@@ -126,6 +129,24 @@ class RequireSubscription:
         return current_user
 
 
+async def require_any_paid_subscription(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+) -> User:
+    """Require any active paid subscription (Starter or above)"""
+    user_tier = get_user_subscription_tier(current_user, db)
+    
+    if user_tier == SubscriptionTier.FREE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="An active subscription is required to access this feature. Please subscribe at /pricing."
+        )
+    return current_user
+
+
+require_starter = RequireSubscription(SubscriptionTier.STARTER)
+require_growth = RequireSubscription(SubscriptionTier.GROWTH)
 require_pro = RequireSubscription(SubscriptionTier.PRO)
+require_team = RequireSubscription(SubscriptionTier.TEAM)
 require_business = RequireSubscription(SubscriptionTier.BUSINESS)
 require_enterprise = RequireSubscription(SubscriptionTier.ENTERPRISE)

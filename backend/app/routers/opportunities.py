@@ -8,14 +8,17 @@ import json
 from app.db.database import get_db
 from app.models.opportunity import Opportunity
 from app.models.user import User
+from app.models.subscription import SubscriptionTier
 from app.schemas.opportunity import OpportunityCreate, OpportunityUpdate, Opportunity as OpportunitySchema, OpportunityList, OpportunityGatedResponse
-from app.core.dependencies import get_current_active_user, get_current_user_optional
+from app.core.dependencies import get_current_active_user, get_current_user_optional, get_user_subscription_tier
 from app.services.badges import award_impact_points
 from app.services.usage_service import usage_service
 from app.services.entitlements import get_opportunity_entitlements
 
 router = APIRouter()
 optional_auth = HTTPBearer(auto_error=False)
+
+FREE_PREVIEW_LIMIT = 3
 
 
 @router.get("/categories", response_model=List[str])
@@ -53,8 +56,8 @@ def create_opportunity(
     return new_opportunity
 
 
-@router.get("/", response_model=OpportunityList)
-def get_opportunities(
+@router.get("/")
+async def get_opportunities(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     category: Optional[str] = None,
@@ -63,9 +66,22 @@ def get_opportunities(
     geographic_scope: Optional[str] = None,
     country: Optional[str] = None,
     completion_status: Optional[str] = None,
+    current_user: User = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Get list of opportunities with filtering and pagination"""
+    """
+    Get list of opportunities with filtering and pagination.
+    
+    Free users see only 3 preview opportunities. 
+    Paid subscribers get full access.
+    """
+    is_paid = False
+    user_tier = SubscriptionTier.FREE
+    
+    if current_user:
+        user_tier = get_user_subscription_tier(current_user, db)
+        is_paid = user_tier != SubscriptionTier.FREE
+    
     query = db.query(Opportunity).filter(
         Opportunity.status == status,
         Opportunity.moderation_status == 'approved'
@@ -100,14 +116,31 @@ def get_opportunities(
         query = query.order_by(desc(Opportunity.feasibility_score))
 
     total = query.count()
+    
+    if not is_paid:
+        opportunities = query.offset(0).limit(FREE_PREVIEW_LIMIT).all()
+        
+        return {
+            "opportunities": opportunities,
+            "total": min(total, FREE_PREVIEW_LIMIT),
+            "page": 1,
+            "page_size": FREE_PREVIEW_LIMIT,
+            "is_gated": True,
+            "gated_message": f"Subscribe to access all {total} opportunities",
+            "full_total": total
+        }
+    
     opportunities = query.offset(skip).limit(limit).all()
 
-    return OpportunityList(
-        opportunities=opportunities,
-        total=total,
-        page=skip // limit + 1,
-        page_size=limit
-    )
+    return {
+        "opportunities": opportunities,
+        "total": total,
+        "page": skip // limit + 1,
+        "page_size": limit,
+        "is_gated": False,
+        "gated_message": None,
+        "full_total": total
+    }
 
 
 @router.get("/{opportunity_id}", response_model=OpportunityGatedResponse)

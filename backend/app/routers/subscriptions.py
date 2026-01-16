@@ -959,6 +959,54 @@ def get_slot_balance(
     return slot_service.get_balance_info(current_user, db)
 
 
+@router.post("/slots/claim/{opportunity_id}")
+def claim_opportunity(
+    opportunity_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Claim an opportunity using a slot"""
+    from app.services.slot_service import slot_service
+    
+    if not current_user.subscription or current_user.subscription.tier == SubscriptionTier.FREE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An active subscription is required to claim opportunities"
+        )
+    
+    success, message = slot_service.claim_opportunity(current_user, opportunity_id, db)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+    
+    log_event(
+        db,
+        action="opportunity.claim",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=str(opportunity_id),
+        metadata={"message": message},
+    )
+    
+    return {"success": True, "message": message}
+
+
+@router.get("/slots/claim-status/{opportunity_id}")
+def get_opportunity_claim_status(
+    opportunity_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get claim status for an opportunity (public)"""
+    from app.services.slot_service import slot_service
+    return slot_service.get_opportunity_claim_status(opportunity_id, db)
+
+
 @router.post("/slots/purchase")
 def purchase_slots(
     request: Request,

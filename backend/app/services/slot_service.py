@@ -9,8 +9,12 @@ from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
 from app.models.user import User
-from app.models.subscription import UserSlotBalance, SubscriptionTier
+from app.models.subscription import UserSlotBalance, OpportunityClaimLimit, UnlockedOpportunity, UnlockMethod, SubscriptionTier
+from app.models.opportunity import Opportunity
 from app.services.stripe_service import StripeService, get_stripe_client
+
+MIN_CLAIM_LIMIT = 3
+MAX_CLAIM_LIMIT = 10
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +183,145 @@ class SlotService:
             "extra_slot_price_cents": slot_price_cents,
             "extra_slot_price": f"${slot_price_cents / 100:.2f}",
         }
+    
+    @staticmethod
+    def get_or_create_claim_limit(opportunity_id: int, db: Session) -> OpportunityClaimLimit:
+        """Get or create claim limit record for an opportunity"""
+        claim_limit = db.query(OpportunityClaimLimit).filter(
+            OpportunityClaimLimit.opportunity_id == opportunity_id
+        ).first()
+        
+        if not claim_limit:
+            claim_limit = OpportunityClaimLimit(
+                opportunity_id=opportunity_id,
+                claim_limit=MAX_CLAIM_LIMIT,
+                claimed_count=0
+            )
+            db.add(claim_limit)
+            db.commit()
+            db.refresh(claim_limit)
+        
+        return claim_limit
+    
+    @staticmethod
+    def claim_opportunity(user: User, opportunity_id: int, db: Session) -> Tuple[bool, str]:
+        """
+        Claim an opportunity using a slot.
+        Uses row-level locking to prevent race conditions.
+        
+        Returns (success, message)
+        """
+        from sqlalchemy.exc import IntegrityError
+        
+        try:
+            opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id).first()
+            if not opportunity:
+                return False, "Opportunity not found"
+            
+            existing = db.query(UnlockedOpportunity).filter(
+                UnlockedOpportunity.user_id == user.id,
+                UnlockedOpportunity.opportunity_id == opportunity_id
+            ).first()
+            if existing:
+                return False, "You have already claimed this opportunity"
+            
+            claim_limit = db.query(OpportunityClaimLimit).filter(
+                OpportunityClaimLimit.opportunity_id == opportunity_id
+            ).with_for_update().first()
+            
+            if not claim_limit:
+                try:
+                    claim_limit = OpportunityClaimLimit(
+                        opportunity_id=opportunity_id,
+                        claim_limit=MAX_CLAIM_LIMIT,
+                        claimed_count=0
+                    )
+                    db.add(claim_limit)
+                    db.flush()
+                except IntegrityError:
+                    db.rollback()
+                    claim_limit = db.query(OpportunityClaimLimit).filter(
+                        OpportunityClaimLimit.opportunity_id == opportunity_id
+                    ).with_for_update().first()
+            
+            if claim_limit.claimed_count >= claim_limit.claim_limit:
+                db.rollback()
+                return False, f"This opportunity has reached its exclusivity limit ({claim_limit.claim_limit} users)"
+            
+            balance = db.query(UserSlotBalance).filter(
+                UserSlotBalance.user_id == user.id
+            ).with_for_update().first()
+            
+            if not balance:
+                tier = user.subscription.tier if user.subscription else SubscriptionTier.FREE
+                monthly_slots = StripeService.get_monthly_slots(tier)
+                balance = UserSlotBalance(
+                    user_id=user.id,
+                    monthly_slots=monthly_slots,
+                    bonus_slots=0,
+                    used_slots=0,
+                    period_start=datetime.utcnow(),
+                    period_end=datetime.utcnow() + timedelta(days=30)
+                )
+                db.add(balance)
+                db.flush()
+            
+            available = (balance.monthly_slots + balance.bonus_slots) - balance.used_slots
+            if available <= 0:
+                db.rollback()
+                return False, "No slots available. Purchase additional slots to continue."
+            
+            balance.used_slots += 1
+            claim_limit.claimed_count += 1
+            
+            unlocked = UnlockedOpportunity(
+                user_id=user.id,
+                opportunity_id=opportunity_id,
+                unlock_method=UnlockMethod.SLOT_CLAIM,
+                amount_paid=0
+            )
+            db.add(unlocked)
+            
+            db.commit()
+            
+            remaining = (balance.monthly_slots + balance.bonus_slots) - balance.used_slots
+            slots_remaining = claim_limit.claim_limit - claim_limit.claimed_count
+            
+            logger.info(f"User {user.id} claimed opportunity {opportunity_id}. User slots remaining: {remaining}, Opportunity slots: {slots_remaining}")
+            
+            return True, f"Opportunity claimed successfully. {slots_remaining} exclusive slots remaining for this opportunity."
+            
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error claiming opportunity {opportunity_id} for user {user.id}: {e}")
+            return False, "An error occurred while claiming the opportunity. Please try again."
+    
+    @staticmethod
+    def get_opportunity_claim_status(opportunity_id: int, db: Session) -> dict:
+        """Get claim status for an opportunity"""
+        claim_limit = SlotService.get_or_create_claim_limit(opportunity_id, db)
+        
+        return {
+            "opportunity_id": opportunity_id,
+            "claim_limit": claim_limit.claim_limit,
+            "claimed_count": claim_limit.claimed_count,
+            "slots_remaining": claim_limit.slots_remaining,
+            "is_available": claim_limit.is_available,
+        }
+    
+    @staticmethod
+    def set_claim_limit(opportunity_id: int, limit: int, db: Session) -> OpportunityClaimLimit:
+        """Set the claim limit for an opportunity (admin only)"""
+        if limit < MIN_CLAIM_LIMIT or limit > MAX_CLAIM_LIMIT:
+            raise ValueError(f"Claim limit must be between {MIN_CLAIM_LIMIT} and {MAX_CLAIM_LIMIT}")
+        
+        claim_limit = SlotService.get_or_create_claim_limit(opportunity_id, db)
+        claim_limit.claim_limit = limit
+        db.commit()
+        db.refresh(claim_limit)
+        
+        logger.info(f"Set claim limit for opportunity {opportunity_id} to {limit}")
+        return claim_limit
 
 
 slot_service = SlotService()
