@@ -8,6 +8,7 @@ interface MatchingLocation {
   state: string
   lat: number
   lng: number
+  address?: string
   similarity_score: number
   demographics_match: number
   competition_match: number
@@ -111,11 +112,11 @@ function CloneBubbleMapInner({ locations, selectedLocation, onSelectLocation }: 
         el.style.height = `${size}px`
         el.style.borderRadius = '50%'
         el.style.backgroundColor = color
-        el.style.opacity = '0.7'
+        el.style.opacity = '0.45'
         el.style.border = `2px solid ${color}`
         el.style.cursor = 'pointer'
         el.style.transition = 'all 0.2s ease'
-        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)'
+        el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)'
         
         el.addEventListener('mouseenter', () => {
           el.style.transform = 'scale(1.1)'
@@ -128,8 +129,9 @@ function CloneBubbleMapInner({ locations, selectedLocation, onSelectLocation }: 
         })
 
         const popupContent = `
-          <div style="min-width: 180px; padding: 8px;">
+          <div style="min-width: 200px; padding: 8px;">
             <h3 style="font-weight: 600; color: #111; font-size: 14px; margin-bottom: 4px;">${loc.name}</h3>
+            ${loc.address ? `<p style="color: #888; font-size: 11px; margin-bottom: 6px;">${loc.address}</p>` : ''}
             <p style="color: #666; font-size: 12px; margin-bottom: 8px;">${loc.city}, ${loc.state}</p>
             <div style="display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; background: ${
               loc.similarity_score >= 80 ? '#d1fae5' : loc.similarity_score >= 60 ? '#fef3c7' : '#f3f4f6'
@@ -176,9 +178,9 @@ function CloneBubbleMapInner({ locations, selectedLocation, onSelectLocation }: 
       const isSelected = selectedLocation?.name === location.name
       const color = getScoreColor(location.similarity_score)
       
-      element.style.opacity = isSelected ? '0.95' : '0.7'
+      element.style.opacity = isSelected ? '0.6' : '0.45'
       element.style.border = isSelected ? '3px solid #7c3aed' : `2px solid ${color}`
-      element.style.boxShadow = isSelected ? '0 0 8px rgba(124, 58, 237, 0.5)' : '0 2px 4px rgba(0,0,0,0.2)'
+      element.style.boxShadow = isSelected ? '0 0 10px rgba(124, 58, 237, 0.4)' : '0 2px 6px rgba(0,0,0,0.15)'
     })
 
     if (selectedLocation && map.current) {

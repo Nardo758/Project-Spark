@@ -636,6 +636,7 @@ class ConsultantStudioService:
                 "state": loc["state"],
                 "lat": loc["lat"],
                 "lng": loc["lng"],
+                "address": loc.get("address", ""),
                 "similarity_score": similarity_score,
                 "demographics_match": demographics_match,
                 "competition_match": competition_match,
@@ -655,22 +656,118 @@ class ConsultantStudioService:
         state: str,
         category: str,
     ) -> List[Dict[str, Any]]:
-        """Get neighborhood areas within a specific city for Clone Success analysis"""
+        """Get real neighborhood locations within a specific city using SerpAPI for accurate coordinates"""
         import random
+        from .serpapi_service import serpapi_service
         
-        city_coordinates = {
-            ("miami", "fl"): {"lat": 25.7617, "lng": -80.1918},
+        neighborhoods = []
+        
+        search_terms = [
+            f"shopping plaza {city} {state}",
+            f"business center {city} {state}",
+            f"commercial district {city} {state}",
+        ]
+        
+        if serpapi_service.is_configured:
+            try:
+                for search_term in search_terms:
+                    if len(neighborhoods) >= 5:
+                        break
+                    
+                    result = serpapi_service.google_maps_search(
+                        query=search_term,
+                        location=f"{city}, {state}"
+                    )
+                    
+                    local_results = result.get("local_results", [])
+                    
+                    for place in local_results[:3]:
+                        gps = place.get("gps_coordinates", {})
+                        if gps and "latitude" in gps and "longitude" in gps:
+                            address = place.get("address", "")
+                            name = place.get("title", f"Location in {city}")
+                            
+                            if len(name) > 40:
+                                name = name[:37] + "..."
+                            
+                            neighborhoods.append({
+                                "name": name,
+                                "city": city.title(),
+                                "state": state.upper(),
+                                "lat": round(gps["latitude"], 6),
+                                "lng": round(gps["longitude"], 6),
+                                "address": address,
+                                "base_score": random.randint(65, 92),
+                            })
+                            
+                            if len(neighborhoods) >= 5:
+                                break
+                
+                if neighborhoods:
+                    logger.info(f"Found {len(neighborhoods)} real locations in {city}, {state}")
+                    return neighborhoods
+                    
+            except Exception as e:
+                logger.warning(f"SerpAPI search failed for {city}, {state}: {e}")
+        
+        known_locations = {
+            ("miami", "fl"): [
+                {"name": "Brickell City Centre", "lat": 25.7650, "lng": -80.1936, "address": "701 S Miami Ave, Miami, FL"},
+                {"name": "Dadeland Mall", "lat": 25.6903, "lng": -80.3140, "address": "7535 N Kendall Dr, Miami, FL"},
+                {"name": "Aventura Mall", "lat": 25.9569, "lng": -80.1414, "address": "19501 Biscayne Blvd, Aventura, FL"},
+                {"name": "Dolphin Mall", "lat": 25.7883, "lng": -80.3827, "address": "11401 NW 12th St, Miami, FL"},
+                {"name": "Coral Gables Downtown", "lat": 25.7496, "lng": -80.2619, "address": "355 Miracle Mile, Coral Gables, FL"},
+            ],
+            ("orlando", "fl"): [
+                {"name": "The Mall at Millenia", "lat": 28.4848, "lng": -81.4314, "address": "4200 Conroy Rd, Orlando, FL"},
+                {"name": "Orlando Fashion Square", "lat": 28.5529, "lng": -81.3407, "address": "3201 E Colonial Dr, Orlando, FL"},
+                {"name": "Winter Park Village", "lat": 28.5970, "lng": -81.3510, "address": "510 N Orlando Ave, Winter Park, FL"},
+            ],
+            ("austin", "tx"): [
+                {"name": "The Domain", "lat": 30.4020, "lng": -97.7254, "address": "11410 Century Oaks Terrace, Austin, TX"},
+                {"name": "Barton Creek Square", "lat": 30.2610, "lng": -97.8082, "address": "2901 Capital of Texas Hwy, Austin, TX"},
+                {"name": "Downtown Austin", "lat": 30.2672, "lng": -97.7431, "address": "Congress Ave, Austin, TX"},
+            ],
+            ("dallas", "tx"): [
+                {"name": "NorthPark Center", "lat": 32.8680, "lng": -96.7728, "address": "8687 N Central Expy, Dallas, TX"},
+                {"name": "Galleria Dallas", "lat": 32.9308, "lng": -96.8198, "address": "13350 Dallas Pkwy, Dallas, TX"},
+                {"name": "Highland Park Village", "lat": 32.8362, "lng": -96.7993, "address": "47 Highland Park Village, Dallas, TX"},
+            ],
+            ("denver", "co"): [
+                {"name": "Cherry Creek Shopping Center", "lat": 39.7157, "lng": -104.9536, "address": "3000 E 1st Ave, Denver, CO"},
+                {"name": "Park Meadows", "lat": 39.5634, "lng": -104.8791, "address": "8401 Park Meadows Center Dr, Lone Tree, CO"},
+                {"name": "16th Street Mall", "lat": 39.7476, "lng": -104.9940, "address": "16th Street Mall, Denver, CO"},
+            ],
+            ("atlanta", "ga"): [
+                {"name": "Lenox Square", "lat": 33.8463, "lng": -84.3608, "address": "3393 Peachtree Rd NE, Atlanta, GA"},
+                {"name": "Phipps Plaza", "lat": 33.8500, "lng": -84.3611, "address": "3500 Peachtree Rd NE, Atlanta, GA"},
+                {"name": "Atlantic Station", "lat": 33.7910, "lng": -84.3960, "address": "1380 Atlantic Dr NW, Atlanta, GA"},
+            ],
+        }
+        
+        city_key = (city.lower().strip(), state.lower().strip())
+        
+        if city_key in known_locations:
+            for loc in known_locations[city_key][:5]:
+                neighborhoods.append({
+                    "name": loc["name"],
+                    "city": city.title(),
+                    "state": state.upper(),
+                    "lat": loc["lat"],
+                    "lng": loc["lng"],
+                    "address": loc.get("address", ""),
+                    "base_score": random.randint(65, 90),
+                })
+            return neighborhoods
+        
+        logger.warning(f"No real location data available for {city}, {state}. Using city center.")
+        city_centers = {
             ("west palm beach", "fl"): {"lat": 26.7153, "lng": -80.0534},
-            ("orlando", "fl"): {"lat": 28.5383, "lng": -81.3792},
             ("tampa", "fl"): {"lat": 27.9506, "lng": -82.4572},
             ("jacksonville", "fl"): {"lat": 30.3322, "lng": -81.6557},
-            ("austin", "tx"): {"lat": 30.2672, "lng": -97.7431},
-            ("dallas", "tx"): {"lat": 32.7767, "lng": -96.7970},
             ("houston", "tx"): {"lat": 29.7604, "lng": -95.3698},
             ("san antonio", "tx"): {"lat": 29.4241, "lng": -98.4936},
-            ("denver", "co"): {"lat": 39.7392, "lng": -104.9903},
             ("phoenix", "az"): {"lat": 33.4484, "lng": -112.0740},
-            ("atlanta", "ga"): {"lat": 33.7490, "lng": -84.3880},
             ("charlotte", "nc"): {"lat": 35.2271, "lng": -80.8431},
             ("nashville", "tn"): {"lat": 36.1627, "lng": -86.7816},
             ("los angeles", "ca"): {"lat": 34.0522, "lng": -118.2437},
@@ -680,30 +777,17 @@ class ConsultantStudioService:
             ("chicago", "il"): {"lat": 41.8781, "lng": -87.6298},
             ("boston", "ma"): {"lat": 42.3601, "lng": -71.0589},
         }
+        base = city_centers.get(city_key, {"lat": 33.0, "lng": -97.0})
         
-        city_key = (city.lower().strip(), state.lower().strip())
-        base_coords = city_coordinates.get(city_key, {"lat": 33.0, "lng": -97.0})
-        
-        neighborhood_names = [
-            f"Downtown {city}", f"Midtown {city}", f"North {city}",
-            f"South {city}", f"East {city}", f"West {city}",
-            f"{city} Heights", f"{city} Gardens", f"Old Town {city}",
-            f"{city} Business District", f"{city} Arts District", f"Historic {city}"
-        ]
-        
-        neighborhoods = []
-        for i, name in enumerate(random.sample(neighborhood_names, min(8, len(neighborhood_names)))):
-            lat_offset = random.uniform(-0.08, 0.08)
-            lng_offset = random.uniform(-0.08, 0.08)
-            
-            neighborhoods.append({
-                "name": name,
-                "city": city.title(),
-                "state": state.upper(),
-                "lat": round(base_coords["lat"] + lat_offset, 4),
-                "lng": round(base_coords["lng"] + lng_offset, 4),
-                "base_score": random.randint(60, 92),
-            })
+        neighborhoods.append({
+            "name": f"Downtown {city.title()}",
+            "city": city.title(),
+            "state": state.upper(),
+            "lat": base["lat"],
+            "lng": base["lng"],
+            "address": f"City Center, {city.title()}, {state.upper()}",
+            "base_score": 75,
+        })
         
         return neighborhoods
     
