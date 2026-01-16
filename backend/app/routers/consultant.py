@@ -55,8 +55,7 @@ class SearchIdeasResponse(BaseModel):
 
 class IdentifyLocationRequest(BaseModel):
     city: str = Field(..., min_length=2, max_length=255)
-    business_type: str = Field(..., pattern="^(specific_business|retail|multifamily|hospitality)$")
-    business_subtype: Optional[str] = None
+    business_description: str = Field(..., min_length=3, max_length=500)
     additional_params: Optional[Dict[str, Any]] = None
     session_id: Optional[str] = None
 
@@ -64,13 +63,29 @@ class IdentifyLocationRequest(BaseModel):
 class IdentifyLocationResponse(BaseModel):
     success: bool
     city: Optional[str] = None
-    business_type: Optional[str] = None
-    business_subtype: Optional[str] = None
+    business_description: Optional[str] = None
+    inferred_category: Optional[str] = None
     geo_analysis: Optional[Dict[str, Any]] = None
     market_report: Optional[Dict[str, Any]] = None
     site_recommendations: Optional[List[Dict[str, Any]]] = None
     from_cache: Optional[bool] = None
     cache_hit_count: Optional[int] = None
+    processing_time_ms: Optional[int] = None
+    error: Optional[str] = None
+
+
+class CloneSuccessRequest(BaseModel):
+    business_name: str = Field(..., min_length=2, max_length=255)
+    business_address: str = Field(..., min_length=5, max_length=500)
+    radius_miles: int = Field(default=3, ge=1, le=10)
+    session_id: Optional[str] = None
+
+
+class CloneSuccessResponse(BaseModel):
+    success: bool
+    source_business: Optional[Dict[str, Any]] = None
+    matching_locations: Optional[List[Dict[str, Any]]] = None
+    analysis_radius_miles: int = 3
     processing_time_ms: Optional[int] = None
     error: Optional[str] = None
 
@@ -155,12 +170,9 @@ async def identify_location(
     """
     Path 3: Identify Location - Geographic intelligence
     
-    Analyzes a location for business viability.
-    Supports 4 business types:
-    - specific_business: Targeted business analysis
-    - retail: Retail location analysis
-    - multifamily: Multifamily housing analysis
-    - hospitality: Hotel/restaurant analysis
+    Analyzes a location for business viability based on a natural language
+    description of the business (e.g., "coffee shop with drive-thru").
+    AI automatically categorizes the business type.
     
     Results are cached for 30 days.
     """
@@ -169,13 +181,38 @@ async def identify_location(
     result = await service.identify_location(
         user_id=user_id,
         city=request.city,
-        business_type=request.business_type,
-        business_subtype=request.business_subtype,
+        business_description=request.business_description,
         additional_params=request.additional_params,
         session_id=request.session_id,
     )
     
     return IdentifyLocationResponse(**result)
+
+
+@router.post("/clone-success", response_model=CloneSuccessResponse)
+async def clone_success(
+    request: CloneSuccessRequest,
+    db: Session = Depends(get_db),
+    user_id: int = 1,
+):
+    """
+    Path 4: Clone Success - Replicate successful business models
+    
+    Analyzes a successful business's location, demographics, and success factors,
+    then finds similar markets where the model could be replicated.
+    Uses configurable radius (3 or 5 miles) for trade area analysis.
+    """
+    service = ConsultantStudioService(db)
+    
+    result = await service.clone_success(
+        user_id=user_id,
+        business_name=request.business_name,
+        business_address=request.business_address,
+        radius_miles=request.radius_miles,
+        session_id=request.session_id,
+    )
+    
+    return CloneSuccessResponse(**result)
 
 
 @router.get("/activity", response_model=List[ActivityLogResponse])
