@@ -947,3 +947,76 @@ async def stripe_webhook(
     from app.routers.stripe_webhook import stripe_webhook as canonical_webhook
 
     return await canonical_webhook(request=request, db=db)
+
+
+@router.get("/slots/balance")
+def get_slot_balance(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get user's opportunity slot balance"""
+    from app.services.slot_service import slot_service
+    return slot_service.get_balance_info(current_user, db)
+
+
+@router.post("/slots/purchase")
+def purchase_slots(
+    request: Request,
+    quantity: int = 1,
+    success_url: str = None,
+    cancel_url: str = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Create a checkout session to purchase additional opportunity slots"""
+    from app.services.slot_service import slot_service
+    
+    if quantity < 1 or quantity > 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Quantity must be between 1 and 10"
+        )
+    
+    if not current_user.subscription or current_user.subscription.tier == SubscriptionTier.FREE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An active subscription is required to purchase additional slots"
+        )
+    
+    base_url = os.getenv("FRONTEND_URL", os.getenv("BACKEND_URL", ""))
+    if not success_url:
+        success_url = f"{base_url}/discover?slots_purchased=true"
+    if not cancel_url:
+        cancel_url = f"{base_url}/pricing"
+    
+    try:
+        result = slot_service.create_slot_checkout_session(
+            user=current_user,
+            quantity=quantity,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            db=db
+        )
+        
+        log_event(
+            db,
+            action="slot.checkout_session.create",
+            actor=current_user,
+            actor_type="user",
+            request=request,
+            resource_type="slot_purchase",
+            metadata={"quantity": quantity, "session_id": result["session_id"]},
+        )
+        
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create checkout session: {str(e)}"
+        )

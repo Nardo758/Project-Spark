@@ -335,13 +335,10 @@ def handle_invoice_payment_failed(invoice: dict, db: Session):
 
 
 def handle_checkout_completed(session: dict, db: Session):
-    """Handle successful checkout session - link subscription to user."""
-    user_id = session.get("metadata", {}).get("user_id")
-    subscription_id = session.get("subscription")
-    customer_id = session.get("customer")
-    tier = session.get("metadata", {}).get("tier")
-    
-    logger.info(f"Checkout completed for user {user_id}, subscription {subscription_id}")
+    """Handle successful checkout session - link subscription to user or process slot purchase."""
+    metadata = session.get("metadata", {})
+    user_id = metadata.get("user_id")
+    payment_type = metadata.get("type", "")
     
     if not user_id:
         logger.warning("No user_id in checkout session metadata")
@@ -351,6 +348,49 @@ def handle_checkout_completed(session: dict, db: Session):
     if not user:
         logger.warning(f"User {user_id} not found")
         return
+    
+    if payment_type == "slot_purchase":
+        _handle_slot_purchase(session, user, db)
+    else:
+        _handle_subscription_checkout(session, user, db)
+
+
+def _handle_slot_purchase(session: dict, user: User, db: Session):
+    """Handle slot purchase completion."""
+    from app.services.slot_service import slot_service
+    
+    metadata = session.get("metadata", {})
+    quantity = int(metadata.get("quantity", 1))
+    
+    logger.info(f"Processing slot purchase for user {user.id}: {quantity} slots")
+    
+    balance = slot_service.add_bonus_slots(user, quantity, db)
+    
+    tx = Transaction(
+        user_id=user.id,
+        type=TransactionType.ADDON,
+        status=TransactionStatus.SUCCEEDED,
+        amount_cents=session.get("amount_total", 0),
+        currency=session.get("currency", "usd"),
+        metadata_json=json.dumps({
+            "type": "slot_purchase",
+            "quantity": quantity,
+            "session_id": session.get("id"),
+        }),
+    )
+    db.add(tx)
+    db.commit()
+    
+    logger.info(f"Added {quantity} slots to user {user.id}. New balance: {balance.bonus_slots} bonus slots")
+
+
+def _handle_subscription_checkout(session: dict, user: User, db: Session):
+    """Handle subscription checkout completion."""
+    subscription_id = session.get("subscription")
+    customer_id = session.get("customer")
+    tier = session.get("metadata", {}).get("tier")
+    
+    logger.info(f"Checkout completed for user {user.id}, subscription {subscription_id}")
     
     subscription = usage_service.get_or_create_subscription(user, db)
     subscription.stripe_subscription_id = subscription_id
@@ -364,7 +404,7 @@ def handle_checkout_completed(session: dict, db: Session):
             logger.warning(f"Invalid tier in metadata: {tier}")
     
     db.commit()
-    logger.info(f"Updated subscription for user {user_id}")
+    logger.info(f"Updated subscription for user {user.id}")
 
 
 def handle_subscription_updated(stripe_subscription: dict, db: Session):
