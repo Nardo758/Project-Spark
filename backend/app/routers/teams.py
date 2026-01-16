@@ -19,6 +19,7 @@ from app.models.user import User
 from app.models.team import Team, TeamMember, TeamInvitation, TeamRole, InviteStatus
 from app.services import team_service
 from app.services.branding_service import get_report_branding_preview, is_whitelabel_eligible
+from app.services import api_key_service
 
 router = APIRouter()
 
@@ -524,3 +525,142 @@ def preview_branding(
         "has_company_name": bool(team.company_name),
         "primary_color": team.primary_color or "#6366f1"
     }
+
+
+class CreateApiKeyRequest(BaseModel):
+    name: str
+    scopes: Optional[List[str]] = None
+    expires_in_days: Optional[int] = None
+
+
+class ApiKeyResponse(BaseModel):
+    id: int
+    name: str
+    key_prefix: str
+    is_active: bool
+    scopes: List[str]
+    last_used_at: Optional[str] = None
+    usage_count: int
+    expires_at: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class ApiKeyCreatedResponse(BaseModel):
+    id: int
+    name: str
+    key: str
+    key_prefix: str
+    scopes: List[str]
+    message: str
+
+
+@router.get("/{team_id}/api-keys")
+def list_api_keys(
+    team_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """List all API keys for a team"""
+    member = db.query(TeamMember).filter(
+        TeamMember.team_id == team_id,
+        TeamMember.user_id == current_user.id,
+        TeamMember.is_active == True
+    ).first()
+    
+    if not member or member.role not in [TeamRole.OWNER, TeamRole.ADMIN]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission to view API keys")
+    
+    keys = api_key_service.list_api_keys(team_id, db)
+    return {"api_keys": keys}
+
+
+@router.post("/{team_id}/api-keys")
+def create_api_key(
+    team_id: int,
+    payload: CreateApiKeyRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new API key for a team"""
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
+    
+    success, message, full_key = api_key_service.create_api_key(
+        team=team,
+        user=current_user,
+        name=payload.name,
+        scopes=payload.scopes,
+        expires_in_days=payload.expires_in_days,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+    
+    return {
+        "message": message,
+        "key": full_key,
+        "key_prefix": full_key[:10] if full_key else None,
+        "warning": "Save this key now. You won't be able to see it again."
+    }
+
+
+@router.delete("/{team_id}/api-keys/{key_id}")
+def revoke_api_key(
+    team_id: int,
+    key_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Revoke an API key"""
+    success, message = api_key_service.revoke_api_key(key_id, current_user, db)
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+    
+    return {"message": message}
+
+
+@router.post("/{team_id}/api-access/enable")
+def enable_api_access(
+    team_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Enable API access for a team (owner only)"""
+    member = db.query(TeamMember).filter(
+        TeamMember.team_id == team_id,
+        TeamMember.user_id == current_user.id,
+        TeamMember.is_active == True
+    ).first()
+    
+    if not member or member.role != TeamRole.OWNER:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only team owners can enable API access")
+    
+    team = member.team
+    api_key_service.enable_team_api_access(team, rate_limit=100, db=db)
+    
+    return {"message": "API access enabled", "rate_limit": team.api_rate_limit}
+
+
+@router.post("/{team_id}/api-access/disable")
+def disable_api_access(
+    team_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Disable API access for a team (owner only)"""
+    member = db.query(TeamMember).filter(
+        TeamMember.team_id == team_id,
+        TeamMember.user_id == current_user.id,
+        TeamMember.is_active == True
+    ).first()
+    
+    if not member or member.role != TeamRole.OWNER:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only team owners can disable API access")
+    
+    team = member.team
+    api_key_service.disable_team_api_access(team, db)
+    
+    return {"message": "API access disabled"}

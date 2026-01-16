@@ -64,6 +64,7 @@ from app.routers import (
     workspaces,
     byok,
     affiliate_tools,
+    public_api,
 )
 
 logger = logging.getLogger(__name__)
@@ -155,6 +156,7 @@ app.include_router(byok.router, tags=["BYOK"])
 app.include_router(affiliate_tools.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Affiliate Tools"])
 app.include_router(reports.router, tags=["Report Templates"])
 app.include_router(teams.router, prefix=f"{settings.API_V1_PREFIX}/teams", tags=["Teams"])
+app.include_router(public_api.router, prefix=f"{settings.API_V1_PREFIX}/public", tags=["Public API"])
 
 
 @app.get("/")
