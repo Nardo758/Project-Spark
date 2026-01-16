@@ -583,8 +583,18 @@ class ConsultantStudioService:
         
         target_demographics = source_analysis.get("demographics", {})
         category = source_analysis.get("category", "retail")
-        source_income = target_demographics.get("median_income", 65000)
-        source_pop = target_demographics.get("population", 100000)
+        
+        def safe_numeric(value, default):
+            """Convert value to numeric, handling 'N/A' and other non-numeric strings"""
+            if value is None or value == "N/A" or value == "":
+                return default
+            try:
+                return float(value) if isinstance(value, str) else value
+            except (ValueError, TypeError):
+                return default
+        
+        source_income = safe_numeric(target_demographics.get("median_income"), 65000)
+        source_pop = safe_numeric(target_demographics.get("population"), 100000)
         
         if target_city and target_state:
             locations = await self._get_neighborhoods_in_city(target_city, target_state, category)
