@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, BarChart3, BookOpen, Briefcase, CheckCircle, CheckCircle2,
   ChevronRight, DollarSign, ExternalLink, FileText, 
-  Loader2, PanelLeftClose, PanelLeftOpen,
+  Loader2, PanelLeftClose, PanelLeftOpen, ClipboardList,
   Rocket, Search, Send, Settings, Sparkles, Target, 
   TrendingUp, Users, Wrench, X, Zap
 } from 'lucide-react'
@@ -356,12 +356,14 @@ const stageQuickActions: Record<WorkspaceStatus, { label: string; icon: typeof C
     { label: 'Business Canvas', icon: Briefcase, action: 'business_canvas' },
     { label: 'Pricing Model', icon: DollarSign, action: 'pricing_model' },
     { label: 'Risk Analysis', icon: Target, action: 'risk_analysis' },
+    { label: 'Report Library', icon: ClipboardList, action: 'report_library' },
   ],
   building: [
     { label: 'Formation Guide', icon: BookOpen, action: 'formation_guide' },
     { label: 'Tool Stack', icon: Wrench, action: 'tool_stack' },
     { label: 'Find Funding', icon: DollarSign, action: 'find_funding' },
     { label: 'Find Expert', icon: Users, action: 'find_expert' },
+    { label: 'Report Library', icon: ClipboardList, action: 'report_library' },
   ],
   launched: [],
   paused: [],
@@ -531,6 +533,10 @@ export default function WorkHub() {
   }
 
   const handleQuickAction = (action: string) => {
+    if (action === 'report_library') {
+      window.location.href = '/build/reports?path=reports'
+      return
+    }
     const actionMessages: Record<string, string> = {
       view_signals: 'Show me the demand signals for this opportunity.',
       check_competition: 'Who are the main competitors in this space?',
@@ -997,6 +1003,19 @@ export default function WorkHub() {
                   <div className="text-center">
                     <p className="text-xs font-medium text-stone-900">Find Expert</p>
                     <p className="text-xs text-stone-500">Get help launching</p>
+                  </div>
+                </Link>
+                
+                <Link
+                  to="/build/reports?path=reports"
+                  className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border border-amber-200 hover:border-amber-300 hover:shadow-sm transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-violet-200">
+                    <ClipboardList className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-stone-900">Report Library</p>
+                    <p className="text-xs text-stone-500">AI-powered reports</p>
                   </div>
                 </Link>
               </div>

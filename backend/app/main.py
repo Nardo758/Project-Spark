@@ -27,6 +27,7 @@ from app.routers import (
     follows,
     generated_reports,
     google_scraping,
+    reports,
     idea_engine,
     idea_validations,
     leads,
@@ -151,6 +152,7 @@ app.include_router(upwork.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Upw
 app.include_router(sba.router, prefix=f"{settings.API_V1_PREFIX}/sba", tags=["SBA Funding"])
 app.include_router(byok.router, tags=["BYOK"])
 app.include_router(affiliate_tools.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Affiliate Tools"])
+app.include_router(reports.router, tags=["Report Templates"])
 
 
 @app.get("/")

@@ -24,6 +24,7 @@ from .lead import Lead, LeadStatus, LeadSource
 from .saved_search import SavedSearch
 from .lead_purchase import LeadPurchase
 from .generated_report import GeneratedReport, ReportType, ReportStatus
+from .report_template import ReportTemplate, ReportCategory
 from .consultant_activity import ConsultantActivity, ConsultantPath
 from .detected_trend import DetectedTrend
 from .trend_opportunity_mapping import TrendOpportunityMapping
@@ -102,6 +103,8 @@ __all__ = [
     "GeneratedReport",
     "ReportType",
     "ReportStatus",
+    "ReportTemplate",
+    "ReportCategory",
     "ModerationReportStatus",
     "ConsultantActivity",
     "ConsultantPath",
