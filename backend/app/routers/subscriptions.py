@@ -231,8 +231,20 @@ def create_subscription_intent(
     subscription = usage_service.get_or_create_subscription(current_user, db)
 
     # Prevent accidental duplicate active subscriptions. Use portal for upgrades/changes.
-    if subscription.stripe_subscription_id and subscription.status == SubscriptionStatus.ACTIVE:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have an active subscription. Use Manage billing.")
+    # Check both: users with Stripe subscription OR users with active paid tier (e.g., Enterprise set up manually)
+    is_paid_tier = subscription.tier and subscription.tier not in (SubscriptionTier.FREE,)
+    if subscription.status == SubscriptionStatus.ACTIVE and is_paid_tier:
+        if subscription.stripe_subscription_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="You already have an active subscription. Use 'Manage Billing' to change your plan."
+            )
+        else:
+            # Active paid subscription without Stripe (e.g., Enterprise) - cannot self-serve change
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"You have an active {subscription.tier.value} subscription. Please contact support to modify your plan."
+            )
 
     # If there's an old incomplete subscription attempt, best-effort cancel it on Stripe.
     if subscription.stripe_subscription_id and subscription.status == SubscriptionStatus.INCOMPLETE:

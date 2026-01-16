@@ -412,22 +412,25 @@ export default function Pricing() {
     }
   }, [billingSyncing, token, expectedTierLabel])
 
+  const hasActiveSubscription = subscriptionInfo && 
+    subscriptionInfo.is_active && 
+    subscriptionInfo.tier && 
+    subscriptionInfo.tier.toLowerCase() !== 'free' && 
+    subscriptionInfo.tier.toLowerCase() !== 'explorer'
+
   const handleTierClick = (tier: typeof subscriptionTiers[0]) => {
     if (tier.id === 'explorer') {
       navigate(isAuthenticated ? '/discover' : '/signup')
     } else if (tier.id === 'enterprise') {
       setEnterpriseModalOpen(true)
-    } else if (tier.tier === 'pro') {
+    } else if (tier.tier === 'pro' || tier.tier === 'business') {
       if (!isAuthenticated) {
-        navigate(`/login?next=${encodeURIComponent('/pricing?plan=builder')}`)
+        const plan = tier.tier === 'pro' ? 'builder' : 'scaler'
+        navigate(`/login?next=${encodeURIComponent(`/pricing?plan=${plan}`)}`)
+      } else if (hasActiveSubscription) {
+        setBillingError(`You already have an active ${subscriptionInfo?.tier} subscription. Use "Manage Billing" to change your plan.`)
       } else {
-        startSubscription('pro')
-      }
-    } else if (tier.tier === 'business') {
-      if (!isAuthenticated) {
-        navigate(`/login?next=${encodeURIComponent('/pricing?plan=scaler')}`)
-      } else {
-        startSubscription('business')
+        startSubscription(tier.tier)
       }
     }
   }
@@ -678,12 +681,18 @@ export default function Pricing() {
                       </li>
                     ))}
                   </ul>
-                  <Link
-                    to="/build"
+                  <button
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        navigate(`/login?next=${encodeURIComponent('/discover?bundle=' + bundle.id)}`)
+                      } else {
+                        navigate(`/discover?bundle=${bundle.id}`)
+                      }
+                    }}
                     className="block w-full py-3 bg-purple-600 text-white rounded-lg text-center font-medium hover:bg-purple-700 transition-colors"
                   >
                     Get {bundle.name}
-                  </Link>
+                  </button>
                 </div>
               </div>
             ))}
