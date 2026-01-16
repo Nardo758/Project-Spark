@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OppGrid Stripe Modal Locations - Complete Map</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-600: #57534e;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --terracotta: #E87F5C;
+            --green: #16a34a;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --amber: #f59e0b;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            padding: 48px 24px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        
+        h1 {
+            font-family: 'Spectral', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 16px;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: var(--stone-600);
+            max-width: 800px;
+            margin: 0 auto 24px;
+        }
+        
+        .overview {
+            background: white;
+            border: 1px solid var(--stone-200);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 48px;
+        }
+        
+        .overview h2 {
+            font-family: 'Spectral', serif;
+            font-size: 28px;
+            margin-bottom: 16px;
+            color: var(--stone-900);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+        
+        .stat-card {
+            background: var(--stone-50);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--stone-200);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--terracotta);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--stone-600);
+            margin-top: 8px;
+        }
+        
+        .flow-section {
+            margin-bottom: 48px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .section-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .section-header h2 {
+            font-family: 'Spectral', serif;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        .flow-grid {
+            display: grid;
+            gap: 24px;
+        }
+        
+        .flow-card {
+            background: white;
+            border: 2px solid var(--stone-200);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .flow-card:hover {
+            border-color: var(--terracotta);
+            box-shadow: 0 8px 24px rgba(232, 127, 92, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        .flow-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--terracotta), var(--stone-800));
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .flow-card:hover::before {
+            opacity: 1;
+        }
+        
+        .flow-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .flow-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .flow-title-group {
+            flex: 1;
+        }
+        
+        .flow-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--stone-900);
+        }
+        
+        .flow-page {
+            font-size: 14px;
+            color: var(--stone-600);
+            font-family: monospace;
+        }
+        
+        .flow-description {
+            color: var(--stone-600);
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+        
+        .trigger-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .trigger-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: var(--stone-50);
+            border-radius: 8px;
+            border-left: 3px solid var(--terracotta);
+        }
+        
+        .trigger-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: var(--terracotta);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        
+        .trigger-content {
+            flex: 1;
+        }
+        
+        .trigger-title {
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 4px;
+        }
+        
+        .trigger-detail {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+        
+        .integration-box {
+            background: var(--stone-100);
+            border: 1px solid var(--stone-300);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        
+        .integration-title {
+            font-weight: 600;
+            color: var(--stone-900);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .integration-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .integration-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+        
+        .integration-item::before {
+            content: '→';
+            color: var(--terracotta);
+            font-weight: 700;
+        }
+        
+        .code-snippet {
+            background: var(--stone-900);
+            color: #10b981;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+        
+        .legend {
+            background: white;
+            border: 1px solid var(--stone-200);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 48px;
+        }
+        
+        .legend h3 {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--stone-50);
+            border-radius: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        
+        .bg-green { background: var(--green); }
+        .bg-blue { background: var(--blue); }
+        .bg-purple { background: var(--purple); }
+        .bg-amber { background: var(--amber); }
+        .bg-terracotta { background: var(--terracotta); }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 32px; }
+            .subtitle { font-size: 16px; }
+            .section-header h2 { font-size: 24px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 OppGrid Stripe Modal Locations</h1>
+            <p class="subtitle">Complete map of all payment integration points across the platform</p>
+        </header>
+        
+        <div class="overview">
+            <h2>Payment Integration Overview</h2>
+            <p>OppGrid uses Stripe for all payment processing across subscription plans, expert bookings, and pay-per-unlock features. Below is a comprehensive breakdown of every location where Stripe modals and checkout flows are triggered.</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number">11</span>
+                    <span class="stat-label">Total Payment Touchpoints</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">5</span>
+                    <span class="stat-label">Core Pages with Stripe</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">3</span>
+                    <span class="stat-label">Payment Types</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">4</span>
+                    <span class="stat-label">Subscription Tiers</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SUBSCRIPTION CHECKOUT -->
+        <div class="flow-section">
+            <div class="section-header">
+                <div class="section-icon bg-green">💳</div>
+                <h2>1. Subscription Checkout</h2>
+            </div>
+            
+            <div class="flow-grid">
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-green">📊</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Pricing Page - Main Subscription Flow</div>
+                            <div class="flow-page">pricing.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Primary subscription purchase page where users select and upgrade to Pro or Business tiers with monthly/yearly toggle.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">$</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Pro Plan Upgrade</div>
+                                <div class="trigger-detail">$99/month or $79/month (yearly) - Triggered by "Upgrade to Pro" button</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">$</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Business Plan Upgrade</div>
+                                <div class="trigger-detail">$499/month or $399/month (yearly) - Triggered by "Upgrade to Business" button</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🔄</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Billing Portal Access</div>
+                                <div class="trigger-detail">Existing subscribers can access Stripe billing portal to manage subscriptions</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-box">
+                        <div class="integration-title">🔌 Stripe Integration</div>
+                        <div class="integration-list">
+                            <div class="integration-item">Creates Checkout Session with tier-specific pricing</div>
+                            <div class="integration-item">Redirects to <code>account.html?checkout=success#subscription</code> on success</div>
+                            <div class="integration-item">Falls back to <code>pricing.html?checkout=cancelled</code> on cancel</div>
+                        </div>
+                        <div class="code-snippet">api.createCheckoutSession(tier, successUrl, cancelUrl)</div>
+                    </div>
+                </div>
+                
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-green">👤</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Account Page - Subscription Management</div>
+                            <div class="flow-page">account.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">User account dashboard with subscription status display and billing portal access for managing payment methods and plans.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">⚙️</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Manage Billing Button</div>
+                                <div class="trigger-detail">Opens Stripe Customer Portal for subscription changes, payment updates, invoice history</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">📈</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Upgrade from Account</div>
+                                <div class="trigger-detail">Direct upgrade links to pricing page if user on Free tier</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-box">
+                        <div class="integration-title">🔌 Stripe Integration</div>
+                        <div class="integration-list">
+                            <div class="integration-item">Displays current subscription tier and status</div>
+                            <div class="integration-item">Shows views remaining counter</div>
+                            <div class="integration-item">Opens billing portal via <code>api.createPortalSession()</code></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-green">✨</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Signup Flow - Plan Selection</div>
+                            <div class="flow-page">signup.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">New user registration can include immediate plan selection via URL parameter (signup.html?plan=pro).</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🎯</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Plan Pre-selection</div>
+                                <div class="trigger-detail">Users redirected from pricing page with ?plan=pro or ?plan=business parameter</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">➡️</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Post-Registration Checkout</div>
+                                <div class="trigger-detail">After account creation, immediately trigger subscription checkout if plan selected</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OPPORTUNITY UNLOCK FLOWS -->
+        <div class="flow-section">
+            <div class="section-header">
+                <div class="section-icon bg-blue">🔓</div>
+                <h2>2. Opportunity Unlock Flows</h2>
+            </div>
+            
+            <div class="flow-grid">
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-blue">🎯</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Opportunity Page - Multiple Unlock Scenarios</div>
+                            <div class="flow-page">opportunity.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Most complex payment integration with three distinct unlock mechanisms based on user tier and opportunity age.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🎟️</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Unlock with Subscription Views</div>
+                                <div class="trigger-detail"><strong>Free tier:</strong> Use one of 10 monthly views to unlock locked sections (Research/Deep Analysis)</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">💰</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Pay-Per-Unlock ($15)</div>
+                                <div class="trigger-detail"><strong>Archive opportunities:</strong> One-time $15 payment for 90+ day old opportunities if out of views</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">⏰</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Tier-Based Time Lock</div>
+                                <div class="trigger-detail">Display "Upgrade to Pro" prompt for opportunities not yet available to current tier (Pro: 30 days, Business: 7 days, Enterprise: 0 days)</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">📊</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Paywall Overlays</div>
+                                <div class="trigger-detail">Visual overlays on locked sections with CTA buttons to unlock or upgrade</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-box">
+                        <div class="integration-title">🔌 Stripe Integration</div>
+                        <div class="integration-list">
+                            <div class="integration-item">Check unlock status: <code>/api/v1/subscriptions/unlocked/{id}</code></div>
+                            <div class="integration-item">Unlock with views: <code>/api/v1/subscriptions/unlock</code></div>
+                            <div class="integration-item">Pay-per-unlock: <code>/api/v1/subscriptions/pay-per-unlock</code></div>
+                            <div class="integration-item">Confirm payment: <code>/api/v1/subscriptions/confirm-pay-per-unlock</code></div>
+                        </div>
+                        <div class="code-snippet">
+// Pay-per-unlock flow
+const stripe = Stripe('pk_...');
+const {error, paymentIntent} = await stripe.confirmCardPayment(clientSecret);
+if (!error) await api.confirmPayPerUnlock(paymentIntent.id);
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-blue">🔍</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Discover Feed - View Limits & Upgrade Prompts</div>
+                            <div class="flow-page">discover.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Main discovery feed with tier-based access windows and view counters that trigger upgrade prompts.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">👁️</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Views Remaining Counter</div>
+                                <div class="trigger-detail">Display remaining views (10 for free tier), prompt upgrade when low/exhausted</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🔒</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Locked Opportunity Badges</div>
+                                <div class="trigger-detail">Visual indicators on opportunities with "or upgrade to Pro" link beneath</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">⏱️</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Days Until Unlock Display</div>
+                                <div class="trigger-detail">Show countdown timer for opportunities approaching user's tier access window</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-box">
+                        <div class="integration-title">🔌 Subscription Check</div>
+                        <div class="integration-list">
+                            <div class="integration-item">Fetch subscription tier: <code>/api/v1/subscriptions/my-subscription</code></div>
+                            <div class="integration-item">Track views_remaining counter</div>
+                            <div class="integration-item">Apply access windows: Enterprise (0d), Business (7d), Pro (30d), Free (91d)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- EXPERT MARKETPLACE -->
+        <div class="flow-section">
+            <div class="section-header">
+                <div class="section-icon bg-purple">👥</div>
+                <h2>3. Expert Marketplace Bookings</h2>
+            </div>
+            
+            <div class="flow-grid">
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-purple">💼</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Expert Checkout - Service Booking</div>
+                            <div class="flow-page">expert-checkout.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Complete booking flow for hiring experts with multiple service types and payment models.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">📝</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Service Selection</div>
+                                <div class="trigger-detail">Choose from consultation, analysis, or custom services with tiered pricing</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">💳</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Payment Model Selection</div>
+                                <div class="trigger-detail">Fixed price, hourly rate, or success fee arrangements</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">✅</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Booking Confirmation</div>
+                                <div class="trigger-detail">Process payment and create engagement agreement</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-box">
+                        <div class="integration-title">🔌 Stripe Integration</div>
+                        <div class="integration-list">
+                            <div class="integration-item">Create booking: <code>/api/v1/experts/bookings</code></div>
+                            <div class="integration-item">Calculate dynamic pricing based on service type and duration</div>
+                            <div class="integration-item">Support for deposit payments (50% upfront for success fee model)</div>
+                        </div>
+                        <div class="code-snippet">
+POST /api/v1/experts/bookings
+{
+  "expert_id": "...",
+  "service_type": "consultation",
+  "payment_model": "fixed",
+  "details": "..."
+}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-purple">🏪</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Expert Marketplace - Discovery & Profile</div>
+                            <div class="flow-page">expert-marketplace.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Browse experts and view profiles before checkout. Each expert card links to booking flow.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">👆</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">"Book Expert" Buttons</div>
+                                <div class="trigger-detail">Each expert profile card has CTA leading to expert-checkout.html?expert_id=X</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">💰</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Pricing Display</div>
+                                <div class="trigger-detail">Show hourly rates and package pricing on expert cards</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI TOOLS -->
+        <div class="flow-section">
+            <div class="section-header">
+                <div class="section-icon bg-amber">🤖</div>
+                <h2>4. AI-Powered Tools</h2>
+            </div>
+            
+            <div class="flow-grid">
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-amber">💡</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Idea Engine - Validation Unlock</div>
+                            <div class="flow-page">idea-engine.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Generate business ideas for free, unlock deep validation analysis with one-time payment.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🆓</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Free Idea Generation</div>
+                                <div class="trigger-detail">Initial idea generation available to all users without payment</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🔓</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Deep Validation Unlock</div>
+                                <div class="trigger-detail">One-time payment for comprehensive market validation, competitor analysis, and roadmap</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-box">
+                        <div class="integration-title">🔌 Implementation Note</div>
+                        <div class="integration-list">
+                            <div class="integration-item">Similar to pay-per-unlock flow on opportunity.html</div>
+                            <div class="integration-item">Price TBD - likely $15-25 range for full validation report</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-amber">🎯</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">AI Match & Roadmap - Premium Features</div>
+                            <div class="flow-page">ai-match.html, ai-roadmap.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">AI-powered matching and roadmap generation with tier-based access.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">⭐</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Premium AI Features</div>
+                                <div class="trigger-detail">Advanced AI capabilities require Pro or Business tier subscription</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🚀</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Upgrade Prompts</div>
+                                <div class="trigger-detail">Free users see feature preview with upgrade CTA</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ADMIN & SEARCH -->
+        <div class="flow-section">
+            <div class="section-header">
+                <div class="section-icon bg-terracotta">⚡</div>
+                <h2>5. Additional Integration Points</h2>
+            </div>
+            
+            <div class="flow-grid">
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-terracotta">🔍</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Search Results - Tier Badges</div>
+                            <div class="flow-page">search.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Search results display tier requirements and upgrade prompts for locked opportunities.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🏷️</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Tier Requirement Badges</div>
+                                <div class="trigger-detail">Each opportunity shows required tier (HOT/Enterprise, FRESH/Business, VALIDATED/Pro)</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🔼</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Inline Upgrade Links</div>
+                                <div class="trigger-detail">Click to upgrade from search results when encountering locked content</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flow-card">
+                    <div class="flow-header">
+                        <div class="flow-icon bg-terracotta">⚙️</div>
+                        <div class="flow-title-group">
+                            <div class="flow-title">Admin Panel - Subscription Management</div>
+                            <div class="flow-page">admin.html</div>
+                        </div>
+                    </div>
+                    <p class="flow-description">Administrative tools for managing user subscriptions, view limits, and billing.</p>
+                    
+                    <div class="trigger-list">
+                        <div class="trigger-item">
+                            <div class="trigger-icon">👨‍💼</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">User Subscription Viewer</div>
+                                <div class="trigger-detail">View all user subscription statuses, tiers, and payment history</div>
+                            </div>
+                        </div>
+                        <div class="trigger-item">
+                            <div class="trigger-icon">🛠️</div>
+                            <div class="trigger-content">
+                                <div class="trigger-title">Manual Adjustments</div>
+                                <div class="trigger-detail">Grant/revoke access, adjust view limits, handle refunds</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- LEGEND -->
+        <div class="legend">
+            <h3>Payment Flow Types</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color bg-green"></div>
+                    <span><strong>Subscription Checkout:</strong> Recurring monthly/yearly billing</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-blue"></div>
+                    <span><strong>Pay-Per-Unlock:</strong> One-time $15 payments for archive opportunities</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-purple"></div>
+                    <span><strong>Expert Bookings:</strong> Service-based payments with multiple models</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-amber"></div>
+                    <span><strong>AI Tool Unlocks:</strong> One-time feature unlock payments</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-terracotta"></div>
+                    <span><strong>Upgrade Prompts:</strong> Redirects to pricing/subscription flows</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IMPLEMENTATION CHECKLIST -->
+        <div class="overview" style="margin-top: 48px;">
+            <h2>🎯 Implementation Checklist</h2>
+            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
+                <div style="padding: 16px; background: var(--stone-50); border-left: 4px solid var(--green); border-radius: 8px;">
+                    <strong>✅ Subscription Flows (3 locations)</strong>
+                    <ul style="margin-top: 8px; margin-left: 20px;">
+                        <li>pricing.html - Main checkout (Pro/Business tiers)</li>
+                        <li>account.html - Billing portal access</li>
+                        <li>signup.html - Post-registration plan selection</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: 16px; background: var(--stone-50); border-left: 4px solid var(--blue); border-radius: 8px;">
+                    <strong>✅ Opportunity Unlocks (2 locations)</strong>
+                    <ul style="margin-top: 8px; margin-left: 20px;">
+                        <li>opportunity.html - View-based unlock, pay-per-unlock ($15), tier upgrade prompts</li>
+                        <li>discover.html - View counter, upgrade CTAs</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: 16px; background: var(--stone-50); border-left: 4px solid var(--purple); border-radius: 8px;">
+                    <strong>✅ Expert Marketplace (2 locations)</strong>
+                    <ul style="margin-top: 8px; margin-left: 20px;">
+                        <li>expert-checkout.html - Complete booking flow with payment processing</li>
+                        <li>expert-marketplace.html - "Book Expert" CTAs</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: 16px; background: var(--stone-50); border-left: 4px solid var(--amber); border-radius: 8px;">
+                    <strong>✅ AI Tools (3 locations)</strong>
+                    <ul style="margin-top: 8px; margin-left: 20px;">
+                        <li>idea-engine.html - Validation unlock</li>
+                        <li>ai-match.html - Premium feature access</li>
+                        <li>ai-roadmap.html - Premium feature access</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: 16px; background: var(--stone-50); border-left: 4px solid var(--terracotta); border-radius: 8px;">
+                    <strong>✅ Additional Points (2 locations)</strong>
+                    <ul style="margin-top: 8px; margin-left: 20px;">
+                        <li>search.html - Tier badges and upgrade links</li>
+                        <li>admin.html - Subscription management tools</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TECHNICAL REQUIREMENTS -->
+        <div class="overview" style="margin-top: 32px;">
+            <h2>🔧 Technical Requirements Summary</h2>
+            <div style="background: var(--stone-900); color: white; padding: 24px; border-radius: 12px; margin-top: 24px;">
+                <div style="font-family: monospace; font-size: 14px; line-height: 1.8;">
+                    <div style="color: #10b981; margin-bottom: 16px;">// Core Stripe Integration Points</div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <span style="color: #60a5fa;">1.</span> Stripe.js v3 loaded on all payment pages<br>
+                        <span style="color: #60a5fa;">2.</span> Backend API endpoints for checkout session creation<br>
+                        <span style="color: #60a5fa;">3.</span> Webhook handlers for subscription events<br>
+                        <span style="color: #60a5fa;">4.</span> Customer Portal session creation<br>
+                        <span style="color: #60a5fa;">5.</span> Payment Intent confirmation for one-time charges
+                    </div>
+                    
+                    <div style="color: #10b981; margin: 16px 0 8px;">// API Endpoints Required</div>
+                    <div style="color: #e87f5c;">POST</div> /api/v1/subscriptions/checkout-session<br>
+                    <div style="color: #e87f5c;">POST</div> /api/v1/subscriptions/portal-session<br>
+                    <div style="color: #e87f5c;">GET</div> /api/v1/subscriptions/my-subscription<br>
+                    <div style="color: #e87f5c;">POST</div> /api/v1/subscriptions/unlock<br>
+                    <div style="color: #e87f5c;">POST</div> /api/v1/subscriptions/pay-per-unlock<br>
+                    <div style="color: #e87f5c;">POST</div> /api/v1/subscriptions/confirm-pay-per-unlock<br>
+                    <div style="color: #e87f5c;">GET</div> /api/v1/subscriptions/unlocked/{opportunity_id}<br>
+                    <div style="color: #e87f5c;">POST</div> /api/v1/experts/bookings
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

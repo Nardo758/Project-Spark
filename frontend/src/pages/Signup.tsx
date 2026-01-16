@@ -1,9 +1,21 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { Loader2, Check } from 'lucide-react'
+import { Loader2, Check, Zap, Crown } from 'lucide-react'
+
+const planDetails: Record<string, { name: string; price: string; color: string }> = {
+  'pro': { name: 'Builder', price: '$99/mo', color: 'purple' },
+  'builder': { name: 'Builder', price: '$99/mo', color: 'purple' },
+  'business': { name: 'Scaler', price: '$499/mo', color: 'emerald' },
+  'scaler': { name: 'Scaler', price: '$499/mo', color: 'emerald' },
+  'enterprise': { name: 'Enterprise', price: 'Custom', color: 'amber' }
+}
 
 export default function Signup() {
+  const [searchParams] = useSearchParams()
+  const selectedPlan = searchParams.get('plan')
+  const planInfo = selectedPlan ? planDetails[selectedPlan.toLowerCase()] : null
+  
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,7 +35,11 @@ export default function Signup() {
     
     try {
       await signup(email, password, name)
-      navigate('/dashboard')
+      if (selectedPlan && planInfo) {
+        navigate(`/pricing?checkout=${selectedPlan}`)
+      } else {
+        navigate('/dashboard')
+      }
     } catch {
       setError('Failed to create account. Please try again.')
     }
@@ -32,9 +48,41 @@ export default function Signup() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-md w-full">
+        {planInfo && (
+          <div className={`mb-6 p-4 rounded-xl border-2 ${
+            planInfo.color === 'purple' ? 'bg-purple-50 border-purple-200' :
+            planInfo.color === 'emerald' ? 'bg-emerald-50 border-emerald-200' :
+            'bg-amber-50 border-amber-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${
+                planInfo.color === 'purple' ? 'bg-purple-100' :
+                planInfo.color === 'emerald' ? 'bg-emerald-100' :
+                'bg-amber-100'
+              }`}>
+                <Crown className={`w-5 h-5 ${
+                  planInfo.color === 'purple' ? 'text-purple-600' :
+                  planInfo.color === 'emerald' ? 'text-emerald-600' :
+                  'text-amber-600'
+                }`} />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">
+                  You're signing up for {planInfo.name}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {planInfo.price} - You'll complete checkout after registration
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create your account</h1>
-          <p className="text-gray-600">Start building your startup today</p>
+          <p className="text-gray-600">
+            {planInfo ? `Complete registration to activate your ${planInfo.name} plan` : 'Start building your startup today'}
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-8">

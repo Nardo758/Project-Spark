@@ -17,7 +17,7 @@ import {
   Users,
   Database
 } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
@@ -233,6 +233,9 @@ const faqs = [
 export default function Pricing() {
   const { token, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const autoCheckout = searchParams.get('checkout')
+  const [autoCheckoutTriggered, setAutoCheckoutTriggered] = useState(false)
 
   const [billingLoading, setBillingLoading] = useState<'pro' | 'business' | 'portal' | null>(null)
   const [billingError, setBillingError] = useState<string | null>(null)
@@ -343,6 +346,24 @@ export default function Pricing() {
     if (!isAuthenticated || !token) return
     fetchMySubscription().catch(() => {})
   }, [isAuthenticated, token])
+
+  useEffect(() => {
+    if (!autoCheckout || autoCheckoutTriggered || !isAuthenticated || !token) return
+    const tier = autoCheckout.toLowerCase()
+    if (tier === 'pro' || tier === 'builder') {
+      setAutoCheckoutTriggered(true)
+      const newParams = new URLSearchParams(searchParams)
+      newParams.delete('checkout')
+      setSearchParams(newParams, { replace: true })
+      startSubscription('pro')
+    } else if (tier === 'business' || tier === 'scaler') {
+      setAutoCheckoutTriggered(true)
+      const newParams = new URLSearchParams(searchParams)
+      newParams.delete('checkout')
+      setSearchParams(newParams, { replace: true })
+      startSubscription('business')
+    }
+  }, [autoCheckout, autoCheckoutTriggered, isAuthenticated, token, searchParams, setSearchParams])
 
   useEffect(() => {
     if (!billingSyncing) return
