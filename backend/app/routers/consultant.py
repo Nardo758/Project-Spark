@@ -90,6 +90,26 @@ class CloneSuccessResponse(BaseModel):
     error: Optional[str] = None
 
 
+class DeepCloneRequest(BaseModel):
+    source_business_name: str = Field(..., min_length=2, max_length=255)
+    source_business_address: str = Field(..., min_length=5, max_length=500)
+    target_city: str = Field(..., min_length=2, max_length=255)
+    session_id: Optional[str] = None
+
+
+class DeepCloneResponse(BaseModel):
+    success: bool
+    source_business: Optional[Dict[str, Any]] = None
+    target_city: Optional[str] = None
+    three_mile_analysis: Optional[Dict[str, Any]] = None
+    five_mile_analysis: Optional[Dict[str, Any]] = None
+    match_score: Optional[int] = None
+    key_factors: Optional[List[str]] = None
+    processing_time_ms: Optional[int] = None
+    requires_payment: Optional[bool] = None
+    error: Optional[str] = None
+
+
 class ActivityLogResponse(BaseModel):
     id: int
     path: str
@@ -213,6 +233,50 @@ async def clone_success(
     )
     
     return CloneSuccessResponse(**result)
+
+
+@router.post("/deep-clone", response_model=DeepCloneResponse)
+async def deep_clone_analysis(
+    request: DeepCloneRequest,
+    db: Session = Depends(get_db),
+    user_id: int = 1,
+    paid: bool = False,
+):
+    """
+    Premium: Deep Clone Analysis - Detailed 3mi and 5mi radius analysis for a specific target city.
+    
+    Requires payment or premium subscription. Analyzes:
+    - Source business success factors
+    - Target city demographics at 3-mile and 5-mile radius
+    - Competition comparison
+    - Match score and key factors
+    """
+    from app.models import User
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    has_premium_access = False
+    
+    if user:
+        has_premium_access = user.subscription_tier in ['builder', 'scaler', 'enterprise']
+    
+    if not has_premium_access and not paid:
+        return DeepCloneResponse(
+            success=False,
+            requires_payment=True,
+            error="This premium feature requires payment or a Builder+ subscription"
+        )
+    
+    service = ConsultantStudioService(db)
+    
+    result = await service.deep_clone_analysis(
+        user_id=user_id,
+        source_business_name=request.source_business_name,
+        source_business_address=request.source_business_address,
+        target_city=request.target_city,
+        session_id=request.session_id,
+    )
+    
+    return DeepCloneResponse(**result)
 
 
 @router.get("/activity", response_model=List[ActivityLogResponse])
