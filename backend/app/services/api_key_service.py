@@ -9,6 +9,8 @@ Manages API keys for Business Track teams:
 
 import secrets
 import hashlib
+import hmac
+import os
 import json
 import logging
 from datetime import datetime, timedelta
@@ -20,33 +22,47 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
-# Rate limit tracking (in-memory for now, could use Redis)
+# Rate limit tracking (in-memory for development; use Redis in production)
 _rate_limit_cache: Dict[str, List[datetime]] = {}
+
+# Server secret for HMAC - must be configured for production
+# For development, we use a fixed default; in production, set API_KEY_HMAC_SECRET env var
+_API_KEY_SECRET = os.environ.get("API_KEY_HMAC_SECRET")
+if not _API_KEY_SECRET:
+    # Use a stable development secret so keys persist across restarts during development
+    _API_KEY_SECRET = "dev_oppgrid_api_key_secret_2026_stable"
+    logger.warning("API_KEY_HMAC_SECRET not set. Using development default. Set this in production!")
 
 
 def generate_api_key() -> Tuple[str, str, str]:
     """
-    Generate a new API key.
+    Generate a new API key with HMAC-based hash.
     
     Returns:
         Tuple of (full_key, key_hash, key_prefix)
     """
-    # Generate 32-byte random key
-    key_bytes = secrets.token_bytes(32)
     full_key = f"og_{secrets.token_urlsafe(32)}"
     
-    # Hash for storage
-    key_hash = hashlib.sha256(full_key.encode()).hexdigest()
+    # Use HMAC with server secret for secure hashing
+    key_hash = hmac.new(
+        _API_KEY_SECRET.encode(),
+        full_key.encode(),
+        hashlib.sha256
+    ).hexdigest()
     
-    # Prefix for display (first 8 chars after og_)
+    # Prefix for display (first 10 chars)
     key_prefix = full_key[:10]
     
     return full_key, key_hash, key_prefix
 
 
 def hash_api_key(key: str) -> str:
-    """Hash an API key for comparison."""
-    return hashlib.sha256(key.encode()).hexdigest()
+    """Hash an API key using HMAC with server secret."""
+    return hmac.new(
+        _API_KEY_SECRET.encode(),
+        key.encode(),
+        hashlib.sha256
+    ).hexdigest()
 
 
 def create_api_key(

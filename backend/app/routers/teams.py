@@ -20,6 +20,7 @@ from app.models.team import Team, TeamMember, TeamInvitation, TeamRole, InviteSt
 from app.services import team_service
 from app.services.branding_service import get_report_branding_preview, is_whitelabel_eligible
 from app.services import api_key_service
+from app.services import team_collaboration_service
 
 router = APIRouter()
 
@@ -664,3 +665,181 @@ def disable_api_access(
     api_key_service.disable_team_api_access(team, db)
     
     return {"message": "API access disabled"}
+
+
+class ShareOpportunityRequest(BaseModel):
+    opportunity_id: int
+    notes: Optional[str] = None
+    priority: Optional[str] = "medium"
+
+
+class UpdateTeamOpportunityRequest(BaseModel):
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AddNoteRequest(BaseModel):
+    content: str
+
+
+@router.post("/{team_id}/opportunities")
+def share_opportunity(
+    team_id: int,
+    payload: ShareOpportunityRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Share an opportunity with the team"""
+    success, message, team_opp = team_collaboration_service.share_opportunity_with_team(
+        team_id=team_id,
+        opportunity_id=payload.opportunity_id,
+        user=current_user,
+        notes=payload.notes,
+        priority=payload.priority,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+    
+    return {
+        "message": message,
+        "id": team_opp.id,
+        "opportunity_id": team_opp.opportunity_id
+    }
+
+
+@router.get("/{team_id}/opportunities")
+def get_team_opportunities(
+    team_id: int,
+    status_filter: Optional[str] = None,
+    priority_filter: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get all opportunities shared with the team"""
+    success, message, opportunities = team_collaboration_service.get_team_opportunities(
+        team_id=team_id,
+        user=current_user,
+        status_filter=status_filter,
+        priority_filter=priority_filter,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+    
+    return {"opportunities": opportunities}
+
+
+@router.patch("/{team_id}/opportunities/{team_opp_id}")
+def update_team_opportunity(
+    team_id: int,
+    team_opp_id: int,
+    payload: UpdateTeamOpportunityRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Update a team opportunity's status or priority"""
+    success, message = team_collaboration_service.update_team_opportunity_status(
+        team_opportunity_id=team_opp_id,
+        user=current_user,
+        status=payload.status,
+        priority=payload.priority,
+        notes=payload.notes,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+    
+    return {"message": message}
+
+
+@router.delete("/{team_id}/opportunities/{team_opp_id}")
+def remove_team_opportunity(
+    team_id: int,
+    team_opp_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Remove an opportunity from the team"""
+    success, message = team_collaboration_service.remove_shared_opportunity(
+        team_opportunity_id=team_opp_id,
+        user=current_user,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+    
+    return {"message": message}
+
+
+@router.post("/{team_id}/opportunities/{team_opp_id}/notes")
+def add_opportunity_note(
+    team_id: int,
+    team_opp_id: int,
+    payload: AddNoteRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Add a note to a team opportunity"""
+    success, message, note = team_collaboration_service.add_opportunity_note(
+        team_opportunity_id=team_opp_id,
+        user=current_user,
+        content=payload.content,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+    
+    return {
+        "message": message,
+        "note_id": note.id
+    }
+
+
+@router.get("/{team_id}/opportunities/{team_opp_id}/notes")
+def get_opportunity_notes(
+    team_id: int,
+    team_opp_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get all notes for a team opportunity"""
+    success, message, notes = team_collaboration_service.get_opportunity_notes(
+        team_opportunity_id=team_opp_id,
+        user=current_user,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+    
+    return {"notes": notes}
+
+
+@router.get("/{team_id}/activity")
+def get_team_activity(
+    team_id: int,
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get the team activity feed"""
+    success, message, activities = team_collaboration_service.get_team_activity_feed(
+        team_id=team_id,
+        user=current_user,
+        limit=limit,
+        offset=offset,
+        db=db
+    )
+    
+    if not success:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=message)
+    
+    return {"activities": activities}
