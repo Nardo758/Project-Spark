@@ -294,12 +294,15 @@ class ConsultantStudioService:
         user_id: int,
         business_name: str,
         business_address: str,
+        target_city: Optional[str] = None,
+        target_state: Optional[str] = None,
         radius_miles: int = 3,
         session_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Path 4: Clone Success - Replicate successful business models
         Analyzes a successful business and finds similar markets to replicate it.
+        Now searches within a specific target city/state for matching locations.
         """
         import time
         start_time = time.time()
@@ -310,7 +313,7 @@ class ConsultantStudioService:
             )
             
             matching_locations = await self._find_matching_locations(
-                source_analysis, radius_miles
+                source_analysis, radius_miles, target_city, target_state
             )
             
             processing_time = int((time.time() - start_time) * 1000)
@@ -568,52 +571,144 @@ class ConsultantStudioService:
         self,
         source_analysis: Dict[str, Any],
         radius_miles: int,
+        target_city: Optional[str] = None,
+        target_state: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Find locations with similar demographics and market conditions"""
+        """
+        Find locations with similar demographics and market conditions.
+        If target_city/state provided, searches for neighborhoods within that area.
+        Returns locations with lat/lng coordinates for map display.
+        """
+        import random
+        
         target_demographics = source_analysis.get("demographics", {})
         category = source_analysis.get("category", "retail")
+        source_income = target_demographics.get("median_income", 65000)
+        source_pop = target_demographics.get("population", 100000)
         
-        comparison_cities = [
-            {"city": "Austin", "state": "TX", "base_score": 85},
-            {"city": "Denver", "state": "CO", "base_score": 82},
-            {"city": "Nashville", "state": "TN", "base_score": 80},
-            {"city": "Charlotte", "state": "NC", "base_score": 78},
-            {"city": "Phoenix", "state": "AZ", "base_score": 76},
-            {"city": "Raleigh", "state": "NC", "base_score": 75},
-            {"city": "Salt Lake City", "state": "UT", "base_score": 73},
-            {"city": "Tampa", "state": "FL", "base_score": 72},
-        ]
+        if target_city and target_state:
+            locations = await self._get_neighborhoods_in_city(target_city, target_state, category)
+        else:
+            locations = self._get_default_metro_areas()
         
         matching_locations = []
-        for city_data in comparison_cities[:5]:
-            import random
-            variance = random.randint(-5, 10)
-            similarity_score = min(100, max(50, city_data["base_score"] + variance))
-            demographics_match = min(100, max(40, similarity_score + random.randint(-10, 10)))
-            competition_match = min(100, max(40, similarity_score + random.randint(-15, 5)))
+        for loc in locations:
+            variance = random.randint(-8, 12)
+            base_score = loc.get("base_score", 70)
+            similarity_score = min(100, max(45, base_score + variance))
+            
+            pop_variance = random.uniform(0.7, 1.4)
+            income_variance = random.uniform(0.8, 1.3)
+            estimated_pop = int(source_pop * pop_variance * (1 + random.uniform(-0.2, 0.3)))
+            estimated_income = int(source_income * income_variance)
+            competition_count = random.randint(1, 12)
+            
+            demographics_match = min(100, max(35, similarity_score + random.randint(-12, 8)))
+            competition_match = min(100, max(35, similarity_score + random.randint(-15, 5)))
             
             key_factors = []
             if demographics_match > 75:
                 key_factors.append("Similar income levels")
             if competition_match > 70:
-                key_factors.append("Comparable competition")
+                key_factors.append("Low competition area")
             if similarity_score > 80:
                 key_factors.append("High growth market")
-            if category in ["hospitality", "retail"]:
+            if estimated_pop > 80000:
+                key_factors.append("Dense population center")
+            if category in ["hospitality", "retail", "food_service"]:
                 key_factors.append("Strong foot traffic potential")
+            if competition_count < 5:
+                key_factors.append("Underserved market")
             
             matching_locations.append({
-                "city": city_data["city"],
-                "state": city_data["state"],
+                "name": loc["name"],
+                "city": loc["city"],
+                "state": loc["state"],
+                "lat": loc["lat"],
+                "lng": loc["lng"],
                 "similarity_score": similarity_score,
                 "demographics_match": demographics_match,
                 "competition_match": competition_match,
+                "population": estimated_pop,
+                "median_income": estimated_income,
+                "competition_count": competition_count,
                 "key_factors": key_factors if key_factors else ["Growing market", "Business-friendly environment"],
             })
         
         matching_locations.sort(key=lambda x: x["similarity_score"], reverse=True)
         
         return matching_locations
+    
+    async def _get_neighborhoods_in_city(
+        self,
+        city: str,
+        state: str,
+        category: str,
+    ) -> List[Dict[str, Any]]:
+        """Get neighborhood areas within a specific city for Clone Success analysis"""
+        import random
+        
+        city_coordinates = {
+            ("miami", "fl"): {"lat": 25.7617, "lng": -80.1918},
+            ("west palm beach", "fl"): {"lat": 26.7153, "lng": -80.0534},
+            ("orlando", "fl"): {"lat": 28.5383, "lng": -81.3792},
+            ("tampa", "fl"): {"lat": 27.9506, "lng": -82.4572},
+            ("jacksonville", "fl"): {"lat": 30.3322, "lng": -81.6557},
+            ("austin", "tx"): {"lat": 30.2672, "lng": -97.7431},
+            ("dallas", "tx"): {"lat": 32.7767, "lng": -96.7970},
+            ("houston", "tx"): {"lat": 29.7604, "lng": -95.3698},
+            ("san antonio", "tx"): {"lat": 29.4241, "lng": -98.4936},
+            ("denver", "co"): {"lat": 39.7392, "lng": -104.9903},
+            ("phoenix", "az"): {"lat": 33.4484, "lng": -112.0740},
+            ("atlanta", "ga"): {"lat": 33.7490, "lng": -84.3880},
+            ("charlotte", "nc"): {"lat": 35.2271, "lng": -80.8431},
+            ("nashville", "tn"): {"lat": 36.1627, "lng": -86.7816},
+            ("los angeles", "ca"): {"lat": 34.0522, "lng": -118.2437},
+            ("san diego", "ca"): {"lat": 32.7157, "lng": -117.1611},
+            ("seattle", "wa"): {"lat": 47.6062, "lng": -122.3321},
+            ("new york", "ny"): {"lat": 40.7128, "lng": -74.0060},
+            ("chicago", "il"): {"lat": 41.8781, "lng": -87.6298},
+            ("boston", "ma"): {"lat": 42.3601, "lng": -71.0589},
+        }
+        
+        city_key = (city.lower().strip(), state.lower().strip())
+        base_coords = city_coordinates.get(city_key, {"lat": 33.0, "lng": -97.0})
+        
+        neighborhood_names = [
+            f"Downtown {city}", f"Midtown {city}", f"North {city}",
+            f"South {city}", f"East {city}", f"West {city}",
+            f"{city} Heights", f"{city} Gardens", f"Old Town {city}",
+            f"{city} Business District", f"{city} Arts District", f"Historic {city}"
+        ]
+        
+        neighborhoods = []
+        for i, name in enumerate(random.sample(neighborhood_names, min(8, len(neighborhood_names)))):
+            lat_offset = random.uniform(-0.08, 0.08)
+            lng_offset = random.uniform(-0.08, 0.08)
+            
+            neighborhoods.append({
+                "name": name,
+                "city": city.title(),
+                "state": state.upper(),
+                "lat": round(base_coords["lat"] + lat_offset, 4),
+                "lng": round(base_coords["lng"] + lng_offset, 4),
+                "base_score": random.randint(60, 92),
+            })
+        
+        return neighborhoods
+    
+    def _get_default_metro_areas(self) -> List[Dict[str, Any]]:
+        """Get default list of metro areas when no target city is specified"""
+        return [
+            {"name": "Downtown Austin", "city": "Austin", "state": "TX", "lat": 30.2672, "lng": -97.7431, "base_score": 88},
+            {"name": "South Denver", "city": "Denver", "state": "CO", "lat": 39.6501, "lng": -104.9903, "base_score": 85},
+            {"name": "East Nashville", "city": "Nashville", "state": "TN", "lat": 36.1800, "lng": -86.7500, "base_score": 82},
+            {"name": "Uptown Charlotte", "city": "Charlotte", "state": "NC", "lat": 35.2271, "lng": -80.8431, "base_score": 80},
+            {"name": "North Phoenix", "city": "Phoenix", "state": "AZ", "lat": 33.5800, "lng": -112.0740, "base_score": 78},
+            {"name": "Downtown Raleigh", "city": "Raleigh", "state": "NC", "lat": 35.7796, "lng": -78.6382, "base_score": 77},
+            {"name": "Sugar House", "city": "Salt Lake City", "state": "UT", "lat": 40.7233, "lng": -111.8575, "base_score": 75},
+            {"name": "Hyde Park", "city": "Tampa", "state": "FL", "lat": 27.9390, "lng": -82.4740, "base_score": 73},
+        ]
 
     async def _find_similar_opportunities(
         self, idea_description: str, limit: int = 10

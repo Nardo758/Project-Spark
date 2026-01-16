@@ -77,14 +77,32 @@ class IdentifyLocationResponse(BaseModel):
 class CloneSuccessRequest(BaseModel):
     business_name: str = Field(..., min_length=2, max_length=255)
     business_address: str = Field(..., min_length=5, max_length=500)
+    target_city: Optional[str] = Field(default=None, max_length=255, description="Target city to search for similar locations")
+    target_state: Optional[str] = Field(default=None, max_length=2, description="Target state abbreviation (e.g., FL, TX)")
     radius_miles: int = Field(default=3, ge=1, le=10)
     session_id: Optional[str] = None
+
+
+class MatchingLocation(BaseModel):
+    """A matching location with coordinates for map display"""
+    name: str
+    city: str
+    state: str
+    lat: float
+    lng: float
+    similarity_score: int
+    demographics_match: int
+    competition_match: int
+    population: Optional[int] = None
+    median_income: Optional[int] = None
+    competition_count: Optional[int] = None
+    key_factors: List[str] = []
 
 
 class CloneSuccessResponse(BaseModel):
     success: bool
     source_business: Optional[Dict[str, Any]] = None
-    matching_locations: Optional[List[Dict[str, Any]]] = None
+    matching_locations: Optional[List[MatchingLocation]] = None
     analysis_radius_miles: int = 3
     processing_time_ms: Optional[int] = None
     error: Optional[str] = None
@@ -228,6 +246,8 @@ async def clone_success(
         user_id=user_id,
         business_name=request.business_name,
         business_address=request.business_address,
+        target_city=request.target_city,
+        target_state=request.target_state,
         radius_miles=request.radius_miles,
         session_id=request.session_id,
     )
