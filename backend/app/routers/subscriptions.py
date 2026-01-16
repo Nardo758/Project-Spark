@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 import csv
 import io
 import json
+import os
 
 from app.db.database import get_db
 from app.models.user import User
@@ -739,6 +740,102 @@ def confirm_pay_per_unlock(
         "expires_at": expires_at.isoformat(),
         "access_days": 30
     }
+
+
+@router.post("/deep-clone-checkout")
+def create_deep_clone_checkout(
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a Stripe Checkout session for Deep Clone Analysis ($49 one-time payment).
+    
+    Returns a checkout URL that redirects to Stripe's hosted checkout page.
+    """
+    from app.services.stripe_service import get_stripe_client, get_stripe_credentials
+    
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    
+    # Check if user already has premium access
+    if subscription.tier in [SubscriptionTier.PRO, SubscriptionTier.BUSINESS, SubscriptionTier.ENTERPRISE]:
+        return {
+            "success": True,
+            "has_access": True,
+            "message": "You already have access to Deep Clone Analysis with your subscription"
+        }
+    
+    # Get or create Stripe customer
+    if not subscription.stripe_customer_id:
+        customer = stripe_service.create_customer(
+            email=current_user.email,
+            name=current_user.name,
+            metadata={"user_id": current_user.id}
+        )
+        subscription.stripe_customer_id = customer.id
+        db.commit()
+    
+    # Create checkout session for one-time payment
+    try:
+        stripe_client = get_stripe_client()
+        _, publishable_key = get_stripe_credentials()
+        
+        # Build success and cancel URLs
+        frontend_url = os.getenv("FRONTEND_URL", "")
+        if not frontend_url:
+            frontend_url = request.headers.get("origin", "")
+        
+        success_url = f"{frontend_url}/build/reports?deep_clone_success=true"
+        cancel_url = f"{frontend_url}/build/reports?deep_clone_cancelled=true"
+        
+        session = stripe_client.checkout.Session.create(
+            customer=subscription.stripe_customer_id,
+            mode="payment",
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "unit_amount": 4900,  # $49.00
+                        "product_data": {
+                            "name": "Deep Clone Analysis",
+                            "description": "Detailed 3-mile and 5-mile radius comparison for target city analysis",
+                        },
+                    },
+                    "quantity": 1,
+                }
+            ],
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "user_id": str(current_user.id),
+                "type": "deep_clone",
+            },
+        )
+        
+        log_event(
+            db,
+            action="subscription.deep_clone_checkout.created",
+            actor=current_user,
+            actor_type="user",
+            request=request,
+            resource_type="checkout",
+            resource_id=str(session.id),
+            metadata={"amount_cents": 4900},
+        )
+        
+        return {
+            "success": True,
+            "has_access": False,
+            "checkout_url": session.url,
+            "session_id": session.id
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create checkout session: {str(e)}"
+        )
 
 
 @router.post("/export")
