@@ -647,7 +647,7 @@ class ConsultantStudioService:
         
         matching_locations.sort(key=lambda x: x["similarity_score"], reverse=True)
         
-        return matching_locations
+        return matching_locations[:3]
     
     async def _get_neighborhoods_in_city(
         self,
