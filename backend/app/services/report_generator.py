@@ -133,24 +133,34 @@ class ReportGenerator:
         self.db.add(report)
         self.db.commit()
         
-        content = self._build_layer1_content(opportunity, demographics)
-        summary = self._build_layer1_summary(opportunity)
-        
-        branding = get_user_team_branding(user, self.db)
-        if branding:
-            content = inject_branding_into_report(content, branding)
-        
-        report.content = content
-        report.summary = summary
-        report.status = ReportStatus.COMPLETED
-        report.completed_at = datetime.utcnow()
-        report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
-        report.confidence_score = opportunity.ai_opportunity_score or 75
-        
-        self.db.commit()
-        self.db.refresh(report)
-        
-        return report
+        try:
+            content = self._build_layer1_content(opportunity, demographics)
+            summary = self._build_layer1_summary(opportunity)
+            
+            branding = get_user_team_branding(user, self.db)
+            if branding:
+                content = inject_branding_into_report(content, branding)
+            
+            report.content = content
+            report.summary = summary
+            report.status = ReportStatus.COMPLETED
+            report.completed_at = datetime.utcnow()
+            report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            report.confidence_score = opportunity.ai_opportunity_score or 75
+            
+            self.db.commit()
+            self.db.refresh(report)
+            
+            return report
+        except Exception as e:
+            logger.error(f"Failed to generate Layer 1 report for opportunity {opportunity.id}: {e}")
+            report.status = ReportStatus.FAILED
+            report.error_type = "generation_error"
+            report.error_message = str(e)[:500]
+            report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            self.db.commit()
+            self.db.refresh(report)
+            return report
     
     def _build_layer1_content(self, opp: Opportunity, demographics: Optional[Dict] = None) -> str:
         """Build Layer 1 report content in HTML format with AI-generated insights."""
@@ -671,48 +681,58 @@ class ReportGenerator:
         self.db.add(report)
         self.db.commit()
         
-        opp_dict = {
-            'title': opportunity.title,
-            'category': opportunity.category,
-            'city': opportunity.city,
-            'region': opportunity.region,
-            'country': opportunity.country,
-            'description': opportunity.description,
-            'latitude': opportunity.latitude,
-            'longitude': opportunity.longitude,
-            'severity': opportunity.severity,
-            'market_size': opportunity.ai_market_size_estimate or opportunity.market_size,
-            'target_audience': opportunity.ai_target_audience,
-        }
-        
         try:
-            trade_area = trade_area_analyzer.analyze(
-                opp_dict,
-                include_competitors=True,
-                include_demographics=demographics is None,
-                include_ai_synthesis=True
-            )
+            opp_dict = {
+                'title': opportunity.title,
+                'category': opportunity.category,
+                'city': opportunity.city,
+                'region': opportunity.region,
+                'country': opportunity.country,
+                'description': opportunity.description,
+                'latitude': opportunity.latitude,
+                'longitude': opportunity.longitude,
+                'severity': opportunity.severity,
+                'market_size': opportunity.ai_market_size_estimate or opportunity.market_size,
+                'target_audience': opportunity.ai_target_audience,
+            }
             
-            if demographics is None and trade_area.demographics:
-                demographics = trade_area.demographics
+            try:
+                trade_area = trade_area_analyzer.analyze(
+                    opp_dict,
+                    include_competitors=True,
+                    include_demographics=demographics is None,
+                    include_ai_synthesis=True
+                )
+                
+                if demographics is None and trade_area.demographics:
+                    demographics = trade_area.demographics
+            except Exception as e:
+                logger.warning(f"Trade area analysis failed: {e}")
+                trade_area = None
+            
+            content = self._build_layer2_content(opportunity, demographics, trade_area)
+            summary = f"Deep Dive Analysis for '{opportunity.title}' including trade area analysis, TAM/SAM/SOM, competitive landscape, and AI-powered market insights."
+            
+            report.content = content
+            report.summary = summary
+            report.status = ReportStatus.COMPLETED
+            report.completed_at = datetime.utcnow()
+            report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            report.confidence_score = opportunity.ai_opportunity_score or 80
+            
+            self.db.commit()
+            self.db.refresh(report)
+            
+            return report
         except Exception as e:
-            logger.warning(f"Trade area analysis failed: {e}")
-            trade_area = None
-        
-        content = self._build_layer2_content(opportunity, demographics, trade_area)
-        summary = f"Deep Dive Analysis for '{opportunity.title}' including trade area analysis, TAM/SAM/SOM, competitive landscape, and AI-powered market insights."
-        
-        report.content = content
-        report.summary = summary
-        report.status = ReportStatus.COMPLETED
-        report.completed_at = datetime.utcnow()
-        report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
-        report.confidence_score = opportunity.ai_opportunity_score or 80
-        
-        self.db.commit()
-        self.db.refresh(report)
-        
-        return report
+            logger.error(f"Failed to generate Layer 2 report for opportunity {opportunity.id}: {e}")
+            report.status = ReportStatus.FAILED
+            report.error_type = "generation_error"
+            report.error_message = str(e)[:500]
+            report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            self.db.commit()
+            self.db.refresh(report)
+            return report
     
     def _calculate_tam_sam_som(self, opp: Opportunity, demographics: Optional[Dict] = None) -> Dict[str, Any]:
         """Calculate TAM/SAM/SOM using Census data and opportunity characteristics."""
@@ -1324,20 +1344,30 @@ class ReportGenerator:
         self.db.add(report)
         self.db.commit()
         
-        content = self._build_layer3_content(opportunity, demographics)
-        summary = f"Complete Execution Package for '{opportunity.title}' including business plan, go-to-market strategy, and 90-day roadmap."
-        
-        report.content = content
-        report.summary = summary
-        report.status = ReportStatus.COMPLETED
-        report.completed_at = datetime.utcnow()
-        report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
-        report.confidence_score = opportunity.ai_opportunity_score or 85
-        
-        self.db.commit()
-        self.db.refresh(report)
-        
-        return report
+        try:
+            content = self._build_layer3_content(opportunity, demographics)
+            summary = f"Complete Execution Package for '{opportunity.title}' including business plan, go-to-market strategy, and 90-day roadmap."
+            
+            report.content = content
+            report.summary = summary
+            report.status = ReportStatus.COMPLETED
+            report.completed_at = datetime.utcnow()
+            report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            report.confidence_score = opportunity.ai_opportunity_score or 85
+            
+            self.db.commit()
+            self.db.refresh(report)
+            
+            return report
+        except Exception as e:
+            logger.error(f"Failed to generate Layer 3 report for opportunity {opportunity.id}: {e}")
+            report.status = ReportStatus.FAILED
+            report.error_type = "generation_error"
+            report.error_message = str(e)[:500]
+            report.generation_time_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            self.db.commit()
+            self.db.refresh(report)
+            return report
     
     def _build_layer3_content(self, opp: Opportunity, demographics: Optional[Dict] = None) -> str:
         """Build Layer 3 Execution Package content with AI-generated business plan and strategy."""

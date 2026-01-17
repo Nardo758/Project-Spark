@@ -13,6 +13,7 @@ from app.models.opportunity import Opportunity
 logger = logging.getLogger(__name__)
 
 MAX_CONCURRENT_CLAUDE_CALLS = 5
+AI_CALL_TIMEOUT_SECONDS = 30
 
 AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
 AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
@@ -268,7 +269,10 @@ Important:
                     messages=[{"role": "user", "content": prompt}]
                 )
             
-            message = await asyncio.to_thread(sync_claude_call)
+            message = await asyncio.wait_for(
+                asyncio.to_thread(sync_claude_call),
+                timeout=AI_CALL_TIMEOUT_SECONDS
+            )
             
             response_text = message.content[0].text
             
@@ -279,7 +283,10 @@ Important:
             
             analysis = json.loads(response_text.strip())
             return analysis
-            
+        
+        except asyncio.TimeoutError:
+            logger.error(f"Claude API call timed out after {AI_CALL_TIMEOUT_SECONDS}s")
+            return self._fallback_analysis(raw_text, source_type)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse Claude response: {e}")
             return self._fallback_analysis(raw_text, source_type)

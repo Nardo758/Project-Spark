@@ -1,0 +1,148 @@
+What’s powering /build/reports and your “consultation studio”
+That page is backed by two key backend subsystems in this repo:
+
+Consultation Studio (analysis layer) – backend/app/services/consultant_studio.py and backend/app/routers/consultant.py
+Provides:
+POST /consultant/validate-idea
+POST /consultant/search-ideas
+POST /consultant/identify-location
+Uses a dual‑AI architecture (DeepSeek + Claude via ai_orchestrator) and a 30‑day location cache (LocationAnalysisCache) to speed up repeated location runs.
+Report generation & tracking (what /build/reports surfaces) – backend/app/models/generated_report.py and backend/app/routers/generated_reports.py
+Creates and tracks reports like Feasibility Study, Market Analysis, etc.
+Endpoints:
+POST /generated-reports/ – create a pending report record
+PATCH /generated-reports/{id} – update status/content
+GET /generated-reports/ – list a user’s reports
+GET /generated-reports/my-stats, /generated-reports/stats – stats & performance
+Status lifecycle: PENDING → GENERATING → COMPLETED/FAILED, with generation_time_ms + tokens_used.
+There’s also bulk opportunity processing in backend/app/services/opportunity_processor.py that feeds the idea/search paths, using parallel Anthropic (Claude) calls with a semaphore (up to 5 in flight).
+
+Likely reliability & speed bottlenecks
+Based on the code and typical behavior on /build/reports, here’s where reliability and slowness most likely come from:
+
+Unbounded or long-running AI calls (DeepSeek / Claude via ai_orchestrator and OpportunityProcessor)
+
+ConsultantStudioService calls:
+_deepseek_pattern_analysis → ai_orchestrator.process_request(AITaskType.OPPORTUNITY_VALIDATION)
+_claude_viability_report → AITaskType.MARKET_RESEARCH
+_deepseek_geo_analysis → AITaskType.PLATFORM_COORDINATION
+_claude_location_report → AITaskType.MARKET_RESEARCH
+OpportunityProcessor._analyze_with_claude uses Anthropic directly, with no explicit timeout and relatively high max_tokens.
+If any of these calls are slow or hang, the entire consultation/report flow can stall or return 5xx/timeout to the frontend.
+Synchronous DB work around AI
+
+Trend detection (_detect_trends) and opportunity similarity (_find_similar_opportunities) run all on the main request thread:
+Multiple DB queries plus a write + commit() inside each request.
+Under load, this can cause contention and slow median and p95 latency.
+OpportunityProcessor.process_pending_sources also does a lot of DB work in one batch, and uses asyncio.gather – if triggered synchronously (e.g. from an HTTP request) that can block for a while.
+Report lifecycle vs AI pipelines
+
+GeneratedReport records are simple and synchronous; there’s no dedicated background worker tied to ReportStatus.
+If the frontend expects a report to be generated inline with a click (i.e. waiting on the HTTP response), then heavy AI + DB + formatting all run in that single request, which will be:
+Slow under even moderate load.
+Fragile if any AI call fails – errors bubble straight to the user and can leave reports in PENDING or GENERATING forever.
+Partial caching
+
+Location analysis is cached for 30 days, which is good, but:
+Idea validation and report generation do not have equivalent memoization/caching.
+Re-running the same idea or report with the same parameters always recomputes from scratch.
+Error handling & retries
+
+In ConsultantStudioService, any exception returns a generic {"success": False, "error": str(e)}.
+No structured retry/backoff for transient AI/network errors.
+OpportunityProcessor logs on Claude failures and falls back to heuristic analysis, which is okay for ingestion but might produce lower-quality or inconsistent data feeding your consultation studio.
+Concrete improvements to make it more reliable and faster
+If you’d like, I can implement some or all of these next; for now I’ll outline targeted, code-level changes:
+
+1) Add timeouts and tighter limits around AI calls
+Goal: avoid hung/very-slow reports and give predictable upper bounds on response time.
+
+In OpportunityProcessor._analyze_with_claude and in ai_orchestrator (not shown, but referenced):
+Wrap self.client.messages.create(...) in:
+A shorter max_tokens tuned per task.
+An asyncio.wait_for or client-level timeout (Anthropic client supports HTTP timeouts).
+On timeout:
+Mark the report/opportunity as failed or partial, with a clear error_message and status = FAILED.
+Return a fallback minimal structure instead of hanging the route.
+Pattern (high level):
+
+python
+try:
+    message = await asyncio.wait_for(
+        asyncio.to_thread(sync_claude_call),
+        timeout=25  # e.g. 20–30 seconds upper bound
+    )
+except asyncio.TimeoutError:
+    logger.error("Claude call timed out")
+    return self._fallback_analysis(raw_text, source_type)
+2) Make report generation fully asynchronous
+Goal: click → enqueue a report → user sees it progress from PENDING to COMPLETED via polling, instead of waiting on a long request.
+
+You already have the building blocks:
+
+GeneratedReport with statuses + generation_time_ms.
+AI/consultation flows that can generate report content.
+I recommend:
+
+Keep POST /generated-reports/ as “enqueue only”:
+Immediately create the PENDING record and return it.
+Add a background worker/cron job (or a /admin/process-reports endpoint) that:
+Pulls N PENDING or GENERATING reports.
+Runs the appropriate consultation/AI pipelines.
+Writes content, summary, confidence_score, generation_time_ms, tokens_used, status=COMPLETED | FAILED.
+Frontend for /build/reports:
+Polls GET /generated-reports/ or GET /generated-reports/{id} every few seconds until status is COMPLETED or FAILED.
+This decouples user-perceived latency from AI latency and drastically improves reliability.
+
+3) Batch and streamline DB operations in consultation paths
+Goal: reduce lock contention and total DB work per request.
+
+In ConsultantStudioService:
+
+_detect_trends:
+Currently updates/creates DetectedTrend per top category and commit() inside the request.
+Change to:
+Build all changes first.
+Use a single commit() at the end (already mostly doing this, but you can:
+Avoid fetching/creating per category multiple times in high‑QPS scenarios.
+_find_similar_opportunities / _search_opportunities:
+Ensure indices exist on feasibility_score, category, and text-searched columns (title, description).
+If your DB is large and queries are slow, consider:
+Limiting keyword/regex complexity.
+Adding lightweight full‑text search or precomputed embeddings offline rather than at request time.
+4) Introduce caching/memoization for common idea/report inputs
+Goal: identical or near-identical consultations re-use previous AI + DB work.
+
+Approach:
+
+Introduce a ConsultationCache-like model (similar to LocationAnalysisCache) for:
+Idea validation results keyed by sha256(idea_description + normalized_context).
+Before calling AI, check the cache:
+If a recent entry exists (e.g. last 7 days), return it with from_cache: true and cache_hit_count.
+In reports:
+For common report types like Feasibility Study on a given opportunity_id, key on (opportunity_id, report_type) so repeated clicks don’t re-run the whole chain.
+This directly improves perceived speed on repeated/iterative user behavior.
+
+5) Harden error handling, fallbacks, and metrics
+Goal: failures degrade gracefully instead of breaking flows.
+
+In ConsultantStudioService:
+On AI errors, instead of generic error: str(e):
+Return structured reasons (e.g., "ai_timeout", "ai_down", "db_error") to allow the frontend to show friendly messages.
+Log processing_time_ms, AI task type, and whether the response used fallback logic.
+In GeneratedReport flows:
+Ensure that when generation fails you always:
+Set status=FAILED
+Set generation_time_ms
+Optionally store a short summary describing failure.
+Use /generated-reports/stats to watch:
+avg_generation_time_ms
+by_status distribution
+This lets you see if changes actually reduce time and failures.
+How I can proceed from here
+If you confirm you want code changes in this repo, next steps I’d take:
+
+Add AI call timeouts + better error handling in OpportunityProcessor and (via ai_orchestrator) in the Consultant Studio flows.
+Introduce a background report processing job/API that moves GeneratedReports from PENDING → COMPLETED asynchronously.
+Add a simple cache for idea validation similar to the existing LocationAnalysisCache.
+Run the project’s tests/validators and adjust anything failing.

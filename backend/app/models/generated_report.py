@@ -64,7 +64,12 @@ class GeneratedReport(Base):
     generation_time_ms = Column(Integer, nullable=True)
     tokens_used = Column(Integer, nullable=True)
     
+    error_type = Column(String(50), nullable=True)
+    error_message = Column(Text, nullable=True)
+    retry_count = Column(Integer, default=0)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
     
     user = relationship("User", back_populates="generated_reports")

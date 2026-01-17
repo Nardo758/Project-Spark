@@ -15,9 +15,12 @@ from app.models.consultant_activity import ConsultantActivity, ConsultantPath
 from app.models.detected_trend import DetectedTrend
 from app.models.trend_opportunity_mapping import TrendOpportunityMapping
 from app.models.location_analysis_cache import LocationAnalysisCache, BusinessType
+from app.models.idea_validation_cache import IdeaValidationCache
 from app.models.opportunity import Opportunity
 
 logger = logging.getLogger(__name__)
+
+IDEA_CACHE_TTL_DAYS = 7
 
 # State name to abbreviation mapping
 STATE_ABBREVIATIONS = {
@@ -68,7 +71,6 @@ class ConsultantStudioService:
     """Three-path validation system with dual AI architecture"""
 
     CACHE_TTL_DAYS = 30
-    _validation_cache: Dict[str, Dict[str, Any]] = {}
 
     def __init__(self, db: Session):
         self.db = db
@@ -78,28 +80,85 @@ class ConsultantStudioService:
         content = idea_description.lower().strip()
         if context:
             content += json.dumps(context, sort_keys=True)
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.sha256(content.encode()).hexdigest()
 
     def _get_cached_validation(self, cache_key: str) -> Optional[Dict[str, Any]]:
-        """Get cached validation result if exists and not expired"""
-        import copy
-        if cache_key in self._validation_cache:
-            cached = self._validation_cache[cache_key]
-            if datetime.utcnow() - cached.get('cached_at', datetime.min) < timedelta(hours=1):
-                logger.info(f"Cache hit for validation: {cache_key[:8]}")
-                return copy.deepcopy(cached.get('result'))
+        """Get cached validation result from database if exists and not expired"""
+        try:
+            cached = self.db.query(IdeaValidationCache).filter(
+                IdeaValidationCache.cache_key == cache_key,
+                IdeaValidationCache.expires_at > datetime.utcnow()
+            ).first()
+            
+            if cached:
+                cached.hit_count += 1
+                cached.updated_at = datetime.utcnow()
+                self.db.commit()
+                
+                logger.info(f"DB cache hit for validation: {cache_key[:8]} (hits: {cached.hit_count})")
+                return {
+                    "success": True,
+                    "idea_description": cached.idea_description,
+                    "recommendation": cached.recommendation,
+                    "online_score": cached.online_score,
+                    "physical_score": cached.physical_score,
+                    "pattern_analysis": cached.pattern_analysis or {},
+                    "viability_report": cached.viability_report or {},
+                    "similar_opportunities": cached.similar_opportunities or [],
+                    "processing_time_ms": cached.processing_time_ms,
+                }
+        except Exception as e:
+            logger.warning(f"Cache lookup failed: {e}")
+            self.db.rollback()
         return None
 
-    def _cache_validation(self, cache_key: str, result: Dict[str, Any]):
-        """Cache validation result"""
-        self._validation_cache[cache_key] = {
-            'result': result,
-            'cached_at': datetime.utcnow()
-        }
-        if len(self._validation_cache) > 100:
-            oldest_key = min(self._validation_cache.keys(), 
-                           key=lambda k: self._validation_cache[k].get('cached_at', datetime.min))
-            del self._validation_cache[oldest_key]
+    def _cache_validation(self, cache_key: str, idea_description: str, context: Optional[Dict], result: Dict[str, Any]):
+        """Cache validation result to database with safe upsert handling"""
+        from sqlalchemy.exc import IntegrityError
+        
+        try:
+            existing = self.db.query(IdeaValidationCache).filter(
+                IdeaValidationCache.cache_key == cache_key
+            ).first()
+            
+            if existing:
+                existing.recommendation = result.get("recommendation")
+                existing.online_score = result.get("online_score")
+                existing.physical_score = result.get("physical_score")
+                existing.pattern_analysis = result.get("pattern_analysis")
+                existing.viability_report = result.get("viability_report")
+                existing.similar_opportunities = result.get("similar_opportunities")
+                existing.processing_time_ms = result.get("processing_time_ms")
+                existing.expires_at = datetime.utcnow() + timedelta(days=IDEA_CACHE_TTL_DAYS)
+                existing.updated_at = datetime.utcnow()
+                self.db.commit()
+            else:
+                new_cache = IdeaValidationCache(
+                    cache_key=cache_key,
+                    idea_description=idea_description,
+                    business_context=context,
+                    recommendation=result.get("recommendation"),
+                    online_score=result.get("online_score"),
+                    physical_score=result.get("physical_score"),
+                    pattern_analysis=result.get("pattern_analysis"),
+                    viability_report=result.get("viability_report"),
+                    similar_opportunities=result.get("similar_opportunities"),
+                    processing_time_ms=result.get("processing_time_ms"),
+                    hit_count=0,
+                    expires_at=datetime.utcnow() + timedelta(days=IDEA_CACHE_TTL_DAYS)
+                )
+                self.db.add(new_cache)
+                try:
+                    self.db.commit()
+                except IntegrityError:
+                    self.db.rollback()
+                    logger.info(f"Cache entry already exists (race condition): {cache_key[:8]}")
+                    return
+            
+            logger.info(f"Cached validation result: {cache_key[:8]}")
+        except Exception as e:
+            logger.warning(f"Failed to cache validation: {e}")
+            self.db.rollback()
 
     async def validate_idea(
         self,
@@ -165,7 +224,7 @@ class ConsultantStudioService:
                 "from_cache": False,
             }
             
-            self._cache_validation(cache_key, result)
+            self._cache_validation(cache_key, idea_description, business_context, result)
             
             await self._log_activity(
                 user_id=user_id,

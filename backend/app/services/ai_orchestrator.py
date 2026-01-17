@@ -7,8 +7,11 @@ from enum import Enum
 from typing import Dict, Any, Optional
 import logging
 import os
+import asyncio
 
 logger = logging.getLogger(__name__)
+
+AI_CALL_TIMEOUT_SECONDS = 30
 
 
 class AITaskType(Enum):
@@ -74,7 +77,6 @@ class AIOrchestrator:
         """Call DeepSeek service for platform coordination tasks"""
         import openai
         import json
-        import asyncio
         
         deepseek_key = os.getenv("DEEPSEEK_API_KEY")
         
@@ -87,7 +89,8 @@ class AIOrchestrator:
         def sync_deepseek_call():
             client = openai.OpenAI(
                 api_key=deepseek_key,
-                base_url="https://api.deepseek.com"
+                base_url="https://api.deepseek.com",
+                timeout=AI_CALL_TIMEOUT_SECONDS
             )
             return client.chat.completions.create(
                 model="deepseek-chat",
@@ -96,7 +99,10 @@ class AIOrchestrator:
             )
         
         try:
-            response = await asyncio.to_thread(sync_deepseek_call)
+            response = await asyncio.wait_for(
+                asyncio.to_thread(sync_deepseek_call),
+                timeout=AI_CALL_TIMEOUT_SECONDS
+            )
             
             response_text = response.choices[0].message.content.strip()
             
@@ -116,13 +122,23 @@ class AIOrchestrator:
                 "processed": True,
                 "result": result,
             }
+        except asyncio.TimeoutError:
+            logger.error(f"DeepSeek call timed out after {AI_CALL_TIMEOUT_SECONDS}s")
+            return {
+                "ai_service": "deepseek",
+                "task_type": task_type.value,
+                "processed": False,
+                "error": "ai_timeout",
+                "error_message": f"AI call timed out after {AI_CALL_TIMEOUT_SECONDS} seconds",
+            }
         except Exception as e:
             logger.error(f"DeepSeek processing error: {e}")
             return {
                 "ai_service": "deepseek",
                 "task_type": task_type.value,
                 "processed": False,
-                "error": str(e),
+                "error": "ai_error",
+                "error_message": str(e),
             }
 
     async def _call_claude(
@@ -136,12 +152,24 @@ class AIOrchestrator:
         prompt = self._build_prompt_for_task(task_type, data)
         
         try:
-            result = await engine.generate_response(prompt, model="claude")
+            result = await asyncio.wait_for(
+                engine.generate_response(prompt, model="claude"),
+                timeout=AI_CALL_TIMEOUT_SECONDS
+            )
             return {
                 "ai_service": "claude",
                 "task_type": task_type.value,
                 "processed": True,
                 "result": result,
+            }
+        except asyncio.TimeoutError:
+            logger.error(f"Claude call timed out after {AI_CALL_TIMEOUT_SECONDS}s")
+            return {
+                "ai_service": "claude",
+                "task_type": task_type.value,
+                "processed": False,
+                "error": "ai_timeout",
+                "error_message": f"AI call timed out after {AI_CALL_TIMEOUT_SECONDS} seconds",
             }
         except Exception as e:
             logger.error(f"Claude processing error: {e}")
@@ -149,7 +177,8 @@ class AIOrchestrator:
                 "ai_service": "claude",
                 "task_type": task_type.value,
                 "processed": False,
-                "error": str(e),
+                "error": "ai_error",
+                "error_message": str(e),
             }
 
     async def _process_hybrid(

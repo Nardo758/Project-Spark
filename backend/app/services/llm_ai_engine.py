@@ -10,8 +10,12 @@ from __future__ import annotations
 import os
 import json
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
+
+AI_CALL_TIMEOUT_SECONDS = 30
 
 from app.models.opportunity import Opportunity
 from app.models.user import User
@@ -370,15 +374,21 @@ Respond only with valid JSON."""
         client = get_anthropic_client()
         if not client:
             logger.warning("No AI client available, returning empty response")
-            return {"error": "AI service not available", "response": None}
+            return {"error": "ai_unavailable", "error_message": "AI service not available", "response": None}
         
         try:
             model_id = self.fast_model if model == "deepseek" else self.model
             
-            response = client.messages.create(
-                model=model_id,
-                max_tokens=1500,
-                messages=[{"role": "user", "content": prompt}]
+            def sync_call():
+                return client.messages.create(
+                    model=model_id,
+                    max_tokens=1500,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+            
+            response = await asyncio.wait_for(
+                asyncio.to_thread(sync_call),
+                timeout=AI_CALL_TIMEOUT_SECONDS
             )
             
             response_text = response.content[0].text.strip()
@@ -393,10 +403,13 @@ Respond only with valid JSON."""
                 return {"response": parsed, "raw": response_text}
             except json.JSONDecodeError:
                 return {"response": response_text, "raw": response_text}
-                
+        
+        except asyncio.TimeoutError:
+            logger.error(f"AI generation timed out after {AI_CALL_TIMEOUT_SECONDS}s")
+            return {"error": "ai_timeout", "error_message": f"AI call timed out after {AI_CALL_TIMEOUT_SECONDS} seconds", "response": None}
         except Exception as e:
             logger.error(f"AI generation failed: {e}")
-            return {"error": str(e), "response": None}
+            return {"error": "ai_error", "error_message": str(e), "response": None}
 
 
 llm_ai_engine_service = LLMAIEngineService()

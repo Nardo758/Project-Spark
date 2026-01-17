@@ -670,3 +670,77 @@ async def send_report_email(
         return {"success": True, "message": "Report sent successfully", "email_id": result.get("id")}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+
+
+@router.post("/admin/cleanup-stuck")
+def cleanup_stuck_reports(
+    threshold_minutes: int = 5,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Clean up reports stuck in GENERATING status for more than threshold minutes.
+    Marks them as FAILED with appropriate error information.
+    """
+    threshold_time = datetime.utcnow() - timedelta(minutes=threshold_minutes)
+    
+    stuck_reports = db.query(GeneratedReport).filter(
+        GeneratedReport.status == ReportStatus.GENERATING,
+        GeneratedReport.created_at < threshold_time
+    ).all()
+    
+    cleaned = []
+    for report in stuck_reports:
+        report.status = ReportStatus.FAILED
+        report.error_type = "timeout"
+        report.error_message = f"Report generation timed out after {threshold_minutes} minutes"
+        report.generation_time_ms = int((datetime.utcnow() - report.created_at).total_seconds() * 1000)
+        cleaned.append({
+            "id": report.id,
+            "title": report.title,
+            "created_at": report.created_at.isoformat() if report.created_at else None,
+            "user_id": report.user_id,
+        })
+    
+    db.commit()
+    
+    return {
+        "cleaned_count": len(cleaned),
+        "threshold_minutes": threshold_minutes,
+        "reports": cleaned,
+    }
+
+
+@router.get("/{report_id}/status")
+def get_report_status(
+    report_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get the current status of a report (for polling during async generation).
+    Returns minimal data for efficient polling.
+    """
+    report = db.query(GeneratedReport).filter(
+        GeneratedReport.id == report_id,
+        GeneratedReport.user_id == current_user.id
+    ).first()
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    response = {
+        "id": report.id,
+        "status": report.status.value,
+        "progress": 100 if report.status == ReportStatus.COMPLETED else (50 if report.status == ReportStatus.GENERATING else 0),
+    }
+    
+    if report.status == ReportStatus.FAILED:
+        response["error_type"] = report.error_type
+        response["error_message"] = report.error_message
+    
+    if report.status == ReportStatus.COMPLETED:
+        response["completed_at"] = report.completed_at.isoformat() if report.completed_at else None
+        response["generation_time_ms"] = report.generation_time_ms
+    
+    return response

@@ -32,6 +32,7 @@ from .consultant_activity import ConsultantActivity, ConsultantPath
 from .detected_trend import DetectedTrend
 from .trend_opportunity_mapping import TrendOpportunityMapping
 from .location_analysis_cache import LocationAnalysisCache, BusinessType
+from .idea_validation_cache import IdeaValidationCache
 from .scraped_source import ScrapedSource, SourceType
 from .geographic_feature import GeographicFeature, FeatureType
 from .map_layer import MapLayer, LayerType
@@ -125,6 +126,7 @@ __all__ = [
     "TrendOpportunityMapping",
     "LocationAnalysisCache",
     "BusinessType",
+    "IdeaValidationCache",
     "ScrapedSource",
     "SourceType",
     "GeographicFeature",
