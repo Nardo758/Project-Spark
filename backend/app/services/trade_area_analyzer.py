@@ -128,6 +128,9 @@ class TradeAreaAnalyzer:
         Async version of analyze() with parallelized I/O operations.
         Uses asyncio.gather() to run independent I/O operations in parallel.
         """
+        import time
+        total_start = time.time()
+        
         try:
             loop = asyncio.get_running_loop()
             
@@ -135,43 +138,53 @@ class TradeAreaAnalyzer:
             lng = opportunity.get('longitude') or opportunity.get('lng')
             
             if not lat or not lng:
+                geocode_start = time.time()
                 lat, lng = await loop.run_in_executor(
                     _executor,
                     self._geocode_location,
                     opportunity.get('city'),
-                    opportunity.get('region'),
+                    opportunity.get('region') or opportunity.get('state'),
                     opportunity.get('country')
                 )
+                logger.info(f"[TIMING] Geocoding: {int((time.time() - geocode_start) * 1000)}ms")
             
             signal_clusters = self._analyze_signals(opportunity, lat, lng)
             
             competitors = []
             if include_competitors and self.serpapi_key:
+                comp_start = time.time()
                 competitors = await loop.run_in_executor(
                     _executor,
                     self._fetch_competitors,
                     opportunity, lat, lng
                 )
+                logger.info(f"[TIMING] Fetch competitors: {int((time.time() - comp_start) * 1000)}ms, found {len(competitors)}")
             
+            trade_start = time.time()
             trade_area = await loop.run_in_executor(
                 _executor,
                 self._compute_trade_area,
                 lat, lng, signal_clusters, competitors
             )
+            logger.info(f"[TIMING] Compute trade area: {int((time.time() - trade_start) * 1000)}ms")
             
             async def fetch_demographics_task():
                 if include_demographics:
-                    return await loop.run_in_executor(
+                    demo_start = time.time()
+                    result = await loop.run_in_executor(
                         _executor,
                         self._fetch_demographics,
                         trade_area['center_lat'],
                         trade_area['center_lng'],
-                        opportunity.get('region')
+                        opportunity.get('region') or opportunity.get('state')
                     )
+                    logger.info(f"[TIMING] Fetch demographics: {int((time.time() - demo_start) * 1000)}ms")
+                    return result
                 return None
             
             async def generate_map_task():
-                return await loop.run_in_executor(
+                map_start = time.time()
+                result = await loop.run_in_executor(
                     _executor,
                     self._generate_trade_area_map,
                     trade_area['center_lat'],
@@ -180,19 +193,27 @@ class TradeAreaAnalyzer:
                     competitors[:10] if competitors else [],
                     signal_clusters
                 )
+                logger.info(f"[TIMING] Generate map: {int((time.time() - map_start) * 1000)}ms")
+                return result
             
+            parallel_start = time.time()
             demographics, map_url = await asyncio.gather(
                 fetch_demographics_task(),
                 generate_map_task()
             )
+            logger.info(f"[TIMING] Parallel (demographics + map): {int((time.time() - parallel_start) * 1000)}ms")
             
             ai_synthesis = None
             if include_ai_synthesis:
+                ai_start = time.time()
                 ai_synthesis = await loop.run_in_executor(
                     _executor,
                     self._generate_ai_synthesis,
                     opportunity, trade_area, competitors, demographics
                 )
+                logger.info(f"[TIMING] AI synthesis: {int((time.time() - ai_start) * 1000)}ms")
+            
+            logger.info(f"[TIMING] Total trade area analysis: {int((time.time() - total_start) * 1000)}ms")
             
             return TradeAreaResult(
                 center_lat=trade_area['center_lat'],

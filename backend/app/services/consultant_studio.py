@@ -19,6 +19,50 @@ from app.models.opportunity import Opportunity
 
 logger = logging.getLogger(__name__)
 
+# State name to abbreviation mapping
+STATE_ABBREVIATIONS = {
+    'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR', 'california': 'CA',
+    'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE', 'florida': 'FL', 'georgia': 'GA',
+    'hawaii': 'HI', 'idaho': 'ID', 'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA',
+    'kansas': 'KS', 'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
+    'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS', 'missouri': 'MO',
+    'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ',
+    'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH',
+    'oklahoma': 'OK', 'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+    'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT', 'vermont': 'VT',
+    'virginia': 'VA', 'washington': 'WA', 'west virginia': 'WV', 'wisconsin': 'WI', 'wyoming': 'WY',
+    'district of columbia': 'DC', 'puerto rico': 'PR',
+}
+
+def parse_city_state(location: str) -> tuple[str, Optional[str]]:
+    """
+    Parse a location string like 'Miami, Florida' into (city, state_abbrev).
+    Returns (city, None) if state cannot be parsed.
+    """
+    if not location:
+        return location, None
+    
+    # Try comma-separated format: "Miami, Florida" or "Miami, FL"
+    if ',' in location:
+        parts = [p.strip() for p in location.split(',')]
+        if len(parts) >= 2:
+            city = parts[0]
+            state_part = parts[1].strip()
+            
+            # Check if already an abbreviation (2 chars)
+            if len(state_part) == 2 and state_part.upper() in STATE_ABBREVIATIONS.values():
+                return city, state_part.upper()
+            
+            # Try to convert full state name to abbreviation
+            state_lower = state_part.lower()
+            if state_lower in STATE_ABBREVIATIONS:
+                return city, STATE_ABBREVIATIONS[state_lower]
+            
+            # Return city but couldn't parse state
+            return city, None
+    
+    return location, None
+
 
 class ConsultantStudioService:
     """Three-path validation system with dual AI architecture"""
@@ -1080,14 +1124,22 @@ class ConsultantStudioService:
         from .trade_area_analyzer import trade_area_analyzer
         
         try:
+            # Parse city and state from input like "Miami, Florida"
+            parsed_city, parsed_state = parse_city_state(city)
+            
+            # Use parsed state, or fallback to params if provided
+            state = parsed_state or (params.get("state") if params else None)
+            
+            logger.info(f"[PARSE] City input: '{city}' -> city='{parsed_city}', state='{state}'")
+            
             opportunity_data = {
                 "id": 0,
-                "title": f"{business_description} in {city}",
+                "title": f"{business_description} in {parsed_city}",
                 "category": inferred_category,
                 "location": city,
-                "city": city,
-                "region": params.get("state") if params else None,
-                "state": params.get("state") if params else None,
+                "city": parsed_city,
+                "region": state,
+                "state": state,
                 "latitude": params.get("latitude") if params else None,
                 "longitude": params.get("longitude") if params else None,
             }
