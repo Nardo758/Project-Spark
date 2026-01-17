@@ -2763,7 +2763,8 @@
                 if (tierFilter) url += `&tier_filter=${tierFilter}`;
 
                 const response = await fetchWithAuth(url);
-                const subscriptions = await response.json();
+                const data = await response.json();
+                const subscriptions = data.subscriptions || [];
 
                 if (subscriptions.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No subscriptions found</td></tr>';
@@ -2773,14 +2774,16 @@
                 tbody.innerHTML = subscriptions.map(sub => {
                     const tierLower = (sub.tier || 'free').toLowerCase();
                     const statusLower = (sub.status || 'active').toLowerCase();
+                    const userName = sub.name || sub.user_name || 'Unknown';
+                    const userEmail = sub.email || sub.user_email || '';
                     return `
                     <tr>
                         <td>
                             <div class="user-cell">
-                                <div class="user-avatar">${sub.user_name.charAt(0).toUpperCase()}</div>
+                                <div class="user-avatar">${userName.charAt(0).toUpperCase()}</div>
                                 <div class="user-info">
-                                    <span class="user-name">${escapeHtml(sub.user_name)}</span>
-                                    <span class="user-email">${escapeHtml(sub.user_email)}</span>
+                                    <span class="user-name">${escapeHtml(userName)}</span>
+                                    <span class="user-email">${escapeHtml(userEmail)}</span>
                                 </div>
                             </div>
                         </td>
