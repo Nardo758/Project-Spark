@@ -357,6 +357,35 @@ class ConsultantStudioService:
             
             processing_time = int((time.time() - start_time) * 1000)
             
+            competitors = geo_analysis.get("competitors", [])
+            pins = []
+            for idx, comp in enumerate(competitors):
+                if comp.get("lat") and comp.get("lng"):
+                    pins.append({
+                        "id": idx + 1,
+                        "lat": comp.get("lat"),
+                        "lng": comp.get("lng"),
+                        "name": comp.get("name", "Unknown"),
+                        "rating": comp.get("rating"),
+                        "reviews": comp.get("reviews"),
+                        "source": "google_maps",
+                        "address": comp.get("address", ""),
+                    })
+            
+            center_lat = pins[0]["lat"] if pins else 25.7617
+            center_lng = pins[0]["lng"] if pins else -80.1918
+            
+            map_data = {
+                "city": city,
+                "center": {"lat": center_lat, "lng": center_lng},
+                "layers": {
+                    "pins": {"type": "pins", "data": pins, "count": len(pins)},
+                    "heatmap": {"type": "heatmap", "data": [], "count": 0},
+                    "polygons": {"type": "polygons", "data": [], "count": 0},
+                },
+                "totalFeatures": len(pins),
+            }
+            
             result = {
                 "success": True,
                 "city": city,
@@ -365,6 +394,7 @@ class ConsultantStudioService:
                 "geo_analysis": geo_analysis,
                 "market_report": market_report,
                 "site_recommendations": site_recommendations,
+                "map_data": map_data,
                 "from_cache": False,
                 "processing_time_ms": processing_time,
             }

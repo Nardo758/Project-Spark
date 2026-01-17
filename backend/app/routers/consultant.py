@@ -68,6 +68,7 @@ class IdentifyLocationResponse(BaseModel):
     geo_analysis: Optional[Dict[str, Any]] = None
     market_report: Optional[Dict[str, Any]] = None
     site_recommendations: Optional[List[Dict[str, Any]]] = None
+    map_data: Optional[Dict[str, Any]] = None
     from_cache: Optional[bool] = None
     cache_hit_count: Optional[int] = None
     processing_time_ms: Optional[int] = None
