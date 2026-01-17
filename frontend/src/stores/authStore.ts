@@ -211,6 +211,9 @@ export const useAuthStore = create<AuthState>()(
       
       signup: async (email: string, password: string, name: string) => {
         set({ isLoading: true })
+        const startTime = Date.now()
+        const isDebug = import.meta.env.DEV
+        
         try {
           const response = await fetch('/api/v1/auth/register', {
             method: 'POST',
@@ -218,11 +221,15 @@ export const useAuthStore = create<AuthState>()(
             body: JSON.stringify({ email, password, name }),
           })
           
-          if (!response.ok) throw new Error('Signup failed')
+          if (!response.ok) {
+            if (isDebug) console.error('[Auth] Registration failed', { status: response.status })
+            throw new Error('Signup failed')
+          }
           
           // Parse registration response immediately to preserve user data
           const registerData = await response.json().catch(() => ({}))
           const registeredUser = normalizeUser(registerData)
+          if (isDebug) console.log('[Auth] Registration successful', { elapsed: Date.now() - startTime })
           
           // Auto-login after successful registration to get access token
           const loginBody = new URLSearchParams()
@@ -237,6 +244,7 @@ export const useAuthStore = create<AuthState>()(
 
           if (!loginResponse.ok) {
             // Registration succeeded but login failed - user can still log in manually
+            if (isDebug) console.warn('[Auth] Auto-login failed', { status: loginResponse.status })
             set({ user: registeredUser, isAuthenticated: false, isLoading: false })
             return
           }
@@ -245,24 +253,28 @@ export const useAuthStore = create<AuthState>()(
           
           // Handle 2FA requirement - user needs to complete 2FA separately
           if (loginData?.requires_2fa) {
+            if (isDebug) console.log('[Auth] 2FA required')
             set({ user: registeredUser, isAuthenticated: false, isLoading: false })
             return
           }
 
           const user = normalizeUser(loginData.user) || registeredUser
+          const hasToken = Boolean(loginData.access_token)
           if (loginData.access_token) setLegacyAccessToken(loginData.access_token)
           set({
             user,
             token: loginData.access_token,
-            isAuthenticated: Boolean(loginData.access_token),
+            isAuthenticated: hasToken,
             isLoading: false,
           })
+          if (isDebug) console.log('[Auth] Signup flow completed', { hasToken, elapsed: Date.now() - startTime })
           try {
             if (user) localStorage.setItem('user', JSON.stringify(user))
           } catch {
             // ignore
           }
         } catch (error) {
+          if (isDebug) console.error('[Auth] Signup flow error', { elapsed: Date.now() - startTime })
           set({ isLoading: false })
           throw error
         }

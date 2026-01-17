@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from pydantic import BaseModel
+import logging
 
 from app.db.database import get_db
 from app.models.user import User
@@ -19,6 +20,7 @@ from app.core.tokens import (
 )
 from app.services.email import email_service
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -42,9 +44,12 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user and send verification email"""
+    logger.info(f"[Auth] Registration attempt for email: {user_data.email[:3]}***")
+    
     # Check if user exists
     db_user = db.query(User).filter(User.email == user_data.email).first()
     if db_user:
+        logger.warning(f"[Auth] Registration failed - email already exists")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
@@ -69,6 +74,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    logger.info(f"[Auth] User registered successfully: id={new_user.id}")
 
     # Send verification email
     try:
@@ -77,9 +83,9 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             verification_token=verification_token,
             user_name=new_user.name
         )
+        logger.info(f"[Auth] Verification email sent to user id={new_user.id}")
     except Exception as e:
-        # Log error but don't fail registration
-        print(f"Failed to send verification email: {e}")
+        logger.error(f"[Auth] Failed to send verification email: {e}")
 
     return new_user
 
@@ -90,9 +96,11 @@ def login(
     db: Session = Depends(get_db)
 ):
     """Login and get access token"""
+    logger.info(f"[Auth] Login attempt for email: {form_data.username[:3]}***")
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
+        logger.warning(f"[Auth] Login failed - invalid credentials")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -100,6 +108,7 @@ def login(
         )
 
     if not user.is_active:
+        logger.warning(f"[Auth] Login failed - inactive user id={user.id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
@@ -107,6 +116,7 @@ def login(
 
     # Check if 2FA is enabled
     if user.otp_enabled:
+        logger.info(f"[Auth] 2FA required for user id={user.id}")
         return {
             "requires_2fa": True,
             "email": user.email,
@@ -121,6 +131,8 @@ def login(
     from app.models.subscription import Subscription
     subscription = db.query(Subscription).filter(Subscription.user_id == user.id).first()
     tier = subscription.tier.value.lower() if subscription and subscription.tier else "free"
+    
+    logger.info(f"[Auth] Login successful: user_id={user.id}, tier={tier}")
 
     return {
         "access_token": access_token,

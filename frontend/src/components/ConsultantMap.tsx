@@ -5,6 +5,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || '';
 
+if (!MAPBOX_TOKEN && import.meta.env.PROD) {
+  console.warn('[ConsultantMap] MAPBOX_ACCESS_TOKEN not configured for production build');
+}
+
 const COMPETITOR_RADIUS_MILES = 0.5;
 const GRID_SIZE = 10;
 
