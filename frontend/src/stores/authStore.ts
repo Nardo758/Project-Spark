@@ -220,10 +220,48 @@ export const useAuthStore = create<AuthState>()(
           
           if (!response.ok) throw new Error('Signup failed')
           
-          // Register returns user; it may not return a token (password login still needed).
-          const data = await response.json().catch(() => ({}))
-          const user = normalizeUser(data)
-          set({ user, isAuthenticated: Boolean(user), isLoading: false })
+          // Parse registration response immediately to preserve user data
+          const registerData = await response.json().catch(() => ({}))
+          const registeredUser = normalizeUser(registerData)
+          
+          // Auto-login after successful registration to get access token
+          const loginBody = new URLSearchParams()
+          loginBody.set('username', email)
+          loginBody.set('password', password)
+
+          const loginResponse = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: loginBody,
+          })
+
+          if (!loginResponse.ok) {
+            // Registration succeeded but login failed - user can still log in manually
+            set({ user: registeredUser, isAuthenticated: false, isLoading: false })
+            return
+          }
+
+          const loginData = await loginResponse.json()
+          
+          // Handle 2FA requirement - user needs to complete 2FA separately
+          if (loginData?.requires_2fa) {
+            set({ user: registeredUser, isAuthenticated: false, isLoading: false })
+            return
+          }
+
+          const user = normalizeUser(loginData.user) || registeredUser
+          if (loginData.access_token) setLegacyAccessToken(loginData.access_token)
+          set({
+            user,
+            token: loginData.access_token,
+            isAuthenticated: Boolean(loginData.access_token),
+            isLoading: false,
+          })
+          try {
+            if (user) localStorage.setItem('user', JSON.stringify(user))
+          } catch {
+            // ignore
+          }
         } catch (error) {
           set({ isLoading: false })
           throw error
