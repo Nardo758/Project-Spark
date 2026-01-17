@@ -2,13 +2,17 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { Loader2, Check, Crown } from 'lucide-react'
+import PayPerUnlockModal from '../components/PayPerUnlockModal'
 
-const planDetails: Record<string, { name: string; price: string; color: string }> = {
-  'pro': { name: 'Builder', price: '$99/mo', color: 'purple' },
-  'builder': { name: 'Builder', price: '$99/mo', color: 'purple' },
-  'business': { name: 'Scaler', price: '$499/mo', color: 'emerald' },
-  'scaler': { name: 'Scaler', price: '$499/mo', color: 'emerald' },
-  'enterprise': { name: 'Enterprise', price: 'Custom', color: 'amber' }
+const planDetails: Record<string, { name: string; price: string; color: string; tier: string }> = {
+  'starter': { name: 'Starter', price: '$20/mo', color: 'blue', tier: 'starter' },
+  'growth': { name: 'Growth', price: '$50/mo', color: 'blue', tier: 'growth' },
+  'pro': { name: 'Pro', price: '$99/mo', color: 'purple', tier: 'pro' },
+  'builder': { name: 'Pro', price: '$99/mo', color: 'purple', tier: 'pro' },
+  'team': { name: 'Team', price: '$250/mo', color: 'emerald', tier: 'team' },
+  'business': { name: 'Business', price: '$750/mo', color: 'emerald', tier: 'business' },
+  'scaler': { name: 'Business', price: '$750/mo', color: 'emerald', tier: 'business' },
+  'enterprise': { name: 'Enterprise', price: 'Custom', color: 'amber', tier: 'enterprise' }
 }
 
 export default function Signup() {
@@ -23,8 +27,72 @@ export default function Signup() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
   const [showNextSteps, setShowNextSteps] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
+  const [publishableKey, setPublishableKey] = useState<string | null>(null)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [paymentCancelled, setPaymentCancelled] = useState(false)
+  const [signupComplete, setSignupComplete] = useState(false)
+  
   const { signup, isLoading, startReplitAuth, startGoogleAuth, startLinkedInAuth } = useAuthStore()
   const navigate = useNavigate()
+
+  async function startCheckout(tier: string, authToken: string) {
+    setCheckoutLoading(true)
+    setError('')
+    try {
+      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
+      const keyData = await keyRes.json().catch(() => ({}))
+      if (!keyRes.ok) throw new Error(keyData?.detail || 'Payment system not configured')
+
+      const res = await fetch('/api/v1/subscriptions/subscription-intent', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          Authorization: `Bearer ${authToken}` 
+        },
+        body: JSON.stringify({ tier }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.detail || 'Unable to start subscription')
+      
+      if (data?.status === 'active') {
+        navigate('/dashboard')
+        return
+      }
+      
+      if (!data?.client_secret) throw new Error('Missing payment information')
+
+      setPublishableKey(String(keyData.publishable_key))
+      setClientSecret(String(data.client_secret))
+      setPaymentModalOpen(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to start checkout')
+    } finally {
+      setCheckoutLoading(false)
+    }
+  }
+
+  async function handlePaymentConfirmed(_paymentIntentId: string) {
+    navigate('/dashboard')
+  }
+
+  function handlePaymentModalClose() {
+    setPaymentModalOpen(false)
+    setPaymentCancelled(true)
+  }
+
+  async function retryCheckout() {
+    if (!planInfo) return
+    const authToken = useAuthStore.getState().token
+    if (authToken) {
+      setPaymentCancelled(false)
+      await startCheckout(planInfo.tier, authToken)
+    } else {
+      navigate(`/pricing?checkout=${planInfo.tier}`)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,8 +105,17 @@ export default function Signup() {
     
     try {
       await signup(email, password, name)
-      if (selectedPlan && planInfo) {
-        navigate(`/pricing?checkout=${selectedPlan}`)
+      setSignupComplete(true)
+      
+      if (selectedPlan && planInfo && planInfo.tier !== 'enterprise') {
+        const authToken = useAuthStore.getState().token
+        if (authToken) {
+          await startCheckout(planInfo.tier, authToken)
+        } else {
+          navigate(`/pricing?checkout=${planInfo.tier}`)
+        }
+      } else if (selectedPlan && planInfo?.tier === 'enterprise') {
+        navigate('/pricing?plan=enterprise')
       } else {
         const from = (location.state as { from?: string } | null)?.from
         if (from) {
@@ -52,26 +129,23 @@ export default function Signup() {
     }
   }
 
+  const colorClasses = {
+    blue: { bg: 'bg-blue-50', border: 'border-blue-200', iconBg: 'bg-blue-100', iconText: 'text-blue-600' },
+    purple: { bg: 'bg-purple-50', border: 'border-purple-200', iconBg: 'bg-purple-100', iconText: 'text-purple-600' },
+    emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-200', iconBg: 'bg-amber-100', iconText: 'text-amber-600' },
+  }
+
+  const planColors = planInfo ? colorClasses[planInfo.color as keyof typeof colorClasses] : null
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        {planInfo && (
-          <div className={`mb-6 p-4 rounded-xl border-2 ${
-            planInfo.color === 'purple' ? 'bg-purple-50 border-purple-200' :
-            planInfo.color === 'emerald' ? 'bg-emerald-50 border-emerald-200' :
-            'bg-amber-50 border-amber-200'
-          }`}>
+        {planInfo && planColors && (
+          <div className={`mb-6 p-4 rounded-xl border-2 ${planColors.bg} ${planColors.border}`}>
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${
-                planInfo.color === 'purple' ? 'bg-purple-100' :
-                planInfo.color === 'emerald' ? 'bg-emerald-100' :
-                'bg-amber-100'
-              }`}>
-                <Crown className={`w-5 h-5 ${
-                  planInfo.color === 'purple' ? 'text-purple-600' :
-                  planInfo.color === 'emerald' ? 'text-emerald-600' :
-                  'text-amber-600'
-                }`} />
+              <div className={`p-2 rounded-lg ${planColors.iconBg}`}>
+                <Crown className={`w-5 h-5 ${planColors.iconText}`} />
               </div>
               <div>
                 <p className="font-semibold text-gray-900">
@@ -186,7 +260,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={isLoading || showNextSteps}
+              disabled={isLoading || checkoutLoading || showNextSteps || paymentModalOpen}
               className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
@@ -194,13 +268,18 @@ export default function Signup() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Creating account...
                 </>
+              ) : checkoutLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Preparing checkout...
+                </>
               ) : (
                 'Create account'
               )}
             </button>
           </form>
 
-          {showNextSteps && (
+          {showNextSteps && !signupComplete && (
             <div className="mt-8 border-t border-gray-100 pt-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">
                 Next, choose how you want to start
@@ -222,6 +301,41 @@ export default function Signup() {
                   className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm font-medium"
                 >
                   View paid plans & upgrade
+                </button>
+              </div>
+            </div>
+          )}
+
+          {paymentCancelled && signupComplete && planInfo && (
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Complete your {planInfo.name} subscription
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Your account is ready! Complete payment to activate your {planInfo.name} plan, or continue with the free tier.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-800"
+                >
+                  Continue with free plan
+                </button>
+                <button
+                  type="button"
+                  onClick={retryCheckout}
+                  disabled={checkoutLoading}
+                  className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {checkoutLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    `Subscribe to ${planInfo.name}`
+                  )}
                 </button>
               </div>
             </div>
@@ -270,6 +384,20 @@ export default function Signup() {
           </Link>
         </p>
       </div>
+
+      {paymentModalOpen && publishableKey && clientSecret && planInfo && (
+        <PayPerUnlockModal
+          publishableKey={publishableKey}
+          clientSecret={clientSecret}
+          amountLabel={planInfo.price}
+          contextLabel="Subscription"
+          title={`Subscribe to ${planInfo.name} for ${planInfo.price}`}
+          confirmLabel="Subscribe"
+          footnote="Your plan activates immediately after payment."
+          onClose={handlePaymentModalClose}
+          onConfirmed={handlePaymentConfirmed}
+        />
+      )}
     </div>
   )
 }
