@@ -1,9 +1,82 @@
-import { useEffect, useRef, useState, useCallback, Component, ReactNode } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, Component, ReactNode } from 'react';
 import Map, { Marker, Popup, Source, Layer, NavigationControl, ViewStateChangeEvent } from 'react-map-gl';
 import type { MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || '';
+
+const COMPETITOR_RADIUS_MILES = 0.5;
+const GRID_SIZE = 10;
+
+function createCirclePolygon(lat: number, lng: number, radiusMiles: number, points: number = 32): [number, number][] {
+  const radiusKm = radiusMiles * 1.60934;
+  const coords: [number, number][] = [];
+  for (let i = 0; i <= points; i++) {
+    const angle = (i / points) * 2 * Math.PI;
+    const latOffset = (radiusKm / 111) * Math.cos(angle);
+    const lngOffset = (radiusKm / (111 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle);
+    coords.push([lng + lngOffset, lat + latOffset]);
+  }
+  return coords;
+}
+
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3959;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+interface GridCell {
+  lat: number;
+  lng: number;
+  score: number;
+  minDistance: number;
+  inCompetitorZone: boolean;
+}
+
+const MAX_OPPORTUNITY_DISTANCE = 1.5;
+
+function generateOpportunityGrid(
+  pins: Pin[],
+  center: { lat: number; lng: number },
+  gridSize: number = GRID_SIZE,
+  radiusMiles: number = 2
+): GridCell[] {
+  const cells: GridCell[] = [];
+  const stepLat = (radiusMiles * 2 / 111) / gridSize;
+  const stepLng = (radiusMiles * 2 / (111 * Math.cos(center.lat * Math.PI / 180))) / gridSize;
+  
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const cellLat = center.lat - (radiusMiles / 111) + (i + 0.5) * stepLat;
+      const cellLng = center.lng - (radiusMiles / (111 * Math.cos(center.lat * Math.PI / 180))) + (j + 0.5) * stepLng;
+      
+      let minDistance = Infinity;
+      for (const pin of pins) {
+        const dist = calculateDistance(cellLat, cellLng, pin.lat, pin.lng);
+        if (dist < minDistance) minDistance = dist;
+      }
+      
+      const inCompetitorZone = minDistance < COMPETITOR_RADIUS_MILES;
+      let score: number;
+      if (inCompetitorZone) {
+        score = 0;
+      } else {
+        const distanceBeyondZone = minDistance - COMPETITOR_RADIUS_MILES;
+        const maxExtraDistance = MAX_OPPORTUNITY_DISTANCE - COMPETITOR_RADIUS_MILES;
+        score = Math.min(100, (distanceBeyondZone / maxExtraDistance) * 100);
+      }
+      
+      cells.push({ lat: cellLat, lng: cellLng, score, minDistance, inCompetitorZone });
+    }
+  }
+  return cells;
+}
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -78,6 +151,8 @@ interface LayerState {
   pins: boolean;
   heatmap: boolean;
   polygons: boolean;
+  competitorZones: boolean;
+  opportunityGrid: boolean;
 }
 
 interface ConsultantMapProps {
@@ -93,6 +168,8 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
     pins: true,
     heatmap: true,
     polygons: true,
+    competitorZones: true,
+    opportunityGrid: true,
   });
   
   const [viewState, setViewState] = useState({
@@ -135,6 +212,58 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
     features: (mapData?.layers?.polygons?.data || []).filter(g => g?.geometry?.type === 'Polygon'),
   };
   
+  const competitorZonesGeoJSON = useMemo(() => {
+    const pins = mapData?.layers?.pins?.data || [];
+    if (pins.length === 0) return { type: 'FeatureCollection' as const, features: [] };
+    
+    return {
+      type: 'FeatureCollection' as const,
+      features: pins.map((pin, idx) => ({
+        type: 'Feature' as const,
+        properties: { id: idx, name: pin.name },
+        geometry: {
+          type: 'Polygon' as const,
+          coordinates: [createCirclePolygon(pin.lat, pin.lng, COMPETITOR_RADIUS_MILES)],
+        },
+      })),
+    };
+  }, [mapData?.layers?.pins?.data]);
+  
+  const opportunityGridGeoJSON = useMemo(() => {
+    const pins = mapData?.layers?.pins?.data || [];
+    const center = mapData?.center;
+    if (pins.length === 0 || !center) return { type: 'FeatureCollection' as const, features: [] };
+    
+    const grid = generateOpportunityGrid(pins, center);
+    const cellSizeLat = (2 * 2 / 111) / GRID_SIZE;
+    const cellSizeLng = (2 * 2 / (111 * Math.cos(center.lat * Math.PI / 180))) / GRID_SIZE;
+    
+    return {
+      type: 'FeatureCollection' as const,
+      features: grid.map((cell, idx) => ({
+        type: 'Feature' as const,
+        properties: { 
+          id: idx, 
+          score: cell.score,
+          minDistance: cell.minDistance.toFixed(2),
+          inCompetitorZone: cell.inCompetitorZone,
+        },
+        geometry: {
+          type: 'Polygon' as const,
+          coordinates: [[
+            [cell.lng - cellSizeLng/2, cell.lat - cellSizeLat/2],
+            [cell.lng + cellSizeLng/2, cell.lat - cellSizeLat/2],
+            [cell.lng + cellSizeLng/2, cell.lat + cellSizeLat/2],
+            [cell.lng - cellSizeLng/2, cell.lat + cellSizeLat/2],
+            [cell.lng - cellSizeLng/2, cell.lat - cellSizeLat/2],
+          ]],
+        },
+      })),
+    };
+  }, [mapData?.layers?.pins?.data, mapData?.center]);
+  
+  const opportunityCount = opportunityGridGeoJSON.features.filter(f => f.properties.score > 50).length;
+  
   if (isLoading) {
     return (
       <div className="w-full h-[500px] bg-gray-100 rounded-lg flex items-center justify-center">
@@ -174,26 +303,26 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
             Business Pins ({mapData?.layers?.pins?.count || 0})
           </button>
           <button
-            onClick={() => toggleLayer('heatmap')}
+            onClick={() => toggleLayer('competitorZones')}
             className={`px-3 py-1.5 text-sm rounded-full flex items-center gap-1.5 transition-colors ${
-              layerState.heatmap 
-                ? 'bg-orange-600 text-white' 
+              layerState.competitorZones 
+                ? 'bg-red-600 text-white' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-orange-400"></span>
-            Problem Heatmap ({mapData?.layers?.heatmap?.count || 0})
+            <span className="w-2 h-2 rounded-full bg-red-400"></span>
+            Competitor Zones ({competitorZonesGeoJSON.features.length})
           </button>
           <button
-            onClick={() => toggleLayer('polygons')}
+            onClick={() => toggleLayer('opportunityGrid')}
             className={`px-3 py-1.5 text-sm rounded-full flex items-center gap-1.5 transition-colors ${
-              layerState.polygons 
-                ? 'bg-purple-600 text-white' 
+              layerState.opportunityGrid 
+                ? 'bg-green-600 text-white' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-            Neighborhoods ({mapData?.layers?.polygons?.count || 0})
+            <span className="w-2 h-2 rounded-full bg-green-400"></span>
+            Opportunity Zones ({opportunityCount})
           </button>
         </div>
         <div className="text-sm text-gray-500">
@@ -255,6 +384,63 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
                     ],
                     'heatmap-radius': 30,
                     'heatmap-opacity': 0.7,
+                  }}
+                />
+              </Source>
+            )}
+            
+            {layerState.opportunityGrid && opportunityGridGeoJSON.features.length > 0 && (
+              <Source id="opportunity-grid" type="geojson" data={opportunityGridGeoJSON}>
+                <Layer
+                  id="opportunity-grid-fill"
+                  type="fill"
+                  paint={{
+                    'fill-color': [
+                      'interpolate',
+                      ['linear'],
+                      ['get', 'score'],
+                      0, 'rgba(158, 158, 158, 0.3)',
+                      25, 'rgba(255, 235, 59, 0.4)',
+                      50, 'rgba(205, 220, 57, 0.5)',
+                      75, 'rgba(139, 195, 74, 0.6)',
+                      100, 'rgba(46, 125, 50, 0.7)'
+                    ],
+                    'fill-opacity': 0.7,
+                  }}
+                />
+                <Layer
+                  id="opportunity-grid-outline"
+                  type="line"
+                  paint={{
+                    'line-color': [
+                      'case',
+                      ['>', ['get', 'score'], 50], '#2E7D32',
+                      '#9E9E9E'
+                    ],
+                    'line-width': 1,
+                    'line-opacity': 0.6,
+                  }}
+                />
+              </Source>
+            )}
+            
+            {layerState.competitorZones && competitorZonesGeoJSON.features.length > 0 && (
+              <Source id="competitor-zones" type="geojson" data={competitorZonesGeoJSON}>
+                <Layer
+                  id="competitor-zones-fill"
+                  type="fill"
+                  paint={{
+                    'fill-color': 'rgba(244, 67, 54, 0.15)',
+                    'fill-opacity': 0.4,
+                  }}
+                />
+                <Layer
+                  id="competitor-zones-outline"
+                  type="line"
+                  paint={{
+                    'line-color': '#D32F2F',
+                    'line-width': 2,
+                    'line-dasharray': [2, 2],
                   }}
                 />
               </Source>
