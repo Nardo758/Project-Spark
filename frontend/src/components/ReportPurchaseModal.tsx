@@ -35,8 +35,9 @@ export default function ReportPurchaseModal({
   opportunityId,
   opportunityTitle,
   onClose,
-  onPurchased,
+  onPurchased: _onPurchased,
 }: Props) {
+  void _onPurchased;
   const { token } = useAuthStore()
   
   const [pricing, setPricing] = useState<{ reports: ReportProduct[]; bundles: Bundle[]; user_tier: string } | null>(null)
