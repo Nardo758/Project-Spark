@@ -206,9 +206,9 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
             </button>
             <button
               onClick={handleViewAllPlans}
-              className="flex-1 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+              className="flex-1 py-2.5 text-gray-500 hover:text-gray-700 text-sm transition-colors"
             >
-              View all plans
+              Compare plan details
             </button>
           </div>
         </div>
