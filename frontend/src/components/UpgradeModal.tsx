@@ -84,6 +84,12 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
       return
     }
 
+    // Validate token is available
+    if (!token) {
+      setError('Please log in again to continue')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -105,7 +111,8 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
-        throw new Error(data?.detail || 'Unable to start checkout')
+        const errorMessage = data?.detail || data?.message || `Error ${res.status}: Unable to start checkout`
+        throw new Error(errorMessage)
       }
 
       if (data?.url) {
@@ -115,6 +122,7 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
         throw new Error('No checkout URL returned')
       }
     } catch (e) {
+      console.error('Checkout error:', e)
       setError(e instanceof Error ? e.message : 'Unable to start checkout')
       setIsLoading(false)
     }
