@@ -1,0 +1,64 @@
+ts
+import { useState } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useAuthStore } from '../stores/authStore'
+import { Loader2 } from 'lucide-react'
+
+export default function Signup() {
+  const location = useLocation()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [showNextSteps, setShowNextSteps] = useState(false)
+  const { signup, isLoading } = useAuthStore()
+  const navigate = useNavigate()
+
+  const handleSubmit = async (<span class="hljs-attr">e: React.FormEvent</span>) => {
+    e.preventDefault()
+    setError('')
+
+    try {
+      await signup(email, password, name)
+      const from = (location.state as { from?: string } | null)?.from
+      if (from) {
+        navigate(from)
+      } else {
+        setShowNextSteps(true)
+      }
+    } catch {
+      setError('Failed to create account. Please try again.')
+    }
+  }
+
+  // ... existing form markup, unchanged ...
+
+  {/* After the form submit button, inside the card: */}
+  {showNextSteps && (
+    <span class="hljs-tag"><<span class="hljs-name">div className="mt-8 border-t border-gray-100 pt-6"></span>
+      <<span class="hljs-name">h2 className="text-lg font-semibold text-gray-900 mb-2"></span>
+        Next, choose how you want to start
+      </<span class="hljs-name">h2></span>
+      <<span class="hljs-name">p className="text-sm text-gray-600 mb-4"></span>
+        You now have a free Explorer account. You can keep browsing for free or upgrade to unlock more data.
+      </<span class="hljs-name">p></span>
+      <<span class="hljs-name">div className="grid gap-3 sm:grid-cols-2"></span>
+        <<span class="hljs-name">button
+          type="button"
+          onClick={() =></span> navigate('/dashboard')}
+          className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-800"
+        >
+          Continue with free Explorer plan
+        </<span class="hljs-name">button></span>
+        <<span class="hljs-name">button
+          type="button"
+          onClick={() =></span> navigate('/pricing?from=signup&plan=builder')}
+          className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm font-medium"
+        >
+          View paid plans & upgrade
+        </<span class="hljs-name">button></span>
+      </<span class="hljs-name">div></span>
+    </<span class="hljs-name">div></span></span>
+  )}
+}
+

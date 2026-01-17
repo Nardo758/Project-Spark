@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { Loader2, Check, Crown } from 'lucide-react'
 
@@ -13,6 +13,7 @@ const planDetails: Record<string, { name: string; price: string; color: string }
 
 export default function Signup() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const selectedPlan = searchParams.get('plan')
   const planInfo = selectedPlan ? planDetails[selectedPlan.toLowerCase()] : null
   
@@ -21,6 +22,7 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
+  const [showNextSteps, setShowNextSteps] = useState(false)
   const { signup, isLoading, startReplitAuth, startGoogleAuth, startLinkedInAuth } = useAuthStore()
   const navigate = useNavigate()
 
@@ -38,7 +40,12 @@ export default function Signup() {
       if (selectedPlan && planInfo) {
         navigate(`/pricing?checkout=${selectedPlan}`)
       } else {
-        navigate('/dashboard')
+        const from = (location.state as { from?: string } | null)?.from
+        if (from) {
+          navigate(from)
+        } else {
+          setShowNextSteps(true)
+        }
       }
     } catch {
       setError('Failed to create account. Please try again.')
@@ -179,7 +186,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || showNextSteps}
               className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
@@ -192,6 +199,33 @@ export default function Signup() {
               )}
             </button>
           </form>
+
+          {showNextSteps && (
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Next, choose how you want to start
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                You now have a free Explorer account. You can keep browsing for free or upgrade to unlock more data.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full py-3 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-800"
+                >
+                  Continue with free Explorer plan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/pricing?from=signup&plan=builder')}
+                  className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm font-medium"
+                >
+                  View paid plans & upgrade
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6">
             <div className="relative">
