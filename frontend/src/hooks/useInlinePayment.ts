@@ -68,11 +68,29 @@ export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn
         throw new Error(data?.detail || 'Unable to start subscription')
       }
       
-      if (data?.status === 'active') {
+      // Handle success cases where no payment is needed (active, trialing, or subscription created)
+      if (data?.status === 'active' || data?.status === 'trialing') {
+        setState(s => ({ ...s, isLoading: false }))
         if (onSuccess) {
           onSuccess()
         } else {
-          navigate('/dashboard')
+          navigate('/dashboard?subscription=success')
+        }
+        return
+      }
+      
+      // Fallback: If we have a subscription ID but no client_secret, 
+      // the subscription may have been created with a trial or already paid
+      if (data?.stripe_subscription_id && !data?.client_secret) {
+        console.log('Subscription created without payment required:', {
+          stripeSubId: data.stripe_subscription_id,
+          status: data?.status,
+        })
+        setState(s => ({ ...s, isLoading: false }))
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          navigate('/dashboard?subscription=success')
         }
         return
       }

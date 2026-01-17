@@ -2,9 +2,9 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/authStore'
 import { useUpgrade } from '../contexts/UpgradeContext'
-import { useMemo, useEffect } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { 
-  Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight, Briefcase
+  Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight, Briefcase, CheckCircle, X
 } from 'lucide-react'
 import type { AccessInfo } from '../types/paywall'
 import { useInlinePayment } from '../hooks/useInlinePayment'
@@ -63,6 +63,7 @@ export default function Dashboard() {
   const { showUpgradeModal } = useUpgrade()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
+  const [showSubscriptionSuccess, setShowSubscriptionSuccess] = useState(false)
   
   const { 
     state: paymentState, 
@@ -70,6 +71,17 @@ export default function Dashboard() {
     closePaymentModal, 
     handlePaymentConfirmed 
   } = useInlinePayment()
+
+  // Handle subscription success notification
+  useEffect(() => {
+    if (searchParams.get('subscription') === 'success') {
+      setShowSubscriptionSuccess(true)
+      setSearchParams({})
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => setShowSubscriptionSuccess(false), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     const checkoutTier = searchParams.get('checkout')
@@ -163,6 +175,24 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {showSubscriptionSuccess && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            <div>
+              <p className="font-medium text-green-900">Subscription activated!</p>
+              <p className="text-sm text-green-700">Welcome to your new plan. Enjoy your premium features!</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowSubscriptionSuccess(false)}
+            className="p-1 hover:bg-green-100 rounded-full transition-colors"
+          >
+            <X className="w-4 h-4 text-green-600" />
+          </button>
+        </div>
+      )}
+      
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
