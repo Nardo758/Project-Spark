@@ -351,13 +351,22 @@ export default function Home() {
           <p className="text-purple-100 text-lg mb-8">
             Join thousands of entrepreneurs discovering and validating opportunities every day.
           </p>
-          <Link
-            to="/pricing"
-            className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-purple-600 bg-white hover:bg-gray-100 rounded-lg gap-2"
-          >
-            Get Started Free
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/signup"
+              className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-purple-600 bg-white hover:bg-gray-100 rounded-lg gap-2"
+            >
+              Get Started Free
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              to="/pricing?from=home&plan=builder"
+              className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium text-white border border-white/60 hover:bg-white/10 rounded-lg gap-2"
+            >
+              View paid plans
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
