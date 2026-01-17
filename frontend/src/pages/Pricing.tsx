@@ -349,6 +349,13 @@ export default function Pricing() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data?.detail || 'Unable to start subscription')
+      
+      if (data?.status === 'active') {
+        setBillingSuccess('Your subscription is now active!')
+        await fetchMySubscription()
+        return
+      }
+      
       if (!data?.client_secret) throw new Error('Missing payment client secret')
 
       setSubPublishableKey(String(keyData.publishable_key))

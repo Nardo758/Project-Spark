@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session
 import csv
 import io
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 from app.db.database import get_db
 from app.models.user import User
@@ -280,14 +283,42 @@ def create_subscription_intent(
             expand=["latest_invoice.payment_intent"],
             metadata={"user_id": str(current_user.id), "tier": tier.value},
         )
+        
+        sub_status = getattr(stripe_sub, "status", None)
         latest_invoice = getattr(stripe_sub, "latest_invoice", None)
         payment_intent = getattr(latest_invoice, "payment_intent", None) if latest_invoice else None
         client_secret = getattr(payment_intent, "client_secret", None)
+        
+        if sub_status == "active":
+            subscription.stripe_subscription_id = stripe_sub.id
+            subscription.stripe_price_id = price_id
+            subscription.tier = tier
+            subscription.status = SubscriptionStatus.ACTIVE
+            cps = getattr(stripe_sub, "current_period_start", None)
+            cpe = getattr(stripe_sub, "current_period_end", None)
+            if isinstance(cps, (int, float)):
+                subscription.current_period_start = datetime.fromtimestamp(int(cps), tz=timezone.utc)
+            if isinstance(cpe, (int, float)):
+                subscription.current_period_end = datetime.fromtimestamp(int(cpe), tz=timezone.utc)
+            db.commit()
+            return {"stripe_subscription_id": stripe_sub.id, "client_secret": None, "status": "active"}
+        
         if not client_secret:
-            raise HTTPException(status_code=500, detail="Stripe did not return a payment client secret")
+            invoice_status = getattr(latest_invoice, "status", None) if latest_invoice else None
+            pi_status = getattr(payment_intent, "status", None) if payment_intent else None
+            logger.error(
+                f"Stripe subscription created but no client_secret. "
+                f"sub_status={sub_status}, invoice_status={invoice_status}, pi_status={pi_status}, "
+                f"latest_invoice={bool(latest_invoice)}, payment_intent={bool(payment_intent)}"
+            )
+            raise HTTPException(
+                status_code=500, 
+                detail="Stripe did not return a payment client secret. Please try again or contact support."
+            )
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Stripe subscription creation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Unable to create subscription: {e}")
 
     # Persist linkage for webhook reconciliation
