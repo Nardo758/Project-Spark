@@ -370,9 +370,24 @@
             color: var(--stone-600);
         }
 
+        .badge-starter {
+            background: var(--green-100);
+            color: var(--green-600);
+        }
+
+        .badge-growth {
+            background: var(--blue-50);
+            color: var(--blue-500);
+        }
+
         .badge-pro {
             background: var(--blue-100);
             color: var(--blue-600);
+        }
+
+        .badge-team {
+            background: var(--violet-50);
+            color: var(--violet-600);
         }
 
         .badge-business {
@@ -1184,10 +1199,15 @@
                             <select class="filter-select" id="sub-tier-filter">
                                 <option value="">All Tiers</option>
                                 <option value="free">Free</option>
+                                <option value="starter">Starter</option>
+                                <option value="growth">Growth</option>
                                 <option value="pro">Pro</option>
+                                <option value="team">Team</option>
                                 <option value="business">Business</option>
                                 <option value="enterprise">Enterprise</option>
                             </select>
+                            <button class="btn-sm btn-secondary" onclick="bulkResetSubscriptions()">Bulk Reset Invalid</button>
+                            <button class="btn-sm" onclick="loadSubscriptions()">Refresh</button>
                         </div>
                     </div>
                     <table class="data-table">
@@ -2672,7 +2692,10 @@
                     return;
                 }
 
-                tbody.innerHTML = subscriptions.map(sub => `
+                tbody.innerHTML = subscriptions.map(sub => {
+                    const tierLower = (sub.tier || 'free').toLowerCase();
+                    const statusLower = (sub.status || 'active').toLowerCase();
+                    return `
                     <tr>
                         <td>
                             <div class="user-cell">
@@ -2683,16 +2706,16 @@
                                 </div>
                             </div>
                         </td>
-                        <td><span class="badge badge-${sub.tier}">${sub.tier.toUpperCase()}</span></td>
-                        <td><span class="badge badge-${sub.status}">${sub.status}</span></td>
+                        <td><span class="badge badge-${tierLower}">${tierLower.toUpperCase()}</span></td>
+                        <td><span class="badge badge-${statusLower}">${statusLower}</span></td>
                         <td>${sub.current_period_end ? formatDate(sub.current_period_end) : 'N/A'}</td>
                         <td>
                             <div class="action-btns">
-                                <button class="btn-sm btn-secondary" onclick="showTierModal(${sub.id}, ${sub.user_id}, '${sub.tier}')">Change Tier</button>
+                                <button class="btn-sm btn-secondary" onclick="showTierModal(${sub.id}, ${sub.user_id}, '${tierLower}')">Change Tier</button>
                             </div>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
             } catch (error) {
                 console.error('Failed to load subscriptions:', error);
                 tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load subscriptions</td></tr>';
@@ -2838,9 +2861,12 @@
                             <label for="new-tier">New Tier</label>
                             <select id="new-tier">
                                 <option value="free" ${currentTier === 'free' ? 'selected' : ''}>Free</option>
-                                <option value="pro" ${currentTier === 'pro' ? 'selected' : ''}>Pro</option>
-                                <option value="business" ${currentTier === 'business' ? 'selected' : ''}>Business</option>
-                                <option value="enterprise" ${currentTier === 'enterprise' ? 'selected' : ''}>Enterprise</option>
+                                <option value="starter" ${currentTier === 'starter' ? 'selected' : ''}>Starter ($20/mo)</option>
+                                <option value="growth" ${currentTier === 'growth' ? 'selected' : ''}>Growth ($50/mo)</option>
+                                <option value="pro" ${currentTier === 'pro' ? 'selected' : ''}>Pro ($99/mo)</option>
+                                <option value="team" ${currentTier === 'team' ? 'selected' : ''}>Team ($250/mo)</option>
+                                <option value="business" ${currentTier === 'business' ? 'selected' : ''}>Business ($750/mo)</option>
+                                <option value="enterprise" ${currentTier === 'enterprise' ? 'selected' : ''}>Enterprise ($2500+/mo)</option>
                             </select>
                         </div>
                     </div>
@@ -2867,6 +2893,23 @@
                 loadSubscriptions();
             } catch (error) {
                 showToast('Failed to update subscription', 'error');
+            }
+        }
+
+        async function bulkResetSubscriptions() {
+            if (!confirm('This will reset all subscriptions with paid tiers but no Stripe subscription ID to FREE. Continue?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetchWithAuth('/api/v1/admin/subscriptions/bulk-reset-invalid', { method: 'POST' });
+                const result = await response.json();
+                
+                showToast(`Reset ${result.count || 0} invalid subscriptions to FREE`, 'success');
+                loadSubscriptions();
+            } catch (error) {
+                console.error('Bulk reset failed:', error);
+                showToast('Failed to bulk reset subscriptions', 'error');
             }
         }
 
