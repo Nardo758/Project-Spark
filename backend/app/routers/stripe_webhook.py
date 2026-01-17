@@ -549,30 +549,40 @@ def _handle_bundle_purchase(session: dict, user: User, db: Session):
 
 
 def _handle_subscription_checkout(session: dict, user: User, db: Session):
-    """Handle subscription checkout completion."""
+    """Handle subscription checkout completion.
+    
+    This only links the Stripe subscription/customer IDs to the user record.
+    Actual activation happens via customer.subscription.updated webhook when
+    Stripe confirms the subscription is active.
+    """
     subscription_id = session.get("subscription")
     customer_id = session.get("customer")
     tier = session.get("metadata", {}).get("tier")
+    payment_status = session.get("payment_status", "")
     
-    logger.info(f"Checkout completed for user {user.id}, subscription {subscription_id}")
+    logger.info(f"Checkout completed for user {user.id}, subscription {subscription_id}, payment_status: {payment_status}")
     
     subscription = usage_service.get_or_create_subscription(user, db)
     subscription.stripe_subscription_id = subscription_id
     subscription.stripe_customer_id = customer_id
-    subscription.status = SubscriptionStatus.ACTIVE
     
     if tier:
         try:
-            subscription.tier = SubscriptionTier(tier)
-        except ValueError:
-            logger.warning(f"Invalid tier in metadata: {tier}")
+            subscription.pending_tier = tier
+        except Exception:
+            pass
+        subscription.metadata_json = json.dumps({"pending_tier": tier})
     
     db.commit()
-    logger.info(f"Updated subscription for user {user.id}")
+    logger.info(f"Linked Stripe subscription {subscription_id} to user {user.id}, awaiting subscription.updated for activation")
 
 
 def handle_subscription_updated(stripe_subscription: dict, db: Session):
-    """Handle subscription update from Stripe."""
+    """Handle subscription update from Stripe.
+    
+    This is the authoritative source for subscription status. Only activate
+    subscriptions when Stripe confirms status is 'active' or 'trialing'.
+    """
     subscription_id = stripe_subscription.get("id")
     status = stripe_subscription.get("status")
     cancel_at_period_end = stripe_subscription.get("cancel_at_period_end", False)
@@ -590,13 +600,21 @@ def handle_subscription_updated(stripe_subscription: dict, db: Session):
     
     status_map = {
         "active": SubscriptionStatus.ACTIVE,
+        "trialing": SubscriptionStatus.ACTIVE,
         "past_due": SubscriptionStatus.PAST_DUE,
         "canceled": SubscriptionStatus.CANCELED,
         "unpaid": SubscriptionStatus.PAST_DUE,
-        "trialing": SubscriptionStatus.ACTIVE,
+        "incomplete": SubscriptionStatus.PAST_DUE,
+        "incomplete_expired": SubscriptionStatus.CANCELED,
     }
     
-    subscription.status = status_map.get(status, SubscriptionStatus.ACTIVE)
+    new_status = status_map.get(status)
+    if new_status is None:
+        logger.warning(f"Unknown subscription status '{status}', not updating")
+        return
+    
+    old_status = subscription.status
+    subscription.status = new_status
     subscription.cancel_at_period_end = cancel_at_period_end
     
     if current_period_end:
@@ -611,9 +629,18 @@ def handle_subscription_updated(stripe_subscription: dict, db: Session):
         tier = _map_price_to_tier(price_id)
         if tier:
             subscription.tier = tier
+    elif subscription.metadata_json and new_status == SubscriptionStatus.ACTIVE:
+        try:
+            meta = json.loads(subscription.metadata_json)
+            pending_tier = meta.get("pending_tier")
+            if pending_tier:
+                subscription.tier = SubscriptionTier(pending_tier.upper())
+                subscription.metadata_json = None
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.warning(f"Failed to apply pending tier: {e}")
     
     db.commit()
-    logger.info(f"Updated subscription {subscription_id} in database")
+    logger.info(f"Updated subscription {subscription_id}: {old_status} -> {new_status}")
 
 
 def handle_subscription_deleted(stripe_subscription: dict, db: Session):
