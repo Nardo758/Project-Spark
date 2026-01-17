@@ -149,6 +149,13 @@ export default function Dashboard() {
               <Brain className="w-5 h-5" />
               AI Co-founder
             </Link>
+            <Link
+              to="/pricing?from=dashboard&plan=builder"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400 hover:bg-amber-500 text-gray-900 rounded-lg font-medium"
+            >
+              <DollarSign className="w-5 h-5" />
+              Upgrade plan
+            </Link>
           </div>
         </div>
       </div>
