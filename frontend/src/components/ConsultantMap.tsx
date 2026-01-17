@@ -39,15 +39,16 @@ interface GridCell {
   inCompetitorZone: boolean;
 }
 
-const MAX_OPPORTUNITY_DISTANCE = 1.5;
+const GRID_RADIUS_MILES = 1.5;
+const MAX_SCORE_DISTANCE = 1.5;
 
 function generateOpportunityGrid(
   pins: Pin[],
   center: { lat: number; lng: number },
-  gridSize: number = GRID_SIZE,
-  radiusMiles: number = 2
+  gridSize: number = GRID_SIZE
 ): GridCell[] {
   const cells: GridCell[] = [];
+  const radiusMiles = GRID_RADIUS_MILES;
   const stepLat = (radiusMiles * 2 / 111) / gridSize;
   const stepLng = (radiusMiles * 2 / (111 * Math.cos(center.lat * Math.PI / 180))) / gridSize;
   
@@ -67,9 +68,13 @@ function generateOpportunityGrid(
       if (inCompetitorZone) {
         score = 0;
       } else {
-        const distanceBeyondZone = minDistance - COMPETITOR_RADIUS_MILES;
-        const maxExtraDistance = MAX_OPPORTUNITY_DISTANCE - COMPETITOR_RADIUS_MILES;
-        score = Math.min(100, (distanceBeyondZone / maxExtraDistance) * 100);
+        const maxExtraDistance = MAX_SCORE_DISTANCE - COMPETITOR_RADIUS_MILES;
+        if (maxExtraDistance <= 0) {
+          score = 100;
+        } else {
+          const distanceBeyondZone = minDistance - COMPETITOR_RADIUS_MILES;
+          score = Math.min(100, Math.max(0, (distanceBeyondZone / maxExtraDistance) * 100));
+        }
       }
       
       cells.push({ lat: cellLat, lng: cellLng, score, minDistance, inCompetitorZone });
@@ -235,8 +240,8 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
     if (pins.length === 0 || !center) return { type: 'FeatureCollection' as const, features: [] };
     
     const grid = generateOpportunityGrid(pins, center);
-    const cellSizeLat = (2 * 2 / 111) / GRID_SIZE;
-    const cellSizeLng = (2 * 2 / (111 * Math.cos(center.lat * Math.PI / 180))) / GRID_SIZE;
+    const cellSizeLat = (GRID_RADIUS_MILES * 2 / 111) / GRID_SIZE;
+    const cellSizeLng = (GRID_RADIUS_MILES * 2 / (111 * Math.cos(center.lat * Math.PI / 180))) / GRID_SIZE;
     
     return {
       type: 'FeatureCollection' as const,
