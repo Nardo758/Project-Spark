@@ -40,10 +40,16 @@ const benefits = [
   { icon: Zap, text: 'Priority processing and faster results' },
 ]
 
-const plans = [
+const individualPlans = [
   { tier: 'starter', name: 'Starter', price: '$20/mo', slots: 1 },
   { tier: 'growth', name: 'Growth', price: '$50/mo', slots: 3, popular: true },
   { tier: 'pro', name: 'Pro', price: '$99/mo', slots: 5 },
+]
+
+const businessPlans = [
+  { tier: 'team', name: 'Team', price: '$250/mo', slots: 5, seats: 3 },
+  { tier: 'business', name: 'Business', price: '$750/mo', slots: 15, seats: 10 },
+  { tier: 'enterprise', name: 'Enterprise', price: '$2,500+/mo', slots: 30, seats: 'Unlimited' },
 ]
 
 export default function UpgradeModal({ isOpen, onClose, feature, context = 'general' }: UpgradeModalProps) {
@@ -106,9 +112,9 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
             ))}
           </div>
 
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Choose a plan:</h3>
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Individual Plans:</h3>
           <div className="grid grid-cols-3 gap-3 mb-4">
-            {plans.map((plan) => (
+            {individualPlans.map((plan) => (
               <button
                 key={plan.tier}
                 onClick={() => handlePlanSelect(plan.tier)}
@@ -122,6 +128,21 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
                 <div className="font-semibold text-gray-900">{plan.name}</div>
                 <div className="text-sm text-gray-600">{plan.price}</div>
                 <div className="text-xs text-gray-500 mt-1">{plan.slots} slot{plan.slots > 1 ? 's' : ''}</div>
+              </button>
+            ))}
+          </div>
+
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Plans:</h3>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {businessPlans.map((plan) => (
+              <button
+                key={plan.tier}
+                onClick={() => handlePlanSelect(plan.tier)}
+                className="p-3 rounded-xl border-2 border-gray-200 text-center transition-all hover:border-indigo-500 hover:bg-indigo-50"
+              >
+                <div className="font-semibold text-gray-900">{plan.name}</div>
+                <div className="text-sm text-gray-600">{plan.price}</div>
+                <div className="text-xs text-gray-500 mt-1">{plan.slots} slots • {plan.seats} seats</div>
               </button>
             ))}
           </div>

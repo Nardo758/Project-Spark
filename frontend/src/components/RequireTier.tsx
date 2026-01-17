@@ -4,13 +4,16 @@ import { useAuthStore } from '../stores/authStore'
 import { useUpgrade } from '../contexts/UpgradeContext'
 import { Lock } from 'lucide-react'
 
-type Tier = 'free' | 'pro' | 'business' | 'enterprise'
+type Tier = 'free' | 'starter' | 'growth' | 'pro' | 'team' | 'business' | 'enterprise'
 
 const TIER_LEVELS: Record<Tier, number> = {
   free: 0,
-  pro: 1,
-  business: 2,
-  enterprise: 3,
+  starter: 1,
+  growth: 2,
+  pro: 3,
+  team: 4,
+  business: 5,
+  enterprise: 6,
 }
 
 type Props = {

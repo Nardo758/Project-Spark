@@ -154,7 +154,14 @@ function App() {
             </RequireTier>
           }
         />
-        <Route path="build/experts" element={<ExpertMarketplace />} />
+        <Route
+          path="build/experts"
+          element={
+            <RequireTier requiredTier="starter" featureName="Expert Marketplace">
+              <ExpertMarketplace />
+            </RequireTier>
+          }
+        />
         <Route
           path="expert/dashboard"
           element={
@@ -187,7 +194,14 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route path="build/funding" element={<Funding />} />
+        <Route
+          path="build/funding"
+          element={
+            <RequireTier requiredTier="starter" featureName="Funding Discovery">
+              <Funding />
+            </RequireTier>
+          }
+        />
         <Route
           path="settings"
           element={
