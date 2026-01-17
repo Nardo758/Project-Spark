@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import httpx
 import logging
+import os
 
 from app.db.database import get_db
 from app.services.webhook_gateway import WebhookGateway, WebhookValidationError, RateLimitExceededError
@@ -13,6 +14,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 apify_router = APIRouter(prefix="/webhook", tags=["apify-webhook"])
+
+
+def is_webhook_dev_mode():
+    """
+    Check if webhook dev mode is enabled.
+    Dev mode only works in development environment (not production).
+    """
+    dev_mode = os.getenv("WEBHOOK_DEV_MODE", "0") == "1"
+    is_development = os.getenv("REPLIT_DEPLOYMENT", "") != "1"
+    
+    if dev_mode and not is_development:
+        logger.warning("WEBHOOK_DEV_MODE is set but ignored in production environment")
+        return False
+    
+    return dev_mode and is_development
 
 
 class WebhookPayload(BaseModel):
@@ -38,15 +54,15 @@ async def receive_webhook(
     Receive webhook from external scrapers.
     Supports HMAC-SHA256 authentication via X-Hub-Signature-256 or X-Webhook-Signature headers.
     In development mode (WEBHOOK_DEV_MODE=1), HMAC verification can be skipped.
+    Dev mode is automatically disabled in production.
     """
-    import os
     gateway = WebhookGateway(db)
     
     signature = x_hub_signature_256 or x_webhook_signature
     
     body = await request.body()
     
-    skip_hmac = os.getenv("WEBHOOK_DEV_MODE", "0") == "1"
+    skip_hmac = is_webhook_dev_mode()
     
     try:
         result = await gateway.process_webhook(
@@ -81,10 +97,9 @@ async def receive_batch_webhook(
     Receive batch webhook with multiple items from a single source.
     Useful for bulk imports from scraping jobs.
     Requires HMAC-SHA256 authentication in production.
+    Dev mode is automatically disabled in production.
     """
-    import os
-    
-    skip_hmac = os.getenv("WEBHOOK_DEV_MODE", "0") == "1"
+    skip_hmac = is_webhook_dev_mode()
     
     if not skip_hmac:
         signature = x_hub_signature_256 or x_webhook_signature
@@ -261,12 +276,28 @@ async def receive_apify_webhook(
     request: Request,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    x_apify_webhook_secret: Optional[str] = Header(None, alias="X-Apify-Webhook-Secret"),
 ):
     """
     Receive webhook from Apify when an actor run completes.
     Apify sends run metadata with dataset URL - we fetch the data and process it.
+    
+    Authentication: Requires X-Apify-Webhook-Secret header matching APIFY_WEBHOOK_SECRET env var.
+    In dev mode (WEBHOOK_DEV_MODE=1), authentication is skipped.
+    In production, APIFY_WEBHOOK_SECRET must be configured.
     """
-    import os
+    apify_secret = os.getenv("APIFY_WEBHOOK_SECRET", "")
+    
+    if not is_webhook_dev_mode():
+        if not apify_secret:
+            logger.error("APIFY_WEBHOOK_SECRET not configured - rejecting webhook in production")
+            raise HTTPException(
+                status_code=500,
+                detail="Apify webhook secret not configured. This is a server configuration error."
+            )
+        if x_apify_webhook_secret != apify_secret:
+            logger.warning("Invalid Apify webhook secret received")
+            raise HTTPException(status_code=401, detail="Invalid webhook secret")
     
     try:
         body = await request.json()

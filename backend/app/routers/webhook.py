@@ -100,12 +100,36 @@ def extract_opportunity_from_post(post: dict) -> dict:
         "source_id": post.get("id"),
     }
 
+def _is_production():
+    """Check if running in production environment."""
+    return os.getenv("REPLIT_DEPLOYMENT", "") == "1"
+
+
 @router.post("/apify")
 async def receive_apify_webhook(
     payload: ApifyWebhookPayload,
     db: Session = Depends(get_db),
     x_apify_webhook_secret: Optional[str] = Header(None, alias="X-Apify-Webhook-Secret")
 ):
+    """
+    DEPRECATED: Use /api/v1/webhook/apify instead (from webhooks.py).
+    This endpoint is disabled in production. The new endpoint provides better
+    validation and processing through the WebhookGateway.
+    """
+    import logging
+    _logger = logging.getLogger(__name__)
+    
+    if _is_production():
+        _logger.error("Deprecated /api/v1/webhook/apify endpoint called in production - disabled")
+        raise HTTPException(
+            status_code=410,
+            detail="This endpoint is deprecated. Use /api/v1/webhook/apify from the webhooks module."
+        )
+    
+    _logger.warning(
+        "Deprecated /api/v1/webhook/apify endpoint called - use /api/v1/webhook/apify (webhooks.py) instead"
+    )
+    
     if APIFY_WEBHOOK_SECRET and x_apify_webhook_secret != APIFY_WEBHOOK_SECRET:
         raise HTTPException(status_code=401, detail="Invalid webhook secret")
     
