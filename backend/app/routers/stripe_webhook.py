@@ -156,6 +156,8 @@ async def stripe_webhook(
             handle_subscription_deleted(event_object, db)
         elif event_type == "checkout.session.expired":
             handle_checkout_expired(event_object, db)
+        elif event_type == "invoice.voided":
+            handle_invoice_voided(event_object, db)
         else:
             logger.info(f"Unhandled webhook event type: {event_type}")
     except Exception as e:
@@ -346,6 +348,33 @@ def handle_invoice_payment_failed(invoice: dict, db: Session):
     db.add(tx)
     db.commit()
     logger.info(f"Recorded failed invoice transaction {tx.id}")
+
+
+def handle_invoice_voided(invoice: dict, db: Session):
+    """
+    Handle voided invoice - typically when a subscription is cancelled before payment.
+    Updates any related transactions and logs the event.
+    """
+    invoice_id = invoice.get("id")
+    subscription_id = invoice.get("subscription")
+    customer_id = invoice.get("customer")
+    
+    logger.info(f"Invoice voided: {invoice_id}, subscription: {subscription_id}")
+    
+    existing_tx = db.query(Transaction).filter(
+        Transaction.stripe_invoice_id == invoice_id
+    ).first()
+    
+    if existing_tx:
+        existing_tx.status = TransactionStatus.REFUNDED
+        existing_meta = json.loads(existing_tx.metadata_json) if existing_tx.metadata_json else {}
+        existing_meta["voided"] = True
+        existing_meta["voided_reason"] = invoice.get("voided_reason") or "Invoice voided"
+        existing_tx.metadata_json = json.dumps(existing_meta)
+        db.commit()
+        logger.info(f"Updated transaction {existing_tx.id} to REFUNDED (voided)")
+    else:
+        logger.info(f"No existing transaction found for voided invoice {invoice_id}")
 
 
 def handle_checkout_completed(session: dict, db: Session):
