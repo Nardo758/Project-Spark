@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/authStore'
+import { useUpgrade } from '../contexts/UpgradeContext'
 import { useMemo } from 'react'
 import { 
   Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight, Briefcase
@@ -66,6 +67,7 @@ function formatMarketSize(size?: string | null): string {
 
 export default function Dashboard() {
   const { user, token, isAuthenticated } = useAuthStore()
+  const { showUpgradeModal } = useUpgrade()
 
   const { data: opportunities, isLoading, isError: opportunitiesError } = useQuery({
     queryKey: ['dashboard-opportunities', { isAuthenticated }],
@@ -149,13 +151,13 @@ export default function Dashboard() {
               <Brain className="w-5 h-5" />
               AI Co-founder
             </Link>
-            <Link
-              to="/pricing?from=dashboard&plan=builder"
+            <button
+              onClick={() => showUpgradeModal('general', 'Dashboard')}
               className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400 hover:bg-amber-500 text-gray-900 rounded-lg font-medium"
             >
               <DollarSign className="w-5 h-5" />
               Upgrade plan
-            </Link>
+            </button>
           </div>
         </div>
       </div>

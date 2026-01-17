@@ -9,6 +9,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { useUpgrade } from '../contexts/UpgradeContext'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
 import ReportViewer from '../components/ReportViewer'
@@ -128,6 +129,7 @@ export default function OpportunityDetail() {
   const navigate = useNavigate()
 
   const { token, isAuthenticated, user } = useAuthStore()
+  const { showUpgradeModal } = useUpgrade()
   const queryClient = useQueryClient()
   
   const [activeTab, setActiveTab] = useState('validation')
@@ -659,13 +661,13 @@ export default function OpportunityDetail() {
                 <Lock className="w-12 h-12 text-stone-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-stone-900 mb-2">Unlock Research Dashboard</h3>
                 <p className="text-stone-600 mb-4">Get market analysis, demographics, and competitive landscape</p>
-                <Link 
-                  to="/pricing" 
+                <button 
+                  onClick={() => showUpgradeModal('opportunity', opportunityQuery.data?.title)} 
                   className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-stone-800"
                 >
                   Upgrade to Pro ($99/mo)
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </button>
               </div>
             </div>
           )}
@@ -836,9 +838,9 @@ export default function OpportunityDetail() {
                     <div className="bg-stone-50 rounded-lg p-4 text-center">
                       <Lock className="w-6 h-6 text-stone-400 mx-auto mb-2" />
                       <p className="text-sm text-stone-600 mb-2">Census data requires Business tier</p>
-                      <Link to="/pricing" className="text-violet-600 font-medium text-sm hover:underline">
+                      <button onClick={() => showUpgradeModal('analysis', 'Census Demographics')} className="text-violet-600 font-medium text-sm hover:underline">
                         Upgrade to Business
-                      </Link>
+                      </button>
                     </div>
                   ) : demographicsQuery.isLoading ? (
                     <div className="grid grid-cols-4 gap-4">
