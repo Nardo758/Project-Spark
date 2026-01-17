@@ -1,0 +1,197 @@
+Deep Scan of AI / Validation / Scraper Pipeline – Findings vs Your Targets
+Here’s what the deeper scan reveals about the validation pipeline, AI processing, and data quality relative to your original test goals, plus the main remaining risks.
+
+1. Webhook Validation Pipeline (Scraper Ingest)
+Where it lives: app/services/webhook_gateway.py + app/routers/webhooks.py
+
+1.1 Implemented Stages
+The WebhookGateway actually implements a 4-stage pipeline:
+
+HMAC verification
+
+verify_hmac_signature(payload, signature, source)
+Uses WEBHOOK_SECRET_{SOURCE} if set, otherwise global WEBHOOK_SECRET.
+Gate is enforced in process_webhook (unless skip_hmac=True).
+Schema validation
+
+validate_schema(source, data) with REQUIRED_FIELDS per source:
+reddit: requires ["post_id", "subreddit", "title"]
+Others: google_maps, yelp, twitter, nextdoor, custom.
+Duplicate detection
+
+extract_external_id → check_duplicate(source, external_id)
+Uses ScrapedSource table with (source_type, external_id) unique constraint and an additional ON CONFLICT check during insert.
+Rate limiting
+
+Uses rate_limit_counters table with per-source, per-minute windows, controlled by WEBHOOK_RATE_LIMIT (default 100/min).
+Duplicates do not consume quota, because they’re detected before or via ON CONFLICT then slot is released.
+Net effect: The ingest path via /api/v1/webhooks/{source} is robust: it does signature, schema, dup-check, and rate-limit, then stores raw JSON into scraped_sources as unprocessed for downstream stages.
+
+1.2 Remaining Risks / Gaps
+Dev escape hatch: skip_hmac=True is allowed if WEBHOOK_DEV_MODE=1.
+WebhookGateway.__init__ requires WEBHOOK_SECRET unless WEBHOOK_DEV_MODE=1; in dev mode it silently uses "dev-mode-secret".
+In routers:
+/webhooks/{source} sets skip_hmac based on WEBHOOK_DEV_MODE.
+/webhooks/{source}/batch enforces HMAC by default unless WEBHOOK_DEV_MODE=1.
+You must ensure WEBHOOK_DEV_MODE is never set in production, or all dev-only bypasses become active.
+
+2. Geographic Validation & Location Confidence
+Where it lives: app/services/geographic_extractor.py
+
+For each ScrapedSource, it builds a GeographicFeature:
+
+Google Maps / Yelp / Nextdoor / Custom / Twitter:
+
+Extracts lat/lng; if missing, returns None (source stays “processed, no feature”).
+Sets confidence_score:
+Google/Yelp: 0.95
+Twitter: 0.85
+Nextdoor: 0.8
+Custom: 0.7
+Reddit:
+
+Tries to extract location hints from text via regex (in <City>, from <City>, etc.).
+If no explicit coords:
+Infers from subreddit (/r/nyc, /r/seattle, etc.) with fixed coords + confidence: 0.7.
+If still no coords, returns a GeographicFeature with geometry: None, confidence_score: 0.3, and a location_hint field.
+If lat/lng available, builds point feature with confidence from hint/inference.
+process_pending_sources(limit):
+
+Pulls unprocessed scraped sources from WebhookGateway.get_unprocessed_sources.
+For each:
+Creates a GeographicFeature if possible.
+Marks ScrapedSource.processed to 1 (or -1 on error).
+Against your benchmarks:
+
+“>80% of opportunities have valid location data” – This depends heavily on:
+How often incoming data includes coordinates or recognizable patterns/subreddits.
+You are already assigning confidence scores (0.3–0.95), which can be used to compute average location confidence >0.7 as you wanted, but there’s no explicit monitoring code here; that’s a separate analytics/metrics task.
+3. AI Validation & Opportunity Quality (Claude)
+Where it lives: app/services/opportunity_processor.py
+
+3.1 Processing Flow
+OpportunityProcessor.process_pending_sources(limit):
+Fetches unprocessed ScrapedSource rows.
+For each source (with concurrency cap of 5):
+_extract_text_from_raw_data(raw_data, source_type):
+
+For Reddit: combines title + body/selftext.
+For Twitter: full_text / text / rawContent.
+Others: structured heuristics (Google Maps, Yelp, Craigslist, custom).
+If raw_text < 20 chars → skip as insufficient_content.
+
+Checks if an Opportunity already exists for source.external_id:
+
+If yes → skip as duplicate, mark source processed.
+Calls _analyze_with_claude(raw_text, source_type, raw_data):
+
+Sends a strongly-typed JSON schema prompt to Claude (model claude-haiku-4-5).
+Response must include:
+is_valid_opportunity (boolean).
+Detailed professional rewrite fields.
+opportunity_score and feasibility_score (0–100).
+pain_intensity, urgency_level, etc.
+If parsing fails or API issues, fallback heuristic is used.
+Post-analysis:
+
+If analysis["is_valid_opportunity"] is false → skip, mark source processed.
+If true → _create_opportunity_from_analysis(...) builds an Opportunity:
+Title, description, category, subcategory, severity, feasibility, ai_opportunity_score, ai_summary, ai_next_steps, ai_key_risks, etc.
+ai_analyzed=True, ai_analyzed_at=now.
+fallback_analysis:
+If no AI client configured or errors:
+Checks for “pain” keywords in text; if none or very short → is_valid_opportunity=False.
+Otherwise marks as valid with:
+opportunity_score = 50
+feasibility_score = 50
+Minimal fields filled.
+3.2 Against Your “Signal Quality ≥ 0.70” Target
+You asked for:
+
+“Signal Quality Scoring: Opportunities have confidence scores ≥ 0.70”
+“Problem Validation: >60% pass DeepSeek validation”
+In this code:
+
+The main numeric quality signal is ai_opportunity_score (0–100), not normalized to 0–1; you can treat ≥70 as your “0.70” threshold.
+There is no enforcement that created opportunities must have opportunity_score ≥ 70; they’re accepted if is_valid_opportunity is true, regardless of numeric score.
+The fallback path always uses 50, which is below your 0.70/70 target.
+Implications:
+
+The pipeline correctly filters spam-ish / low-signal content when:
+Claude marks is_valid_opportunity=false, or
+Fallback sees little text / no pain keywords.
+But you do not currently enforce a minimum opportunity_score for accepting an opportunity into the database.
+If you want to match your spec strictly, a natural improvement is:
+
+python
+if not analysis.get("is_valid_opportunity", False):
+    ...
+else:
+    score = analysis.get("opportunity_score") or 0
+    if score < 70:
+        source.processed = 1
+        source.processed_at = datetime.utcnow()
+        stats["skipped"] += 1
+        continue
+    # else create opportunity
+
+Show more
+That would ensure all stored AI-validated opportunities meet your “≥0.70” signal requirement.
+
+4. “AI Idea Engine” / Matching / Roadmaps
+Where it lives: app/services/ai_engine.py
+
+This service does not call external models; it’s a deterministic orchestrator that:
+
+Uses Opportunity fields (including AI-enriched ones from Claude) and UserProfile/Expert data to:
+Compute a fit score (0–100) and confidence.
+Recommend experts based on skill overlap.
+Generate execution roadmaps and capital estimates using ai_next_steps, ai_key_risks, severity, feasibility, etc.
+validate_opportunity:
+Derives a validation score from ai_opportunity_score or fallbacks.
+Maps it to verdict: fast_track (≥80), refine (≥60), pivot (<60) and provides next steps & risks.
+This aligns with your “Idea Engine” concept: it layers heuristics on top of the Claude-enriched opportunity, without requiring more LLM calls.
+
+5. What’s Still Missing vs Your Specs
+Enforced scoring thresholds:
+
+As noted, you don’t enforce opportunity_score ≥ 70 for writing to DB, only is_valid_opportunity.
+Fallbacks use 50 by default, which weakens signal quality.
+Explicit metrics for:
+
+Webhook success rate.
+Processing time per item (<500ms).
+Queue depth alerting (>1000 items).
+Geographic data coverage and average confidence.
+Problem validation pass rate (>60%).
+These stats can be derived from DB tables (scraped_sources, geographic_features, opportunities) but are not currently implemented as metrics/alerts in this code.
+
+Dual ingest paths:
+
+The older webhook.py Apify/Reddit importer bypasses the unified WebhookGateway + Claude pipeline and writes directly to Opportunity. That means:
+No Claude-based professional rewrite/analysis.
+No standardized geographic features or ai_* fields.
+Potentially weaker deduplication / quality checks.
+6. Recommended Next Steps (Concrete)
+If you want to tighten the system to match your original goals, I’d prioritize:
+
+Enforce a minimum AI opportunity score for creation
+In OpportunityProcessor.process_pending_sources, require opportunity_score >= 70 (or at least 60–70) before instantiating an Opportunity.
+
+Disable or refactor legacy Apify/Reddit ingest
+
+Either:
+Route everything through the WebhookGateway + OpportunityProcessor model, or
+Clearly mark webhook.py endpoints as legacy and disable them when the new pipeline is active, to avoid inconsistent data.
+Add lightweight DB-based metrics endpoints (no external infra required):
+
+E.g., in analytics router:
+Count scraped_sources by processed and status over last 24h to estimate webhook success rate and queue depth.
+Join geographic_features and opportunities to report:
+% of opportunities with non-null lat/lng
+Average confidence_score.
+Production safeguards for dev flags/secrets:
+
+Ensure:
+WEBHOOK_DEV_MODE is never set in prod.
+STRIPE_WEBHOOK_SECRET is always set; otherwise, do not process events in prod.

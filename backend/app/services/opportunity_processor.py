@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 MAX_CONCURRENT_CLAUDE_CALLS = 5
 AI_CALL_TIMEOUT_SECONDS = 30
+MIN_OPPORTUNITY_SCORE = 50
 
 AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
 AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
@@ -84,11 +85,18 @@ class OpportunityProcessor:
                     source.processed_at = datetime.utcnow()
                     stats["skipped"] += 1
                 else:
-                    opportunity = self._create_opportunity_from_analysis(source, analysis, raw_data)
-                    self.db.add(opportunity)
-                    source.processed = 1
-                    source.processed_at = datetime.utcnow()
-                    stats["opportunities_created"] += 1
+                    opportunity_score = analysis.get("opportunity_score") or 0
+                    if opportunity_score < MIN_OPPORTUNITY_SCORE:
+                        logger.info(f"Skipping source {source.id}: opportunity_score {opportunity_score} below minimum {MIN_OPPORTUNITY_SCORE}")
+                        source.processed = 1
+                        source.processed_at = datetime.utcnow()
+                        stats["skipped"] += 1
+                    else:
+                        opportunity = self._create_opportunity_from_analysis(source, analysis, raw_data)
+                        self.db.add(opportunity)
+                        source.processed = 1
+                        source.processed_at = datetime.utcnow()
+                        stats["opportunities_created"] += 1
 
         self.db.commit()
         logger.info(f"Opportunity processing complete: {stats}")
@@ -307,10 +315,10 @@ Important:
             "professional_description": raw_text[:1000],
             "one_line_summary": raw_text[:200],
             "problem_statement": raw_text[:500],
-            "category": "Other",  # Default fallback category
+            "category": "Other",
             "severity": 3,
-            "opportunity_score": 50,
-            "feasibility_score": 50,
+            "opportunity_score": MIN_OPPORTUNITY_SCORE,
+            "feasibility_score": MIN_OPPORTUNITY_SCORE,
             "competition_level": "medium",
             "urgency_level": "medium",
             "geographic_scope": "online",

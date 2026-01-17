@@ -193,7 +193,22 @@ async def fetch_latest_apify_data(
     db: Session = Depends(get_db),
     actor_id: str = "trudax/reddit-scraper-lite"
 ):
-    """Fetch latest data from an Apify actor's default dataset"""
+    """
+    DEPRECATED: Use the unified webhook pipeline instead.
+    This endpoint is disabled in production.
+    """
+    import logging
+    _logger = logging.getLogger(__name__)
+    
+    if _is_production():
+        _logger.error("Deprecated /api/v1/webhook/apify/fetch-latest endpoint called in production - disabled")
+        raise HTTPException(
+            status_code=410,
+            detail="This endpoint is deprecated. Use the unified webhook pipeline."
+        )
+    
+    _logger.warning("Deprecated /api/v1/webhook/apify/fetch-latest endpoint called")
+    
     apify_token = os.getenv("APIFY_API_TOKEN", "")
     if not apify_token:
         raise HTTPException(status_code=500, detail="APIFY_API_TOKEN not configured")
@@ -277,6 +292,22 @@ async def import_apify_data(
     db: Session = Depends(get_db),
     x_apify_webhook_secret: Optional[str] = Header(None, alias="X-Apify-Webhook-Secret")
 ):
+    """
+    DEPRECATED: Use the unified webhook pipeline instead.
+    This endpoint is disabled in production.
+    """
+    import logging
+    _logger = logging.getLogger(__name__)
+    
+    if _is_production():
+        _logger.error("Deprecated /api/v1/webhook/apify/import endpoint called in production - disabled")
+        raise HTTPException(
+            status_code=410,
+            detail="This endpoint is deprecated. Use the unified webhook pipeline."
+        )
+    
+    _logger.warning("Deprecated /api/v1/webhook/apify/import endpoint called")
+    
     if APIFY_WEBHOOK_SECRET and x_apify_webhook_secret != APIFY_WEBHOOK_SECRET:
         raise HTTPException(status_code=401, detail="Invalid webhook secret")
     
@@ -323,7 +354,22 @@ async def import_apify_data(
 async def trigger_apify_scrape(
     x_apify_webhook_secret: Optional[str] = Header(None, alias="X-Apify-Webhook-Secret")
 ):
-    """Trigger the Apify Reddit scraper to run a new scrape"""
+    """
+    DEPRECATED: Use the unified webhook pipeline instead.
+    This endpoint is disabled in production.
+    """
+    import logging
+    _logger = logging.getLogger(__name__)
+    
+    if _is_production():
+        _logger.error("Deprecated /api/v1/webhook/apify/trigger-scrape endpoint called in production - disabled")
+        raise HTTPException(
+            status_code=410,
+            detail="This endpoint is deprecated. Use the unified webhook pipeline."
+        )
+    
+    _logger.warning("Deprecated /api/v1/webhook/apify/trigger-scrape endpoint called")
+    
     if APIFY_WEBHOOK_SECRET and x_apify_webhook_secret != APIFY_WEBHOOK_SECRET:
         raise HTTPException(status_code=401, detail="Invalid webhook secret")
     

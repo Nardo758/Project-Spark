@@ -380,3 +380,77 @@ async def receive_apify_webhook(
     except Exception as e:
         logger.error(f"Apify webhook error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/metrics")
+async def get_pipeline_metrics(db: Session = Depends(get_db)):
+    """
+    Get pipeline health metrics including:
+    - Opportunity processing statistics
+    - Quality thresholds
+    - Recent processing activity
+    """
+    from app.models.opportunity import Opportunity
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    now = datetime.utcnow()
+    last_24h = now - timedelta(hours=24)
+    last_7d = now - timedelta(days=7)
+    
+    total_opportunities = db.query(func.count(Opportunity.id)).scalar() or 0
+    
+    opportunities_24h = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.created_at >= last_24h
+    ).scalar() or 0
+    
+    opportunities_7d = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.created_at >= last_7d
+    ).scalar() or 0
+    
+    avg_score = db.query(func.avg(Opportunity.ai_opportunity_score)).filter(
+        Opportunity.ai_opportunity_score.isnot(None)
+    ).scalar() or 0
+    
+    high_quality_count = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.ai_opportunity_score >= 70
+    ).scalar() or 0
+    
+    above_threshold_count = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.ai_opportunity_score >= 50
+    ).scalar() or 0
+    
+    pending_moderation = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.moderation_status == "pending_review"
+    ).scalar() or 0
+    
+    approved_count = db.query(func.count(Opportunity.id)).filter(
+        Opportunity.moderation_status == "approved"
+    ).scalar() or 0
+    
+    return {
+        "status": "healthy",
+        "timestamp": now.isoformat(),
+        "quality_threshold": {
+            "min_opportunity_score": 50,
+            "description": "Opportunities below this score are filtered out during processing"
+        },
+        "totals": {
+            "opportunities": total_opportunities,
+            "high_quality": high_quality_count,
+            "above_threshold": above_threshold_count,
+        },
+        "activity": {
+            "opportunities_last_24h": opportunities_24h,
+            "opportunities_last_7d": opportunities_7d,
+        },
+        "quality_metrics": {
+            "average_score": round(float(avg_score), 2) if avg_score else 0,
+            "high_quality_percentage": round(high_quality_count / total_opportunities * 100, 2) if total_opportunities > 0 else 0,
+            "above_threshold_percentage": round(above_threshold_count / total_opportunities * 100, 2) if total_opportunities > 0 else 0,
+        },
+        "moderation": {
+            "pending_review": pending_moderation,
+            "approved": approved_count,
+        }
+    }
