@@ -718,6 +718,22 @@ def delete_user(
     return {"message": "User deleted successfully"}
 
 
+@router.get("/opportunities/count")
+def count_opportunities(
+    search: Optional[str] = Query(None),
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Get total count of opportunities for pagination"""
+    query = db.query(Opportunity)
+    
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(Opportunity.title.ilike(search_pattern))
+    
+    return {"count": query.count()}
+
+
 @router.get("/opportunities", response_model=List[AdminOpportunityListItem])
 def list_opportunities(
     skip: int = Query(0, ge=0),
@@ -736,7 +752,7 @@ def list_opportunities(
         Opportunity.status,
         Opportunity.validation_count,
         Opportunity.created_at
-    ).join(User, Opportunity.author_id == User.id)
+    ).outerjoin(User, Opportunity.author_id == User.id)
 
     # Apply filters
     if search:
@@ -753,8 +769,8 @@ def list_opportunities(
         {
             "id": opp.id,
             "title": opp.title,
-            "author_id": opp.author_id,
-            "author_name": opp.author_name,
+            "author_id": opp.author_id or 0,
+            "author_name": opp.author_name or "Web Scraper",
             "status": opp.status,
             "validation_count": opp.validation_count,
             "created_at": opp.created_at

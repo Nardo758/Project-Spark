@@ -239,6 +239,42 @@
             margin-bottom: 24px;
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            border-top: 1px solid var(--stone-200);
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid var(--stone-300);
+            background: var(--white);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: var(--stone-100);
+            border-color: var(--stone-400);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .page-info {
+            font-size: 14px;
+            color: var(--stone-600);
+            min-width: 150px;
+            text-align: center;
+        }
+
         .section-header {
             padding: 20px 24px;
             border-bottom: 1px solid var(--stone-200);
@@ -1045,6 +1081,11 @@
                             <tr><td colspan="6" class="loading">Loading opportunities...</td></tr>
                         </tbody>
                     </table>
+                    <div class="pagination" id="opp-pagination">
+                        <button id="opp-prev-btn" onclick="changeOppPage(-1)" disabled>← Previous</button>
+                        <span class="page-info" id="opp-page-info">Page 1</span>
+                        <button id="opp-next-btn" onclick="changeOppPage(1)">Next →</button>
+                    </div>
                 </div>
             </section>
 
@@ -2148,6 +2189,11 @@
     <script>
         const API_BASE_URL = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL) ? CONFIG.API_BASE_URL : '/api/v1';
         let currentUser = null;
+        
+        // Pagination state for opportunities
+        let oppCurrentPage = 1;
+        const oppPageSize = 50;
+        let oppTotalCount = 0;
 
         async function init() {
             if (!OppGridAuth.requireAuth({ redirect: 'admin.html' })) return;
@@ -2198,7 +2244,7 @@
 
             document.getElementById('user-search').addEventListener('input', debounce(() => loadUsers(), 300));
             document.getElementById('user-filter').addEventListener('change', () => loadUsers());
-            document.getElementById('opp-search').addEventListener('input', debounce(() => loadOpportunities(), 300));
+            document.getElementById('opp-search').addEventListener('input', debounce(() => loadOpportunities(true), 300));
             document.getElementById('sub-tier-filter').addEventListener('change', () => loadSubscriptions());
             document.getElementById('report-status-filter').addEventListener('change', () => loadReports());
             document.getElementById('partner-search')?.addEventListener('input', debounce(() => loadPartners(), 300));
@@ -2458,12 +2504,20 @@
             }
         }
 
-        async function loadOpportunities() {
+        async function loadOpportunities(resetPage = false) {
+            if (resetPage) oppCurrentPage = 1;
+            
             const search = document.getElementById('opp-search').value;
             const tbody = document.getElementById('opportunities-table-body');
+            const skip = (oppCurrentPage - 1) * oppPageSize;
             
             try {
-                let url = '/api/v1/admin/opportunities?limit=50';
+                // First get total count
+                const countResponse = await fetchWithAuth('/api/v1/admin/opportunities/count' + (search ? `?search=${encodeURIComponent(search)}` : ''));
+                const countData = await countResponse.json();
+                oppTotalCount = countData.count || 0;
+                
+                let url = `/api/v1/admin/opportunities?limit=${oppPageSize}&skip=${skip}`;
                 if (search) url += `&search=${encodeURIComponent(search)}`;
 
                 const response = await fetchWithAuth(url);
@@ -2471,6 +2525,7 @@
 
                 if (opportunities.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No opportunities found</td></tr>';
+                    updateOppPagination();
                     return;
                 }
 
@@ -2492,9 +2547,32 @@
                         </td>
                     </tr>
                 `).join('');
+                
+                updateOppPagination();
             } catch (error) {
                 console.error('Failed to load opportunities:', error);
                 tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load opportunities</td></tr>';
+            }
+        }
+        
+        function updateOppPagination() {
+            const totalPages = Math.ceil(oppTotalCount / oppPageSize) || 1;
+            const pageInfo = document.getElementById('opp-page-info');
+            const prevBtn = document.getElementById('opp-prev-btn');
+            const nextBtn = document.getElementById('opp-next-btn');
+            
+            pageInfo.textContent = `Page ${oppCurrentPage} of ${totalPages} (${oppTotalCount} total)`;
+            prevBtn.disabled = oppCurrentPage <= 1;
+            nextBtn.disabled = oppCurrentPage >= totalPages;
+        }
+        
+        function changeOppPage(delta) {
+            const totalPages = Math.ceil(oppTotalCount / oppPageSize) || 1;
+            const newPage = oppCurrentPage + delta;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                oppCurrentPage = newPage;
+                loadOpportunities();
             }
         }
 
