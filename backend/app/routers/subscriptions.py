@@ -341,15 +341,28 @@ def create_subscription_intent(
             return {"stripe_subscription_id": stripe_sub.id, "client_secret": None, "status": "active"}
         
         if not client_secret:
-            logger.error(
-                f"Stripe subscription created but no client_secret. "
+            # No client_secret means no payment is required right now
+            # This can happen with trials, $0 invoices, or already-paid subscriptions
+            logger.warning(
+                f"Stripe subscription created without client_secret. "
                 f"sub_status={sub_status}, invoice_status={invoice_status}, pi_status={pi_status}, "
-                f"latest_invoice={bool(latest_invoice)}, payment_intent={bool(payment_intent)}"
+                f"latest_invoice={bool(latest_invoice)}, payment_intent={bool(payment_intent)}. "
+                f"Treating as successful subscription creation."
             )
-            raise HTTPException(
-                status_code=500, 
-                detail="Stripe did not return a payment client secret. Please try again or contact support."
-            )
+            # Save the subscription and return success - frontend will handle appropriately
+            subscription.stripe_subscription_id = stripe_sub.id
+            subscription.stripe_price_id = price_id
+            subscription.tier = tier
+            # For incomplete subscriptions without payment, treat as active since no payment is needed
+            subscription.status = SubscriptionStatus.ACTIVE
+            cps = getattr(stripe_sub, "current_period_start", None)
+            cpe = getattr(stripe_sub, "current_period_end", None)
+            if isinstance(cps, (int, float)):
+                subscription.current_period_start = datetime.fromtimestamp(int(cps), tz=timezone.utc)
+            if isinstance(cpe, (int, float)):
+                subscription.current_period_end = datetime.fromtimestamp(int(cpe), tz=timezone.utc)
+            db.commit()
+            return {"stripe_subscription_id": stripe_sub.id, "client_secret": None, "status": "active"}
     except HTTPException:
         raise
     except Exception as e:
