@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 import Layout from './components/Layout'
 import RequireAuth from './components/RequireAuth'
+import RequireTier from './components/RequireTier'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Discover from './pages/Discover'
@@ -113,11 +114,46 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route path="build/reports" element={<ReportStudio />} />
-        <Route path="build/reports/:type" element={<ReportStudio />} />
-        <Route path="build/business-plan" element={<ReportStudio />} />
-        <Route path="build/financials" element={<ReportStudio />} />
-        <Route path="build/pitch-deck" element={<ReportStudio />} />
+        <Route
+          path="build/reports"
+          element={
+            <RequireTier requiredTier="pro" featureName="Consultant Studio">
+              <ReportStudio />
+            </RequireTier>
+          }
+        />
+        <Route
+          path="build/reports/:type"
+          element={
+            <RequireTier requiredTier="pro" featureName="Report Library">
+              <ReportStudio />
+            </RequireTier>
+          }
+        />
+        <Route
+          path="build/business-plan"
+          element={
+            <RequireTier requiredTier="pro" featureName="Business Plan Builder">
+              <ReportStudio />
+            </RequireTier>
+          }
+        />
+        <Route
+          path="build/financials"
+          element={
+            <RequireTier requiredTier="pro" featureName="Financial Reports">
+              <ReportStudio />
+            </RequireTier>
+          }
+        />
+        <Route
+          path="build/pitch-deck"
+          element={
+            <RequireTier requiredTier="pro" featureName="Pitch Deck Builder">
+              <ReportStudio />
+            </RequireTier>
+          }
+        />
         <Route path="build/experts" element={<ExpertMarketplace />} />
         <Route
           path="expert/dashboard"
