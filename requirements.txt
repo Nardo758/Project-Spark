@@ -98,3 +98,4 @@ tenacity
 gql
 aiohttp
 resend
+stripe==14.1.0
