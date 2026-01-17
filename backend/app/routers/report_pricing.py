@@ -3,6 +3,9 @@ Report Pricing Router
 Endpoints for report pricing, purchases, and access checks
 """
 
+import os
+from urllib.parse import urlparse
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -10,6 +13,30 @@ from typing import Optional, List
 from datetime import datetime, timedelta, timezone
 
 from app.db.database import get_db
+
+
+def validate_redirect_url(url: str, request: Request) -> bool:
+    """Validate that redirect URLs are from trusted origins to prevent open redirect attacks."""
+    if not url:
+        return False
+    
+    parsed = urlparse(url)
+    
+    allowed_hosts = [
+        request.headers.get("host", "").split(":")[0],
+        "localhost",
+        "127.0.0.1",
+    ]
+    
+    replit_domain = os.getenv("REPLIT_DOMAINS", "").split(",")
+    allowed_hosts.extend([d.strip() for d in replit_domain if d.strip()])
+    
+    if os.getenv("REPLIT_DEPLOYMENT"):
+        allowed_hosts.append(f"{os.getenv('REPL_SLUG', '')}.{os.getenv('REPL_OWNER', '')}.repl.co")
+    
+    return parsed.netloc.split(":")[0] in allowed_hosts or parsed.netloc == ""
+
+
 from app.models.user import User
 from app.models.opportunity import Opportunity
 from app.models.purchased_report import PurchasedReport, PurchasedBundle, ConsultantLicense, PurchaseType
@@ -389,6 +416,9 @@ def create_report_checkout(
     if amount_cents <= 0:
         raise HTTPException(status_code=400, detail="Invalid price for this report")
     
+    if not validate_redirect_url(checkout_data.success_url, request) or not validate_redirect_url(checkout_data.cancel_url, request):
+        raise HTTPException(status_code=400, detail="Invalid redirect URL")
+    
     stripe_client = get_stripe_client()
     
     session = stripe_client.checkout.Session.create(
@@ -470,6 +500,9 @@ def create_bundle_checkout(
     amount_cents = get_bundle_price(checkout_data.bundle_type, subscription.tier)
     if amount_cents <= 0:
         raise HTTPException(status_code=400, detail="Invalid price for this bundle")
+    
+    if not validate_redirect_url(checkout_data.success_url, request) or not validate_redirect_url(checkout_data.cancel_url, request):
+        raise HTTPException(status_code=400, detail="Invalid redirect URL")
     
     stripe_client = get_stripe_client()
     
