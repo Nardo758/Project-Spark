@@ -3,18 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useUpgrade } from '../contexts/UpgradeContext'
 import { Lock } from 'lucide-react'
-
-type Tier = 'free' | 'starter' | 'growth' | 'pro' | 'team' | 'business' | 'enterprise'
-
-const TIER_LEVELS: Record<Tier, number> = {
-  free: 0,
-  starter: 1,
-  growth: 2,
-  pro: 3,
-  team: 4,
-  business: 5,
-  enterprise: 6,
-}
+import { type Tier, TIER_LEVELS, getTierLevel } from '../constants/pricing'
 
 type Props = {
   children: ReactNode
@@ -39,8 +28,8 @@ export default function RequireTier({ children, requiredTier, featureName }: Pro
   }
 
   const userTier = (user?.tier || 'free') as Tier
-  const userLevel = TIER_LEVELS[userTier] ?? 0
-  const requiredLevel = TIER_LEVELS[requiredTier] ?? 0
+  const userLevel = getTierLevel(userTier)
+  const requiredLevel = TIER_LEVELS[requiredTier]
 
   if (userLevel < requiredLevel) {
     return (

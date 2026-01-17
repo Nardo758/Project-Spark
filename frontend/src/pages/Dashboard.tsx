@@ -6,17 +6,7 @@ import { useMemo } from 'react'
 import { 
   Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight, Briefcase
 } from 'lucide-react'
-
-type AccessInfo = {
-  age_days: number
-  days_until_unlock: number
-  is_accessible: boolean
-  is_unlocked: boolean
-  can_pay_to_unlock: boolean
-  unlock_price?: number | null
-  user_tier?: string | null
-  content_state?: string | null
-}
+import type { AccessInfo } from '../types/paywall'
 
 const quickActions = [
   { icon: Target, label: 'Find Opportunity', path: '/discover', color: 'bg-blue-500' },

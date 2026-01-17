@@ -14,18 +14,7 @@ import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
 import ReportViewer from '../components/ReportViewer'
 import OpportunityMap from '../components/OpportunityMap'
-
-type AccessInfo = {
-  age_days: number
-  days_until_unlock: number
-  is_accessible: boolean
-  is_unlocked: boolean
-  can_pay_to_unlock: boolean
-  unlock_price?: number | null
-  user_tier?: string | null
-  freshness_badge?: { label: string; icon: string; color: string; tier_required: string; description: string }
-  content_state?: string | null
-}
+import type { AccessInfo } from '../types/paywall'
 
 type Opportunity = {
   id: number

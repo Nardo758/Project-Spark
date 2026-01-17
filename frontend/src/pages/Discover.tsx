@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Search, Bookmark, Filter, FileText, ChevronRight, Lock, Sparkles, Target, TrendingUp, Users } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import type { AccessInfo } from '../types/paywall'
 
 const freshnessOptions = [
   { value: 'All', label: 'All', maxDays: Infinity },
@@ -29,19 +30,6 @@ type Opportunity = {
   growth_rate?: number
   tags?: string[]
 }
-
-type AccessInfo = {
-  age_days: number
-  days_until_unlock: number
-  is_accessible: boolean
-  working_on_count?: number
-  is_unlocked: boolean
-  can_pay_to_unlock: boolean
-  unlock_price?: number | null
-  user_tier?: string | null
-  content_state?: string | null
-}
-
 
 type OpportunityList = {
   opportunities: Opportunity[]

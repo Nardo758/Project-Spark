@@ -3,16 +3,17 @@ import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-do
 import { useAuthStore } from '../stores/authStore'
 import { Loader2, Check, Crown } from 'lucide-react'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
+import { PLAN_DISPLAY, type Tier } from '../constants/pricing'
 
-const planDetails: Record<string, { name: string; price: string; color: string; tier: string }> = {
-  'starter': { name: 'Starter', price: '$20/mo', color: 'blue', tier: 'starter' },
-  'growth': { name: 'Growth', price: '$50/mo', color: 'blue', tier: 'growth' },
-  'pro': { name: 'Pro', price: '$99/mo', color: 'purple', tier: 'pro' },
-  'builder': { name: 'Pro', price: '$99/mo', color: 'purple', tier: 'pro' },
-  'team': { name: 'Team', price: '$250/mo', color: 'emerald', tier: 'team' },
-  'business': { name: 'Business', price: '$750/mo', color: 'emerald', tier: 'business' },
-  'scaler': { name: 'Business', price: '$750/mo', color: 'emerald', tier: 'business' },
-  'enterprise': { name: 'Enterprise', price: 'Custom', color: 'amber', tier: 'enterprise' }
+const planDetails: Record<string, { name: string; price: string; color: string; tier: Tier }> = {
+  starter: { name: 'Starter', price: '$20/mo', color: 'blue', tier: 'starter' },
+  growth: { name: 'Growth', price: '$50/mo', color: 'blue', tier: 'growth' },
+  pro: { name: 'Pro', price: '$99/mo', color: 'purple', tier: 'pro' },
+  builder: PLAN_DISPLAY.builder,
+  team: { name: 'Team', price: '$250/mo', color: 'emerald', tier: 'team' },
+  business: { name: 'Business', price: '$750/mo', color: 'emerald', tier: 'business' },
+  scaler: PLAN_DISPLAY.scaler,
+  enterprise: { name: 'Enterprise', price: 'Custom', color: 'amber', tier: 'enterprise' },
 }
 
 export default function Signup() {
