@@ -225,6 +225,7 @@ class ConsultantStudioService:
         
         try:
             inferred_category = self._infer_business_category(business_description)
+            logger.info(f"[TIMING] Category inference: {int((time.time() - start_time) * 1000)}ms")
             
             cache_key = self._generate_cache_key(city, business_description, None, additional_params)
             
@@ -235,13 +236,17 @@ class ConsultantStudioService:
                 self._increment_cache_hit(cache_key)
                 return cached
             
+            geo_start = time.time()
             geo_analysis = await self._deepseek_geo_analysis(
                 city, business_description, inferred_category, additional_params
             )
+            logger.info(f"[TIMING] Geo analysis: {int((time.time() - geo_start) * 1000)}ms")
             
+            report_start = time.time()
             market_report = await self._claude_location_report(
                 city, business_description, inferred_category, geo_analysis, additional_params
             )
+            logger.info(f"[TIMING] Market report: {int((time.time() - report_start) * 1000)}ms")
             
             site_recommendations = self._generate_site_recommendations(
                 geo_analysis, market_report, inferred_category
@@ -1132,10 +1137,13 @@ class ConsultantStudioService:
         geo_analysis: Dict[str, Any],
         params: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Claude generates comprehensive location market report"""
+        """Claude generates comprehensive location market report with parallelized AI calls"""
         from .ai_report_generator import ai_report_generator
+        import asyncio
         
         try:
+            loop = asyncio.get_running_loop()
+            
             opportunity_context = {
                 "title": f"{business_description} in {city}",
                 "category": inferred_category,
@@ -1146,15 +1154,20 @@ class ConsultantStudioService:
             demographics = geo_analysis.get("demographics", {})
             competitors = geo_analysis.get("competitors", [])
             
-            market_insights = ai_report_generator.generate_market_insights(
-                opportunity_context,
-                demographics,
-                competitors
-            )
-            
-            competitive_analysis = ai_report_generator.generate_competitive_analysis(
-                opportunity_context,
-                competitors
+            market_insights, competitive_analysis = await asyncio.gather(
+                loop.run_in_executor(
+                    None,
+                    ai_report_generator.generate_market_insights,
+                    opportunity_context,
+                    demographics,
+                    competitors
+                ),
+                loop.run_in_executor(
+                    None,
+                    ai_report_generator.generate_competitive_analysis,
+                    opportunity_context,
+                    competitors
+                )
             )
             
             return {
