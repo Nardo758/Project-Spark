@@ -1,0 +1,162 @@
+Codebase Scan – Key Findings & Potential Issues
+Below is a focused review of the parts of the code we’ve seen (backend core, security, webhooks/Stripe, frontend JS), with concrete risks or gotchas rather than generic comments.
+
+1. Security & Hardening
+1.1 JWT & Passwords
+app/core/security.py:
+Uses jose + a single SECRET_KEY for signing; security is entirely dependent on that env var being strong and secret.
+Passwords are truncated to 72 bytes for bcrypt compatibility; this is fine but means very long passphrases have diminishing returns (documenting this in your UX is usually recommended, but code-wise it’s OK).
+Risk: If SECRET_KEY is weak or checked into .env, JWTs are trivial to forge.
+Mitigation: Ensure SECRET_KEY is long, random, and only configured via secure env in prod.
+
+1.2 Security Middleware & Rate Limiting
+SecurityHeadersMiddleware:
+
+Good defaults: X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy.
+HSTS only applied when scheme == https, which is correct.
+RateLimitMiddleware:
+
+In-memory, per-process rate limiting keyed by (client_ip, path) with fixed 60s window.
+Important detail: some paths are skipped from rate limiting:
+/health, /docs, /openapi.json
+/api/v1/webhook/stripe, /api/v1/webhook/
+/api/v1/replit-auth/, /auth/
+High-risk auth endpoints (login, register, 2FA, magic-link, pay-per-unlock) have much tighter per-minute limits, which is good.
+Risks / caveats:
+
+Webhooks (Stripe/Apify/Reddit) are intentionally not rate-limited; that’s reasonable for provider retries, but it also means:
+If an attacker knows your webhook URL and signing secret is misconfigured or disabled, they can flood the endpoint and cause DB/load.
+This limiter is not distributed; multiple app instances will each apply their own limits.
+Mitigation suggestions:
+
+Ensure webhooks rely strictly on HMAC/signature (see below) and are not exposed publicly without that.
+For production scale, consider an external rate-forward or WAF-based rate limiting.
+2. Webhooks / Reddit / Apify
+You essentially have two webhook layers:
+
+app/routers/webhooks.py – generalized WebhookGateway and Apify import.
+app/routers/webhook.py – a separate, older-style Apify + Reddit importer that writes directly to Opportunity.
+2.1 General Webhooks (/api/v1/webhooks/{source})
+receive_webhook:
+
+Accepts WebhookPayload with .data dict.
+Reads raw body for signature verification and passes both raw payload + parsed data into WebhookGateway.process_webhook.
+Accepts headers X-Hub-Signature-256 or X-Webhook-Signature.
+Dev escape hatch: WEBHOOK_DEV_MODE=1 allows skipping HMAC verification entirely.
+receive_webhook_batch:
+
+Requires signature unless WEBHOOK_DEV_MODE=1.
+Validates signature via WebhookGateway.verify_hmac_signature(...).
+Calls process_batch(..., pre_authenticated=True) if verification passes.
+Risks / potential issues:
+
+If WEBHOOK_DEV_MODE is left set to 1 in production, all webhooks can be spoofed with no signature check.
+receive_webhook allows signature=None if dev mode or if headers are absent; WebhookGateway.process_webhook must robustly reject missing signatures in prod mode; if it doesn’t, that’s a vulnerability.
+Ensure that HMAC secrets (per source) aren’t weak or checked into code/env accidentally.
+2.2 Apify Webhook (/api/v1/webhooks/apify and /api/v1/webhook/apify)
+You have two different Apify handlers:
+
+In webhooks.py (apify_router.post("/apify")):
+
+Does not enforce X-Apify-Webhook-Secret.
+Uses WebhookGateway with skip_hmac=True for Apify items.
+Deducts source_type based on actor name (reddit/yelp/google/etc).
+Immediately fetches up to 1000 items from a dataset and pipes each through WebhookGateway.process_webhook(...).
+Starts background opportunity processing.
+In webhook.py (router.post("/apify")):
+
+Enforces X-Apify-Webhook-Secret if APIFY_WEBHOOK_SECRET is set.
+Fetches dataset via APIFY_API_TOKEN, processes only items where dataType == "post", and writes directly to Opportunity without shared validation/dup detection logic.
+Risks / design issues:
+
+Duplication & drift: Two parallel code paths (webhook.py vs webhooks.py) import Reddit/Apify data into opportunities with different validation behavior. Monitoring, dedup, geographic extraction, and scoring could diverge.
+webhooks.apify lacks any shared secret check and relies solely on Apify’s ability to call the URL; an attacker with the URL can fire arbitrary JSON items marked as “safe” because you call process_webhook with skip_hmac=True.
+Mitigation:
+
+For production, I’d strongly recommend consolidating onto one Apify path (the WebhookGateway-based one) and enforce a secret or HMAC scheme there as well.
+Confirm that WebhookGateway.process_webhook enforces validation pipeline (schema, geographic, duplicates, content quality, scoring) and logging; if skip_hmac=True, that should be allowed only in internal/trusted scenarios.
+3. Stripe Webhooks & Payments
+app/routers/stripe_webhook.py handles /api/v1/webhook/stripe.
+
+3.1 Signature Verification
+Retrieves STRIPE_WEBHOOK_SECRET from env.
+If secret is not set:
+Logs a warning and skips signature verification, but does attempt to parse the payload as JSON and process event.
+If secret is set:
+Uses stripe.Webhook.construct_event(payload, sig_header, webhook_secret).
+Risks:
+
+Running without STRIPE_WEBHOOK_SECRET in prod is dangerous: any client with the URL can send forged Stripe events to manipulate:
+Transaction statuses
+Subscription tiers/status
+Unlocks (UnlockedOpportunity), fast-pass/deep-dive features, idea validations, etc.
+Mitigation:
+
+Treat missing STRIPE_WEBHOOK_SECRET as a hard error in production; the current behavior is reasonably safe for local dev, but you must ensure the secret is always configured in real environments.
+Consider gating “no secret” mode behind an explicit STRIPE_WEBHOOK_DEV_MODE flag to avoid accidental misconfig.
+3.2 Idempotency & DB Updates
+Uses StripeWebhookEvent table to record stripe_event_id, status, attempt counts – this is good practice.
+Individual handlers check for existing records before creating duplicate transactions or unlocks.
+Possible improvements / checks:
+
+Some flows (e.g., _fulfill_micro_payment, _fulfill_project_payment) are essentially stubs that log only; make sure this matches your product expectations.
+Deep-dive & fast-pass logic assumes metadata always contains user_id and opportunity_id; missing data is logged but silently fails – fine for safety, but you may want to notify ops.
+4. Frontend Auth & API Usage
+Files: js/api.js, js/auth.js, js/config.js.
+
+4.1 Token Storage & Use
+Access tokens are stored in localStorage under access_token (canonical) with backward-compat for token.
+OppGridAPI reads Replit-auth cookies (auth_token, auth_user), migrates them into localStorage, then clears cookies.
+Risks:
+
+localStorage-stored JWT is vulnerable to XSS: any successful script injection can fully hijack user accounts.
+Tokens are included via Authorization: Bearer header, which is standard, but again depends heavily on XSS hygiene of all HTML/JS.
+Mitigation:
+
+Continue to aggressively sanitize/escape user content on the backend (templates) and in any HTML injection points.
+Long term: consider HTTP-only cookies plus CSRF tokens for more secure auth, but that’s a larger refactor.
+4.2 Error Handling
+handleResponse:
+Assumes response is JSON on error; if backend returns plain text/HTML, response.json() will throw, but is wrapped in .catch to return {detail: 'An error occurred'} – this is fine.
+logout doesn’t clear any server-side session (since you’re JWT-based, that’s expected); just be aware of token revocation strategy (normally done via short expiry + rotation).
+5. Reddit / Opportunity Processing Logic
+backend/app/routers/webhook.py contains logic to convert Reddit posts to Opportunity entries.
+
+Potential Issues:
+categorize_content uses simple keyword checks; this is business logic, not a bug, but it can lead to misclassification if keywords are very generic (e.g., “app”, “crypto”).
+calculate_severity:
+Uses integer cast after adding 0.5; e.g. score += 0.5 but then int(score) => 3.5 becomes 3, losing that nuance. That may be fine, but it’s slightly inconsistent.
+In several insert loops, you do not set source_url, source_platform, source_id in some earlier endpoints (receive_apify_webhook vs fetch_latest_apify_data – the latter sets more fields). This leads to partial/uneven data across opportunities.
+These are not security issues but could affect downstream analytics/UX.
+
+6. Gaps vs Your Testing/Monitoring Goals
+Comparing code to your target specs, I see these implementation or validation gaps:
+
+AI signal quality scoring (≥0.70):
+I don’t yet see explicit scoring thresholds or enforcement (we’d need to inspect ai_engine.py, opportunity_processor.py, map_data_engine.py next).
+Validation pipeline (schema, geographic, duplicate, content quality):
+WebhookGateway and GeographicExtractor appear to centralize this, but your older webhook.py bypasses them and implements simpler duplication checks directly on Opportunity.
+Webhook success rate, queue depth, processing time:
+I see some logging and background tasks but no metrics hooks in the scanned code (no Prometheus or stats collection). That likely lives elsewhere or is not yet implemented.
+CSRF protection:
+Backend is a pure API consumed by JS with Bearer tokens; there’s no CSRF middleware, which is usually OK for JWT-in-header APIs but not if you ever accept cookie-based auth without headers.
+HTTPS-only / TLS 1.3:
+Handled at the platform/load balancer layer, not in this repo; just ensure your deployment uses TLS1.2+ / 1.3 and HSTS is turned on at the edge.
+7. Summary: Highest-Priority Potential Issues
+If I prioritize what to fix / verify first:
+
+Webhook authenticity:
+
+Ensure WEBHOOK_DEV_MODE is OFF in prod and that all live webhooks use HMAC or secret verification.
+Avoid running without STRIPE_WEBHOOK_SECRET; treat missing secret as error outside of local dev.
+Consider merging webhook.py Apify routes into the WebhookGateway system and consistently enforcing a secret.
+Stripe event spoofing:
+
+As above, never ship to production with STRIPE_WEBHOOK_SECRET empty.
+XSS + localStorage tokens:
+
+Double-check all views that render user-generated content to ensure proper HTML escaping.
+If you ever add rich text/HTML to comments/descriptions, use a sanitizer on the backend.
+Redundant / inconsistent ingest paths:
+
+Having both webhooks.py and webhook.py for Apify/Reddit can lead to subtle duplication/quality differences and harder monitoring.
