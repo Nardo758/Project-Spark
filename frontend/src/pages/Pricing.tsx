@@ -16,7 +16,7 @@ import {
   Users,
   Database
 } from 'lucide-react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
@@ -296,9 +296,15 @@ const faqs = [
 export default function Pricing() {
   const { token, isAuthenticated } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const autoCheckout = searchParams.get('checkout')
   const [autoCheckoutTriggered, setAutoCheckoutTriggered] = useState(false)
+
+  const queryParams = new URLSearchParams(location.search)
+  const planFromQuery = queryParams.get('plan')
+  const fromQuery = queryParams.get('from')
+  const [signupAutoStartTriggered, setSignupAutoStartTriggered] = useState(false)
 
   type TierType = 'starter' | 'growth' | 'pro' | 'team' | 'business' | 'enterprise'
   const [billingLoading, setBillingLoading] = useState<TierType | 'portal' | null>(null)
@@ -437,6 +443,24 @@ export default function Pricing() {
       startSubscription(tier)
     }
   }, [autoCheckout, autoCheckoutTriggered, isAuthenticated, token, searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) return
+    if (fromQuery !== 'signup') return
+    if (signupAutoStartTriggered) return
+    if (subOpen || billingLoading) return
+    if (subscriptionInfo?.is_active) return
+
+    setSignupAutoStartTriggered(true)
+    const newParams = new URLSearchParams(searchParams)
+    newParams.delete('from')
+    newParams.delete('plan')
+    setSearchParams(newParams, { replace: true })
+
+    const plan: TierType = planFromQuery === 'scaler' ? 'business' : 'pro'
+    startSubscription(plan)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromQuery, planFromQuery, isAuthenticated, token, signupAutoStartTriggered, subOpen, billingLoading, subscriptionInfo?.is_active])
 
   useEffect(() => {
     if (!billingSyncing) return
