@@ -2,9 +2,6 @@ import { useState } from 'react'
 import { X, Zap, Lock, TrendingUp, FileText, Users, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { useInlinePayment } from '../hooks/useInlinePayment'
-import { type Tier } from '../constants/pricing'
-import PayPerUnlockModal from './PayPerUnlockModal'
 
 interface UpgradeModalProps {
   isOpen: boolean
@@ -57,54 +54,70 @@ const businessPlans = [
 
 export default function UpgradeModal({ isOpen, onClose, feature, context = 'general' }: UpgradeModalProps) {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, token } = useAuthStore()
   const [selectedPlan, setSelectedPlan] = useState<string>('growth') // Default to popular plan
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
-  const { 
-    state: paymentState, 
-    startCheckout, 
-    closePaymentModal, 
-    handlePaymentConfirmed 
-  } = useInlinePayment(() => {
-    onClose()
-  })
-  
-  if (!isOpen && !paymentState.paymentModalOpen) return null
+  if (!isOpen) return null
 
   const contextInfo = contextMessages[context]
   const ContextIcon = contextInfo.icon
 
   function handlePlanClick(tier: string) {
     setSelectedPlan(tier)
+    setError(null)
   }
 
-  function handleCheckout() {
+  async function handleCheckout() {
     if (!selectedPlan) return
     
-    if (isAuthenticated) {
-      startCheckout(selectedPlan as Tier)
-    } else {
+    if (!isAuthenticated) {
       onClose()
       navigate(`/signup?plan=${selectedPlan}`)
+      return
     }
-  }
 
-  if (paymentState.paymentModalOpen && paymentState.publishableKey && paymentState.clientSecret) {
-    return (
-      <PayPerUnlockModal
-        publishableKey={paymentState.publishableKey}
-        clientSecret={paymentState.clientSecret}
-        amountLabel={paymentState.priceLabel || ''}
-        title={`Subscribe to ${paymentState.selectedTier?.charAt(0).toUpperCase()}${paymentState.selectedTier?.slice(1) || ''}`}
-        contextLabel="Subscription"
-        confirmLabel={`Subscribe ${paymentState.priceLabel}`}
-        footnote="Your subscription will begin immediately after payment."
-        onClose={() => {
-          closePaymentModal()
-        }}
-        onConfirmed={handlePaymentConfirmed}
-      />
-    )
+    // Enterprise requires contact
+    if (selectedPlan === 'enterprise') {
+      window.open('mailto:sales@oppgrid.com?subject=Enterprise Plan Inquiry', '_blank')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const baseUrl = window.location.origin
+      const res = await fetch('/api/v1/subscriptions/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tier: selectedPlan,
+          success_url: `${baseUrl}/dashboard?subscription=success`,
+          cancel_url: `${baseUrl}/dashboard?subscription=canceled`,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        throw new Error(data?.detail || 'Unable to start checkout')
+      }
+
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url
+      } else {
+        throw new Error('No checkout URL returned')
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to start checkout')
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -144,9 +157,9 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
             ))}
           </div>
 
-          {paymentState.error && (
+          {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              {paymentState.error}
+              {error}
             </div>
           )}
 
@@ -156,7 +169,7 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
               <button
                 key={plan.tier}
                 onClick={() => handlePlanClick(plan.tier)}
-                disabled={paymentState.isLoading}
+                disabled={isLoading}
                 className={`p-3 rounded-xl border-2 text-center transition-all hover:border-purple-500 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed ${
                   selectedPlan === plan.tier ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-200' : 'border-gray-200'
                 }`}
@@ -177,7 +190,7 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
               <button
                 key={plan.tier}
                 onClick={() => handlePlanClick(plan.tier)}
-                disabled={paymentState.isLoading}
+                disabled={isLoading}
                 className={`p-3 rounded-xl border-2 text-center transition-all hover:border-indigo-500 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed ${
                   selectedPlan === plan.tier ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-200' : 'border-gray-200'
                 }`}
@@ -198,10 +211,10 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
             </button>
             <button
               onClick={handleCheckout}
-              disabled={!selectedPlan || paymentState.isLoading}
+              disabled={!selectedPlan || isLoading}
               className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-sm font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {paymentState.isLoading ? (
+              {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : null}
               Checkout

@@ -138,9 +138,10 @@ def create_checkout_session(
     db: Session = Depends(get_db)
 ):
     """Create a Stripe Checkout session for subscription"""
-    # Validate tier
+    # Validate tier - normalize to uppercase to match database enum
+    tier_value = checkout_data.tier.upper() if checkout_data.tier else ""
     try:
-        tier = SubscriptionTier(checkout_data.tier)
+        tier = SubscriptionTier(tier_value)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
