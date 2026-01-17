@@ -25,6 +25,11 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
 *   **Authentication:** Uses Replit's OIDC patterns with database-backed user authentication, supporting various providers including LinkedIn OAuth.
 *   **User Interface:** Features a professional dark-themed design with a deep dive console, dynamic navigation, and interactive mapping (Leaflet.js/Mapbox).
 *   **Admin Panel:** Provides comprehensive tools for user, subscription, opportunity, and lead management, along with platform statistics.
+*   **Webhook Security Hardening:** Production-safe webhook authentication with defense-in-depth:
+    - Stripe webhooks require `STRIPE_WEBHOOK_SECRET` in production (hard-fail if missing). `STRIPE_DEV_MODE=1` only works in development.
+    - Apify webhooks require `APIFY_WEBHOOK_SECRET` in production (hard-fail if missing). `WEBHOOK_DEV_MODE=1` only works in development.
+    - Legacy webhook endpoints return HTTP 410 (Gone) in production, forcing use of secure consolidated handlers.
+    - Production detection via `REPLIT_DEPLOYMENT=1` environment variable.
 *   **Content Moderation System:** Quality control workflow requiring admin approval before opportunities are publicly visible. Features include:
     - Moderation statuses: pending_review, approved, rejected, needs_edit
     - Admin moderation queue with filtering by status
