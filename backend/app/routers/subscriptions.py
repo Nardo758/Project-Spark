@@ -223,9 +223,10 @@ def create_subscription_intent(
     """
     from datetime import timezone
 
-    # Validate tier
+    # Validate tier - normalize to uppercase to match database enum
+    tier_value = payload.tier.upper() if payload.tier else ""
     try:
-        tier = SubscriptionTier(payload.tier)
+        tier = SubscriptionTier(tier_value)
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid subscription tier: {payload.tier}")
 

@@ -8,25 +8,25 @@ import enum
 class SubscriptionTier(str, enum.Enum):
     """Subscription tier levels - New 6-tier pricing model (Jan 2026)"""
     # Individual Track
-    STARTER = "starter"      # $20/month - 1 slot, 0% discount
-    GROWTH = "growth"        # $50/month - 3 slots, 10% discount
-    PRO = "pro"              # $99/month - 5 slots, 15% discount
+    STARTER = "STARTER"      # $20/month - 1 slot, 0% discount
+    GROWTH = "GROWTH"        # $50/month - 3 slots, 10% discount
+    PRO = "PRO"              # $99/month - 5 slots, 15% discount
     # Business Track
-    TEAM = "team"            # $250/month - 3 seats, 5 slots, white-label
-    BUSINESS = "business"    # $750/month - 10 seats, 15 slots, 20% discount + white-label
-    ENTERPRISE = "enterprise" # $2500/month - unlimited seats, 30 slots, 50% discount + white-label
+    TEAM = "TEAM"            # $250/month - 3 seats, 5 slots, white-label
+    BUSINESS = "BUSINESS"    # $750/month - 10 seats, 15 slots, 20% discount + white-label
+    ENTERPRISE = "ENTERPRISE" # $2500/month - unlimited seats, 30 slots, 50% discount + white-label
     
     # Legacy tier (for migration)
-    FREE = "free"            # Deprecated - map to blocked access
+    FREE = "FREE"            # Deprecated - map to blocked access
 
 
 class SubscriptionStatus(str, enum.Enum):
     """Subscription status"""
-    ACTIVE = "active"
-    CANCELED = "canceled"
-    PAST_DUE = "past_due"
-    TRIALING = "trialing"
-    INCOMPLETE = "incomplete"
+    ACTIVE = "ACTIVE"
+    CANCELED = "CANCELED"
+    PAST_DUE = "PAST_DUE"
+    TRIALING = "TRIALING"
+    INCOMPLETE = "INCOMPLETE"
 
 
 class Subscription(Base):
