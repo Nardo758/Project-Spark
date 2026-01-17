@@ -11,10 +11,14 @@ Implements the 5-step trade area analysis pipeline:
 import os
 import logging
 import math
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+_executor = ThreadPoolExecutor(max_workers=4)
 
 
 @dataclass
@@ -112,6 +116,110 @@ class TradeAreaAnalyzer:
             ai_synthesis=ai_synthesis,
             map_url=map_url
         )
+
+    async def analyze_async(
+        self,
+        opportunity: Dict[str, Any],
+        include_competitors: bool = True,
+        include_demographics: bool = True,
+        include_ai_synthesis: bool = True
+    ) -> TradeAreaResult:
+        """
+        Async version of analyze() with parallelized I/O operations.
+        Uses asyncio.gather() to run independent I/O operations in parallel.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+            
+            lat = opportunity.get('latitude') or opportunity.get('lat')
+            lng = opportunity.get('longitude') or opportunity.get('lng')
+            
+            if not lat or not lng:
+                lat, lng = await loop.run_in_executor(
+                    _executor,
+                    self._geocode_location,
+                    opportunity.get('city'),
+                    opportunity.get('region'),
+                    opportunity.get('country')
+                )
+            
+            signal_clusters = self._analyze_signals(opportunity, lat, lng)
+            
+            competitors = []
+            if include_competitors and self.serpapi_key:
+                competitors = await loop.run_in_executor(
+                    _executor,
+                    self._fetch_competitors,
+                    opportunity, lat, lng
+                )
+            
+            trade_area = await loop.run_in_executor(
+                _executor,
+                self._compute_trade_area,
+                lat, lng, signal_clusters, competitors
+            )
+            
+            async def fetch_demographics_task():
+                if include_demographics:
+                    return await loop.run_in_executor(
+                        _executor,
+                        self._fetch_demographics,
+                        trade_area['center_lat'],
+                        trade_area['center_lng'],
+                        opportunity.get('region')
+                    )
+                return None
+            
+            async def generate_map_task():
+                return await loop.run_in_executor(
+                    _executor,
+                    self._generate_trade_area_map,
+                    trade_area['center_lat'],
+                    trade_area['center_lng'],
+                    trade_area['radius_km'],
+                    competitors[:10] if competitors else [],
+                    signal_clusters
+                )
+            
+            demographics, map_url = await asyncio.gather(
+                fetch_demographics_task(),
+                generate_map_task()
+            )
+            
+            ai_synthesis = None
+            if include_ai_synthesis:
+                ai_synthesis = await loop.run_in_executor(
+                    _executor,
+                    self._generate_ai_synthesis,
+                    opportunity, trade_area, competitors, demographics
+                )
+            
+            return TradeAreaResult(
+                center_lat=trade_area['center_lat'],
+                center_lng=trade_area['center_lng'],
+                radius_km=trade_area['radius_km'],
+                polygon_coords=trade_area['polygon_coords'],
+                signal_clusters=signal_clusters,
+                competitors=competitors,
+                white_space_score=trade_area['white_space_score'],
+                demographics=demographics,
+                ai_synthesis=ai_synthesis,
+                map_url=map_url
+            )
+        except Exception as e:
+            logger.error(f"Error in async trade area analysis: {e}")
+            return TradeAreaResult(
+                center_lat=0,
+                center_lng=0,
+                radius_km=5,
+                polygon_coords=[],
+                signal_clusters=[],
+                competitors=[],
+                white_space_score=50,
+                demographics=None,
+                ai_synthesis=None,
+                map_url=None
+            )
     
     def _analyze_signals(
         self, 

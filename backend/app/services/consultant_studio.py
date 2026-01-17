@@ -514,7 +514,7 @@ class ConsultantStudioService:
                 "city": business_address,
             }
             
-            trade_area = trade_area_analyzer.analyze(opportunity_data)
+            trade_area = await trade_area_analyzer.analyze_async(opportunity_data)
             demographics = trade_area.demographics or {}
             competitors = trade_area.competitors or []
             
@@ -1087,7 +1087,7 @@ class ConsultantStudioService:
                 "longitude": params.get("longitude") if params else None,
             }
             
-            trade_area = trade_area_analyzer.analyze(opportunity_data)
+            trade_area = await trade_area_analyzer.analyze_async(opportunity_data)
             
             demographics = trade_area.demographics or {}
             competitors = trade_area.competitors or []
