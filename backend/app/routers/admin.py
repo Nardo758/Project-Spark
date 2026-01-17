@@ -735,7 +735,6 @@ def list_opportunities(
         User.name.label("author_name"),
         Opportunity.status,
         Opportunity.validation_count,
-        Opportunity.comment_count,
         Opportunity.created_at
     ).join(User, Opportunity.author_id == User.id)
 
@@ -758,7 +757,6 @@ def list_opportunities(
             "author_name": opp.author_name,
             "status": opp.status,
             "validation_count": opp.validation_count,
-            "comment_count": opp.comment_count,
             "created_at": opp.created_at
         }
         for opp in opportunities

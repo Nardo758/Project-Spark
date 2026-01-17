@@ -86,7 +86,6 @@ class AdminOpportunityListItem(BaseModel):
     author_name: str
     status: str
     validation_count: int
-    comment_count: int
     created_at: datetime
 
     class Config:
