@@ -1,0 +1,55 @@
+5. frontend/src/pages/build/ReportStudio.tsx (new file)
+Create this file matching the import in App.tsx:
+
+tsx
+import { useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import ConsultantMap from '../../components/ConsultantMap'
+
+export default function ReportStudio() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const params = new URLSearchParams(location.search)
+  const city = params.get('city') || 'San Francisco'
+
+  const mapData = useMemo(
+    () => ({
+      center: { lat: 37.7749, lng: -122.4194 },
+      layers: {
+        pins: { data: [], count: 0 },
+        heatmap: { data: [], count: 0 },
+        polygons: { data: [], count: 0 },
+      },
+      totalFeatures: 0,
+    }),
+    []
+  )
+
+  return (
+    <span class="hljs-tag"><<span class="hljs-name">div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"></span>
+      <<span class="hljs-name">div className="mb-6 flex items-center justify-between gap-4"></span>
+        <<span class="hljs-name">div></span>
+          <<span class="hljs-name">h1 className="text-2xl font-bold text-gray-900"></span>Consultant Report Studio</<span class="hljs-name">h1></span>
+          <<span class="hljs-name">p className="text-sm text-gray-600 mt-1"></span>
+            Explore opportunity intelligence and geographic patterns for your report.
+          </<span class="hljs-name">p></span>
+        </<span class="hljs-name">div></span>
+        <<span class="hljs-name">button
+          type="button"
+          onClick={() =></span> navigate(-1)}
+          className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50"
+        >
+          Back
+        </<span class="hljs-name">button></span>
+      </<span class="hljs-name">div></span>
+
+      <<span class="hljs-name">div className="mb-4 text-sm text-gray-700"></span>
+        <<span class="hljs-name">span className="font-medium"></span>Location:</<span class="hljs-name">span></span> {city}
+      </<span class="hljs-name">div></span>
+
+      <<span class="hljs-name">ConsultantMap mapData={mapData} city={city} /></span>
+    </<span class="hljs-name">div></span></span>
+  )
+}
+
