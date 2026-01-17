@@ -1,0 +1,78 @@
+Admin Panel Code Scan – Findings
+I reviewed your admin backend (backend/app/routers/admin.py, backend/app/schemas/admin.py) and the admin panel frontend (admin.html + its inline JS).
+
+1. Security & Access Control
+Admin auth on all endpoints: Every backend admin route uses Depends(get_current_admin_user), which is good – non‑admins cannot hit these APIs if get_current_admin_user is implemented correctly.
+Self‑protection rules:
+Admins cannot remove their own admin status, ban themselves, or delete themselves.
+Admins cannot ban or delete other admins. These checks look correct and prevent obvious privilege‑escalation / lockout issues.
+Enum validation: For filters like Stripe event status, PayPerUnlockAttempt status, IdeaValidation status, PartnerOutreach status, SubscriptionTier/Status, the API converts string → enum in try/except and returns 400 on invalid values (or safely ignores invalid tier_filter/status_filter in /subscriptions list). No clear injection vector there.
+Tracking / audit / job‑run views: They are read‑only from the admin perspective and data is returned as plain objects; front‑end escapes values via escapeHtml, which mitigates XSS from stored data.
+2. Frontend Security (XSS / CSRF / Tokens)
+HTML escaping: In admin.html inline JS:
+escapeHtml is used consistently when rendering user names, emails, partner data, job names, audit entries, report data, etc.
+Attribute values are escaped with escapeAttr for inputs in modals (e.g., partner modal). This is good and significantly reduces XSS risk from stored content.
+Token handling inconsistency (potential bug/security issue):
+Most admin requests use fetchWithAuth, which pulls the token from OppGridAuth.getAccessToken() and prefixes with Authorization: Bearer ....
+analyzeScraperData() is different: it calls:
+js
+const url = `/api/v1/scraper/analyze?auto_import=<span class="hljs-subst">${autoImport}`</span>;
+const response = await fetch(url, {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer <span class="hljs-subst">${<span class="hljs-variable language_">localStorage.getItem('access_token')}</span>`</span>
+  },
+  body: formData
+});
+Issues:
+It bypasses API_BASE_URL and directly uses /api/v1/..., which might be wrong if CONFIG.API_BASE_URL is different (e.g., staging/prod).
+It reads localStorage.getItem('access_token') directly, but the rest of the app might store tokens under a different key managed by OppGridAuth. If these differ, the call silently fails with 401/403 and breaks scraper import.
+It doesn’t reuse fetchWithAuth, so there’s a risk the auth logic diverges (e.g., refreshed tokens in OppGridAuth won’t be used here).
+Recommendation: Reuse fetchWithAuth and API_BASE_URL:
+js
+const url = `/api/v1/scraper/analyze?auto_import=<span class="hljs-subst">${autoImport}`</span>;
+const response = await fetchWithAuth(url, {
+  method: 'POST',
+  body: formData
+});
+CSRF: Since admin endpoints are all authenticated via bearer token in Authorization header and not cookies, CSRF risk is low (standard SPA API pattern).
+3. Backend Data Handling & Validation
+Admin schemas: Types look consistent with usage: from_attributes = True is correctly used for ORM integration. Computed fields (opportunity_count, etc.) are included explicitly in response dicts instead of relying solely on the ORM model, which is fine.
+IdeaValidations response: For include_result=False, large fields (result_json, error_message) are omitted; for True they are included. That’s good for performance and avoids accidentally dumping large JSON by default.
+PartnerOutreach creation/update:
+Status is validated against PartnerOutreachStatus; invalid values return 400.
+Generic field updates use:
+py
+data = payload.dict(exclude_unset=True)
+...
+for k, v in data.items():
+    setattr(partner, k, v)
+This is safe as long as Pydantic schema only exposes fields you intend admins to control, which is currently true.
+Subscription routes:
+Manual tier/status updates strictly validate the tier via enum; invalid tiers return 400 with a helpful message.
+Granting a subscription will either activate/create a subscription; there is no Stripe sync here, but that’s expected for an “admin override” endpoint.
+4. UX / Logic Issues (Non‑Security)
+Leads + Webhook calendar sections:
+The sidebar includes Leads and Scraper calendar, with JS functions like loadLeads, loadLeadStats, and loadWebhookCalendar referenced. In admin.html we saw loadLeads()/loadLeadStats() in loadSection('leads') and loadWebhookCalendar() in scraper, but the truncated portion of the file did not yet define them. If these functions are not defined later, switching to those sections will throw JS errors and break navigation.
+Verify those functions exist in the truncated part or a separate script; otherwise, they need to be implemented or those menu entries hidden until implemented.
+Error messages on failed fetches: Most loaders replace table body with a friendly “Failed to load …” row, which is good. Some actions (e.g., promoteUser, demoteUser, banUser) show only generic error toasts; that’s acceptable, but you might later want to surface backend error messages for admin debugging.
+Job duration calculation: _formatDurationMs returns — if end < start. That’s safe and avoids NaN; just be aware that clock skew or missing finished_at will show — rather than partial duration.
+5. Potential Improvements / Edge Cases
+If you want to harden further:
+
+Standardize token usage and base URL (main concrete fix):
+
+Change analyzeScraperData() to:
+js
+const url = `/api/v1/scraper/analyze?auto_import=<span class="hljs-subst">${autoImport}`</span>;
+const response = await fetchWithAuth(url, {
+  method: 'POST',
+  body: formData
+});
+This avoids direct localStorage usage and ensures tokens and base URL are consistent.
+Ensure all dynamically injected HTML uses escaping helpers:
+
+You’re already using escapeHtml/escapeAttr in all rendered text I saw (users, partners, reports, opportunities, job runs, audit logs). Keep that discipline for any new dynamic content (especially the Leads and Webhook calendar UIs).
+Check for missing functions referenced by UI:
+
+Confirm loadLeads, loadLeadStats, and loadWebhookCalendar are actually implemented (in the truncated part or another file). If they’re not, either implement them or remove/disable those navigation items to avoid runtime errors.

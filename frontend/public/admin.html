@@ -3522,7 +3522,7 @@
             const container = document.getElementById('webhook-calendar-container');
             
             try {
-                const response = await fetch('/api/v1/webhooks/calendar?days=30');
+                const response = await fetchWithAuth('/api/v1/webhooks/calendar?days=30', {}, false);
                 if (!response.ok) throw new Error('Failed to fetch calendar data');
                 const data = await response.json();
                 
@@ -3648,14 +3648,11 @@
             try {
                 showToast('Analyzing scraper data...', 'info');
                 
-                const url = `/api/v1/scraper/analyze?auto_import=${autoImport}`;
-                const response = await fetch(url, {
+                const url = `${API_BASE_URL}/scraper/analyze?auto_import=${autoImport}`;
+                const response = await fetchWithAuth(url, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                    },
                     body: formData
-                });
+                }, false);
                 
                 if (!response.ok) {
                     const error = await response.json();
