@@ -289,6 +289,16 @@ def create_subscription_intent(
         payment_intent = getattr(latest_invoice, "payment_intent", None) if latest_invoice else None
         client_secret = getattr(payment_intent, "client_secret", None)
         
+        # Debug logging for subscription creation
+        invoice_status = getattr(latest_invoice, "status", None) if latest_invoice else None
+        pi_status = getattr(payment_intent, "status", None) if payment_intent else None
+        logger.info(
+            f"Stripe subscription created: sub_id={stripe_sub.id}, sub_status={sub_status}, "
+            f"invoice_status={invoice_status}, pi_status={pi_status}, "
+            f"has_invoice={bool(latest_invoice)}, has_pi={bool(payment_intent)}, has_secret={bool(client_secret)}"
+        )
+        
+        # Handle active subscription (already paid, no payment needed)
         if sub_status == "active":
             subscription.stripe_subscription_id = stripe_sub.id
             subscription.stripe_price_id = price_id
@@ -303,9 +313,34 @@ def create_subscription_intent(
             db.commit()
             return {"stripe_subscription_id": stripe_sub.id, "client_secret": None, "status": "active"}
         
+        # Handle trialing subscription (trial period, no payment needed now)
+        if sub_status == "trialing":
+            subscription.stripe_subscription_id = stripe_sub.id
+            subscription.stripe_price_id = price_id
+            subscription.tier = tier
+            subscription.status = SubscriptionStatus.ACTIVE  # Treat trial as active
+            cps = getattr(stripe_sub, "current_period_start", None)
+            cpe = getattr(stripe_sub, "current_period_end", None)
+            if isinstance(cps, (int, float)):
+                subscription.current_period_start = datetime.fromtimestamp(int(cps), tz=timezone.utc)
+            if isinstance(cpe, (int, float)):
+                subscription.current_period_end = datetime.fromtimestamp(int(cpe), tz=timezone.utc)
+            db.commit()
+            logger.info(f"Subscription {stripe_sub.id} is in trial period, treating as active")
+            return {"stripe_subscription_id": stripe_sub.id, "client_secret": None, "status": "active"}
+        
+        # Handle paid invoice (already charged, subscription starting)
+        if invoice_status == "paid" and sub_status == "incomplete":
+            # Edge case: invoice was paid but subscription still incomplete
+            subscription.stripe_subscription_id = stripe_sub.id
+            subscription.stripe_price_id = price_id
+            subscription.tier = tier
+            subscription.status = SubscriptionStatus.ACTIVE
+            db.commit()
+            logger.info(f"Subscription {stripe_sub.id} invoice already paid, activating")
+            return {"stripe_subscription_id": stripe_sub.id, "client_secret": None, "status": "active"}
+        
         if not client_secret:
-            invoice_status = getattr(latest_invoice, "status", None) if latest_invoice else None
-            pi_status = getattr(payment_intent, "status", None) if payment_intent else None
             logger.error(
                 f"Stripe subscription created but no client_secret. "
                 f"sub_status={sub_status}, invoice_status={invoice_status}, pi_status={pi_status}, "

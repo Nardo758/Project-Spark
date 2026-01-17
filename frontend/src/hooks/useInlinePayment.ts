@@ -78,7 +78,13 @@ export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn
       }
       
       if (!data?.client_secret || typeof data.client_secret !== 'string') {
-        throw new Error('Missing payment information')
+        // Log more detail for debugging
+        console.error('Subscription intent response missing client_secret:', {
+          hasClientSecret: !!data?.client_secret,
+          status: data?.status,
+          stripeSubId: data?.stripe_subscription_id,
+        })
+        throw new Error('Payment setup incomplete. Please try again or contact support.')
       }
 
       const tierConfig = TIER_CONFIG[tier]
