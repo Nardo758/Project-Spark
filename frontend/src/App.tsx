@@ -42,6 +42,7 @@ import MyWorkspaces from './pages/MyWorkspaces'
 import WorkspacePage from './pages/Workspace'
 import OpportunityHub from './pages/OpportunityHub'
 import WorkHub from './pages/WorkHub'
+import Admin from './pages/Admin'
 import AdminMarketing from './pages/AdminMarketing'
 import AdminExperts from './pages/AdminExperts'
 import AdminAffiliateTools from './pages/AdminAffiliateTools'
@@ -241,6 +242,7 @@ function App() {
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/oauth-callback" element={<OAuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
+        <Route path="admin" element={<Admin />} />
         <Route path="admin/marketing" element={<AdminMarketing />} />
         <Route path="admin/experts" element={<AdminExperts />} />
         <Route path="admin/affiliate-tools" element={<AdminAffiliateTools />} />
