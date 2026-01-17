@@ -9,7 +9,13 @@ export default function OAuthCallback() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const next = params.get('next') || '/dashboard'
+    const rawNext = params.get('next') || '/dashboard'
+    let next = rawNext
+    try {
+      next = decodeURIComponent(rawNext)
+    } catch {
+      next = rawNext
+    }
     const token = params.get('token')
     const errorParam = params.get('error')
 
