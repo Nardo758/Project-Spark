@@ -369,7 +369,7 @@ class ConsultantStudioService:
                         "rating": comp.get("rating"),
                         "reviews": comp.get("reviews"),
                         "source": "google_maps",
-                        "address": comp.get("address", ""),
+                        "popup": comp.get("address", ""),
                     })
             
             center_lat = pins[0]["lat"] if pins else 25.7617
