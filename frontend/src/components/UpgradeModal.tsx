@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { X, Zap, Lock, TrendingUp, FileText, Users } from 'lucide-react'
+import { X, Zap, Lock, TrendingUp, FileText, Users, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import { useInlinePayment } from '../hooks/useInlinePayment'
+import { type Tier } from '../constants/pricing'
+import PayPerUnlockModal from './PayPerUnlockModal'
 
 interface UpgradeModalProps {
   isOpen: boolean
@@ -56,16 +59,25 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   
-  if (!isOpen) return null
+  const { 
+    state: paymentState, 
+    startCheckout, 
+    closePaymentModal, 
+    handlePaymentConfirmed 
+  } = useInlinePayment(() => {
+    onClose()
+  })
+  
+  if (!isOpen && !paymentState.paymentModalOpen) return null
 
   const contextInfo = contextMessages[context]
   const ContextIcon = contextInfo.icon
 
   function handlePlanSelect(tier: string) {
-    onClose()
     if (isAuthenticated) {
-      navigate(`/pricing?checkout=${tier}`)
+      startCheckout(tier as Tier)
     } else {
+      onClose()
       navigate(`/signup?plan=${tier}`)
     }
   }
@@ -73,6 +85,24 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
   function handleViewAllPlans() {
     onClose()
     navigate('/pricing')
+  }
+
+  if (paymentState.paymentModalOpen && paymentState.publishableKey && paymentState.clientSecret) {
+    return (
+      <PayPerUnlockModal
+        publishableKey={paymentState.publishableKey}
+        clientSecret={paymentState.clientSecret}
+        amountLabel={paymentState.priceLabel || ''}
+        title={`Subscribe to ${paymentState.selectedTier?.charAt(0).toUpperCase()}${paymentState.selectedTier?.slice(1) || ''}`}
+        contextLabel="Subscription"
+        confirmLabel={`Subscribe ${paymentState.priceLabel}`}
+        footnote="Your subscription will begin immediately after payment."
+        onClose={() => {
+          closePaymentModal()
+        }}
+        onConfirmed={handlePaymentConfirmed}
+      />
+    )
   }
 
   return (
@@ -112,22 +142,35 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
             ))}
           </div>
 
+          {paymentState.error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {paymentState.error}
+            </div>
+          )}
+
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Individual Plans:</h3>
           <div className="grid grid-cols-3 gap-3 mb-4">
             {individualPlans.map((plan) => (
               <button
                 key={plan.tier}
                 onClick={() => handlePlanSelect(plan.tier)}
-                className={`p-3 rounded-xl border-2 text-center transition-all hover:border-purple-500 hover:bg-purple-50 ${
+                disabled={paymentState.isLoading}
+                className={`p-3 rounded-xl border-2 text-center transition-all hover:border-purple-500 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed ${
                   plan.popular ? 'border-purple-500 bg-purple-50' : 'border-gray-200'
                 }`}
               >
-                {plan.popular && (
-                  <span className="text-[10px] font-bold text-purple-600 uppercase">Popular</span>
+                {paymentState.isLoading && paymentState.selectedTier === plan.tier ? (
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto text-purple-600" />
+                ) : (
+                  <>
+                    {plan.popular && (
+                      <span className="text-[10px] font-bold text-purple-600 uppercase">Popular</span>
+                    )}
+                    <div className="font-semibold text-gray-900">{plan.name}</div>
+                    <div className="text-sm text-gray-600">{plan.price}</div>
+                    <div className="text-xs text-gray-500 mt-1">{plan.slots} slot{plan.slots > 1 ? 's' : ''}</div>
+                  </>
                 )}
-                <div className="font-semibold text-gray-900">{plan.name}</div>
-                <div className="text-sm text-gray-600">{plan.price}</div>
-                <div className="text-xs text-gray-500 mt-1">{plan.slots} slot{plan.slots > 1 ? 's' : ''}</div>
               </button>
             ))}
           </div>
@@ -138,11 +181,18 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
               <button
                 key={plan.tier}
                 onClick={() => handlePlanSelect(plan.tier)}
-                className="p-3 rounded-xl border-2 border-gray-200 text-center transition-all hover:border-indigo-500 hover:bg-indigo-50"
+                disabled={paymentState.isLoading}
+                className="p-3 rounded-xl border-2 border-gray-200 text-center transition-all hover:border-indigo-500 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="font-semibold text-gray-900">{plan.name}</div>
-                <div className="text-sm text-gray-600">{plan.price}</div>
-                <div className="text-xs text-gray-500 mt-1">{plan.slots} slots • {plan.seats} seats</div>
+                {paymentState.isLoading && paymentState.selectedTier === plan.tier ? (
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto text-indigo-600" />
+                ) : (
+                  <>
+                    <div className="font-semibold text-gray-900">{plan.name}</div>
+                    <div className="text-sm text-gray-600">{plan.price}</div>
+                    <div className="text-xs text-gray-500 mt-1">{plan.slots} slots • {plan.seats} seats</div>
+                  </>
+                )}
               </button>
             ))}
           </div>

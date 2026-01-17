@@ -46,6 +46,10 @@ export default function Signup() {
       const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
       const keyData = await keyRes.json().catch(() => ({}))
       if (!keyRes.ok) throw new Error(keyData?.detail || 'Payment system not configured')
+      
+      if (!keyData?.publishable_key || typeof keyData.publishable_key !== 'string') {
+        throw new Error('Invalid Stripe configuration')
+      }
 
       const res = await fetch('/api/v1/subscriptions/subscription-intent', {
         method: 'POST',
@@ -63,10 +67,12 @@ export default function Signup() {
         return
       }
       
-      if (!data?.client_secret) throw new Error('Missing payment information')
+      if (!data?.client_secret || typeof data.client_secret !== 'string') {
+        throw new Error('Missing payment information')
+      }
 
-      setPublishableKey(String(keyData.publishable_key))
-      setClientSecret(String(data.client_secret))
+      setPublishableKey(keyData.publishable_key)
+      setClientSecret(data.client_secret)
       setPaymentModalOpen(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to start checkout')
@@ -91,7 +97,7 @@ export default function Signup() {
       setPaymentCancelled(false)
       await startCheckout(planInfo.tier, authToken)
     } else {
-      navigate(`/pricing?checkout=${planInfo.tier}`)
+      navigate(`/login?next=${encodeURIComponent(`/dashboard?checkout=${planInfo.tier}`)}`)
     }
   }
 
@@ -113,10 +119,10 @@ export default function Signup() {
         if (authToken) {
           await startCheckout(planInfo.tier, authToken)
         } else {
-          navigate(`/pricing?checkout=${planInfo.tier}`)
+          navigate(`/dashboard?checkout=${planInfo.tier}`)
         }
       } else if (selectedPlan && planInfo?.tier === 'enterprise') {
-        navigate('/pricing?plan=enterprise')
+        navigate('/pricing?plan=enterprise&contact=true')
       } else {
         const from = (location.state as { from?: string } | null)?.from
         if (from) {
@@ -355,21 +361,21 @@ export default function Signup() {
             <div className="mt-6 grid grid-cols-3 gap-3">
               <button 
                 type="button"
-                onClick={() => startGoogleAuth(selectedPlan ? `/pricing?checkout=${selectedPlan}` : '/dashboard')}
+                onClick={() => startGoogleAuth(selectedPlan ? `/dashboard?checkout=${selectedPlan}` : '/dashboard')}
                 className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700"
               >
                 Google
               </button>
               <button 
                 type="button"
-                onClick={() => startReplitAuth(selectedPlan ? `/pricing?checkout=${selectedPlan}` : '/dashboard')}
+                onClick={() => startReplitAuth(selectedPlan ? `/dashboard?checkout=${selectedPlan}` : '/dashboard')}
                 className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700"
               >
                 Replit
               </button>
               <button 
                 type="button"
-                onClick={() => startLinkedInAuth(selectedPlan ? `/pricing?checkout=${selectedPlan}` : '/dashboard')}
+                onClick={() => startLinkedInAuth(selectedPlan ? `/dashboard?checkout=${selectedPlan}` : '/dashboard')}
                 className="w-full py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700"
               >
                 LinkedIn

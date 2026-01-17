@@ -1,12 +1,15 @@
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../stores/authStore'
 import { useUpgrade } from '../contexts/UpgradeContext'
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { 
   Brain, Target, Lightbulb, Users, FileText, DollarSign, Zap, Loader2, Lock, Bookmark, ChevronRight, Briefcase
 } from 'lucide-react'
 import type { AccessInfo } from '../types/paywall'
+import { useInlinePayment } from '../hooks/useInlinePayment'
+import { type Tier } from '../constants/pricing'
+import PayPerUnlockModal from '../components/PayPerUnlockModal'
 
 const quickActions = [
   { icon: Target, label: 'Find Opportunity', path: '/discover', color: 'bg-blue-500' },
@@ -58,6 +61,44 @@ function formatMarketSize(size?: string | null): string {
 export default function Dashboard() {
   const { user, token, isAuthenticated } = useAuthStore()
   const { showUpgradeModal } = useUpgrade()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  
+  const { 
+    state: paymentState, 
+    startCheckout, 
+    closePaymentModal, 
+    handlePaymentConfirmed 
+  } = useInlinePayment()
+
+  useEffect(() => {
+    const checkoutTier = searchParams.get('checkout')
+    if (!checkoutTier) return
+    
+    if (!isAuthenticated) {
+      navigate(`/login?next=${encodeURIComponent(`/dashboard?checkout=${checkoutTier}`)}`)
+      return
+    }
+    
+    if (paymentState.paymentModalOpen || paymentState.isLoading) return
+    
+    const validTiers = ['starter', 'growth', 'pro', 'builder', 'team', 'business', 'scaler', 'enterprise']
+    const normalizedTier = checkoutTier.toLowerCase()
+    if (validTiers.includes(normalizedTier)) {
+      const tierMap: Record<string, Tier> = {
+        starter: 'starter',
+        growth: 'growth',
+        pro: 'pro',
+        builder: 'pro',
+        team: 'team',
+        business: 'business',
+        scaler: 'business',
+        enterprise: 'enterprise',
+      }
+      setSearchParams({})
+      startCheckout(tierMap[normalizedTier] || 'starter')
+    }
+  }, [searchParams, isAuthenticated, paymentState.paymentModalOpen, paymentState.isLoading, startCheckout, setSearchParams, navigate])
 
   const { data: opportunities, isLoading, isError: opportunitiesError } = useQuery({
     queryKey: ['dashboard-opportunities', { isAuthenticated }],
@@ -335,6 +376,20 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {paymentState.paymentModalOpen && paymentState.publishableKey && paymentState.clientSecret && (
+        <PayPerUnlockModal
+          publishableKey={paymentState.publishableKey}
+          clientSecret={paymentState.clientSecret}
+          amountLabel={paymentState.priceLabel || ''}
+          title={`Subscribe to ${paymentState.selectedTier?.charAt(0).toUpperCase()}${paymentState.selectedTier?.slice(1) || ''}`}
+          contextLabel="Subscription"
+          confirmLabel={`Subscribe ${paymentState.priceLabel}`}
+          footnote="Your subscription will begin immediately after payment."
+          onClose={closePaymentModal}
+          onConfirmed={handlePaymentConfirmed}
+        />
+      )}
     </div>
   )
 }
