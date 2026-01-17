@@ -18,7 +18,6 @@ import {
 } from 'lucide-react'
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import PayPerUnlockModal from '../components/PayPerUnlockModal'
 import EnterpriseContactModal from '../components/EnterpriseContactModal'
 
 type MySubscriptionResponse = {
@@ -318,22 +317,9 @@ export default function Pricing() {
     period_end: string | null
   }>(null)
 
-  const [subOpen, setSubOpen] = useState(false)
-  const [subClientSecret, setSubClientSecret] = useState<string | null>(null)
-  const [subPublishableKey, setSubPublishableKey] = useState<string | null>(null)
-  const [subPlanLabel, setSubPlanLabel] = useState<string>('')
   const [enterpriseModalOpen, setEnterpriseModalOpen] = useState(false)
   const [subPendingTier, setSubPendingTier] = useState<TierType | null>(null)
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
-
-  const tierPriceLabels: Record<TierType, string> = {
-    starter: '$20/mo',
-    growth: '$50/mo',
-    pro: '$99/mo',
-    team: '$250/mo',
-    business: '$750/mo',
-    enterprise: '$2,500+/mo'
-  }
 
   async function startSubscription(tier: TierType) {
     if (!token) {
@@ -391,12 +377,6 @@ export default function Pricing() {
     return data as MySubscriptionResponse
   }
 
-  async function confirmSubscriptionPayment(paymentIntentId: string) {
-    void paymentIntentId
-    setBillingSuccess('Payment confirmed. Syncing your plan…')
-    setBillingSyncing(true)
-  }
-
   async function openBillingPortal() {
     if (!token) {
       navigate(`/login?next=${encodeURIComponent('/pricing')}`)
@@ -445,7 +425,7 @@ export default function Pricing() {
     if (!isAuthenticated || !token) return
     if (fromQuery !== 'signup') return
     if (signupAutoStartTriggered) return
-    if (subOpen || billingLoading) return
+    if (billingLoading) return
     if (subscriptionInfo?.is_active) return
 
     setSignupAutoStartTriggered(true)
@@ -457,7 +437,7 @@ export default function Pricing() {
     const plan: TierType = planFromQuery === 'scaler' ? 'business' : 'pro'
     startSubscription(plan)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromQuery, planFromQuery, isAuthenticated, token, signupAutoStartTriggered, subOpen, billingLoading, subscriptionInfo?.is_active])
+  }, [fromQuery, planFromQuery, isAuthenticated, token, signupAutoStartTriggered, billingLoading, subscriptionInfo?.is_active])
 
   useEffect(() => {
     if (!billingSyncing) return
@@ -989,19 +969,6 @@ export default function Pricing() {
         </div>
       </div>
 
-      {subOpen && subPublishableKey && subClientSecret && (
-        <PayPerUnlockModal
-          publishableKey={subPublishableKey}
-          clientSecret={subClientSecret}
-          amountLabel={subPlanLabel}
-          contextLabel="Subscription"
-          title={`Subscribe for ${subPlanLabel}`}
-          confirmLabel="Subscribe"
-          footnote="Your plan updates after confirmation (Stripe + webhooks may take a moment)."
-          onClose={() => setSubOpen(false)}
-          onConfirmed={confirmSubscriptionPayment}
-        />
-      )}
 
       {enterpriseModalOpen && (
         <EnterpriseContactModal
