@@ -344,32 +344,29 @@ export default function Pricing() {
     setBillingSuccess(null)
     setBillingLoading(tier)
     try {
-      const keyRes = await fetch('/api/v1/subscriptions/stripe-key')
-      const keyData = await keyRes.json().catch(() => ({}))
-      if (!keyRes.ok) throw new Error(keyData?.detail || 'Stripe not configured')
-
-      const res = await fetch('/api/v1/subscriptions/subscription-intent', {
+      const baseUrl = window.location.origin
+      const res = await fetch('/api/v1/subscriptions/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ 
+          tier,
+          success_url: `${baseUrl}/pricing?subscription=success`,
+          cancel_url: `${baseUrl}/pricing?subscription=canceled`,
+        }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.detail || 'Unable to start subscription')
-      
-      if (data?.status === 'active') {
-        setBillingSuccess('Your subscription is now active!')
-        await fetchMySubscription()
-        return
+      if (!res.ok) {
+        const errorMessage = data?.detail || data?.message || `Error ${res.status}: Unable to start checkout`
+        throw new Error(errorMessage)
       }
       
-      if (!data?.client_secret) throw new Error('Missing payment client secret')
-
-      setSubPublishableKey(String(keyData.publishable_key))
-      setSubClientSecret(String(data.client_secret))
-      setSubPlanLabel(tierPriceLabels[tier])
-      setSubPendingTier(tier)
-      setSubOpen(true)
+      if (data?.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error('No checkout URL returned')
+      }
     } catch (e) {
+      console.error('Subscription checkout error:', e)
       setBillingError(e instanceof Error ? e.message : 'Unable to start subscription')
     } finally {
       setBillingLoading(null)

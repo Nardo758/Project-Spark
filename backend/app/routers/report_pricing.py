@@ -330,6 +330,193 @@ def create_report_purchase(
     )
 
 
+class ReportCheckoutRequest(BaseModel):
+    opportunity_id: int
+    report_type: str
+    success_url: str
+    cancel_url: str
+
+
+class BundleCheckoutRequest(BaseModel):
+    opportunity_id: int
+    bundle_type: str
+    success_url: str
+    cancel_url: str
+
+
+class CheckoutResponse(BaseModel):
+    session_id: str
+    url: str
+
+
+@router.post("/checkout-report", response_model=CheckoutResponse)
+def create_report_checkout(
+    checkout_data: ReportCheckoutRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe Checkout session for report purchase"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == checkout_data.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    ent = get_opportunity_entitlements(db, opportunity, current_user)
+    if not ent.is_accessible:
+        raise HTTPException(
+            status_code=403, 
+            detail="Layer 1 access required. Unlock this opportunity first or upgrade your subscription."
+        )
+    
+    if checkout_data.report_type not in REPORT_PRODUCTS:
+        raise HTTPException(status_code=400, detail=f"Invalid report type: {checkout_data.report_type}")
+    
+    existing = db.query(PurchasedReport).filter(
+        PurchasedReport.user_id == current_user.id,
+        PurchasedReport.opportunity_id == checkout_data.opportunity_id,
+        PurchasedReport.report_type == checkout_data.report_type
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already purchased this report for this opportunity")
+    
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    report_product = REPORT_PRODUCTS[checkout_data.report_type]
+    
+    if is_report_included_for_tier(checkout_data.report_type, subscription.tier):
+        raise HTTPException(status_code=400, detail="This report is included with your subscription. No purchase needed.")
+    
+    amount_cents = get_report_price(checkout_data.report_type, subscription.tier)
+    if amount_cents <= 0:
+        raise HTTPException(status_code=400, detail="Invalid price for this report")
+    
+    stripe_client = get_stripe_client()
+    
+    session = stripe_client.checkout.Session.create(
+        customer=subscription.stripe_customer_id,
+        mode="payment",
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": "usd",
+                "product_data": {
+                    "name": f"OppGrid Report: {report_product.name}",
+                    "description": f"AI-generated {report_product.name} for opportunity #{checkout_data.opportunity_id}",
+                },
+                "unit_amount": amount_cents,
+            },
+            "quantity": 1,
+        }],
+        success_url=checkout_data.success_url,
+        cancel_url=checkout_data.cancel_url,
+        metadata={
+            "user_id": str(current_user.id),
+            "opportunity_id": str(checkout_data.opportunity_id),
+            "report_type": checkout_data.report_type,
+            "payment_type": "report_purchase",
+        },
+    )
+    
+    log_event(
+        db,
+        action="report_pricing.checkout_session_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=checkout_data.opportunity_id,
+        metadata={
+            "session_id": session.id,
+            "report_type": checkout_data.report_type,
+            "amount_cents": amount_cents,
+        },
+    )
+    
+    return CheckoutResponse(session_id=session.id, url=session.url)
+
+
+@router.post("/checkout-bundle", response_model=CheckoutResponse)
+def create_bundle_checkout(
+    checkout_data: BundleCheckoutRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe Checkout session for bundle purchase"""
+    opportunity = db.query(Opportunity).filter(Opportunity.id == checkout_data.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    ent = get_opportunity_entitlements(db, opportunity, current_user)
+    if not ent.is_accessible:
+        raise HTTPException(
+            status_code=403, 
+            detail="Layer 1 access required. Unlock this opportunity first or upgrade your subscription."
+        )
+    
+    if checkout_data.bundle_type not in BUNDLES:
+        raise HTTPException(status_code=400, detail=f"Invalid bundle type: {checkout_data.bundle_type}")
+    
+    existing = db.query(PurchasedBundle).filter(
+        PurchasedBundle.user_id == current_user.id,
+        PurchasedBundle.opportunity_id == checkout_data.opportunity_id,
+        PurchasedBundle.bundle_type == checkout_data.bundle_type
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="You have already purchased this bundle for this opportunity")
+    
+    subscription = usage_service.get_or_create_subscription(current_user, db)
+    bundle = BUNDLES[checkout_data.bundle_type]
+    
+    amount_cents = get_bundle_price(checkout_data.bundle_type, subscription.tier)
+    if amount_cents <= 0:
+        raise HTTPException(status_code=400, detail="Invalid price for this bundle")
+    
+    stripe_client = get_stripe_client()
+    
+    session = stripe_client.checkout.Session.create(
+        customer=subscription.stripe_customer_id,
+        mode="payment",
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": "usd",
+                "product_data": {
+                    "name": f"OppGrid Bundle: {bundle.name}",
+                    "description": f"Includes: {', '.join(bundle.reports)}",
+                },
+                "unit_amount": amount_cents,
+            },
+            "quantity": 1,
+        }],
+        success_url=checkout_data.success_url,
+        cancel_url=checkout_data.cancel_url,
+        metadata={
+            "user_id": str(current_user.id),
+            "opportunity_id": str(checkout_data.opportunity_id),
+            "bundle_type": checkout_data.bundle_type,
+            "payment_type": "bundle_purchase",
+            "reports": ",".join(bundle.reports),
+        },
+    )
+    
+    log_event(
+        db,
+        action="report_pricing.bundle_checkout_session_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="opportunity",
+        resource_id=checkout_data.opportunity_id,
+        metadata={
+            "session_id": session.id,
+            "bundle_type": checkout_data.bundle_type,
+            "amount_cents": amount_cents,
+        },
+    )
+    
+    return CheckoutResponse(session_id=session.id, url=session.url)
+
+
 @router.post("/purchase-bundle", response_model=PurchaseResponse)
 def create_bundle_purchase(
     purchase_data: BundlePurchaseRequest,

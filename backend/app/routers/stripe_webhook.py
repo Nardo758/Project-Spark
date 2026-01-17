@@ -378,10 +378,10 @@ def handle_invoice_voided(invoice: dict, db: Session):
 
 
 def handle_checkout_completed(session: dict, db: Session):
-    """Handle successful checkout session - link subscription to user or process slot purchase."""
+    """Handle successful checkout session - link subscription to user or process slot/report/bundle purchase."""
     metadata = session.get("metadata", {})
     user_id = metadata.get("user_id")
-    payment_type = metadata.get("type", "")
+    payment_type = metadata.get("payment_type") or metadata.get("type", "")
     
     if not user_id:
         logger.warning("No user_id in checkout session metadata")
@@ -394,6 +394,10 @@ def handle_checkout_completed(session: dict, db: Session):
     
     if payment_type == "slot_purchase":
         _handle_slot_purchase(session, user, db)
+    elif payment_type == "report_purchase":
+        _handle_report_purchase(session, user, db)
+    elif payment_type == "bundle_purchase":
+        _handle_bundle_purchase(session, user, db)
     else:
         _handle_subscription_checkout(session, user, db)
 
@@ -425,6 +429,123 @@ def _handle_slot_purchase(session: dict, user: User, db: Session):
     db.commit()
     
     logger.info(f"Added {quantity} slots to user {user.id}. New balance: {balance.bonus_slots} bonus slots")
+
+
+def _handle_report_purchase(session: dict, user: User, db: Session):
+    """Handle report purchase completion from checkout session."""
+    from app.models.purchased_report import PurchasedReport
+    
+    metadata = session.get("metadata", {})
+    opportunity_id = int(metadata.get("opportunity_id", 0))
+    report_type = metadata.get("report_type", "")
+    
+    logger.info(f"Processing report purchase for user {user.id}: {report_type} for opportunity {opportunity_id}")
+    
+    existing = db.query(PurchasedReport).filter(
+        PurchasedReport.user_id == user.id,
+        PurchasedReport.opportunity_id == opportunity_id,
+        PurchasedReport.report_type == report_type,
+    ).first()
+    
+    if existing:
+        logger.info(f"Report already purchased: {report_type} for opportunity {opportunity_id}")
+        return
+    
+    purchased = PurchasedReport(
+        user_id=user.id,
+        opportunity_id=opportunity_id,
+        report_type=report_type,
+        amount_cents=session.get("amount_total", 0),
+        stripe_payment_intent_id=session.get("payment_intent"),
+    )
+    db.add(purchased)
+    
+    tx = Transaction(
+        user_id=user.id,
+        type=TransactionType.UNLOCK,
+        status=TransactionStatus.SUCCEEDED,
+        amount_cents=session.get("amount_total", 0),
+        currency=session.get("currency", "usd"),
+        metadata_json=json.dumps({
+            "type": "report_purchase",
+            "report_type": report_type,
+            "opportunity_id": opportunity_id,
+            "session_id": session.get("id"),
+        }),
+    )
+    db.add(tx)
+    db.commit()
+    
+    logger.info(f"Report purchase completed: {report_type} for user {user.id}")
+
+
+def _handle_bundle_purchase(session: dict, user: User, db: Session):
+    """Handle bundle purchase completion from checkout session."""
+    from app.models.purchased_report import PurchasedReport, PurchasedBundle
+    
+    metadata = session.get("metadata", {})
+    opportunity_id = int(metadata.get("opportunity_id", 0))
+    bundle_type = metadata.get("bundle_type", "")
+    reports = metadata.get("reports", "").split(",")
+    
+    logger.info(f"Processing bundle purchase for user {user.id}: {bundle_type} for opportunity {opportunity_id}")
+    
+    existing_bundle = db.query(PurchasedBundle).filter(
+        PurchasedBundle.user_id == user.id,
+        PurchasedBundle.opportunity_id == opportunity_id,
+        PurchasedBundle.bundle_type == bundle_type,
+    ).first()
+    
+    if existing_bundle:
+        logger.info(f"Bundle already purchased: {bundle_type} for opportunity {opportunity_id}")
+        return
+    
+    bundle = PurchasedBundle(
+        user_id=user.id,
+        opportunity_id=opportunity_id,
+        bundle_type=bundle_type,
+        amount_cents=session.get("amount_total", 0),
+        stripe_payment_intent_id=session.get("payment_intent"),
+    )
+    db.add(bundle)
+    
+    for report_type in reports:
+        report_type = report_type.strip()
+        if not report_type:
+            continue
+        existing = db.query(PurchasedReport).filter(
+            PurchasedReport.user_id == user.id,
+            PurchasedReport.opportunity_id == opportunity_id,
+            PurchasedReport.report_type == report_type,
+        ).first()
+        if not existing:
+            purchased = PurchasedReport(
+                user_id=user.id,
+                opportunity_id=opportunity_id,
+                report_type=report_type,
+                amount_cents=0,
+                stripe_payment_intent_id=session.get("payment_intent"),
+            )
+            db.add(purchased)
+    
+    tx = Transaction(
+        user_id=user.id,
+        type=TransactionType.UNLOCK,
+        status=TransactionStatus.SUCCEEDED,
+        amount_cents=session.get("amount_total", 0),
+        currency=session.get("currency", "usd"),
+        metadata_json=json.dumps({
+            "type": "bundle_purchase",
+            "bundle_type": bundle_type,
+            "opportunity_id": opportunity_id,
+            "reports": reports,
+            "session_id": session.get("id"),
+        }),
+    )
+    db.add(tx)
+    db.commit()
+    
+    logger.info(f"Bundle purchase completed: {bundle_type} ({len(reports)} reports) for user {user.id}")
 
 
 def _handle_subscription_checkout(session: dict, user: User, db: Session):
