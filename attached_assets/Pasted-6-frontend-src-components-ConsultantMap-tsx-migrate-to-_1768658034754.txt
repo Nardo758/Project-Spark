@@ -1,0 +1,274 @@
+6. frontend/src/components/ConsultantMap.tsx – migrate to Mapbox GL
+Replace the existing Leaflet implementation with this Mapbox‑based version:
+
+tsx
+import { useEffect, useState, Component, ReactNode } from 'react'
+import mapboxgl, { LngLatBoundsLike, Map as MapboxMap } from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
+
+interface ErrorBoundaryState {
+  hasError: boolean
+  error?: Error
+}
+
+class MapErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, ErrorBoundaryState> {
+  constructor(<span class="hljs-attr">props: { children: ReactNode; fallback?: ReactNode }</span>) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        this.props.fallback || (
+          <span class="hljs-tag"><<span class="hljs-name">div className="w-full h-[500px] bg-gray-100 rounded-lg flex items-center justify-center"></span>
+            <<span class="hljs-name">div className="text-center p-6"></span>
+              <<span class="hljs-name">div className="text-4xl mb-4"></span>🗺️</<span class="hljs-name">div></span>
+              <<span class="hljs-name">p className="text-gray-600 mb-2"></span>Map temporarily unavailable</<span class="hljs-name">p></span>
+              <<span class="hljs-name">p className="text-sm text-gray-500"></span>The results are displayed below</<span class="hljs-name">p></span>
+            </<span class="hljs-name">div></span>
+          </<span class="hljs-name">div></span></span>
+        )
+      )
+    }
+    return this.props.children
+  }
+}
+
+interface Pin {
+  id: number
+  lat: number
+  lng: number
+  name: string
+  rating?: number
+  reviews?: number
+  source: string
+  popup?: string
+}
+
+interface HeatmapPoint {
+  lat: number
+  lng: number
+  intensity: number
+  title?: string
+  source: string
+}
+
+interface MapData {
+  bounds?: {
+    north: number
+    south: number
+    east: number
+    west: number
+  }
+  center?: {
+    lat: number
+    lng: number
+  }
+  layers: {
+    pins: { data: Pin[]; count: number }
+    heatmap: { data: HeatmapPoint[]; count: number }
+    polygons: { data: any[]; count: number }
+  }
+  totalFeatures: number
+}
+
+interface LayerState {
+  pins: boolean
+  heatmap: boolean
+  polygons: boolean
+}
+
+interface ConsultantMapProps {
+  mapData: MapData | null
+  city?: string
+  isLoading?: boolean
+  onBoundsChange?: (<span class="hljs-params"><span class="hljs-attr">bounds: any</span>) =></span> void
+}
+
+export default function ConsultantMap({ mapData, city, isLoading, onBoundsChange }: <span class="hljs-title class_">ConsultantMapProps</span>) {
+  const [layerState, setLayerState] = useState<LayerState>({
+    pins: true,
+    heatmap: true,
+    polygons: true,
+  })
+
+  const defaultCenter: [number, number] = [39.8283, -98.5795]
+  const defaultZoom = 4
+
+  const toggleLayer = (<span class="hljs-attr">layer: keyof LayerState</span>) => {
+    setLayerState((<span class="hljs-params">prev) =></span> ({ ...prev, [layer]: !prev[layer] }))
+  }
+
+  useEffect(() => {
+    if (!mapData) return
+    if (typeof window === 'undefined') return
+
+    const center: [number, number] = mapData.center
+      ? [mapData.center.lat, mapData.center.lng]
+      : defaultCenter
+
+    mapboxgl.accessToken = (window as any).MAPBOX_TOKEN || ''
+
+    const container = document.getElementById('consultant-map-container')
+    if (!container) return
+
+    const map = new mapboxgl.Map({
+      container,
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [center[1], center[0]],
+      zoom: mapData.center ? 11 : defaultZoom,
+    }) as MapboxMap
+
+    if (onBoundsChange) {
+      map.on('moveend', () => {
+        const b = map.getBounds()
+        if (!b) return
+        const bounds: LngLatBoundsLike = [
+          [b.getWest(), b.getSouth()],
+          [b.getEast(), b.getNorth()],
+        ]
+        onBoundsChange(bounds)
+      })
+    }
+
+    map.on('load', () => {
+      // Heatmap
+      if (layerState.heatmap && mapData.layers.heatmap.data.length > 0) {
+        const heatFeatures: GeoJSON.Feature<GeoJSON.Point, { intensity: number }>[] =
+          mapData.layers.heatmap.data.map((<span class="hljs-params">p) =></span> ({
+            type: 'Feature',
+            properties: { intensity: p.intensity },
+            geometry: {
+              type: 'Point',
+              coordinates: [p.lng, p.lat],
+            },
+          }))
+
+        map.addSource('heat-points', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: heatFeatures,
+          },
+        } as any)
+
+        map.addLayer({
+          id: 'heatmap-layer',
+          type: 'heatmap',
+          source: 'heat-points',
+          paint: {
+            'heatmap-weight': ['get', 'intensity'],
+            'heatmap-intensity': 1,
+            'heatmap-radius': 20,
+            'heatmap-opacity': 0.7,
+          },
+        })
+      }
+
+      // Pins
+      if (layerState.pins && mapData.layers.pins.data.length > 0) {
+        mapData.layers.pins.data.forEach((<span class="hljs-params">pin) =></span> {
+          const el = document.createElement('div')
+          el.className = 'rounded-full bg-blue-600 w-3 h-3 border-2 border-white shadow'
+
+          const marker = new mapboxgl.Marker(el)
+            .setLngLat([pin.lng, pin.lat])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 12 }).setHTML(
+                `<div style="min-width:200px">
+                   <h3 style="font-weight:600"><span class="hljs-subst">${pin.name}</h3>
+                   ${
+                     pin.rating
+                       ? <span class="hljs-string">`<div>★ <span class="hljs-subst">${pin.rating}${pin.reviews ? <span class="hljs-string">` (<span class="hljs-subst">${pin.reviews} reviews)`</span> : ''}</span></div>`</span>
+                       : ''
+                   }</span>
+                   <div style="font-size:12px;color:#6b7280;margin-top:4px;text-transform:capitalize">
+                     Source: ${pin.source?.replace(<span class="hljs-string">'_', ' ')}</span>
+                   </div>
+                 </div>`</span>
+              )
+            )
+
+          marker.addTo(map)
+        })
+      }
+
+      // Polygons
+      if (layerState.polygons && mapData.layers.polygons.data.length > 0) {
+        const polyFeatures: GeoJSON.Feature<GeoJSON.Polygon, any>[] = mapData.layers.polygons.data
+          .filter((<span class="hljs-params"><span class="hljs-attr">geojson: any</span>) =></span> geojson?.geometry?.type === 'Polygon')
+          .map((<span class="hljs-params"><span class="hljs-attr">geojson: any</span>) =></span> ({
+            type: 'Feature',
+            properties: geojson.properties || {},
+            geometry: geojson.geometry,
+          }))
+
+        if (polyFeatures.length > 0) {
+          map.addSource('polygons', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: polyFeatures,
+            },
+          } as any)
+
+          map.addLayer({
+            id: 'polygon-fill',
+            type: 'fill',
+            source: 'polygons',
+            paint: {
+              'fill-color': '#9C27B0',
+              'fill-opacity': 0.2,
+            },
+          })
+
+          map.addLayer({
+            id: 'polygon-outline',
+            type: 'line',
+            source: 'polygons',
+            paint: {
+              'line-color': '#7B1FA2',
+              'line-width': 2,
+            },
+          })
+        }
+      }
+    })
+
+    return () => {
+      map.remove()
+    }
+  }, [mapData, layerState.pins, layerState.heatmap, layerState.polygons, onBoundsChange])
+
+  if (isLoading) {
+    return (
+      <span class="hljs-tag"><<span class="hljs-name">div className="w-full h-[500px] bg-gray-100 rounded-lg flex items-center justify-center"></span>
+        <<span class="hljs-name">div className="text-center"></span>
+          <<span class="hljs-name">div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" /></span>
+          <<span class="hljs-name">p className="text-gray-600"></span>Loading map data for {city}...</<span class="hljs-name">p></span>
+        </<span class="hljs-name">div></span>
+      </<span class="hljs-name">div></span></span>
+    )
+  }
+
+  return (
+    <span class="hljs-tag"><<span class="hljs-name">div className="w-full"></span>
+      {/* layer toggle UI stays same as before (pins/heatmap/polygons buttons + totalFeatures) */}
+      {/* ... */}
+      <<span class="hljs-name">MapErrorBoundary></span>
+        <<span class="hljs-name">div
+          id="consultant-map-container"
+          className="rounded-lg overflow-hidden border border-gray-200 shadow-sm"
+          style={{ height: '500px', width: '100%' }}
+        /></span>
+      </<span class="hljs-name">MapErrorBoundary></span>
+      {/* existing “no data” banner stays */}
+    </<span class="hljs-name">div></span></span>
+  )
+}
+
