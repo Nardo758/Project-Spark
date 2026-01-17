@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.trace_id import TraceIdMiddleware, install_trace_id_factory, configure_app_logging
 from app.routers import (
     admin,
     agreements,
@@ -67,6 +68,8 @@ from app.routers import (
     public_api,
 )
 
+install_trace_id_factory()
+configure_app_logging()
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -94,6 +97,7 @@ app.add_middleware(
     enabled=settings.RATE_LIMIT_ENABLED,
     default_limit_per_minute=settings.RATE_LIMIT_DEFAULT_PER_MINUTE,
 )
+app.add_middleware(TraceIdMiddleware)
 
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
