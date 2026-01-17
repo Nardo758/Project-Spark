@@ -1397,24 +1397,48 @@ def list_subscriptions(
         except ValueError:
             pass
 
+    total = query.count()
     results = query.order_by(desc(Subscription.created_at)).offset(skip).limit(limit).all()
 
-    return [
-        {
-            "id": sub.id,
-            "user_id": sub.user_id,
-            "user_email": email,
-            "user_name": name,
-            "tier": sub.tier.value,
-            "status": sub.status.value,
-            "stripe_customer_id": sub.stripe_customer_id,
-            "stripe_subscription_id": sub.stripe_subscription_id,
-            "current_period_end": sub.current_period_end,
-            "cancel_at_period_end": sub.cancel_at_period_end,
-            "created_at": sub.created_at
-        }
-        for sub, email, name in results
-    ]
+    return {
+        "subscriptions": [
+            {
+                "id": sub.id,
+                "user_id": sub.user_id,
+                "email": email,
+                "name": name,
+                "tier": sub.tier.value,
+                "status": sub.status.value,
+                "stripe_customer_id": sub.stripe_customer_id,
+                "stripe_subscription_id": sub.stripe_subscription_id,
+                "current_period_end": sub.current_period_end,
+                "cancel_at_period_end": sub.cancel_at_period_end,
+                "created_at": sub.created_at
+            }
+            for sub, email, name in results
+        ],
+        "total": total
+    }
+
+
+@router.post("/subscriptions/bulk-reset-invalid")
+def bulk_reset_invalid_subscriptions(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Reset all subscriptions with paid tiers but no Stripe subscription ID to FREE"""
+    invalid_subs = db.query(Subscription).filter(
+        Subscription.tier != SubscriptionTier.FREE,
+        (Subscription.stripe_subscription_id == None) | (Subscription.stripe_subscription_id == '')
+    ).all()
+    
+    count = len(invalid_subs)
+    for sub in invalid_subs:
+        sub.tier = SubscriptionTier.FREE
+        sub.status = SubscriptionStatus.ACTIVE
+    
+    db.commit()
+    return {"message": f"Reset {count} invalid subscriptions to FREE", "count": count}
 
 
 @router.patch("/subscriptions/{subscription_id}/tier")
@@ -1434,17 +1458,18 @@ def update_subscription_tier(
         )
 
     try:
-        new_tier = SubscriptionTier(tier)
+        new_tier = SubscriptionTier(tier.upper())
     except ValueError:
+        valid_tiers = [t.value for t in SubscriptionTier]
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tier: {tier}. Valid options: free, pro, business, enterprise"
+            detail=f"Invalid tier: {tier}. Valid options: {', '.join(valid_tiers)}"
         )
 
     subscription.tier = new_tier
     db.commit()
 
-    return {"message": f"Subscription updated to {tier}"}
+    return {"message": f"Subscription updated to {new_tier.value}"}
 
 
 @router.post("/users/{user_id}/grant-subscription")
@@ -1464,11 +1489,12 @@ def grant_subscription(
         )
 
     try:
-        new_tier = SubscriptionTier(tier)
+        new_tier = SubscriptionTier(tier.upper())
     except ValueError:
+        valid_tiers = [t.value for t in SubscriptionTier]
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tier: {tier}. Valid options: free, pro, business, enterprise"
+            detail=f"Invalid tier: {tier}. Valid options: {', '.join(valid_tiers)}"
         )
 
     subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()

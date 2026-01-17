@@ -45,6 +45,7 @@ import WorkHub from './pages/WorkHub'
 import AdminMarketing from './pages/AdminMarketing'
 import AdminExperts from './pages/AdminExperts'
 import AdminAffiliateTools from './pages/AdminAffiliateTools'
+import AdminSubscriptions from './pages/AdminSubscriptions'
 import StripeArchitecture from './pages/StripeArchitecture'
 
 function App() {
@@ -243,6 +244,7 @@ function App() {
         <Route path="admin/marketing" element={<AdminMarketing />} />
         <Route path="admin/experts" element={<AdminExperts />} />
         <Route path="admin/affiliate-tools" element={<AdminAffiliateTools />} />
+        <Route path="admin/subscriptions" element={<AdminSubscriptions />} />
         <Route path="architecture/stripe" element={<StripeArchitecture />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
