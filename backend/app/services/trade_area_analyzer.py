@@ -100,7 +100,7 @@ class TradeAreaAnalyzer:
             trade_area['center_lat'],
             trade_area['center_lng'],
             trade_area['radius_km'],
-            competitors[:10] if competitors else [],
+            competitors[:20] if competitors else [],
             signal_clusters
         )
         
@@ -190,7 +190,7 @@ class TradeAreaAnalyzer:
                     trade_area['center_lat'],
                     trade_area['center_lng'],
                     trade_area['radius_km'],
-                    competitors[:10] if competitors else [],
+                    competitors[:20] if competitors else [],
                     signal_clusters
                 )
                 logger.info(f"[TIMING] Generate map: {int((time.time() - map_start) * 1000)}ms")
@@ -288,16 +288,26 @@ class TradeAreaAnalyzer:
             logger.warning("SERPAPI_KEY not configured, skipping competitor fetch")
             return []
         
+        business_description = opportunity.get('business_description') or opportunity.get('title') or ''
         category = opportunity.get('category', '')
         city = opportunity.get('city', '')
         
-        search_query = f"{category} near {city}" if city else category
+        if business_description and city:
+            search_query = f"{business_description} in {city}"
+        elif business_description:
+            search_query = business_description
+        elif category and city:
+            search_query = f"{category} near {city}"
+        else:
+            search_query = category or "business"
+        
+        logger.info(f"Competitor search query: '{search_query}' at ({lat}, {lng})")
         
         try:
             params = {
                 "engine": "google_maps",
                 "q": search_query,
-                "ll": f"@{lat},{lng},15z",
+                "ll": f"@{lat},{lng},14z",
                 "type": "search",
                 "api_key": self.serpapi_key
             }
@@ -309,19 +319,22 @@ class TradeAreaAnalyzer:
             competitors = []
             local_results = data.get('local_results', [])
             
-            for result in local_results[:20]:
+            logger.info(f"Found {len(local_results)} competitors from SerpAPI")
+            
+            for result in local_results[:30]:
                 gps = result.get('gps_coordinates', {})
-                competitors.append({
-                    'name': result.get('title', 'Unknown'),
-                    'address': result.get('address', ''),
-                    'rating': result.get('rating', 0),
-                    'reviews': result.get('reviews', 0),
-                    'lat': gps.get('latitude'),
-                    'lng': gps.get('longitude'),
-                    'type': result.get('type', ''),
-                    'price_level': result.get('price', ''),
-                    'place_id': result.get('place_id', ''),
-                })
+                if gps.get('latitude') and gps.get('longitude'):
+                    competitors.append({
+                        'name': result.get('title', 'Unknown'),
+                        'address': result.get('address', ''),
+                        'rating': result.get('rating', 0),
+                        'reviews': result.get('reviews', 0),
+                        'lat': gps.get('latitude'),
+                        'lng': gps.get('longitude'),
+                        'type': result.get('type', ''),
+                        'price_level': result.get('price', ''),
+                        'place_id': result.get('place_id', ''),
+                    })
             
             return competitors
             

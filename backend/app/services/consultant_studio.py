@@ -1194,6 +1194,7 @@ class ConsultantStudioService:
             opportunity_data = {
                 "id": 0,
                 "title": f"{business_description} in {parsed_city}",
+                "business_description": business_description,
                 "category": inferred_category,
                 "location": city,
                 "city": parsed_city,
@@ -1223,7 +1224,7 @@ class ConsultantStudioService:
                     "median_home_value": f"${demographics.get('median_home_value', 0):,}" if demographics.get("median_home_value") else "N/A",
                 },
                 "trade_area_radius_miles": round(radius_miles, 1),
-                "competitors": competitors[:10],
+                "competitors": competitors[:20],
                 "ai_synthesis": trade_area.ai_synthesis,
             }
             
