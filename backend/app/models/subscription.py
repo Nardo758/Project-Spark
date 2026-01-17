@@ -36,8 +36,16 @@ class Subscription(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
 
     # Subscription details
-    tier = Column(Enum(SubscriptionTier), default=SubscriptionTier.FREE, nullable=False)
-    status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.ACTIVE, nullable=False)
+    tier = Column(
+        Enum(SubscriptionTier, values_callable=lambda x: [e.value for e in x]),
+        default=SubscriptionTier.FREE,
+        nullable=False
+    )
+    status = Column(
+        Enum(SubscriptionStatus, values_callable=lambda x: [e.value for e in x]),
+        default=SubscriptionStatus.ACTIVE,
+        nullable=False
+    )
 
     # Stripe details
     stripe_customer_id = Column(String(255), nullable=True, unique=True)
