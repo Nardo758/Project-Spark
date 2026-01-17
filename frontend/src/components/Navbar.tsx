@@ -27,6 +27,7 @@ const guestNavItems = [
 const paidNavItems = [
   { name: 'Dashboard', path: '/dashboard' },
   { name: 'Discover', path: '/discover' },
+  { name: 'Consultant Studio', path: '/build/reports' },
   { 
     name: 'My Projects',
     dropdown: [
