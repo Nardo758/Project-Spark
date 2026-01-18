@@ -32,6 +32,10 @@ class User(Base):
     password_reset_token = Column(String(255), nullable=True)
     password_reset_token_expires = Column(DateTime(timezone=True), nullable=True)
 
+    # Magic Link
+    magic_link_token = Column(String(255), nullable=True)
+    magic_link_token_expires = Column(DateTime(timezone=True), nullable=True)
+
     # Two-Factor Authentication
     otp_secret = Column(String(32), nullable=True)
     otp_enabled = Column(Boolean, default=False)

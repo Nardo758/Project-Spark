@@ -4,9 +4,7 @@ Passwordless login via email using Resend
 """
 import os
 import secrets
-import time
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
@@ -21,18 +19,6 @@ from app.services.email import email_service
 router = APIRouter()
 
 MAGIC_LINK_EXPIRY_MINUTES = 15
-_magic_tokens: Dict[str, Dict[str, Any]] = {}
-
-
-def cleanup_expired_tokens():
-    """Remove expired magic link tokens"""
-    current_time = time.time()
-    expired = [
-        token for token, data in _magic_tokens.items()
-        if current_time - data.get('created_at', 0) > MAGIC_LINK_EXPIRY_MINUTES * 60
-    ]
-    for token in expired:
-        _magic_tokens.pop(token, None)
 
 
 def get_frontend_url() -> str:
@@ -73,24 +59,36 @@ async def send_magic_link(request: MagicLinkRequest, db: Session = Depends(get_d
     Send a magic link to the user's email.
     Works for both existing users and new signups.
     """
-    cleanup_expired_tokens()
-    
     email = request.email.lower().strip()
     
     token = secrets.token_urlsafe(32)
-    
-    _magic_tokens[token] = {
-        'email': email,
-        'created_at': time.time()
-    }
-    
-    frontend_url = get_frontend_url()
-    # React route (served by server.py SPA fallback) that verifies token via API.
-    magic_link = f"{frontend_url}/auth/magic?token={token}"
+    token_expires = datetime.now(timezone.utc) + timedelta(minutes=MAGIC_LINK_EXPIRY_MINUTES)
     
     user = db.query(User).filter(User.email == email).first()
-    user_name = user.name if user else "there"
-    action_text = "sign in to" if user else "create your account on"
+    
+    if user:
+        user.magic_link_token = token
+        user.magic_link_token_expires = token_expires
+        db.commit()
+    else:
+        user = User(
+            email=email,
+            name=email.split('@')[0].title(),
+            is_active=True,
+            is_verified=False,
+            oauth_provider='magic_link',
+            magic_link_token=token,
+            magic_link_token_expires=token_expires
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    frontend_url = get_frontend_url()
+    magic_link = f"{frontend_url}/auth/magic?token={token}"
+    
+    user_name = user.name if user.name else "there"
+    action_text = "sign in to" if user.is_verified else "create your account on"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -216,7 +214,9 @@ async def send_magic_link(request: MagicLinkRequest, db: Session = Depends(get_d
             text_content=text_content
         )
     except Exception as e:
-        _magic_tokens.pop(token, None)
+        user.magic_link_token = None
+        user.magic_link_token_expires = None
+        db.commit()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to send magic link email: {str(e)}"
@@ -232,44 +232,31 @@ async def send_magic_link(request: MagicLinkRequest, db: Session = Depends(get_d
 async def verify_magic_link(request: MagicLinkVerify, db: Session = Depends(get_db)):
     """
     Verify the magic link token and log the user in.
-    Creates a new account if the user doesn't exist.
     """
-    cleanup_expired_tokens()
-    
     token = request.token
     
-    token_data = _magic_tokens.pop(token, None)
-    if not token_data:
+    user = db.query(User).filter(User.magic_link_token == token).first()
+    
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired magic link. Please request a new one."
         )
     
-    if time.time() - token_data['created_at'] > MAGIC_LINK_EXPIRY_MINUTES * 60:
+    if user.magic_link_token_expires and user.magic_link_token_expires < datetime.now(timezone.utc):
+        user.magic_link_token = None
+        user.magic_link_token_expires = None
+        db.commit()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Magic link has expired. Please request a new one."
         )
     
-    email = token_data['email']
-    
-    user = db.query(User).filter(User.email == email).first()
-    
-    if not user:
-        user = User(
-            email=email,
-            name=email.split('@')[0].title(),
-            is_active=True,
-            is_verified=True,
-            oauth_provider='magic_link'
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    else:
-        if not user.is_verified:
-            user.is_verified = True
-            db.commit()
+    user.magic_link_token = None
+    user.magic_link_token_expires = None
+    if not user.is_verified:
+        user.is_verified = True
+    db.commit()
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
