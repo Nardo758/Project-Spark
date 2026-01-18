@@ -146,86 +146,136 @@ class EmailService:
         <html>
         <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
                 body {{
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                     line-height: 1.6;
-                    color: #333;
+                    color: #111827;
                     max-width: 600px;
                     margin: 0 auto;
                     padding: 20px;
+                    background: #f9fafb;
+                }}
+                .email-container {{
+                    background: #ffffff;
+                    border-radius: 16px;
+                    border: 1px solid #e5e7eb;
+                    overflow: hidden;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #D97757 0%, #C96646 100%);
-                    padding: 30px;
+                    background: #000000;
+                    padding: 24px 30px;
                     text-align: center;
-                    border-radius: 10px 10px 0 0;
                 }}
-                .header h1 {{
-                    color: white;
-                    margin: 0;
-                    font-size: 28px;
+                .logo {{
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }}
+                .logo-icon {{
+                    width: 32px;
+                    height: 32px;
+                    background: #ffffff;
+                    border-radius: 8px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 700;
+                    font-size: 12px;
+                    color: #000000;
+                }}
+                .logo-text {{
+                    color: #ffffff;
+                    font-size: 20px;
+                    font-weight: 600;
                 }}
                 .content {{
-                    background: #ffffff;
-                    padding: 40px 30px;
-                    border: 1px solid #E8E4DF;
-                    border-top: none;
+                    padding: 40px 32px;
+                }}
+                .content h2 {{
+                    margin: 0 0 16px 0;
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #111827;
+                }}
+                .content p {{
+                    margin: 0 0 16px 0;
+                    color: #374151;
+                    font-size: 15px;
                 }}
                 .button {{
                     display: inline-block;
-                    padding: 14px 32px;
-                    background: #D97757;
-                    color: white;
+                    padding: 12px 24px;
+                    background: #000000;
+                    color: #ffffff !important;
                     text-decoration: none;
                     border-radius: 8px;
-                    margin: 20px 0;
-                    font-weight: 600;
+                    margin: 24px 0;
+                    font-weight: 500;
+                    font-size: 15px;
                 }}
-                .button:hover {{
-                    background: #C96646;
+                .link-box {{
+                    background: #f9fafb;
+                    border: 1px solid #e5e7eb;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    font-family: monospace;
+                    font-size: 13px;
+                    word-break: break-all;
+                    margin: 16px 0;
+                    color: #6b7280;
                 }}
                 .footer {{
-                    background: #F5F3EF;
-                    padding: 20px 30px;
+                    background: #f9fafb;
+                    padding: 20px 32px;
                     text-align: center;
-                    font-size: 12px;
-                    color: #6B6560;
-                    border-radius: 0 0 10px 10px;
+                    border-top: 1px solid #e5e7eb;
                 }}
-                .token {{
-                    background: #F0EDE8;
-                    padding: 10px;
-                    border-radius: 6px;
-                    font-family: monospace;
-                    word-break: break-all;
-                    margin: 15px 0;
+                .footer p {{
+                    margin: 0;
+                    font-size: 12px;
+                    color: #9ca3af;
+                }}
+                .footer p + p {{
+                    margin-top: 4px;
+                }}
+                .tagline {{
+                    font-size: 9px;
+                    color: #9ca3af;
+                    margin-top: 4px;
                 }}
             </style>
         </head>
         <body>
-            <div class="header">
-                <h1>⚡ OppGrid</h1>
-            </div>
-            <div class="content">
-                <h2>Welcome, {user_name}!</h2>
-                <p>Thanks for signing up for OppGrid. We're excited to have you on board!</p>
-                <p>To complete your registration and start discovering opportunities, please verify your email address by clicking the button below:</p>
-
-                <div style="text-align: center;">
-                    <a href="{verification_link}" class="button">Verify Email Address</a>
+            <div class="email-container">
+                <div class="header">
+                    <div class="logo">
+                        <div class="logo-icon">OG</div>
+                        <span class="logo-text">OppGrid</span>
+                    </div>
+                    <div class="tagline">The Opportunity Intelligence Platform</div>
                 </div>
+                <div class="content">
+                    <h2>Welcome, {user_name}!</h2>
+                    <p>Thanks for signing up for OppGrid. We're excited to have you on board!</p>
+                    <p>To complete your registration and start discovering opportunities, please verify your email address:</p>
 
-                <p>Or copy and paste this link into your browser:</p>
-                <div class="token">{verification_link}</div>
+                    <div style="text-align: center;">
+                        <a href="{verification_link}" class="button">Verify Email Address</a>
+                    </div>
 
-                <p>This verification link will expire in 24 hours.</p>
+                    <p style="font-size: 13px; color: #6b7280;">Or copy and paste this link into your browser:</p>
+                    <div class="link-box">{verification_link}</div>
 
-                <p>If you didn't create an account with OppGrid, you can safely ignore this email.</p>
-            </div>
-            <div class="footer">
-                <p>© 2025 OppGrid. All rights reserved.</p>
-                <p>This is an automated message, please do not reply.</p>
+                    <p style="font-size: 13px; color: #6b7280;">This verification link will expire in 24 hours.</p>
+
+                    <p style="font-size: 13px; color: #9ca3af; margin-top: 24px;">If you didn't create an account with OppGrid, you can safely ignore this email.</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; 2025 OppGrid. All rights reserved.</p>
+                    <p>This is an automated message, please do not reply.</p>
+                </div>
             </div>
         </body>
         </html>
@@ -272,91 +322,150 @@ class EmailService:
         <html>
         <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
                 body {{
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                     line-height: 1.6;
-                    color: #333;
+                    color: #111827;
                     max-width: 600px;
                     margin: 0 auto;
                     padding: 20px;
+                    background: #f9fafb;
+                }}
+                .email-container {{
+                    background: #ffffff;
+                    border-radius: 16px;
+                    border: 1px solid #e5e7eb;
+                    overflow: hidden;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #D97757 0%, #C96646 100%);
-                    padding: 30px;
+                    background: #000000;
+                    padding: 24px 30px;
                     text-align: center;
-                    border-radius: 10px 10px 0 0;
                 }}
-                .header h1 {{
-                    color: white;
-                    margin: 0;
-                    font-size: 28px;
+                .logo {{
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }}
+                .logo-icon {{
+                    width: 32px;
+                    height: 32px;
+                    background: #ffffff;
+                    border-radius: 8px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 700;
+                    font-size: 12px;
+                    color: #000000;
+                }}
+                .logo-text {{
+                    color: #ffffff;
+                    font-size: 20px;
+                    font-weight: 600;
                 }}
                 .content {{
-                    background: #ffffff;
-                    padding: 40px 30px;
-                    border: 1px solid #E8E4DF;
-                    border-top: none;
+                    padding: 40px 32px;
+                }}
+                .content h2 {{
+                    margin: 0 0 16px 0;
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #111827;
+                }}
+                .content p {{
+                    margin: 0 0 16px 0;
+                    color: #374151;
+                    font-size: 15px;
                 }}
                 .button {{
                     display: inline-block;
-                    padding: 14px 32px;
-                    background: #D97757;
-                    color: white;
+                    padding: 12px 24px;
+                    background: #000000;
+                    color: #ffffff !important;
                     text-decoration: none;
                     border-radius: 8px;
-                    margin: 20px 0;
-                    font-weight: 600;
+                    margin: 24px 0;
+                    font-weight: 500;
+                    font-size: 15px;
                 }}
-                .footer {{
-                    background: #F5F3EF;
-                    padding: 20px 30px;
-                    text-align: center;
-                    font-size: 12px;
-                    color: #6B6560;
-                    border-radius: 0 0 10px 10px;
-                }}
-                .token {{
-                    background: #F0EDE8;
-                    padding: 10px;
-                    border-radius: 6px;
+                .link-box {{
+                    background: #f9fafb;
+                    border: 1px solid #e5e7eb;
+                    padding: 12px 16px;
+                    border-radius: 8px;
                     font-family: monospace;
+                    font-size: 13px;
                     word-break: break-all;
-                    margin: 15px 0;
+                    margin: 16px 0;
+                    color: #6b7280;
                 }}
                 .warning {{
-                    background: #FEE2E2;
-                    border-left: 4px solid #DC2626;
-                    padding: 12px;
-                    margin: 15px 0;
+                    background: #fef2f2;
+                    border: 1px solid #fecaca;
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin: 24px 0;
+                }}
+                .warning p {{
+                    margin: 0;
+                    font-size: 13px;
+                    color: #991b1b;
+                }}
+                .footer {{
+                    background: #f9fafb;
+                    padding: 20px 32px;
+                    text-align: center;
+                    border-top: 1px solid #e5e7eb;
+                }}
+                .footer p {{
+                    margin: 0;
+                    font-size: 12px;
+                    color: #9ca3af;
+                }}
+                .footer p + p {{
+                    margin-top: 4px;
+                }}
+                .tagline {{
+                    font-size: 9px;
+                    color: #9ca3af;
+                    margin-top: 4px;
                 }}
             </style>
         </head>
         <body>
-            <div class="header">
-                <h1>⚡ OppGrid</h1>
-            </div>
-            <div class="content">
-                <h2>Password Reset Request</h2>
-                <p>Hi {user_name},</p>
-                <p>We received a request to reset your password. Click the button below to create a new password:</p>
-
-                <div style="text-align: center;">
-                    <a href="{reset_link}" class="button">Reset Password</a>
+            <div class="email-container">
+                <div class="header">
+                    <div class="logo">
+                        <div class="logo-icon">OG</div>
+                        <span class="logo-text">OppGrid</span>
+                    </div>
+                    <div class="tagline">The Opportunity Intelligence Platform</div>
                 </div>
+                <div class="content">
+                    <h2>Password Reset Request</h2>
+                    <p>Hi {user_name},</p>
+                    <p>We received a request to reset your password. Click the button below to create a new password:</p>
 
-                <p>Or copy and paste this link into your browser:</p>
-                <div class="token">{reset_link}</div>
+                    <div style="text-align: center;">
+                        <a href="{reset_link}" class="button">Reset Password</a>
+                    </div>
 
-                <p>This password reset link will expire in 1 hour.</p>
+                    <p style="font-size: 13px; color: #6b7280;">Or copy and paste this link into your browser:</p>
+                    <div class="link-box">{reset_link}</div>
 
-                <div class="warning">
-                    <strong>⚠️ Important:</strong> If you didn't request a password reset, please ignore this email or contact support if you have concerns about your account security.
+                    <p style="font-size: 13px; color: #6b7280;">This password reset link will expire in 1 hour.</p>
+
+                    <div class="warning">
+                        <p><strong>Important:</strong> If you didn't request a password reset, please ignore this email or contact support if you have concerns about your account security.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="footer">
-                <p>© 2025 OppGrid. All rights reserved.</p>
-                <p>This is an automated message, please do not reply.</p>
+                <div class="footer">
+                    <p>&copy; 2025 OppGrid. All rights reserved.</p>
+                    <p>This is an automated message, please do not reply.</p>
+                </div>
             </div>
         </body>
         </html>
@@ -413,87 +522,150 @@ class EmailService:
         <html>
         <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
                 body {{
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                     line-height: 1.6;
-                    color: #333;
+                    color: #111827;
                     max-width: 600px;
                     margin: 0 auto;
                     padding: 20px;
+                    background: #f9fafb;
+                }}
+                .email-container {{
+                    background: #ffffff;
+                    border-radius: 16px;
+                    border: 1px solid #e5e7eb;
+                    overflow: hidden;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #D97757 0%, #C96646 100%);
-                    padding: 30px;
+                    background: #000000;
+                    padding: 24px 30px;
                     text-align: center;
-                    border-radius: 10px 10px 0 0;
                 }}
-                .header h1 {{
-                    color: white;
-                    margin: 0;
-                    font-size: 28px;
+                .logo {{
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }}
+                .logo-icon {{
+                    width: 32px;
+                    height: 32px;
+                    background: #ffffff;
+                    border-radius: 8px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 700;
+                    font-size: 12px;
+                    color: #000000;
+                }}
+                .logo-text {{
+                    color: #ffffff;
+                    font-size: 20px;
+                    font-weight: 600;
                 }}
                 .content {{
-                    background: #ffffff;
-                    padding: 40px 30px;
-                    border: 1px solid #E8E4DF;
-                    border-top: none;
+                    padding: 40px 32px;
+                }}
+                .content h2 {{
+                    margin: 0 0 16px 0;
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #111827;
+                }}
+                .content p {{
+                    margin: 0 0 16px 0;
+                    color: #374151;
+                    font-size: 15px;
                 }}
                 .notification-box {{
-                    background: #F0EDE8;
-                    border-left: 4px solid #D97757;
+                    background: #f9fafb;
+                    border: 1px solid #e5e7eb;
+                    border-left: 4px solid #000000;
                     padding: 20px;
-                    margin: 20px 0;
-                    border-radius: 4px;
+                    margin: 24px 0;
+                    border-radius: 8px;
                 }}
                 .notification-box h3 {{
-                    margin-top: 0;
-                    color: #D97757;
+                    margin: 0 0 8px 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #111827;
+                }}
+                .notification-box p {{
+                    margin: 0;
+                    color: #6b7280;
+                    font-size: 14px;
                 }}
                 .button {{
                     display: inline-block;
-                    padding: 14px 32px;
-                    background: #D97757;
-                    color: white;
+                    padding: 12px 24px;
+                    background: #000000;
+                    color: #ffffff !important;
                     text-decoration: none;
                     border-radius: 8px;
-                    margin: 20px 0;
-                    font-weight: 600;
+                    margin: 24px 0;
+                    font-weight: 500;
+                    font-size: 15px;
                 }}
                 .footer {{
-                    background: #F5F3EF;
-                    padding: 20px 30px;
+                    background: #f9fafb;
+                    padding: 20px 32px;
                     text-align: center;
+                    border-top: 1px solid #e5e7eb;
+                }}
+                .footer p {{
+                    margin: 0;
                     font-size: 12px;
-                    color: #6B6560;
-                    border-radius: 0 0 10px 10px;
+                    color: #9ca3af;
+                }}
+                .footer p + p {{
+                    margin-top: 4px;
+                }}
+                .tagline {{
+                    font-size: 9px;
+                    color: #9ca3af;
+                    margin-top: 4px;
+                }}
+                .muted {{
+                    font-size: 13px;
+                    color: #9ca3af;
+                    margin-top: 24px;
                 }}
             </style>
         </head>
         <body>
-            <div class="header">
-                <h1>⚡ OppGrid</h1>
-            </div>
-            <div class="content">
-                <h2>Hi {user_name}!</h2>
-                <p>You have a new notification:</p>
-
-                <div class="notification-box">
-                    <h3>{notification_title}</h3>
-                    <p>{notification_message}</p>
+            <div class="email-container">
+                <div class="header">
+                    <div class="logo">
+                        <div class="logo-icon">OG</div>
+                        <span class="logo-text">OppGrid</span>
+                    </div>
+                    <div class="tagline">The Opportunity Intelligence Platform</div>
                 </div>
+                <div class="content">
+                    <h2>Hi {user_name}!</h2>
+                    <p>You have a new notification:</p>
 
-                <div style="text-align: center;">
-                    <a href="{view_link}" class="button">View Details</a>
+                    <div class="notification-box">
+                        <h3>{notification_title}</h3>
+                        <p>{notification_message}</p>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <a href="{view_link}" class="button">View Details</a>
+                    </div>
+
+                    <p class="muted">
+                        You can manage your notification preferences in your account settings.
+                    </p>
                 </div>
-
-                <p style="margin-top: 30px; font-size: 14px; color: #6B6560;">
-                    You can manage your notification preferences in your account settings.
-                </p>
-            </div>
-            <div class="footer">
-                <p>© 2025 OppGrid. All rights reserved.</p>
-                <p>This is an automated message, please do not reply.</p>
+                <div class="footer">
+                    <p>&copy; 2025 OppGrid. All rights reserved.</p>
+                    <p>This is an automated message, please do not reply.</p>
+                </div>
             </div>
         </body>
         </html>
