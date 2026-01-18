@@ -39,7 +39,7 @@ def validate_redirect_url(url: str, request: Request) -> bool:
 
 from app.models.user import User
 from app.models.opportunity import Opportunity
-from app.models.purchased_report import PurchasedReport, PurchasedBundle, ConsultantLicense, PurchaseType
+from app.models.purchased_report import PurchasedReport, PurchasedBundle, ConsultantLicense, PurchaseType, GuestReportPurchase
 from app.core.dependencies import get_current_user, get_current_active_user
 from app.core.report_pricing import (
     REPORT_PRODUCTS,
@@ -173,6 +173,8 @@ def get_public_pricing():
     
     for report in pricing["reports"]:
         report["consultant_price"] = consultant_prices.get(report["id"], "$1,500-$5,000")
+        report["user_price"] = report["price"]
+        report["is_included"] = False
         reports_with_details.append(report)
     
     bundles_with_details = []
@@ -544,6 +546,175 @@ def create_bundle_checkout(
             "session_id": session.id,
             "bundle_type": checkout_data.bundle_type,
             "amount_cents": amount_cents,
+        },
+    )
+    
+    return CheckoutResponse(session_id=session.id, url=session.url)
+
+
+class GuestCheckoutRequest(BaseModel):
+    opportunity_id: int
+    report_type: str
+    email: str
+    success_url: str
+    cancel_url: str
+
+
+class GuestBundleCheckoutRequest(BaseModel):
+    opportunity_id: int
+    bundle_type: str
+    email: str
+    success_url: str
+    cancel_url: str
+
+
+@router.post("/guest-checkout-report", response_model=CheckoutResponse)
+def create_guest_report_checkout(
+    checkout_data: GuestCheckoutRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe Checkout session for guest report purchase (no auth required)"""
+    import secrets
+    import re
+    
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, checkout_data.email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == checkout_data.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    if checkout_data.report_type not in REPORT_PRODUCTS:
+        raise HTTPException(status_code=400, detail=f"Invalid report type: {checkout_data.report_type}")
+    
+    report_product = REPORT_PRODUCTS[checkout_data.report_type]
+    amount_cents = report_product.price_cents
+    
+    if not validate_redirect_url(checkout_data.success_url, request) or not validate_redirect_url(checkout_data.cancel_url, request):
+        raise HTTPException(status_code=400, detail="Invalid redirect URL")
+    
+    access_token = secrets.token_urlsafe(32)
+    
+    stripe_client = get_stripe_client()
+    
+    session = stripe_client.checkout.Session.create(
+        customer_email=checkout_data.email,
+        mode="payment",
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": "usd",
+                "product_data": {
+                    "name": f"OppGrid Report: {report_product.name}",
+                    "description": f"AI-generated {report_product.name} for opportunity #{checkout_data.opportunity_id}",
+                },
+                "unit_amount": amount_cents,
+            },
+            "quantity": 1,
+        }],
+        success_url=checkout_data.success_url,
+        cancel_url=checkout_data.cancel_url,
+        metadata={
+            "guest_email": checkout_data.email,
+            "opportunity_id": str(checkout_data.opportunity_id),
+            "report_type": checkout_data.report_type,
+            "payment_type": "guest_report_purchase",
+            "access_token": access_token,
+        },
+    )
+    
+    log_event(
+        db,
+        action="report_pricing.guest_checkout_session_created",
+        actor=None,
+        actor_type="guest",
+        request=request,
+        resource_type="opportunity",
+        resource_id=checkout_data.opportunity_id,
+        metadata={
+            "session_id": session.id,
+            "report_type": checkout_data.report_type,
+            "amount_cents": amount_cents,
+            "guest_email": checkout_data.email[:3] + "***",
+        },
+    )
+    
+    return CheckoutResponse(session_id=session.id, url=session.url)
+
+
+@router.post("/guest-checkout-bundle", response_model=CheckoutResponse)
+def create_guest_bundle_checkout(
+    checkout_data: GuestBundleCheckoutRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe Checkout session for guest bundle purchase (no auth required)"""
+    import secrets
+    import re
+    
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, checkout_data.email):
+        raise HTTPException(status_code=400, detail="Invalid email address")
+    
+    opportunity = db.query(Opportunity).filter(Opportunity.id == checkout_data.opportunity_id).first()
+    if not opportunity:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    if checkout_data.bundle_type not in BUNDLES:
+        raise HTTPException(status_code=400, detail=f"Invalid bundle type: {checkout_data.bundle_type}")
+    
+    bundle = BUNDLES[checkout_data.bundle_type]
+    amount_cents = bundle.price_cents
+    
+    if not validate_redirect_url(checkout_data.success_url, request) or not validate_redirect_url(checkout_data.cancel_url, request):
+        raise HTTPException(status_code=400, detail="Invalid redirect URL")
+    
+    access_token = secrets.token_urlsafe(32)
+    
+    stripe_client = get_stripe_client()
+    
+    session = stripe_client.checkout.Session.create(
+        customer_email=checkout_data.email,
+        mode="payment",
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": "usd",
+                "product_data": {
+                    "name": f"OppGrid Bundle: {bundle.name}",
+                    "description": f"Includes: {', '.join(bundle.reports)}",
+                },
+                "unit_amount": amount_cents,
+            },
+            "quantity": 1,
+        }],
+        success_url=checkout_data.success_url,
+        cancel_url=checkout_data.cancel_url,
+        metadata={
+            "guest_email": checkout_data.email,
+            "opportunity_id": str(checkout_data.opportunity_id),
+            "bundle_type": checkout_data.bundle_type,
+            "payment_type": "guest_bundle_purchase",
+            "reports": ",".join(bundle.reports),
+            "access_token": access_token,
+        },
+    )
+    
+    log_event(
+        db,
+        action="report_pricing.guest_bundle_checkout_session_created",
+        actor=None,
+        actor_type="guest",
+        request=request,
+        resource_type="opportunity",
+        resource_id=checkout_data.opportunity_id,
+        metadata={
+            "session_id": session.id,
+            "bundle_type": checkout_data.bundle_type,
+            "amount_cents": amount_cents,
+            "guest_email": checkout_data.email[:3] + "***",
         },
     )
     

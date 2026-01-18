@@ -75,3 +75,29 @@ class ConsultantLicense(Base):
     expires_at = Column(DateTime(timezone=True), nullable=True)
     
     user = relationship("User")
+
+
+class GuestReportPurchase(Base):
+    """Track report purchases by guest users (no account required)"""
+    __tablename__ = "guest_report_purchases"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="CASCADE"), nullable=False)
+    
+    report_type = Column(String(100), nullable=False)
+    bundle_type = Column(String(100), nullable=True)
+    
+    amount_paid = Column(Integer, default=0)
+    stripe_session_id = Column(String(255), nullable=True)
+    stripe_payment_intent_id = Column(String(255), nullable=True)
+    
+    is_generated = Column(Boolean, default=False)
+    generated_report_id = Column(Integer, ForeignKey("generated_reports.id", ondelete="SET NULL"), nullable=True)
+    
+    access_token = Column(String(255), nullable=True, unique=True)
+    
+    purchased_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    
+    opportunity = relationship("Opportunity")

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Loader2, Package, Check, X } from 'lucide-react'
+import { Loader2, Package, Check, X, Mail } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 
 type ReportProduct = {
@@ -31,6 +31,10 @@ function formatPrice(cents: number): string {
   return `$${(cents / 100).toFixed(0)}`
 }
 
+function isValidEmail(email: string): boolean {
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
+}
+
 export default function ReportPurchaseModal({
   opportunityId,
   opportunityTitle,
@@ -39,6 +43,7 @@ export default function ReportPurchaseModal({
 }: Props) {
   void _onPurchased;
   const { token } = useAuthStore()
+  const isGuest = !token
   
   const [pricing, setPricing] = useState<{ reports: ReportProduct[]; bundles: Bundle[]; user_tier: string } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,13 +52,19 @@ export default function ReportPurchaseModal({
   const [selectedBundle, setSelectedBundle] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [guestEmail, setGuestEmail] = useState('')
 
   useEffect(() => {
     async function fetchPricing() {
       try {
-        const res = await fetch(`/api/v1/report-pricing/?opportunity_id=${opportunityId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const headers: Record<string, string> = {}
+        if (token) {
+          headers.Authorization = `Bearer ${token}`
+        }
+        const endpoint = token 
+          ? `/api/v1/report-pricing/?opportunity_id=${opportunityId}`
+          : `/api/v1/report-pricing/public`
+        const res = await fetch(endpoint, { headers })
         if (!res.ok) throw new Error('Failed to fetch pricing')
         const data = await res.json()
         setPricing(data)
@@ -67,8 +78,8 @@ export default function ReportPurchaseModal({
   }, [opportunityId, token])
 
   async function handleCheckout() {
-    if (!token) {
-      setPaymentError('Please log in to continue')
+    if (isGuest && !isValidEmail(guestEmail)) {
+      setPaymentError('Please enter a valid email address')
       return
     }
 
@@ -77,34 +88,64 @@ export default function ReportPurchaseModal({
     
     try {
       const baseUrl = window.location.origin
-      const successUrl = `${baseUrl}/opportunities/${opportunityId}?purchase=success`
-      const cancelUrl = `${baseUrl}/opportunities/${opportunityId}?purchase=canceled`
+      const successUrl = `${baseUrl}/build/reports?purchase=success&opportunity_id=${opportunityId}`
+      const cancelUrl = `${baseUrl}/build/reports?purchase=canceled`
 
       let res
-      if (selectedBundle) {
-        res = await fetch('/api/v1/report-pricing/checkout-bundle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ 
-            opportunity_id: opportunityId, 
-            bundle_type: selectedBundle,
-            success_url: successUrl,
-            cancel_url: cancelUrl,
+      if (isGuest) {
+        if (selectedBundle) {
+          res = await fetch('/api/v1/report-pricing/guest-checkout-bundle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              opportunity_id: opportunityId, 
+              bundle_type: selectedBundle,
+              email: guestEmail,
+              success_url: successUrl,
+              cancel_url: cancelUrl,
+            })
           })
-        })
-      } else if (selectedReport) {
-        res = await fetch('/api/v1/report-pricing/checkout-report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ 
-            opportunity_id: opportunityId, 
-            report_type: selectedReport,
-            success_url: successUrl,
-            cancel_url: cancelUrl,
+        } else if (selectedReport) {
+          res = await fetch('/api/v1/report-pricing/guest-checkout-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              opportunity_id: opportunityId, 
+              report_type: selectedReport,
+              email: guestEmail,
+              success_url: successUrl,
+              cancel_url: cancelUrl,
+            })
           })
-        })
+        } else {
+          throw new Error('Please select a report or bundle')
+        }
       } else {
-        throw new Error('Please select a report or bundle')
+        if (selectedBundle) {
+          res = await fetch('/api/v1/report-pricing/checkout-bundle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ 
+              opportunity_id: opportunityId, 
+              bundle_type: selectedBundle,
+              success_url: successUrl,
+              cancel_url: cancelUrl,
+            })
+          })
+        } else if (selectedReport) {
+          res = await fetch('/api/v1/report-pricing/checkout-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ 
+              opportunity_id: opportunityId, 
+              report_type: selectedReport,
+              success_url: successUrl,
+              cancel_url: cancelUrl,
+            })
+          })
+        } else {
+          throw new Error('Please select a report or bundle')
+        }
       }
       
       const data = await res?.json().catch(() => ({}))
@@ -247,6 +288,28 @@ export default function ReportPurchaseModal({
             </div>
           </div>
 
+          {isGuest && (selectedReport || selectedBundle) && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <Mail className="w-4 h-4 inline-block mr-1" />
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={guestEmail}
+                onChange={(e) => {
+                  setGuestEmail(e.target.value)
+                  setPaymentError(null)
+                }}
+                placeholder="Enter your email to receive the report"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Your report will be delivered to this email after purchase.
+              </p>
+            </div>
+          )}
+
           {paymentError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {paymentError}
@@ -263,7 +326,7 @@ export default function ReportPurchaseModal({
             </button>
             <button
               onClick={handleCheckout}
-              disabled={(!selectedReport && !selectedBundle) || submitting}
+              disabled={(!selectedReport && !selectedBundle) || submitting || (isGuest && !isValidEmail(guestEmail))}
               className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
             >
               {submitting ? (

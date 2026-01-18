@@ -119,46 +119,11 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route
-          path="build/reports"
-          element={
-            <RequireTier requiredTier="pro" featureName="Consultant Studio">
-              <ReportStudio />
-            </RequireTier>
-          }
-        />
-        <Route
-          path="build/reports/:type"
-          element={
-            <RequireTier requiredTier="pro" featureName="Report Library">
-              <ReportStudio />
-            </RequireTier>
-          }
-        />
-        <Route
-          path="build/business-plan"
-          element={
-            <RequireTier requiredTier="pro" featureName="Business Plan Builder">
-              <ReportStudio />
-            </RequireTier>
-          }
-        />
-        <Route
-          path="build/financials"
-          element={
-            <RequireTier requiredTier="pro" featureName="Financial Reports">
-              <ReportStudio />
-            </RequireTier>
-          }
-        />
-        <Route
-          path="build/pitch-deck"
-          element={
-            <RequireTier requiredTier="pro" featureName="Pitch Deck Builder">
-              <ReportStudio />
-            </RequireTier>
-          }
-        />
+        <Route path="build/reports" element={<ReportStudio />} />
+        <Route path="build/reports/:type" element={<ReportStudio />} />
+        <Route path="build/business-plan" element={<ReportStudio />} />
+        <Route path="build/financials" element={<ReportStudio />} />
+        <Route path="build/pitch-deck" element={<ReportStudio />} />
         <Route
           path="build/experts"
           element={
