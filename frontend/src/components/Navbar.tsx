@@ -20,7 +20,7 @@ const guestNavItems = [
       { name: 'Lender', path: '/network/lenders', description: 'Provide funding to startups' },
     ]
   },
-  { name: 'API', path: '/api' },
+  { name: 'API', path: '/developer' },
   { name: 'Pricing', path: '/pricing' },
 ]
 
@@ -44,7 +44,7 @@ const paidNavItems = [
       { name: 'Leads', path: '/leads', description: 'Generate and manage leads' },
     ]
   },
-  { name: 'API', path: '/api' },
+  { name: 'API', path: '/developer' },
   { name: 'Pricing', path: '/pricing' },
 ]
 

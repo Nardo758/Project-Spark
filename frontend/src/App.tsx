@@ -89,7 +89,7 @@ function App() {
         <Route path="learn" element={<Learn />} />
         <Route path="ai-roadmap" element={<AIRoadmap />} />
         <Route path="ai-match" element={<AIMatch />} />
-        <Route path="api" element={<ApiPortal />} />
+        <Route path="developer" element={<ApiPortal />} />
         <Route path="about" element={<About />} />
         <Route path="blog" element={<Blog />} />
         <Route path="contact" element={<Contact />} />
