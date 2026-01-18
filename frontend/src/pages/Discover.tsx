@@ -510,7 +510,6 @@ export default function Discover() {
             const marketSize = formatMarketSize(opp.ai_market_size_estimate || opp.market_size)
             const validations = opp.validation_count || 0
             const accessInfo = accessInfoQuery.data?.[opp.id]
-            const daysUntilUnlock = accessInfo?.days_until_unlock ?? 0
             const isAccessible = accessInfo?.is_accessible ?? true
 
             return (
@@ -627,7 +626,63 @@ export default function Discover() {
 
         {/* Right Sidebar - Discovery Metrics */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-24">
+          <div className="sticky top-24 space-y-4">
+            {/* Views Remaining Card - Free tier only */}
+            {isAuthenticated && isFreeTier && (
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm">
+                      {viewsRemaining !== null ? (
+                        <>
+                          <span className="text-purple-600 font-bold">{viewsRemaining}</span> opportunity views remaining this month
+                        </>
+                      ) : (
+                        'Explorer Plan - Limited Access'
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Upgrade for unlimited access and earlier opportunities
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/pricing"
+                  className="mt-3 w-full px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
+                >
+                  Upgrade Plan
+                </Link>
+              </div>
+            )}
+
+            {/* No Views Warning Card - When views exhausted */}
+            {isAuthenticated && isFreeTier && viewsRemaining === 0 && (
+              <div className="bg-amber-50 rounded-xl border border-amber-200 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+                    <Lock className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-amber-800 text-sm">No views remaining this month</p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Upgrade to continue accessing detailed opportunity analysis, or wait until next month for your views to reset.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/pricing"
+                  className="mt-3 w-full px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center"
+                >
+                  Upgrade Now
+                </Link>
+              </div>
+            )}
+
+            {/* Discovery Metrics Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
               Your Discovery Metrics
             </h3>
@@ -657,6 +712,7 @@ export default function Discover() {
                 Improve Your Matches
                 <ChevronRight className="w-4 h-4" />
               </button>
+            </div>
             </div>
           </div>
         </div>
