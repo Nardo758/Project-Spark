@@ -432,10 +432,10 @@ export default function OpportunityDetail() {
                     {access.freshness_badge.label}
                   </span>
                 )}
-                {access && !access.is_accessible && access.days_until_unlock > 0 ? (
+                {access && !access.is_accessible ? (
                   <span className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
                     <Lock className="w-3 h-3" />
-                    Unlocks for your tier in {access.days_until_unlock} days
+                    Upgrade for Premium
                   </span>
                 ) : access?.is_accessible ? (
                   <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-medium">
