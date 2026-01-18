@@ -13,9 +13,139 @@ import logging
 
 from app.db.database import get_db
 from app.services.llm_ai_engine import get_anthropic_client
+from app.core.dependencies import get_current_user_optional
+from app.services.branding_service import get_user_team_branding, inject_branding_into_report
+from app.models.user import User
+from datetime import datetime
 
 router = APIRouter(prefix="/quick-actions", tags=["Quick Actions"])
 logger = logging.getLogger(__name__)
+
+
+def format_report_html(report_type: str, title: str, data: Dict[str, Any], subtitle: str = "") -> str:
+    """Format JSON data into professional HTML report with OppGrid header/footer."""
+    date_str = datetime.utcnow().strftime('%B %d, %Y')
+    
+    def render_section(key: str, value: Any, depth: int = 0) -> str:
+        """Recursively render data into HTML sections."""
+        key_title = key.replace('_', ' ').title()
+        
+        if isinstance(value, dict):
+            items = []
+            for k, v in value.items():
+                items.append(render_section(k, v, depth + 1))
+            if depth == 0:
+                return f'''
+                <div class="report-section">
+                    <h3>{key_title}</h3>
+                    <div class="section-content">{''.join(items)}</div>
+                </div>'''
+            else:
+                return f'''
+                <div class="subsection">
+                    <h4>{key_title}</h4>
+                    {''.join(items)}
+                </div>'''
+        elif isinstance(value, list):
+            if all(isinstance(i, str) for i in value):
+                list_items = ''.join(f'<li>{item}</li>' for item in value)
+                return f'<div class="field"><span class="label">{key_title}:</span><ul class="value-list">{list_items}</ul></div>'
+            else:
+                items = []
+                for i, item in enumerate(value):
+                    if isinstance(item, dict):
+                        item_content = ''.join(f'<span class="item-field"><strong>{k.replace("_", " ").title()}:</strong> {v}</span>' for k, v in item.items())
+                        items.append(f'<div class="list-item">{item_content}</div>')
+                    else:
+                        items.append(f'<div class="list-item">{item}</div>')
+                return f'<div class="field"><span class="label">{key_title}:</span><div class="complex-list">{"".join(items)}</div></div>'
+        else:
+            return f'<div class="field"><span class="label">{key_title}:</span> <span class="value">{value}</span></div>'
+    
+    sections_html = ''
+    for key, value in data.items():
+        sections_html += render_section(key, value)
+    
+    html = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{title} - OppGrid</title>
+    <style>
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1e293b; background: #f8fafc; }}
+        .report-container {{ max-width: 900px; margin: 0 auto; background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }}
+        .report-header {{
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            padding: 32px 40px;
+        }}
+        .report-header .brand {{ display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }}
+        .report-header .brand-logo {{ font-size: 24px; font-weight: 700; }}
+        .report-header .report-type {{ font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; }}
+        .report-header h1 {{ font-size: 28px; font-weight: 600; margin-bottom: 8px; }}
+        .report-header .subtitle {{ font-size: 16px; opacity: 0.9; }}
+        .report-header .meta {{ display: flex; gap: 24px; margin-top: 16px; font-size: 14px; opacity: 0.85; }}
+        .report-body {{ padding: 40px; }}
+        .report-section {{ margin-bottom: 32px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }}
+        .report-section h3 {{ background: #f1f5f9; padding: 16px 20px; font-size: 16px; font-weight: 600; color: #334155; border-bottom: 1px solid #e2e8f0; }}
+        .section-content {{ padding: 20px; }}
+        .subsection {{ margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }}
+        .subsection:last-child {{ border-bottom: none; margin-bottom: 0; padding-bottom: 0; }}
+        .subsection h4 {{ font-size: 14px; font-weight: 600; color: #6366f1; margin-bottom: 12px; }}
+        .field {{ margin-bottom: 12px; }}
+        .field .label {{ font-weight: 500; color: #64748b; font-size: 13px; }}
+        .field .value {{ color: #1e293b; }}
+        .value-list {{ margin: 8px 0 0 20px; }}
+        .value-list li {{ color: #475569; margin-bottom: 4px; }}
+        .complex-list {{ margin-top: 8px; }}
+        .list-item {{ background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 8px; }}
+        .list-item:last-child {{ margin-bottom: 0; }}
+        .item-field {{ display: block; margin-bottom: 4px; font-size: 14px; }}
+        .item-field strong {{ color: #64748b; font-weight: 500; }}
+        .report-footer {{
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 24px 40px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+        }}
+        .report-footer .powered-by {{ margin-bottom: 8px; }}
+        .report-footer .disclaimer {{ font-size: 12px; color: #94a3b8; }}
+        @media print {{
+            .report-container {{ box-shadow: none; }}
+            .report-section {{ break-inside: avoid; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <header class="report-header">
+            <div class="brand">
+                <span class="brand-logo">OppGrid</span>
+                <span class="report-type">{report_type}</span>
+            </div>
+            <h1>{title}</h1>
+            {f'<div class="subtitle">{subtitle}</div>' if subtitle else ''}
+            <div class="meta">
+                <span>Generated: {date_str}</span>
+                <span>AI-Powered Analysis</span>
+            </div>
+        </header>
+        <div class="report-body">
+            {sections_html}
+        </div>
+        <footer class="report-footer">
+            <div class="powered-by">Generated by <strong>OppGrid</strong> AI-Powered Business Intelligence</div>
+            <div class="disclaimer">This report was generated using Claude AI. Results should be validated with professional advisors for major business decisions.</div>
+        </footer>
+    </div>
+</body>
+</html>
+'''
+    return html
 
 
 class BusinessPlanRequest(BaseModel):
@@ -368,6 +498,7 @@ class FeasibilityRequest(BaseModel):
 class FeasibilityResponse(BaseModel):
     success: bool
     study: Optional[Dict[str, Any]] = None
+    html_content: Optional[str] = None
     processing_time_ms: Optional[int] = None
     error: Optional[str] = None
 
@@ -381,6 +512,7 @@ class MarketAnalysisRequest(BaseModel):
 class MarketAnalysisResponse(BaseModel):
     success: bool
     analysis: Optional[Dict[str, Any]] = None
+    html_content: Optional[str] = None
     processing_time_ms: Optional[int] = None
     error: Optional[str] = None
 
@@ -394,6 +526,7 @@ class StrategicAssessmentRequest(BaseModel):
 class StrategicAssessmentResponse(BaseModel):
     success: bool
     assessment: Optional[Dict[str, Any]] = None
+    html_content: Optional[str] = None
     processing_time_ms: Optional[int] = None
     error: Optional[str] = None
 
@@ -407,12 +540,17 @@ class PestleRequest(BaseModel):
 class PestleResponse(BaseModel):
     success: bool
     analysis: Optional[Dict[str, Any]] = None
+    html_content: Optional[str] = None
     processing_time_ms: Optional[int] = None
     error: Optional[str] = None
 
 
 @router.post("/feasibility", response_model=FeasibilityResponse)
-async def generate_feasibility_study(request: FeasibilityRequest, db: Session = Depends(get_db)):
+async def generate_feasibility_study(
+    request: FeasibilityRequest, 
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional)
+):
     """Generate a feasibility study using AI."""
     start_time = time.time()
     
@@ -489,9 +627,22 @@ Be objective and balanced. Respond only with valid JSON."""
         result = parse_ai_response(response.content[0].text)
         processing_time = int((time.time() - start_time) * 1000)
         
+        html_content = format_report_html(
+            report_type="Feasibility Study",
+            title=f"Feasibility Study: {request.business_idea[:50]}{'...' if len(request.business_idea) > 50 else ''}",
+            data=result,
+            subtitle=f"Industry: {request.industry or 'General'} | Location: {request.location or 'National'}"
+        )
+        
+        if current_user:
+            branding = get_user_team_branding(current_user, db)
+            if branding:
+                html_content = inject_branding_into_report(html_content, branding)
+        
         return FeasibilityResponse(
             success=True,
             study=result,
+            html_content=html_content,
             processing_time_ms=processing_time
         )
         
@@ -505,7 +656,11 @@ Be objective and balanced. Respond only with valid JSON."""
 
 
 @router.post("/market-analysis", response_model=MarketAnalysisResponse)
-async def generate_market_analysis(request: MarketAnalysisRequest, db: Session = Depends(get_db)):
+async def generate_market_analysis(
+    request: MarketAnalysisRequest, 
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional)
+):
     """Generate a comprehensive market analysis using AI."""
     start_time = time.time()
     
@@ -580,9 +735,22 @@ Include data points and be specific. Respond only with valid JSON."""
         result = parse_ai_response(response.content[0].text)
         processing_time = int((time.time() - start_time) * 1000)
         
+        html_content = format_report_html(
+            report_type="Market Analysis",
+            title=f"Market Analysis: {request.industry}",
+            data=result,
+            subtitle=f"Location Focus: {request.location or 'Global/National'}"
+        )
+        
+        if current_user:
+            branding = get_user_team_branding(current_user, db)
+            if branding:
+                html_content = inject_branding_into_report(html_content, branding)
+        
         return MarketAnalysisResponse(
             success=True,
             analysis=result,
+            html_content=html_content,
             processing_time_ms=processing_time
         )
         
@@ -596,7 +764,11 @@ Include data points and be specific. Respond only with valid JSON."""
 
 
 @router.post("/strategic-assessment", response_model=StrategicAssessmentResponse)
-async def generate_strategic_assessment(request: StrategicAssessmentRequest, db: Session = Depends(get_db)):
+async def generate_strategic_assessment(
+    request: StrategicAssessmentRequest, 
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional)
+):
     """Generate a strategic assessment with SWOT analysis using AI."""
     start_time = time.time()
     
@@ -676,9 +848,22 @@ Provide actionable, specific recommendations. Respond only with valid JSON."""
         result = parse_ai_response(response.content[0].text)
         processing_time = int((time.time() - start_time) * 1000)
         
+        html_content = format_report_html(
+            report_type="Strategic Assessment",
+            title=f"Strategic Assessment: {request.business_concept[:50]}{'...' if len(request.business_concept) > 50 else ''}",
+            data=result,
+            subtitle=f"Industry: {request.industry or 'General'}"
+        )
+        
+        if current_user:
+            branding = get_user_team_branding(current_user, db)
+            if branding:
+                html_content = inject_branding_into_report(html_content, branding)
+        
         return StrategicAssessmentResponse(
             success=True,
             assessment=result,
+            html_content=html_content,
             processing_time_ms=processing_time
         )
         
@@ -692,7 +877,11 @@ Provide actionable, specific recommendations. Respond only with valid JSON."""
 
 
 @router.post("/pestle", response_model=PestleResponse)
-async def generate_pestle_analysis(request: PestleRequest, db: Session = Depends(get_db)):
+async def generate_pestle_analysis(
+    request: PestleRequest, 
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional)
+):
     """Generate a PESTLE analysis using AI."""
     start_time = time.time()
     
@@ -786,9 +975,22 @@ Be specific to the industry and region. Respond only with valid JSON."""
         result = parse_ai_response(response.content[0].text)
         processing_time = int((time.time() - start_time) * 1000)
         
+        html_content = format_report_html(
+            report_type="PESTLE Analysis",
+            title=f"PESTLE Analysis: {request.business_industry}",
+            data=result,
+            subtitle=f"Target Region: {request.target_region or 'Global'}"
+        )
+        
+        if current_user:
+            branding = get_user_team_branding(current_user, db)
+            if branding:
+                html_content = inject_branding_into_report(html_content, branding)
+        
         return PestleResponse(
             success=True,
             analysis=result,
+            html_content=html_content,
             processing_time_ms=processing_time
         )
         
