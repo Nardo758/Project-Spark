@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In · OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap&family=Roboto+Mono:wght@700" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-100: #d1fae5;
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --violet-50: #f5f3ff;
+            --violet-100: #ede9fe;
+            --violet-400: #a78bfa;
+            --violet-600: #1c1917;
+            --violet-700: #292524;
+            --purple-600: #292524;
+            --red-50: #fef2f2;
+            --red-600: #dc2626;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .spektral {
+            font-family: 'Spectral', serif;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+        }
+
+        .nav-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--stone-900);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 18px;
+        }
+
+        .logo-text-group {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .logo-text {
+            font-family: 'Spectral', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--stone-900);
+        }
+
+        .logo-tagline {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--stone-500);
+            letter-spacing: 0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-link {
+            color: var(--stone-600);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--stone-900);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--stone-600);
+        }
+
+        .btn-ghost:hover {
+            color: var(--stone-900);
+        }
+
+        .btn-primary {
+            background: var(--violet-600);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--stone-800);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Left Side - Feature Panel */
+        .feature-side {
+            flex: 1;
+            background: linear-gradient(135deg, var(--stone-900), var(--stone-800));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-side::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+        }
+
+        .feature-content {
+            max-width: 480px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--violet-400);
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            border: 1px solid rgba(124, 58, 237, 0.3);
+        }
+
+        .feature-content h2 {
+            font-family: 'Spectral', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .feature-content > p {
+            font-size: 18px;
+            color: var(--stone-400);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-family: 'Spectral', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--stone-400);
+        }
+
+        /* Right Side - Form */
+        .form-side {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+        }
+
+        .form-container {
+            max-width: 440px;
+            width: 100%;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .form-header h1 {
+            font-family: 'Spectral', serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--stone-900);
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            font-size: 16px;
+            color: var(--stone-600);
+        }
+
+        /* Success Message */
+        .success-message {
+            background: var(--emerald-100);
+            border: 1px solid var(--emerald-600);
+            color: var(--emerald-700);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .success-message.visible {
+            display: block;
+        }
+
+        /* Social Buttons */
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn-social {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--white);
+            border: 2px solid var(--stone-200);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--stone-700);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-social:hover {
+            border-color: var(--stone-300);
+            background: var(--stone-50);
+        }
+
+        .btn-social svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--stone-200);
+        }
+
+        .divider span {
+            font-size: 14px;
+            color: var(--stone-500);
+        }
+
+        /* Form */
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--stone-700);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--stone-200);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            background: var(--white);
+        }
+
+        .form-group input:hover {
+            border-color: var(--stone-300);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--violet-400);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: var(--stone-400);
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--violet-600);
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .forgot-link {
+            font-size: 14px;
+            color: var(--violet-600);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--violet-600), var(--purple-600));
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-submit svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Error Message */
+        .error-message {
+            background: var(--red-50);
+            border: 1px solid var(--red-600);
+            color: var(--red-600);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        /* Footer Link */
+        .form-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--stone-600);
+        }
+
+        .form-footer a {
+            color: var(--violet-600);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Magic Link Section */
+        .magic-link-section {
+            margin-bottom: 8px;
+        }
+
+        .btn-magic-link {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-magic-link:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.35);
+        }
+
+        .btn-magic-link:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .magic-link-success {
+            display: none;
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            color: #166534;
+            font-size: 14px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .magic-link-success.visible {
+            display: flex;
+        }
+
+        .magic-link-success svg {
+            color: #16a34a;
+            flex-shrink: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .feature-side {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .form-side {
+                padding: 24px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                    </svg>
+                </div>
+                <div class="logo-text-group">
+                    <span class="logo-text">OppGrid</span>
+                    <span class="logo-tagline">The Opportunity Intelligence Platform</span>
+                </div>
+            </a>
+            <div class="nav-links">
+                <!-- Guest Navigation (signin is guest-only page) -->
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="discover.html" class="nav-link">Browse Ideas</a>
+                <a href="idea-engine.html" class="nav-link">Idea Engine</a>
+                <a href="pricing.html" class="nav-link">Pricing</a>
+            </div>
+            <div class="nav-actions">
+                <a href="signin.html" class="btn btn-ghost">Sign In</a>
+                <a href="signup.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Left Side - Features -->
+        <div class="feature-side">
+            <div class="feature-content">
+                <div class="feature-badge">Welcome back</div>
+                <h2 class="spektral">Continue your research journey</h2>
+                <p>Pick up where you left off. Your saved opportunities and research insights are waiting.</p>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">2,847+</div>
+                        <div class="stat-label">Validated Opportunities</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">$8.4B+</div>
+                        <div class="stat-label">Total Market Value</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">6</div>
+                        <div class="stat-label">Global Regions</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Avg Validation Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Form -->
+        <div class="form-side">
+            <div class="form-container fade-in-up">
+                <div class="form-header">
+                    <h1 class="spektral">Sign in to OppGrid</h1>
+                    <p>Enter your credentials to continue</p>
+                </div>
+
+                <!-- Success Message (shown after registration) -->
+                <div class="success-message" id="successMessage">
+                    Account created successfully! Please sign in.
+                </div>
+
+                <!-- Primary Sign In Button - Uses unified auth (Google, GitHub, X, Apple, email) -->
+                <div class="social-buttons">
+                    <button type="button" class="btn-submit" id="primarySignin" style="margin-bottom: 12px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        Sign In
+                    </button>
+                    <p style="text-align: center; font-size: 13px; color: var(--stone-500); margin-bottom: 8px;">
+                        Use Google, GitHub, X, Apple, or email
+                    </p>
+                </div>
+
+                <div class="divider">
+                    <span>or sign in with password</span>
+                </div>
+
+                <!-- Error Message -->
+                <div class="error-message" id="errorMessage"></div>
+
+                <!-- Form -->
+                <form class="auth-form" id="signinForm">
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="remember" name="remember">
+                            <label for="remember">Remember me</label>
+                        </div>
+                        <a href="#" class="forgot-link" id="forgotPassword">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        Sign In
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14"/>
+                            <path d="m12 5 7 7-7 7"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <!-- 2FA Step (shown only if account requires it) -->
+                <div class="success-message" id="twoFactorMessage" style="display:none;">
+                    Two-factor authentication required. Enter the 6-digit code from your authenticator app.
+                </div>
+                <form class="auth-form" id="twoFactorForm" style="display:none; margin-top: 16px;">
+                    <div class="form-group">
+                        <label for="otp">2FA code</label>
+                        <input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" required>
+                    </div>
+                    <button type="submit" class="btn-submit" id="twoFactorBtn">
+                        Verify Code
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14"/>
+                            <path d="m12 5 7 7-7 7"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="form-footer">
+                    Don't have an account? <a href="signup.html">Create one</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Integration -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        const form = document.getElementById('signinForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // Check for registration success
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('registered') === 'true') {
+            successMessage.classList.add('visible');
+        }
+
+        function getSafeRedirectPath(defaultPath = '/discover.html') {
+            const raw = urlParams.get('redirect');
+            if (!raw) return defaultPath;
+            try {
+                // Allow only same-origin redirects to avoid open-redirect vulnerabilities.
+                const url = new URL(raw, window.location.origin);
+                if (url.origin !== window.location.origin) return defaultPath;
+                return `${url.pathname}${url.search}${url.hash}` || defaultPath;
+            } catch (e) {
+                return defaultPath;
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('visible');
+            successMessage.classList.remove('visible');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('visible');
+        }
+
+        const twoFactorForm = document.getElementById('twoFactorForm');
+        const twoFactorBtn = document.getElementById('twoFactorBtn');
+        const twoFactorMessage = document.getElementById('twoFactorMessage');
+        let pending2FAEmail = null;
+
+        function showTwoFactor(email) {
+            pending2FAEmail = email;
+            twoFactorMessage.style.display = 'block';
+            twoFactorMessage.classList.add('visible');
+            twoFactorForm.style.display = 'block';
+            document.getElementById('otp').focus();
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const originalText = submitBtn.innerHTML;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span>Signing in...</span>';
+
+                const response = await api.login(email, password);
+
+                console.log('Login successful!', response);
+
+                if (response.requires_2fa) {
+                    // Proceed to 2FA step
+                    showTwoFactor(response.email || email);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    return;
+                }
+
+                if (response.access_token) {
+                    // Store token and redirect
+                    localStorage.setItem('access_token', response.access_token);
+                    if (response.user) {
+                        localStorage.setItem('user', JSON.stringify(response.user));
+                    }
+                    api.token = response.access_token;
+                }
+
+                window.location.href = getSafeRedirectPath('/discover.html');
+
+            } catch (error) {
+                console.error('Login error:', error);
+                showError(error.message || 'Invalid email or password. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+
+        // Primary Sign In button - redirects to Replit Auth (supports Google, GitHub, X, Apple, email)
+        document.getElementById('primarySignin').addEventListener('click', () => {
+            const redirectPath = getSafeRedirectPath('/discover.html');
+            window.location.href = `/auth/login?redirect_url=${encodeURIComponent(redirectPath)}`;
+        });
+
+        // Forgot password handler
+        document.getElementById('forgotPassword').addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const target = email
+                ? `reset-password.html?email=${encodeURIComponent(email)}&autosend=1`
+                : 'reset-password.html';
+            window.location.href = target;
+        });
+
+        // 2FA verify handler
+        twoFactorForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const otp = document.getElementById('otp').value.trim();
+            if (!pending2FAEmail) {
+                showError('Missing email for 2FA. Please sign in again.');
+                return;
+            }
+
+            const originalText = twoFactorBtn.innerHTML;
+            try {
+                twoFactorBtn.disabled = true;
+                twoFactorBtn.innerHTML = '<span>Verifying...</span>';
+                const data = await api.verifyTwoFactor(pending2FAEmail, otp);
+
+                if (data.access_token) {
+                    localStorage.setItem('access_token', data.access_token);
+                    api.token = data.access_token;
+                }
+
+                window.location.href = getSafeRedirectPath('/discover.html');
+            } catch (error) {
+                console.error('2FA error:', error);
+                showError(error.message || 'Invalid 2FA code. Please try again.');
+                twoFactorBtn.disabled = false;
+                twoFactorBtn.innerHTML = originalText;
+            }
+        });
+
+    </script>
+</body>
+</html>
