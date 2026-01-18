@@ -721,6 +721,83 @@ def create_guest_bundle_checkout(
     return CheckoutResponse(session_id=session.id, url=session.url)
 
 
+class StudioReportCheckoutRequest(BaseModel):
+    """Request for standalone studio report checkout (no opportunity required)"""
+    report_type: str  # market_analysis, strategic_assessment, pestle_analysis
+    success_url: str
+    cancel_url: str
+
+
+STUDIO_REPORT_PRICES = {
+    "market_analysis": {"name": "Market Analysis", "price_cents": 9900},
+    "strategic_assessment": {"name": "Strategic Assessment", "price_cents": 8900},
+    "pestle_analysis": {"name": "PESTLE Analysis", "price_cents": 7900},
+}
+
+
+@router.post("/studio-report-checkout", response_model=CheckoutResponse)
+def create_studio_report_checkout(
+    checkout_data: StudioReportCheckoutRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe Checkout session for standalone studio report purchase"""
+    if checkout_data.report_type not in STUDIO_REPORT_PRICES:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid report type: {checkout_data.report_type}. Valid types: {list(STUDIO_REPORT_PRICES.keys())}"
+        )
+    
+    report_info = STUDIO_REPORT_PRICES[checkout_data.report_type]
+    amount_cents = report_info["price_cents"]
+    
+    if not validate_redirect_url(checkout_data.success_url, request) or not validate_redirect_url(checkout_data.cancel_url, request):
+        raise HTTPException(status_code=400, detail="Invalid redirect URL")
+    
+    stripe_client = get_stripe_client()
+    
+    session = stripe_client.checkout.Session.create(
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data": {
+                "currency": "usd",
+                "unit_amount": amount_cents,
+                "product_data": {
+                    "name": f"OppGrid {report_info['name']}",
+                    "description": f"AI-generated {report_info['name']} report",
+                },
+            },
+            "quantity": 1,
+        }],
+        mode="payment",
+        success_url=checkout_data.success_url,
+        cancel_url=checkout_data.cancel_url,
+        metadata={
+            "user_id": str(current_user.id),
+            "report_type": checkout_data.report_type,
+            "payment_type": "studio_report_purchase",
+        },
+    )
+    
+    log_event(
+        db,
+        action="report_pricing.studio_checkout_session_created",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="studio_report",
+        resource_id=None,
+        metadata={
+            "session_id": session.id,
+            "report_type": checkout_data.report_type,
+            "amount_cents": amount_cents,
+        },
+    )
+    
+    return CheckoutResponse(session_id=session.id, url=session.url)
+
+
 @router.post("/purchase-bundle", response_model=PurchaseResponse)
 def create_bundle_purchase(
     purchase_data: BundlePurchaseRequest,
