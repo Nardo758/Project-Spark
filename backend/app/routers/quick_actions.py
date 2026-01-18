@@ -357,3 +357,445 @@ Make it compelling and investor-ready. Respond only with valid JSON."""
             error=str(e),
             processing_time_ms=int((time.time() - start_time) * 1000)
         )
+
+
+class FeasibilityRequest(BaseModel):
+    business_idea: str = Field(..., min_length=10, max_length=5000)
+    industry: Optional[str] = None
+    location: Optional[str] = None
+
+
+class FeasibilityResponse(BaseModel):
+    success: bool
+    study: Optional[Dict[str, Any]] = None
+    processing_time_ms: Optional[int] = None
+    error: Optional[str] = None
+
+
+class MarketAnalysisRequest(BaseModel):
+    industry: str = Field(..., min_length=2, max_length=200)
+    description: Optional[str] = None
+    location: Optional[str] = None
+
+
+class MarketAnalysisResponse(BaseModel):
+    success: bool
+    analysis: Optional[Dict[str, Any]] = None
+    processing_time_ms: Optional[int] = None
+    error: Optional[str] = None
+
+
+class StrategicAssessmentRequest(BaseModel):
+    business_concept: str = Field(..., min_length=10, max_length=5000)
+    industry: Optional[str] = None
+    competition_level: Optional[str] = None
+
+
+class StrategicAssessmentResponse(BaseModel):
+    success: bool
+    assessment: Optional[Dict[str, Any]] = None
+    processing_time_ms: Optional[int] = None
+    error: Optional[str] = None
+
+
+class PestleRequest(BaseModel):
+    business_industry: str = Field(..., min_length=2, max_length=200)
+    target_region: Optional[str] = None
+    description: Optional[str] = None
+
+
+class PestleResponse(BaseModel):
+    success: bool
+    analysis: Optional[Dict[str, Any]] = None
+    processing_time_ms: Optional[int] = None
+    error: Optional[str] = None
+
+
+@router.post("/feasibility", response_model=FeasibilityResponse)
+async def generate_feasibility_study(request: FeasibilityRequest, db: Session = Depends(get_db)):
+    """Generate a feasibility study using AI."""
+    start_time = time.time()
+    
+    client = get_anthropic_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="AI service not available")
+    
+    try:
+        prompt = f"""Conduct a comprehensive feasibility study for this business idea:
+
+BUSINESS IDEA:
+{request.business_idea}
+
+Industry: {request.industry or 'To be determined'}
+Location: {request.location or 'General market'}
+
+Generate a detailed JSON feasibility study with these sections:
+1. "project_overview": {{
+   "summary": "brief description of what is being evaluated",
+   "scope": "scope of the feasibility analysis",
+   "objectives": ["objective1", "objective2", "objective3"]
+}}
+2. "technical_feasibility": {{
+   "score": 1-10,
+   "assessment": "can this be built/delivered?",
+   "requirements": ["requirement1", "requirement2"],
+   "challenges": ["challenge1", "challenge2"],
+   "mitigation": "how to address challenges"
+}}
+3. "market_feasibility": {{
+   "score": 1-10,
+   "demand_assessment": "is there market demand?",
+   "target_market_size": "estimated market size",
+   "competition_analysis": "competitive landscape",
+   "market_entry_barriers": ["barrier1", "barrier2"]
+}}
+4. "financial_feasibility": {{
+   "score": 1-10,
+   "startup_costs": "estimated initial investment",
+   "operating_costs": "monthly/annual operating expenses",
+   "revenue_potential": "revenue projections",
+   "roi_estimate": "expected return on investment",
+   "break_even_timeline": "time to break even"
+}}
+5. "operational_feasibility": {{
+   "score": 1-10,
+   "execution_plan": "how can this be executed?",
+   "resources_needed": ["resource1", "resource2"],
+   "team_requirements": ["role1", "role2"],
+   "timeline": "implementation timeline"
+}}
+6. "legal_regulatory": {{
+   "score": 1-10,
+   "compliance_requirements": ["requirement1", "requirement2"],
+   "licenses_permits": ["license1", "license2"],
+   "risks": ["risk1", "risk2"]
+}}
+7. "recommendation": {{
+   "overall_score": 1-10,
+   "verdict": "GO / NO-GO / CONDITIONAL",
+   "justification": "reasoning for recommendation",
+   "conditions": ["condition if applicable"],
+   "next_steps": ["step1", "step2", "step3"]
+}}
+
+Be objective and balanced. Respond only with valid JSON."""
+
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=3000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        result = parse_ai_response(response.content[0].text)
+        processing_time = int((time.time() - start_time) * 1000)
+        
+        return FeasibilityResponse(
+            success=True,
+            study=result,
+            processing_time_ms=processing_time
+        )
+        
+    except Exception as e:
+        logger.error(f"Feasibility study generation failed: {e}")
+        return FeasibilityResponse(
+            success=False,
+            error=str(e),
+            processing_time_ms=int((time.time() - start_time) * 1000)
+        )
+
+
+@router.post("/market-analysis", response_model=MarketAnalysisResponse)
+async def generate_market_analysis(request: MarketAnalysisRequest, db: Session = Depends(get_db)):
+    """Generate a comprehensive market analysis using AI."""
+    start_time = time.time()
+    
+    client = get_anthropic_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="AI service not available")
+    
+    try:
+        prompt = f"""Create a comprehensive market analysis for this industry/market:
+
+MARKET/INDUSTRY: {request.industry}
+Description: {request.description or 'General analysis'}
+Location Focus: {request.location or 'Global/National'}
+
+Generate a detailed JSON market analysis with these sections:
+1. "industry_overview": {{
+   "definition": "market definition and scope",
+   "market_size": "current market size estimate",
+   "growth_rate": "annual growth rate",
+   "key_drivers": ["driver1", "driver2", "driver3"],
+   "market_stage": "emerging/growth/mature/declining"
+}}
+2. "market_segmentation": {{
+   "segments": [
+     {{"name": "segment1", "size": "size", "growth": "growth rate", "characteristics": "key traits"}},
+     {{"name": "segment2", "size": "size", "growth": "growth rate", "characteristics": "key traits"}}
+   ],
+   "geographic_distribution": "regional breakdown",
+   "highest_potential_segment": "which segment to target"
+}}
+3. "competitive_landscape": {{
+   "major_players": [
+     {{"name": "company1", "market_share": "share", "strengths": "key strengths"}},
+     {{"name": "company2", "market_share": "share", "strengths": "key strengths"}}
+   ],
+   "concentration": "fragmented/consolidated",
+   "barriers_to_entry": ["barrier1", "barrier2"],
+   "market_gaps": ["gap1", "gap2"]
+}}
+4. "market_trends": {{
+   "current_trends": ["trend1", "trend2", "trend3"],
+   "emerging_opportunities": ["opportunity1", "opportunity2"],
+   "potential_disruptions": ["disruption1", "disruption2"],
+   "technology_impact": "how technology is changing the market"
+}}
+5. "consumer_analysis": {{
+   "buyer_behavior": "how customers make purchase decisions",
+   "key_purchase_factors": ["factor1", "factor2", "factor3"],
+   "price_sensitivity": "low/medium/high",
+   "unmet_needs": ["need1", "need2"]
+}}
+6. "market_forecast": {{
+   "projection_3_year": "3-year market size projection",
+   "projection_5_year": "5-year market size projection",
+   "growth_scenarios": {{
+     "optimistic": "best case",
+     "base": "expected case",
+     "pessimistic": "worst case"
+   }},
+   "key_assumptions": ["assumption1", "assumption2"],
+   "risk_factors": ["risk1", "risk2"]
+}}
+
+Include data points and be specific. Respond only with valid JSON."""
+
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=3000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        result = parse_ai_response(response.content[0].text)
+        processing_time = int((time.time() - start_time) * 1000)
+        
+        return MarketAnalysisResponse(
+            success=True,
+            analysis=result,
+            processing_time_ms=processing_time
+        )
+        
+    except Exception as e:
+        logger.error(f"Market analysis generation failed: {e}")
+        return MarketAnalysisResponse(
+            success=False,
+            error=str(e),
+            processing_time_ms=int((time.time() - start_time) * 1000)
+        )
+
+
+@router.post("/strategic-assessment", response_model=StrategicAssessmentResponse)
+async def generate_strategic_assessment(request: StrategicAssessmentRequest, db: Session = Depends(get_db)):
+    """Generate a strategic assessment with SWOT analysis using AI."""
+    start_time = time.time()
+    
+    client = get_anthropic_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="AI service not available")
+    
+    try:
+        prompt = f"""Create a comprehensive strategic assessment for this business concept:
+
+BUSINESS CONCEPT:
+{request.business_concept}
+
+Industry: {request.industry or 'To be determined'}
+Competition Level: {request.competition_level or 'Unknown'}
+
+Generate a detailed JSON strategic assessment with these sections:
+1. "swot_analysis": {{
+   "strengths": [
+     {{"factor": "strength1", "impact": "high/medium/low", "explanation": "why this matters"}}
+   ],
+   "weaknesses": [
+     {{"factor": "weakness1", "impact": "high/medium/low", "explanation": "why this matters"}}
+   ],
+   "opportunities": [
+     {{"factor": "opportunity1", "impact": "high/medium/low", "explanation": "why this matters"}}
+   ],
+   "threats": [
+     {{"factor": "threat1", "impact": "high/medium/low", "explanation": "why this matters"}}
+   ]
+}}
+2. "strategic_position": {{
+   "current_position": "assessment of current market position",
+   "competitive_advantages": ["advantage1", "advantage2"],
+   "value_proposition_clarity": "clear/needs work/unclear",
+   "differentiation": "how this stands out"
+}}
+3. "growth_strategies": {{
+   "market_penetration": {{"strategy": "description", "feasibility": "high/medium/low", "timeline": "short/medium/long"}},
+   "market_development": {{"strategy": "description", "feasibility": "high/medium/low", "timeline": "short/medium/long"}},
+   "product_expansion": {{"strategy": "description", "feasibility": "high/medium/low", "timeline": "short/medium/long"}},
+   "diversification": {{"strategy": "description", "feasibility": "high/medium/low", "timeline": "short/medium/long"}},
+   "recommended_approach": "which strategy to prioritize and why"
+}}
+4. "resource_requirements": {{
+   "key_capabilities": ["capability1", "capability2"],
+   "investment_needed": "estimated investment range",
+   "team_needs": ["role1", "role2"],
+   "technology_requirements": ["tech1", "tech2"]
+}}
+5. "risk_assessment": {{
+   "strategic_risks": [
+     {{"risk": "risk1", "likelihood": "high/medium/low", "impact": "high/medium/low", "mitigation": "how to address"}}
+   ],
+   "overall_risk_level": "high/medium/low",
+   "contingency_plans": ["plan1", "plan2"]
+}}
+6. "recommendations": {{
+   "priority_actions": [
+     {{"action": "action1", "timeline": "0-3 months", "expected_outcome": "result"}}
+   ],
+   "strategic_initiatives": [
+     {{"initiative": "initiative1", "timeline": "3-12 months", "expected_outcome": "result"}}
+   ],
+   "long_term_vision": "5-year strategic direction",
+   "success_metrics": ["metric1", "metric2", "metric3"]
+}}
+
+Provide actionable, specific recommendations. Respond only with valid JSON."""
+
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=3000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        result = parse_ai_response(response.content[0].text)
+        processing_time = int((time.time() - start_time) * 1000)
+        
+        return StrategicAssessmentResponse(
+            success=True,
+            assessment=result,
+            processing_time_ms=processing_time
+        )
+        
+    except Exception as e:
+        logger.error(f"Strategic assessment generation failed: {e}")
+        return StrategicAssessmentResponse(
+            success=False,
+            error=str(e),
+            processing_time_ms=int((time.time() - start_time) * 1000)
+        )
+
+
+@router.post("/pestle", response_model=PestleResponse)
+async def generate_pestle_analysis(request: PestleRequest, db: Session = Depends(get_db)):
+    """Generate a PESTLE analysis using AI."""
+    start_time = time.time()
+    
+    client = get_anthropic_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="AI service not available")
+    
+    try:
+        prompt = f"""Conduct a comprehensive PESTLE analysis for:
+
+BUSINESS/INDUSTRY: {request.business_industry}
+Target Region: {request.target_region or 'General/National'}
+Description: {request.description or 'General analysis'}
+
+Generate a detailed JSON PESTLE analysis with these sections:
+1. "political": {{
+   "impact_level": "high/medium/low",
+   "factors": [
+     {{"factor": "Government policies", "description": "relevant policies affecting the business", "implication": "what this means for the business"}},
+     {{"factor": "Political stability", "description": "current political climate", "implication": "impact on business operations"}}
+   ],
+   "key_risks": ["risk1", "risk2"],
+   "opportunities": ["opportunity1"]
+}}
+2. "economic": {{
+   "impact_level": "high/medium/low",
+   "factors": [
+     {{"factor": "Economic growth", "description": "GDP trends and economic outlook", "implication": "impact on market"}},
+     {{"factor": "Interest rates", "description": "current interest rate environment", "implication": "effect on financing"}},
+     {{"factor": "Consumer spending", "description": "spending patterns", "implication": "demand implications"}}
+   ],
+   "key_risks": ["risk1", "risk2"],
+   "opportunities": ["opportunity1"]
+}}
+3. "social": {{
+   "impact_level": "high/medium/low",
+   "factors": [
+     {{"factor": "Demographics", "description": "population trends", "implication": "market size implications"}},
+     {{"factor": "Cultural attitudes", "description": "relevant cultural trends", "implication": "product/service fit"}},
+     {{"factor": "Lifestyle changes", "description": "behavioral shifts", "implication": "demand drivers"}}
+   ],
+   "key_risks": ["risk1"],
+   "opportunities": ["opportunity1", "opportunity2"]
+}}
+4. "technological": {{
+   "impact_level": "high/medium/low",
+   "factors": [
+     {{"factor": "Technology adoption", "description": "tech adoption rates in target market", "implication": "digital strategy needs"}},
+     {{"factor": "Innovation", "description": "relevant innovations", "implication": "competitive implications"}},
+     {{"factor": "Digital transformation", "description": "industry digitization", "implication": "operational needs"}}
+   ],
+   "key_risks": ["disruption risk"],
+   "opportunities": ["tech-enabled growth"]
+}}
+5. "legal": {{
+   "impact_level": "high/medium/low",
+   "factors": [
+     {{"factor": "Industry regulations", "description": "key regulations", "implication": "compliance requirements"}},
+     {{"factor": "Employment laws", "description": "labor regulations", "implication": "HR implications"}},
+     {{"factor": "Consumer protection", "description": "consumer rights laws", "implication": "product/service requirements"}}
+   ],
+   "key_risks": ["compliance risk"],
+   "opportunities": ["first-mover compliance advantage"]
+}}
+6. "environmental": {{
+   "impact_level": "high/medium/low",
+   "factors": [
+     {{"factor": "Environmental regulations", "description": "environmental compliance", "implication": "operational requirements"}},
+     {{"factor": "Sustainability trends", "description": "green/sustainable trends", "implication": "product positioning"}},
+     {{"factor": "Climate impact", "description": "climate considerations", "implication": "long-term planning"}}
+   ],
+   "key_risks": ["environmental compliance risk"],
+   "opportunities": ["green market positioning"]
+}}
+7. "summary": {{
+   "highest_impact_factors": ["factor1", "factor2", "factor3"],
+   "critical_risks": ["risk1", "risk2"],
+   "key_opportunities": ["opportunity1", "opportunity2"],
+   "strategic_implications": "overall strategic guidance based on PESTLE",
+   "recommended_actions": ["action1", "action2", "action3"]
+}}
+
+Be specific to the industry and region. Respond only with valid JSON."""
+
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=3000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        result = parse_ai_response(response.content[0].text)
+        processing_time = int((time.time() - start_time) * 1000)
+        
+        return PestleResponse(
+            success=True,
+            analysis=result,
+            processing_time_ms=processing_time
+        )
+        
+    except Exception as e:
+        logger.error(f"PESTLE analysis generation failed: {e}")
+        return PestleResponse(
+            success=False,
+            error=str(e),
+            processing_time_ms=int((time.time() - start_time) * 1000)
+        )

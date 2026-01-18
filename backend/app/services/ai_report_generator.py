@@ -366,6 +366,169 @@ Target Audience: {opportunity.get('target_audience', '')}
 Business Models: {opportunity.get('business_models', '')}
 """
         return self._generate(system, prompt)
+    
+    def generate_pestle_analysis(
+        self, 
+        opportunity: Dict[str, Any],
+        target_region: Optional[str] = None
+    ) -> str:
+        """Generate PESTLE analysis for macro-environmental factors."""
+        system = """You are a strategic analyst conducting PESTLE analysis for business opportunities.
+Structure your analysis across six dimensions:
+
+1. **Political Factors**
+   - Government stability and policies
+   - Tax policies and trade regulations
+   - Political climate affecting the industry
+
+2. **Economic Factors**
+   - Economic growth trends
+   - Interest rates and inflation
+   - Consumer spending patterns
+   - Unemployment and labor costs
+
+3. **Social Factors**
+   - Demographics and population trends
+   - Cultural attitudes and lifestyle changes
+   - Consumer behavior patterns
+   - Health and education levels
+
+4. **Technological Factors**
+   - Technology adoption rates
+   - Innovation and R&D activity
+   - Automation and digital transformation
+   - Emerging technologies impact
+
+5. **Legal Factors**
+   - Industry regulations and compliance
+   - Employment laws
+   - Consumer protection laws
+   - Intellectual property considerations
+
+6. **Environmental Factors**
+   - Environmental regulations
+   - Sustainability trends
+   - Climate change impact
+   - Waste management requirements
+
+For each factor, rate the impact (High/Medium/Low) and provide specific, actionable insights."""
+        
+        region_info = target_region or opportunity.get('city', '') or opportunity.get('region', '')
+        
+        prompt = f"""Conduct a comprehensive PESTLE analysis for:
+
+Business/Industry: {opportunity.get('title', 'Unknown')}
+Category: {opportunity.get('category', 'Unknown')}
+Target Region: {region_info}
+Description: {opportunity.get('description', '')}
+Target Audience: {opportunity.get('target_audience', '')}
+"""
+        return self._generate(system, prompt)
+    
+    def generate_market_analysis_report(
+        self, 
+        opportunity: Dict[str, Any],
+        industry: Optional[str] = None
+    ) -> str:
+        """Generate comprehensive market analysis report."""
+        system = """You are a market research analyst creating comprehensive market analysis reports.
+Structure your report with:
+
+1. **Industry Overview**
+   - Market definition and scope
+   - Industry size and growth rate
+   - Key market drivers and trends
+
+2. **Market Segmentation**
+   - Customer segments and their characteristics
+   - Geographic distribution
+   - Segment size and growth potential
+
+3. **Competitive Landscape**
+   - Major players and market share
+   - Competitive positioning
+   - Barriers to entry
+
+4. **Market Trends**
+   - Current trends shaping the industry
+   - Emerging opportunities
+   - Potential disruptions
+
+5. **Consumer Analysis**
+   - Buyer behavior and preferences
+   - Purchase decision factors
+   - Unmet needs and pain points
+
+6. **Market Forecast**
+   - Growth projections (3-5 years)
+   - Key assumptions
+   - Risk factors
+
+Include data points and statistics where relevant. Be specific about market dynamics."""
+        
+        industry_focus = industry or opportunity.get('category', 'Unknown')
+        
+        prompt = f"""Create a comprehensive market analysis for:
+
+Industry/Market: {industry_focus}
+Focus Area: {opportunity.get('title', 'Unknown')}
+Location: {opportunity.get('city', '')}, {opportunity.get('region', '')}
+Description: {opportunity.get('description', '')}
+Market Size Estimate: {opportunity.get('market_size', 'Under analysis')}
+Target Audience: {opportunity.get('target_audience', '')}
+"""
+        return self._generate(system, prompt)
+    
+    def generate_strategic_assessment(self, opportunity: Dict[str, Any]) -> str:
+        """Generate strategic assessment with SWOT analysis and recommendations."""
+        system = """You are a strategy consultant providing strategic assessments for business opportunities.
+Structure your assessment with:
+
+1. **SWOT Analysis**
+   - **Strengths**: Internal advantages and capabilities
+   - **Weaknesses**: Internal limitations and gaps
+   - **Opportunities**: External factors to capitalize on
+   - **Threats**: External risks and challenges
+
+2. **Strategic Position**
+   - Current market position
+   - Competitive advantages
+   - Value proposition clarity
+
+3. **Growth Strategy Options**
+   - Market penetration strategies
+   - Market development opportunities
+   - Product/service expansion paths
+   - Diversification potential
+
+4. **Resource Requirements**
+   - Key capabilities needed
+   - Investment requirements
+   - Team and talent needs
+
+5. **Risk Assessment**
+   - Strategic risks identified
+   - Mitigation strategies
+   - Contingency plans
+
+6. **Strategic Recommendations**
+   - Priority actions (short-term)
+   - Strategic initiatives (medium-term)
+   - Long-term vision alignment
+
+Provide actionable, specific recommendations based on the analysis."""
+        
+        prompt = f"""Conduct a strategic assessment for:
+
+Opportunity: {opportunity.get('title', 'Unknown')}
+Category: {opportunity.get('category', 'Unknown')}
+Location: {opportunity.get('city', '')}, {opportunity.get('region', '')}
+Description: {opportunity.get('description', '')}
+Market Size: {opportunity.get('market_size', 'Under analysis')}
+Competition Level: {opportunity.get('competition_level', '')}
+Target Audience: {opportunity.get('target_audience', '')}
+"""
+        return self._generate(system, prompt)
 
 
 ai_report_generator = AIReportGenerator()
