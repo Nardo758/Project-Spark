@@ -1,0 +1,178 @@
+Common Inputs (Used Across Most Reports)
+
+Business Concept/Opportunity: Brief description of what they want to do
+Geographic Location: City, zip code, or service radius
+Target Market: Who are the customers?
+Business Category/Industry: What type of business?
+
+
+Report-Specific Inputs
+1. Feasibility Study (FREE)
+Minimum viable inputs to assess viability:
+
+Business concept (1-2 sentences)
+Target location/geography
+Estimated startup budget
+Desired timeline (launch in 3 months? 6 months? 1 year?)
+
+2. Market Analysis ($99)
+Deeper market intelligence:
+
+Industry/vertical (be specific: "coffee shop" not just "food service")
+Target location + service radius
+Target customer demographics (age, income, lifestyle)
+Price point range you're considering
+(Optional) Specific competitors to benchmark
+
+3. Strategic Assessment ($89)
+Strategic positioning:
+
+Current business situation (startup vs. existing business)
+Business goals (growth target, market position, expansion)
+Planning horizon (1-year, 3-year, 5-year strategy)
+Key challenges or concerns
+Geographic market boundaries
+
+4. PESTLE Analysis ($79)
+External environment scan:
+
+Business concept and industry
+Target geographic market (city/region/state/national)
+Business scale (local store vs. regional chain vs. national)
+Launch timeline
+Key regulatory/environmental concerns (if known)
+
+5. Business Plan ($149)
+Comprehensive planning:
+
+Core Business:
+
+Detailed business concept
+Products/services offered
+Unique value proposition
+
+
+Market:
+
+Target customer segments (multiple if applicable)
+Geographic scope
+
+
+Operations:
+
+Business model (B2C, B2B, marketplace, etc.)
+Revenue streams
+Location type (physical, online, hybrid)
+
+
+Financials:
+
+Initial capital available
+Funding needs
+
+
+Team:
+
+Founder background
+Key team roles needed
+
+
+Timeline:
+
+Launch target
+Major milestones
+
+
+
+6. Financial Model ($129)
+Revenue and cost projections:
+
+Revenue Model:
+
+How you make money (per unit, subscription, service fees)
+Pricing structure
+Expected customer volume (per day/month)
+
+
+Costs:
+
+Startup costs estimate
+Monthly fixed costs (rent, utilities, salaries)
+Variable costs (per unit/customer)
+Location (affects labor costs, rent, etc.)
+
+
+Projections:
+
+Growth assumptions
+Timeline (typically 3-5 years)
+Breakeven goals
+
+
+
+7. Pitch Deck ($79)
+Investor-ready presentation:
+
+All Business Plan inputs PLUS:
+
+Funding:
+
+Amount seeking
+Use of funds breakdown
+
+
+Team:
+
+Founder bios and relevant experience
+Advisory board (if any)
+
+
+Traction:
+
+Validation to date (customers, revenue, partnerships)
+
+
+Market Opportunity:
+
+TAM/SAM/SOM if known
+
+
+Target Investor Type:
+
+Angel, VC, strategic, crowd
+
+
+
+
+
+
+Design Recommendation: Progressive Input Flow
+Option 1: Shared Foundation
+
+Start with core inputs that apply to ALL reports
+Then add report-specific questions based on selection
+
+Option 2: Smart Inheritance
+
+Feasibility Study (FREE) captures basics
+If user upgrades to paid reports, pre-fill from Feasibility Study
+Only ask for additional needed fields
+
+Option 3: Quick vs. Detailed Mode
+
+"Quick Generate" = minimal inputs (system makes assumptions)
+"Detailed/Custom" = full questionnaire for precision
+
+
+UX Considerations
+
+Field Descriptions: Include helper text like "This helps us analyze local competition and market conditions"
+Optional vs. Required:
+
+Mark optional fields clearly
+More inputs = better report, but don't overwhelm
+
+
+Save Progress: Allow users to save partially completed forms
+Pre-populate from Opportunity: If generating from a specific opportunity card, auto-fill what you already know (location, category, problem statement)
+Example Values: Show placeholder examples: "e.g., Mobile coffee cart in downtown Seattle"
