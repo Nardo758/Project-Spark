@@ -723,16 +723,20 @@ def create_guest_bundle_checkout(
 
 class StudioReportCheckoutRequest(BaseModel):
     """Request for standalone studio report checkout (no opportunity required)"""
-    report_type: str  # market_analysis, strategic_assessment, pestle_analysis
+    report_type: str  # market_analysis, strategic_assessment, pestle_analysis, business_plan, financial_model, pitch_deck
     success_url: str
     cancel_url: str
     email: Optional[str] = None  # Required for guest purchases
+    report_context: Optional[dict] = None  # User-provided context for report generation
 
 
 STUDIO_REPORT_PRICES = {
     "market_analysis": {"name": "Market Analysis", "price_cents": 9900},
     "strategic_assessment": {"name": "Strategic Assessment", "price_cents": 8900},
     "pestle_analysis": {"name": "PESTLE Analysis", "price_cents": 7900},
+    "business_plan": {"name": "Business Plan", "price_cents": 14900},
+    "financial_model": {"name": "Financial Model", "price_cents": 12900},
+    "pitch_deck": {"name": "Pitch Deck", "price_cents": 7900},
 }
 
 
@@ -771,6 +775,9 @@ async def create_studio_report_checkout(
         metadata["user_id"] = str(current_user.id)
     if checkout_data.email:
         metadata["guest_email"] = checkout_data.email
+    if checkout_data.report_context:
+        import json
+        metadata["report_context"] = json.dumps(checkout_data.report_context)[:500]
     
     session_params = {
         "payment_method_types": ["card"],
