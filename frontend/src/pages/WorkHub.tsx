@@ -534,7 +534,7 @@ export default function WorkHub() {
 
   const handleQuickAction = (action: string) => {
     if (action === 'report_library') {
-      window.location.href = '/build/reports?path=reports'
+      window.location.href = '/build/reports'
       return
     }
     const actionMessages: Record<string, string> = {
@@ -1007,15 +1007,15 @@ export default function WorkHub() {
                 </Link>
                 
                 <Link
-                  to="/build/reports?path=reports"
+                  to="/build/reports"
                   className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border border-amber-200 hover:border-amber-300 hover:shadow-sm transition-all group"
                 >
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-violet-200">
                     <ClipboardList className="w-5 h-5 text-purple-600" />
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-medium text-stone-900">Report Library</p>
-                    <p className="text-xs text-stone-500">AI-powered reports</p>
+                    <p className="text-xs font-medium text-stone-900">Consultant Studio</p>
+                    <p className="text-xs text-stone-500">AI-powered analysis</p>
                   </div>
                 </Link>
               </div>
