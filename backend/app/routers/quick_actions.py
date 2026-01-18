@@ -16,7 +16,46 @@ from app.services.llm_ai_engine import get_anthropic_client
 from app.core.dependencies import get_current_user_optional
 from app.services.branding_service import get_user_team_branding, inject_branding_into_report
 from app.models.user import User
+from app.models.subscription import Subscription, SubscriptionTier, SubscriptionStatus
 from datetime import datetime
+
+REPORT_PRICING = {
+    "feasibility": {"price": 0, "name": "Feasibility Study"},
+    "market-analysis": {"price": 99, "name": "Market Analysis"},
+    "strategic-assessment": {"price": 89, "name": "Strategic Assessment"},
+    "pestle": {"price": 79, "name": "PESTLE Analysis"},
+}
+
+PAID_TIERS = [
+    SubscriptionTier.STARTER,
+    SubscriptionTier.GROWTH,
+    SubscriptionTier.PRO,
+    SubscriptionTier.TEAM,
+    SubscriptionTier.BUSINESS,
+    SubscriptionTier.ENTERPRISE,
+]
+
+def check_report_access(user: User | None, report_type: str, db: Session) -> tuple[bool, str | None]:
+    """Check if user has access to a report type. Returns (has_access, error_message)"""
+    report_info = REPORT_PRICING.get(report_type)
+    if not report_info:
+        return False, "Unknown report type"
+    
+    if report_info["price"] == 0:
+        return True, None
+    
+    if not user:
+        return False, f"{report_info['name']} requires a paid subscription (${report_info['price']})"
+    
+    subscription = db.query(Subscription).filter(
+        Subscription.user_id == user.id,
+        Subscription.status == SubscriptionStatus.ACTIVE
+    ).first()
+    
+    if subscription and subscription.tier in PAID_TIERS:
+        return True, None
+    
+    return False, f"{report_info['name']} requires a paid subscription. Upgrade from ${report_info['price']}/report or subscribe for unlimited access."
 
 router = APIRouter(prefix="/quick-actions", tags=["Quick Actions"])
 logger = logging.getLogger(__name__)
@@ -493,6 +532,8 @@ class FeasibilityRequest(BaseModel):
     business_idea: str = Field(..., min_length=10, max_length=5000)
     industry: Optional[str] = None
     location: Optional[str] = None
+    startup_budget: Optional[str] = None
+    timeline: Optional[str] = None
 
 
 class FeasibilityResponse(BaseModel):
@@ -507,6 +548,10 @@ class MarketAnalysisRequest(BaseModel):
     industry: str = Field(..., min_length=2, max_length=200)
     description: Optional[str] = None
     location: Optional[str] = None
+    service_radius: Optional[str] = None
+    target_income: Optional[str] = None
+    price_point: Optional[str] = None
+    competitors: Optional[str] = None
 
 
 class MarketAnalysisResponse(BaseModel):
@@ -521,6 +566,11 @@ class StrategicAssessmentRequest(BaseModel):
     business_concept: str = Field(..., min_length=10, max_length=5000)
     industry: Optional[str] = None
     competition_level: Optional[str] = None
+    current_situation: Optional[str] = None
+    business_goals: Optional[str] = None
+    planning_horizon: Optional[str] = None
+    key_challenges: Optional[str] = None
+    geographic_boundaries: Optional[str] = None
 
 
 class StrategicAssessmentResponse(BaseModel):
@@ -535,6 +585,9 @@ class PestleRequest(BaseModel):
     business_industry: str = Field(..., min_length=2, max_length=200)
     target_region: Optional[str] = None
     description: Optional[str] = None
+    business_scale: Optional[str] = None
+    launch_timeline: Optional[str] = None
+    regulatory_concerns: Optional[str] = None
 
 
 class PestleResponse(BaseModel):
@@ -566,6 +619,8 @@ BUSINESS IDEA:
 
 Industry: {request.industry or 'To be determined'}
 Location: {request.location or 'General market'}
+Estimated Startup Budget: {request.startup_budget or 'Not specified'}
+Desired Timeline: {request.timeline or 'Not specified'}
 
 Generate a detailed JSON feasibility study with these sections:
 1. "project_overview": {{
@@ -662,6 +717,10 @@ async def generate_market_analysis(
     current_user: User | None = Depends(get_current_user_optional)
 ):
     """Generate a comprehensive market analysis using AI."""
+    has_access, error_msg = check_report_access(current_user, "market-analysis", db)
+    if not has_access:
+        raise HTTPException(status_code=402, detail=error_msg)
+    
     start_time = time.time()
     
     client = get_anthropic_client()
@@ -674,6 +733,10 @@ async def generate_market_analysis(
 MARKET/INDUSTRY: {request.industry}
 Description: {request.description or 'General analysis'}
 Location Focus: {request.location or 'Global/National'}
+Service Radius: {request.service_radius or 'Not specified'}
+Target Customer Income Level: {request.target_income or 'Not specified'}
+Price Point Range: {request.price_point or 'Not specified'}
+Specific Competitors to Benchmark: {request.competitors or 'None specified'}
 
 Generate a detailed JSON market analysis with these sections:
 1. "industry_overview": {{
@@ -770,6 +833,10 @@ async def generate_strategic_assessment(
     current_user: User | None = Depends(get_current_user_optional)
 ):
     """Generate a strategic assessment with SWOT analysis using AI."""
+    has_access, error_msg = check_report_access(current_user, "strategic-assessment", db)
+    if not has_access:
+        raise HTTPException(status_code=402, detail=error_msg)
+    
     start_time = time.time()
     
     client = get_anthropic_client()
@@ -784,6 +851,11 @@ BUSINESS CONCEPT:
 
 Industry: {request.industry or 'To be determined'}
 Competition Level: {request.competition_level or 'Unknown'}
+Current Business Situation: {request.current_situation or 'Startup'}
+Business Goals: {request.business_goals or 'Not specified'}
+Planning Horizon: {request.planning_horizon or '1-3 years'}
+Key Challenges/Concerns: {request.key_challenges or 'Not specified'}
+Geographic Market Boundaries: {request.geographic_boundaries or 'Not specified'}
 
 Generate a detailed JSON strategic assessment with these sections:
 1. "swot_analysis": {{
@@ -883,6 +955,10 @@ async def generate_pestle_analysis(
     current_user: User | None = Depends(get_current_user_optional)
 ):
     """Generate a PESTLE analysis using AI."""
+    has_access, error_msg = check_report_access(current_user, "pestle", db)
+    if not has_access:
+        raise HTTPException(status_code=402, detail=error_msg)
+    
     start_time = time.time()
     
     client = get_anthropic_client()
@@ -895,6 +971,9 @@ async def generate_pestle_analysis(
 BUSINESS/INDUSTRY: {request.business_industry}
 Target Region: {request.target_region or 'General/National'}
 Description: {request.description or 'General analysis'}
+Business Scale: {request.business_scale or 'Not specified'}
+Launch Timeline: {request.launch_timeline or 'Not specified'}
+Known Regulatory/Environmental Concerns: {request.regulatory_concerns or 'None specified'}
 
 Generate a detailed JSON PESTLE analysis with these sections:
 1. "political": {{
