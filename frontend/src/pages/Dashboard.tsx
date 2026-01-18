@@ -268,7 +268,6 @@ export default function Dashboard() {
                   const signals = opp.validation_count || (2 + (opp.id % 18))
                   const marketSize = formatMarketSize(opp.ai_market_size_estimate)
                   const accessInfo = accessInfoData?.[opp.id]
-                  const daysUntilUnlock = accessInfo?.days_until_unlock ?? 0
                   const isAccessible = accessInfo?.is_accessible ?? true
                   
                   return (
