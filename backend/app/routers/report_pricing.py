@@ -40,7 +40,7 @@ def validate_redirect_url(url: str, request: Request) -> bool:
 from app.models.user import User
 from app.models.opportunity import Opportunity
 from app.models.purchased_report import PurchasedReport, PurchasedBundle, ConsultantLicense, PurchaseType, GuestReportPurchase
-from app.core.dependencies import get_current_user, get_current_active_user
+from app.core.dependencies import get_current_user, get_current_active_user, get_current_user_optional
 from app.core.report_pricing import (
     REPORT_PRODUCTS,
     BUNDLES,
@@ -726,6 +726,7 @@ class StudioReportCheckoutRequest(BaseModel):
     report_type: str  # market_analysis, strategic_assessment, pestle_analysis
     success_url: str
     cancel_url: str
+    email: Optional[str] = None  # Required for guest purchases
 
 
 STUDIO_REPORT_PRICES = {
@@ -736,18 +737,22 @@ STUDIO_REPORT_PRICES = {
 
 
 @router.post("/studio-report-checkout", response_model=CheckoutResponse)
-def create_studio_report_checkout(
+async def create_studio_report_checkout(
     checkout_data: StudioReportCheckoutRequest,
     request: Request,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
-    """Create a Stripe Checkout session for standalone studio report purchase"""
+    """Create a Stripe Checkout session for standalone studio report purchase (supports guest purchases)"""
     if checkout_data.report_type not in STUDIO_REPORT_PRICES:
         raise HTTPException(
             status_code=400, 
             detail=f"Invalid report type: {checkout_data.report_type}. Valid types: {list(STUDIO_REPORT_PRICES.keys())}"
         )
+    
+    # Guest purchases require email
+    if not current_user and not checkout_data.email:
+        raise HTTPException(status_code=400, detail="Email is required for guest purchases")
     
     report_info = STUDIO_REPORT_PRICES[checkout_data.report_type]
     amount_cents = report_info["price_cents"]
@@ -757,9 +762,19 @@ def create_studio_report_checkout(
     
     stripe_client = get_stripe_client()
     
-    session = stripe_client.checkout.Session.create(
-        payment_method_types=["card"],
-        line_items=[{
+    # Build metadata based on whether user is authenticated
+    metadata = {
+        "report_type": checkout_data.report_type,
+        "payment_type": "studio_report_purchase",
+    }
+    if current_user:
+        metadata["user_id"] = str(current_user.id)
+    if checkout_data.email:
+        metadata["guest_email"] = checkout_data.email
+    
+    session_params = {
+        "payment_method_types": ["card"],
+        "line_items": [{
             "price_data": {
                 "currency": "usd",
                 "unit_amount": amount_cents,
@@ -770,21 +785,23 @@ def create_studio_report_checkout(
             },
             "quantity": 1,
         }],
-        mode="payment",
-        success_url=checkout_data.success_url,
-        cancel_url=checkout_data.cancel_url,
-        metadata={
-            "user_id": str(current_user.id),
-            "report_type": checkout_data.report_type,
-            "payment_type": "studio_report_purchase",
-        },
-    )
+        "mode": "payment",
+        "success_url": checkout_data.success_url,
+        "cancel_url": checkout_data.cancel_url,
+        "metadata": metadata,
+    }
+    
+    # Pre-fill email for guests
+    if checkout_data.email and not current_user:
+        session_params["customer_email"] = checkout_data.email
+    
+    session = stripe_client.checkout.Session.create(**session_params)
     
     log_event(
         db,
         action="report_pricing.studio_checkout_session_created",
         actor=current_user,
-        actor_type="user",
+        actor_type="user" if current_user else "guest",
         request=request,
         resource_type="studio_report",
         resource_id=None,
@@ -792,6 +809,7 @@ def create_studio_report_checkout(
             "session_id": session.id,
             "report_type": checkout_data.report_type,
             "amount_cents": amount_cents,
+            "is_guest": current_user is None,
         },
     )
     
