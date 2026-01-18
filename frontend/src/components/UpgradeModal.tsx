@@ -8,6 +8,7 @@ interface UpgradeModalProps {
   onClose: () => void
   feature?: string
   context?: 'opportunity' | 'report' | 'analysis' | 'general'
+  returnUrl?: string
 }
 
 const contextMessages = {
@@ -52,7 +53,7 @@ const businessPlans = [
   { tier: 'enterprise', name: 'Enterprise', price: '$2,500+/mo', slots: 30, seats: 'Unlimited' },
 ]
 
-export default function UpgradeModal({ isOpen, onClose, feature, context = 'general' }: UpgradeModalProps) {
+export default function UpgradeModal({ isOpen, onClose, feature, context = 'general', returnUrl }: UpgradeModalProps) {
   const navigate = useNavigate()
   const { isAuthenticated, token } = useAuthStore()
   const [selectedPlan, setSelectedPlan] = useState<string>('growth') // Default to popular plan
@@ -95,6 +96,7 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
 
     try {
       const baseUrl = window.location.origin
+      const successUrl = returnUrl ? `${baseUrl}${returnUrl}` : `${baseUrl}/dashboard?subscription=success`
       const res = await fetch('/api/v1/subscriptions/checkout', {
         method: 'POST',
         headers: {
@@ -103,7 +105,7 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
         },
         body: JSON.stringify({
           tier: selectedPlan,
-          success_url: `${baseUrl}/dashboard?subscription=success`,
+          success_url: successUrl,
           cancel_url: `${baseUrl}/dashboard?subscription=canceled`,
         }),
       })
