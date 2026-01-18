@@ -371,60 +371,6 @@ export default function Discover() {
         </div>
       )}
 
-      {/* Subscription Status Banner */}
-      {isAuthenticated && isFreeTier && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">
-                  {viewsRemaining !== null ? (
-                    <>
-                      <span className="text-purple-600 font-bold">{viewsRemaining}</span> opportunity views remaining this month
-                    </>
-                  ) : (
-                    'Explorer Plan - Limited Access'
-                  )}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Upgrade for unlimited access and earlier opportunities
-                </p>
-              </div>
-            </div>
-            <Link
-              to="/pricing"
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
-            >
-              Upgrade Plan
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Views Exhausted Warning */}
-      {isAuthenticated && isFreeTier && viewsRemaining === 0 && (
-        <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
-          <div className="flex items-center gap-3">
-            <Lock className="w-5 h-5 text-amber-600" />
-            <div className="flex-1">
-              <p className="font-medium text-amber-800">No views remaining this month</p>
-              <p className="text-sm text-amber-700">
-                Upgrade to continue accessing detailed opportunity analysis, or wait until next month for your views to reset.
-              </p>
-            </div>
-            <Link
-              to="/pricing"
-              className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors"
-            >
-              Upgrade Now
-            </Link>
-          </div>
-        </div>
-      )}
-
       {/* Active Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
         {selectedCategory !== 'All' && (
