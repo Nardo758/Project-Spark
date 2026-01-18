@@ -526,10 +526,10 @@ export default function Discover() {
                       <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
                         {opp.category}
                       </span>
-                      {!isAccessible && daysUntilUnlock > 0 && (
-                        <span className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                      {!isAccessible && (
+                        <span className="flex items-center gap-1 bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-xs font-medium">
                           <Lock className="w-3 h-3" />
-                          Unlocks in {daysUntilUnlock}d
+                          Upgrade for Premium
                         </span>
                       )}
                       {isAccessible && (

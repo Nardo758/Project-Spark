@@ -642,8 +642,8 @@ export default function OpportunityDetail() {
 
         </div>
 
-        {/* TIER 2: Research Dashboard (PRO) - Ideate */}
-        <div className={`bg-white rounded-xl border-2 ${hasPro ? 'border-blue-200' : 'border-stone-200'} p-8 mb-6 relative`}>
+        {/* TIER 2: Research Dashboard (PRO) - Ideate + Deep Dive CTA */}
+        <div className="relative">
           {!hasPro && (
             <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
               <div className="text-center p-8">
@@ -654,12 +654,13 @@ export default function OpportunityDetail() {
                   onClick={() => showUpgradeModal('opportunity', opportunityQuery.data?.title)} 
                   className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-stone-800"
                 >
-                  Upgrade to Pro ($99/mo)
+                  Upgrade to Unlock
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           )}
+          <div className={`bg-white rounded-xl border-2 ${hasPro ? 'border-blue-200' : 'border-stone-200'} p-8 mb-6`}>
           
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -1117,7 +1118,7 @@ export default function OpportunityDetail() {
         </div>
 
         {/* CTA: Deep Dive WorkHub */}
-        <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-8 mb-6 text-white">
+        <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-8 mt-6 text-white">
           <div className="flex items-center justify-between gap-6">
             <div className="flex items-center gap-4 flex-1">
               <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -1173,6 +1174,7 @@ export default function OpportunityDetail() {
               )}
             </div>
           </div>
+        </div>
         </div>
 
         {ppuError && (

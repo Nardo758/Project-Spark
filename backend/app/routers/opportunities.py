@@ -118,11 +118,13 @@ async def get_opportunities(
     total = query.count()
     
     if not is_paid:
-        opportunities = query.offset(0).limit(FREE_PREVIEW_LIMIT).all()
+        free_query = query.filter(Opportunity.feasibility_score < 60)
+        free_total = free_query.count()
+        opportunities = free_query.offset(0).limit(FREE_PREVIEW_LIMIT).all()
         
         return {
             "opportunities": opportunities,
-            "total": min(total, FREE_PREVIEW_LIMIT),
+            "total": min(free_total, FREE_PREVIEW_LIMIT),
             "page": 1,
             "page_size": FREE_PREVIEW_LIMIT,
             "is_gated": True,
