@@ -1,0 +1,188 @@
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:15:45 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] Fetch competitors: 730ms, found 2
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/oauth/google/callback?state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm92aWRlciI6Imdvb2dsZSIsInJlZGlyZWN0X3VyaSI6Imh0dHBzOi8vd3d3Lm9wcGdyaWQuY29tL2F1dGgvb2F1dGgtY2FsbGJhY2s_bmV4dD0lMkZkYXNoYm9hcmQiLCJub25jZSI6ImwtMFdtei1HdWwwIiwiZXhwIjoxNzY4ODQ3MDM4fQ.kTWdQJHlmXpoDeuPARhoAULiGA2rdk49iITb1-jrCaY&code=4%2F0ASc3gC3yn7MIbh6_Cr-v5GmZEKW1yf1NM75c0zdI9kD2ckN55FeGE52x8jNHEq2t7l3Isg&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+openid+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email&authuser=0&prompt=none HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44060 - "POST /api/v1/opportunities/batch-access HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /auth/oauth-callback?next=%2Fdashboard&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtLmRpeG9uNTAzMEBnbWFpbC5jb20iLCJleHAiOjE3Njg4NDgyNDJ9.vKdTEWbV3SIVWELYQWIaXVHkqHGbDjVq_cF8kUmGIhQ&provider=google HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:45354 - "GET /api/v1/consultant/stats HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] Total trade area analysis: 53302ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/opportunities/?limit=5&sort_by=recent HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/reports/my-stats HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:15:45 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] Parallel (demographics + map): 168ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:43690 - "GET /api/v1/reports/my-stats HTTP/1.1" 401 Unauthorized
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:43676 - "GET /api/v1/reports/?page_size=5 HTTP/1.1" 401 Unauthorized
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/report-pricing/ HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:43692 - "GET /api/v1/report-pricing/ HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /assets/index-Cu6haJZ4.css HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/users/me HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [INFO] [trace:8328f64f-116] app.services.trade_area_analyzer: [TIMING] Compute trade area: 3ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [INFO] [trace:8328f64f-116] app.services.trade_area_analyzer: [TIMING] Generate map: 1ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44114 - "GET /api/v1/report-pricing/ HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44090 - "GET /api/v1/reports/my-stats HTTP/1.1" 401 Unauthorized
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/reports/my-stats HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/subscriptions/my-subscription HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/reports/?page_size=5 HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44030 - "GET /api/v1/copilot/suggestions?page_context=general HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44034 - "GET /api/v1/consultant/stats HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44018 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/reports/?page_size=5 HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /assets/index-UB9ByhHC.js HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/copilot/suggestions?page_context=general HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:15:45 [INFO] [trace:-] app.services.trade_area_analyzer: Found 2 competitors from SerpAPI
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] AI synthesis: 52397ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:15:45 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] Generate map: 167ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] POST /api/v1/opportunities/batch-access HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [WARNING] [trace:-] app.services.trade_area_analyzer: State not provided, skipping demographics
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44058 - "GET /api/v1/opportunities/?limit=5&sort_by=recent HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [INFO] [trace:-] app.services.trade_area_analyzer: Found 2 competitors from SerpAPI
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [INFO] [trace:8328f64f-116] app.services.trade_area_analyzer: [TIMING] Parallel (demographics + map): 1ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/copilot/suggestions?page_context=general HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44118 - "GET /api/v1/reports/?page_size=5 HTTP/1.1" 401 Unauthorized
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] INFO: 127.0.0.1:44074 - "GET /api/v1/subscriptions/my-subscription HTTP/1.1" 200 OK
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] POST /api/v1/consultant/clone-success HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:16:38 [INFO] [trace:8328f64f-116] app.services.trade_area_analyzer: [TIMING] Geocoding: 10ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:15:45 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] Compute trade area: 3ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/report-pricing/ HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/consultant/stats HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Frontend] GET /api/v1/reports/my-stats HTTP/1.1
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:15:44 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] Geocoding: 1ms
+2026-01-19 13:20:50.48
+d765162d
+User
+[Backend] 2026-01-19 18:15:45 [INFO] [trace:0594f579-abd] app.services.trade_area_analyzer: [TIMING] Fetch demographics: 0ms

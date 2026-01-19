@@ -206,12 +206,22 @@ class TradeAreaAnalyzer:
             ai_synthesis = None
             if include_ai_synthesis:
                 ai_start = time.time()
-                ai_synthesis = await loop.run_in_executor(
-                    _executor,
-                    self._generate_ai_synthesis,
-                    opportunity, trade_area, competitors, demographics
-                )
-                logger.info(f"[TIMING] AI synthesis: {int((time.time() - ai_start) * 1000)}ms")
+                try:
+                    ai_synthesis = await asyncio.wait_for(
+                        loop.run_in_executor(
+                            _executor,
+                            self._generate_ai_synthesis,
+                            opportunity, trade_area, competitors, demographics
+                        ),
+                        timeout=15.0
+                    )
+                    logger.info(f"[TIMING] AI synthesis: {int((time.time() - ai_start) * 1000)}ms")
+                except asyncio.TimeoutError:
+                    logger.warning(f"[TIMING] AI synthesis TIMEOUT after 15s - returning without AI synthesis")
+                    ai_synthesis = "Analysis in progress. AI insights will be available shortly."
+                except Exception as e:
+                    logger.warning(f"[TIMING] AI synthesis ERROR: {e} - returning without AI synthesis")
+                    ai_synthesis = None
             
             logger.info(f"[TIMING] Total trade area analysis: {int((time.time() - total_start) * 1000)}ms")
             

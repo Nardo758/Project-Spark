@@ -215,17 +215,35 @@ async def identify_location(
     
     Results are cached for 30 days.
     """
+    import asyncio
     service = ConsultantStudioService(db)
     
-    result = await service.identify_location(
-        user_id=user_id,
-        city=request.city,
-        business_description=request.business_description,
-        additional_params=request.additional_params,
-        session_id=request.session_id,
-    )
-    
-    return IdentifyLocationResponse(**result)
+    try:
+        result = await asyncio.wait_for(
+            service.identify_location(
+                user_id=user_id,
+                city=request.city,
+                business_description=request.business_description,
+                additional_params=request.additional_params,
+                session_id=request.session_id,
+            ),
+            timeout=25.0
+        )
+        return IdentifyLocationResponse(**result)
+    except asyncio.TimeoutError:
+        return IdentifyLocationResponse(
+            success=False,
+            error="Analysis timed out. Please try again with a simpler query.",
+            city=request.city,
+            business_type=request.business_description,
+        )
+    except Exception as e:
+        return IdentifyLocationResponse(
+            success=False,
+            error=f"Analysis failed: {str(e)}",
+            city=request.city,
+            business_type=request.business_description,
+        )
 
 
 @router.post("/clone-success", response_model=CloneSuccessResponse)
@@ -241,19 +259,35 @@ async def clone_success(
     then finds similar markets where the model could be replicated.
     Uses configurable radius (3 or 5 miles) for trade area analysis.
     """
+    import asyncio
     service = ConsultantStudioService(db)
     
-    result = await service.clone_success(
-        user_id=user_id,
-        business_name=request.business_name,
-        business_address=request.business_address,
-        target_city=request.target_city,
-        target_state=request.target_state,
-        radius_miles=request.radius_miles,
-        session_id=request.session_id,
-    )
-    
-    return CloneSuccessResponse(**result)
+    try:
+        result = await asyncio.wait_for(
+            service.clone_success(
+                user_id=user_id,
+                business_name=request.business_name,
+                business_address=request.business_address,
+                target_city=request.target_city,
+                target_state=request.target_state,
+                radius_miles=request.radius_miles,
+                session_id=request.session_id,
+            ),
+            timeout=25.0
+        )
+        return CloneSuccessResponse(**result)
+    except asyncio.TimeoutError:
+        return CloneSuccessResponse(
+            success=False,
+            error="Analysis timed out. Please try again.",
+            analysis_radius_miles=request.radius_miles,
+        )
+    except Exception as e:
+        return CloneSuccessResponse(
+            success=False,
+            error=f"Analysis failed: {str(e)}",
+            analysis_radius_miles=request.radius_miles,
+        )
 
 
 @router.post("/deep-clone", response_model=DeepCloneResponse)
