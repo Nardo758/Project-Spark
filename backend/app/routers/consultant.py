@@ -155,16 +155,38 @@ async def validate_idea(
     
     Uses DeepSeek for pattern analysis and Claude for viability reports.
     """
+    import asyncio
     service = ConsultantStudioService(db)
     
-    result = await service.validate_idea(
-        user_id=user_id,
-        idea_description=request.idea_description,
-        business_context=request.business_context,
-        session_id=request.session_id,
-    )
-    
-    return ValidateIdeaResponse(**result)
+    try:
+        result = await asyncio.wait_for(
+            service.validate_idea(
+                user_id=user_id,
+                idea_description=request.idea_description,
+                business_context=request.business_context,
+                session_id=request.session_id,
+            ),
+            timeout=25.0
+        )
+        return ValidateIdeaResponse(**result)
+    except asyncio.TimeoutError:
+        return ValidateIdeaResponse(
+            success=False,
+            error="Analysis timed out. Please try again.",
+            idea_description=request.idea_description,
+            recommendation="hybrid",
+            online_score=50,
+            physical_score=50,
+        )
+    except Exception as e:
+        return ValidateIdeaResponse(
+            success=False,
+            error=f"Analysis failed: {str(e)}",
+            idea_description=request.idea_description,
+            recommendation="hybrid",
+            online_score=50,
+            physical_score=50,
+        )
 
 
 @router.post("/search-ideas", response_model=SearchIdeasResponse)
@@ -179,6 +201,7 @@ async def search_ideas(
     Searches validated opportunities with AI-powered trend detection.
     Returns opportunities, detected trends, and AI synthesis.
     """
+    import asyncio
     service = ConsultantStudioService(db)
     
     filters = {
@@ -191,13 +214,26 @@ async def search_ideas(
     
     filters = {k: v for k, v in filters.items() if v is not None}
     
-    result = await service.search_ideas(
-        user_id=user_id,
-        filters=filters,
-        session_id=request.session_id,
-    )
-    
-    return SearchIdeasResponse(**result)
+    try:
+        result = await asyncio.wait_for(
+            service.search_ideas(
+                user_id=user_id,
+                filters=filters,
+                session_id=request.session_id,
+            ),
+            timeout=15.0
+        )
+        return SearchIdeasResponse(**result)
+    except asyncio.TimeoutError:
+        return SearchIdeasResponse(
+            success=False,
+            error="Search timed out. Please try again.",
+        )
+    except Exception as e:
+        return SearchIdeasResponse(
+            success=False,
+            error=f"Search failed: {str(e)}",
+        )
 
 
 @router.post("/identify-location", response_model=IdentifyLocationResponse)

@@ -261,7 +261,7 @@ class ConsultantStudioService:
             
             trends = await self._detect_trends(opportunities, filters)
             
-            synthesis = await self._claude_trend_synthesis(opportunities, trends, filters)
+            synthesis = self._generate_quick_synthesis(opportunities, trends, filters)
             
             processing_time = int((time.time() - start_time) * 1000)
             
@@ -345,11 +345,10 @@ class ConsultantStudioService:
             )
             logger.info(f"[TIMING] Geo analysis: {int((time.time() - geo_start) * 1000)}ms")
             
-            report_start = time.time()
-            market_report = await self._claude_location_report(
-                city, business_description, inferred_category, geo_analysis, additional_params
+            market_report = self._generate_quick_market_report(
+                city, business_description, inferred_category, geo_analysis
             )
-            logger.info(f"[TIMING] Market report: {int((time.time() - report_start) * 1000)}ms")
+            logger.info(f"[TIMING] Quick market report generated")
             
             site_recommendations = self._generate_site_recommendations(
                 geo_analysis, market_report, inferred_category
@@ -652,7 +651,10 @@ class ConsultantStudioService:
                 "city": business_address,
             }
             
-            trade_area = await trade_area_analyzer.analyze_async(opportunity_data)
+            trade_area = await trade_area_analyzer.analyze_async(
+                opportunity_data,
+                include_ai_synthesis=False
+            )
             demographics = trade_area.demographics or {}
             competitors = trade_area.competitors or []
             
@@ -1089,7 +1091,8 @@ class ConsultantStudioService:
         physical_score: int,
         context: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Claude generates comprehensive viability report"""
+        """Claude generates comprehensive viability report with timeout protection"""
+        import asyncio
         from .ai_orchestrator import ai_orchestrator, AITaskType
         
         data = {
@@ -1101,9 +1104,18 @@ class ConsultantStudioService:
             "request": "Generate a comprehensive viability analysis with strengths, weaknesses, opportunities, and threats.",
         }
         
-        result = await ai_orchestrator.process_request(
-            AITaskType.MARKET_RESEARCH, data
-        )
+        try:
+            result = await asyncio.wait_for(
+                ai_orchestrator.process_request(AITaskType.MARKET_RESEARCH, data),
+                timeout=15.0
+            )
+            ai_insights = result.get("result", {}) if result.get("processed") else {}
+        except asyncio.TimeoutError:
+            logger.warning("Claude viability report timed out after 15s")
+            ai_insights = {"status": "Analysis in progress"}
+        except Exception as e:
+            logger.warning(f"Claude viability report failed: {e}")
+            ai_insights = {}
         
         return {
             "executive_summary": "Viability analysis based on market patterns and business context.",
@@ -1111,7 +1123,7 @@ class ConsultantStudioService:
             "weaknesses": ["Competition level unknown", "Requires further market research"],
             "opportunities": ["Growing market segment", "Technology enablers available"],
             "threats": ["Market saturation risk", "Regulatory considerations"],
-            "ai_insights": result.get("result", {}) if result.get("processed") else {},
+            "ai_insights": ai_insights,
             "confidence_score": 75,
         }
 
@@ -1337,6 +1349,95 @@ class ConsultantStudioService:
                 ],
                 "ai_report": {},
             }
+
+    def _generate_quick_synthesis(
+        self,
+        opportunities: List,
+        trends: List,
+        filters: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Generate quick synthesis from opportunities and trends without Claude"""
+        query = filters.get("query", "business opportunities")
+        category = filters.get("category")
+        
+        top_categories = {}
+        for opp in opportunities[:20]:
+            cat = getattr(opp, 'category', 'uncategorized')
+            top_categories[cat] = top_categories.get(cat, 0) + 1
+        
+        sorted_categories = sorted(top_categories.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        insights = []
+        if len(opportunities) > 10:
+            insights.append(f"Strong market activity with {len(opportunities)} opportunities identified")
+        elif len(opportunities) > 0:
+            insights.append(f"Found {len(opportunities)} relevant opportunities")
+        
+        if trends:
+            top_trend = trends[0] if trends else None
+            if top_trend:
+                insights.append(f"Leading trend: {getattr(top_trend, 'trend_name', 'Emerging markets')}")
+        
+        if sorted_categories:
+            top_cat = sorted_categories[0][0]
+            insights.append(f"Most active category: {top_cat}")
+        
+        return {
+            "summary": f"Analysis of {query} opportunities" + (f" in {category}" if category else ""),
+            "opportunity_count": len(opportunities),
+            "trend_count": len(trends),
+            "top_categories": [{"name": cat, "count": count} for cat, count in sorted_categories],
+            "key_insights": insights if insights else ["Market data collected", "Review opportunities for details"],
+        }
+
+    def _generate_quick_market_report(
+        self,
+        city: str,
+        business_description: str,
+        inferred_category: str,
+        geo_analysis: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Generate quick market report from DeepSeek geo_analysis data without Claude"""
+        demographics = geo_analysis.get("demographics", {})
+        competitors = geo_analysis.get("competitors", [])
+        market_indicators = geo_analysis.get("market_indicators", {})
+        
+        competition_level = "low" if len(competitors) < 3 else "moderate" if len(competitors) < 8 else "high"
+        median_income = demographics.get("median_income", 50000)
+        population = demographics.get("population", 0)
+        
+        market_score = 70
+        if median_income > 75000:
+            market_score += 10
+        if population > 100000:
+            market_score += 5
+        if len(competitors) < 5:
+            market_score += 10
+        elif len(competitors) > 10:
+            market_score -= 5
+        
+        insights = []
+        if median_income > 75000:
+            insights.append(f"High income area (${median_income:,} median) supports premium pricing")
+        if population > 50000:
+            insights.append(f"Large population base ({population:,}) provides customer volume")
+        if len(competitors) < 5:
+            insights.append(f"Low competition ({len(competitors)} similar businesses) indicates market opportunity")
+        elif len(competitors) > 8:
+            insights.append(f"Established market ({len(competitors)} competitors) shows proven demand")
+        
+        return {
+            "market_score": min(100, max(0, market_score)),
+            "competition_level": competition_level,
+            "competitor_count": len(competitors),
+            "demographics_summary": {
+                "median_income": median_income,
+                "population": population,
+                "median_age": demographics.get("median_age", 35),
+            },
+            "key_insights": insights if insights else ["Market analysis available", "Review competitor data for positioning"],
+            "recommendation": "favorable" if market_score >= 70 else "moderate" if market_score >= 50 else "challenging",
+        }
 
     def _generate_site_recommendations(
         self,
