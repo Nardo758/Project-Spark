@@ -88,8 +88,9 @@ export default function ReportPurchaseModal({
     
     try {
       const baseUrl = window.location.origin
-      const successUrl = `${baseUrl}/build/reports?purchase=success&opportunity_id=${opportunityId}`
-      const cancelUrl = `${baseUrl}/build/reports?purchase=canceled`
+      const returnPath = `/build/reports?opp=${opportunityId}`
+      const successUrl = `${baseUrl}/billing/return?status=success&return_to=${encodeURIComponent(returnPath)}`
+      const cancelUrl = `${baseUrl}/billing/return?status=canceled&return_to=${encodeURIComponent(returnPath)}`
 
       let res
       if (isGuest) {

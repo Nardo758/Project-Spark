@@ -7,24 +7,27 @@ export default function BillingReturn() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const bootstrap = useAuthStore((s) => s.bootstrap)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   
   const status = searchParams.get('status')
   const returnTo = searchParams.get('return_to')
   
   useEffect(() => {
     if (status === 'success') {
-      bootstrap()
+      if (isAuthenticated) {
+        bootstrap()
+      }
       const timer = setTimeout(() => {
-        navigate(returnTo || '/dashboard')
+        navigate(returnTo || '/')
       }, 2000)
       return () => clearTimeout(timer)
     } else if (status === 'canceled') {
       const timer = setTimeout(() => {
-        navigate(returnTo || '/dashboard')
+        navigate(returnTo || '/')
       }, 2000)
       return () => clearTimeout(timer)
     }
-  }, [status, returnTo, navigate, bootstrap])
+  }, [status, returnTo, navigate, bootstrap, isAuthenticated])
 
   if (status === 'success') {
     return (
@@ -34,7 +37,7 @@ export default function BillingReturn() {
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-          <p className="text-gray-600 mb-4">Your subscription has been activated.</p>
+          <p className="text-gray-600 mb-4">Your purchase has been completed.</p>
           <p className="text-sm text-gray-500">Redirecting you back...</p>
         </div>
       </div>

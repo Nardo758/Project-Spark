@@ -211,14 +211,7 @@ function App() {
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/oauth-callback" element={<OAuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
-        <Route
-          path="billing/return"
-          element={
-            <RequireAuth>
-              <BillingReturn />
-            </RequireAuth>
-          }
-        />
+        <Route path="billing/return" element={<BillingReturn />} />
         <Route path="admin" element={<RequireAuth><AdminRedirect /></RequireAuth>} />
         <Route path="admin/marketing" element={<AdminMarketing />} />
         <Route path="admin/experts" element={<AdminExperts />} />

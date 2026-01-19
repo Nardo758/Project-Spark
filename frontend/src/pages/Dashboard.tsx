@@ -273,7 +273,7 @@ export default function Dashboard() {
                   return (
                     <div 
                       key={opp.id} 
-                      onClick={() => window.location.href = `/opportunity/${opp.id}`}
+                      onClick={() => navigate(`/opportunity/${opp.id}`)}
                       className="bg-white p-5 rounded-xl border-2 border-stone-200 hover:border-stone-900 transition-all cursor-pointer group"
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -323,7 +323,7 @@ export default function Dashboard() {
                       <div className="pt-4 border-t border-stone-200 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <button 
-                            onClick={(e) => { e.stopPropagation(); window.location.href = `/build/reports?opp=${opp.id}` }}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/build/reports?opp=${opp.id}`) }}
                             className="flex items-center gap-1 text-sm text-stone-600 hover:text-violet-600"
                           >
                             <FileText className="w-4 h-4" /> Report

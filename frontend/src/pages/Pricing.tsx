@@ -331,13 +331,16 @@ export default function Pricing() {
     setBillingLoading(tier)
     try {
       const baseUrl = window.location.origin
+      const returnPath = '/pricing'
+      const successUrl = `${baseUrl}/billing/return?status=success&return_to=${encodeURIComponent(returnPath)}`
+      const cancelUrl = `${baseUrl}/billing/return?status=canceled&return_to=${encodeURIComponent(returnPath)}`
       const res = await fetch('/api/v1/subscriptions/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ 
           tier,
-          success_url: `${baseUrl}/pricing?subscription=success`,
-          cancel_url: `${baseUrl}/pricing?subscription=canceled`,
+          success_url: successUrl,
+          cancel_url: cancelUrl,
         }),
       })
       const data = await res.json().catch(() => ({}))
