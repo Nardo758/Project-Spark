@@ -74,7 +74,7 @@ type Props = {
   isOpen: boolean
   onClose: () => void
   opportunity: Opportunity | null
-  onPurchaseReport: (reportType: string, opportunity: Opportunity) => void
+  onPurchaseReport: (reportType: string, opportunity: Opportunity, guestEmail?: string) => void
 }
 
 export default function OpportunityGateModal({ isOpen, onClose, opportunity, onPurchaseReport }: Props) {
@@ -130,8 +130,8 @@ export default function OpportunityGateModal({ isOpen, onClose, opportunity, onP
     navigate(`/opportunity/${opportunity.id}`)
   }
 
-  const handleReportPurchase = (reportId: string) => {
-    onPurchaseReport(reportId, opportunity)
+  const handleReportPurchase = (reportId: string, capturedEmail?: string) => {
+    onPurchaseReport(reportId, opportunity, capturedEmail)
     onClose()
   }
 
@@ -229,7 +229,7 @@ export default function OpportunityGateModal({ isOpen, onClose, opportunity, onP
                 {recommendedReports.map((report) => (
                   <button
                     key={report.id}
-                    onClick={() => handleReportPurchase(report.id)}
+                    onClick={() => handleReportPurchase(report.id, email)}
                     className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-purple-50 border border-gray-200 hover:border-purple-300 transition-all group"
                   >
                     <div className="flex items-center gap-3">

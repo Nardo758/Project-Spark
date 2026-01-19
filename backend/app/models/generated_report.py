@@ -7,8 +7,16 @@ from app.db.database import Base
 
 class ReportType(str, enum.Enum):
     FEASIBILITY_STUDY = "feasibility_study"
+    FEASIBILITY = "feasibility"
     MARKET_ANALYSIS = "market_analysis"
     STRATEGIC_ASSESSMENT = "strategic_assessment"
+    STRATEGIC = "strategic"
+    PESTLE = "pestle"
+    PESTLE_ANALYSIS = "pestle_analysis"
+    BUSINESS_PLAN = "business_plan"
+    FINANCIAL = "financial"
+    FINANCIAL_MODEL = "financial_model"
+    PITCH_DECK = "pitch_deck"
     PROGRESS_REPORT = "progress_report"
     LAYER_1_OVERVIEW = "layer_1_overview"
     LAYER_2_DEEP_DIVE = "layer_2_deep_dive"
@@ -47,7 +55,7 @@ class GeneratedReport(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     opportunity_id = Column(Integer, ForeignKey("opportunities.id", ondelete="SET NULL"), nullable=True, index=True)
     workspace_id = Column(Integer, ForeignKey("user_workspaces.id", ondelete="SET NULL"), nullable=True, index=True)
     template_id = Column(Integer, ForeignKey("report_templates.id", ondelete="SET NULL"), nullable=True, index=True)

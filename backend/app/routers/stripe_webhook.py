@@ -383,6 +383,11 @@ def handle_checkout_completed(session: dict, db: Session):
     user_id = metadata.get("user_id")
     payment_type = metadata.get("payment_type") or metadata.get("type", "")
     
+    # Handle studio report purchase (supports guest purchases)
+    if payment_type == "studio_report_purchase":
+        _handle_studio_report_purchase(session, db)
+        return
+    
     if not user_id:
         logger.warning("No user_id in checkout session metadata")
         return
@@ -546,6 +551,102 @@ def _handle_bundle_purchase(session: dict, user: User, db: Session):
     db.commit()
     
     logger.info(f"Bundle purchase completed: {bundle_type} ({len(reports)} reports) for user {user.id}")
+
+
+def _handle_studio_report_purchase(session: dict, db: Session):
+    """Handle studio report purchase - records purchase and queues report generation.
+    
+    Note: Report generation is deferred to success page load to keep webhook fast.
+    This function only records the transaction and sets up the pending report.
+    """
+    from app.models.generated_report import GeneratedReport, ReportStatus, ReportType as GenReportType
+    
+    metadata = session.get("metadata", {})
+    user_id = metadata.get("user_id")
+    guest_email = metadata.get("guest_email")
+    report_type_raw = metadata.get("report_type", "")
+    report_context_str = metadata.get("report_context", "{}")
+    
+    # Normalize report type (hyphen to underscore)
+    report_type = report_type_raw.replace("-", "_")
+    
+    try:
+        report_context = json.loads(report_context_str) if report_context_str else {}
+    except:
+        report_context = {}
+    
+    logger.info(f"Processing studio report purchase: {report_type}, user_id: {user_id}, guest_email: {guest_email}")
+    
+    # Determine the email to send results to
+    recipient_email = guest_email
+    if user_id:
+        user = db.query(User).filter(User.id == int(user_id)).first()
+        if user:
+            recipient_email = user.email
+    
+    if not recipient_email:
+        logger.warning(f"No email available for studio report delivery - will use session email")
+        recipient_email = session.get("customer_email") or session.get("customer_details", {}).get("email")
+    
+    # Map report type string to enum (handle various naming conventions)
+    report_type_map = {
+        "market_analysis": GenReportType.MARKET_ANALYSIS,
+        "strategic_assessment": GenReportType.STRATEGIC_ASSESSMENT,
+        "strategic": GenReportType.STRATEGIC,
+        "pestle_analysis": GenReportType.PESTLE_ANALYSIS,
+        "pestle": GenReportType.PESTLE,
+        "business_plan": GenReportType.BUSINESS_PLAN,
+        "financial_model": GenReportType.FINANCIAL_MODEL,
+        "financial": GenReportType.FINANCIAL,
+        "financials": GenReportType.FINANCIAL,
+        "pitch_deck": GenReportType.PITCH_DECK,
+        "feasibility": GenReportType.FEASIBILITY,
+        "feasibility_study": GenReportType.FEASIBILITY_STUDY,
+    }
+    gen_report_type = report_type_map.get(report_type, GenReportType.MARKET_ANALYSIS)
+    
+    # Create a pending generated report record
+    # For guest purchases, user_id can be None - the model should allow this
+    # Store guest email and report context in summary for retrieval
+    report_metadata = {
+        "guest_email": guest_email,
+        "report_context": report_context,
+        "stripe_session_id": session.get("id"),
+        "payment_intent": session.get("payment_intent"),
+    }
+    
+    generated_report = GeneratedReport(
+        user_id=int(user_id) if user_id else None,
+        report_type=gen_report_type,
+        status=ReportStatus.PENDING,
+        title=f"{report_type.replace('_', ' ').title()} Report",
+        summary=json.dumps(report_metadata),
+    )
+    db.add(generated_report)
+    db.commit()
+    report_id = generated_report.id
+    
+    logger.info(f"Created pending studio report {report_id} for generation")
+    
+    # Record transaction
+    tx = Transaction(
+        user_id=int(user_id) if user_id else None,
+        type=TransactionType.UNLOCK,
+        status=TransactionStatus.SUCCEEDED,
+        amount_cents=session.get("amount_total", 0),
+        currency=session.get("currency", "usd"),
+        metadata_json=json.dumps({
+            "type": "studio_report_purchase",
+            "report_type": report_type,
+            "report_id": report_id,
+            "guest_email": guest_email,
+            "session_id": session.get("id"),
+        }),
+    )
+    db.add(tx)
+    db.commit()
+    
+    logger.info(f"Studio report purchase recorded: report_id={report_id}, amount={session.get('amount_total', 0)}")
 
 
 def _handle_subscription_checkout(session: dict, user: User, db: Session):

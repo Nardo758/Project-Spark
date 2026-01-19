@@ -823,6 +823,167 @@ async def create_studio_report_checkout(
     return CheckoutResponse(session_id=session.id, url=session.url)
 
 
+class TriggerReportRequest(BaseModel):
+    """Request to trigger generation for a pending report"""
+    session_id: Optional[str] = None
+    payment_intent: Optional[str] = None
+
+
+class TriggerReportResponse(BaseModel):
+    """Response from triggering report generation"""
+    report_id: Optional[int] = None
+    status: str
+    message: str
+
+
+@router.post("/trigger-report-generation", response_model=TriggerReportResponse)
+async def trigger_report_generation(
+    trigger_data: TriggerReportRequest,
+    request: Request,
+    current_user: User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Trigger generation for a pending studio report after successful payment.
+    
+    Called from the success page after Stripe checkout completes.
+    Finds the pending report and starts AI generation.
+    """
+    from app.models.generated_report import GeneratedReport, ReportStatus
+    from app.services.ai_report_generator import AIReportGenerator
+    from app.services.email_service import email_service
+    
+    # Find the pending report by session_id or payment_intent stored in summary
+    query = db.query(GeneratedReport).filter(
+        GeneratedReport.status == ReportStatus.PENDING
+    )
+    
+    pending_report = None
+    if trigger_data.session_id:
+        all_pending = query.all()
+        for report in all_pending:
+            try:
+                summary = json.loads(report.summary) if report.summary else {}
+                if summary.get("stripe_session_id") == trigger_data.session_id:
+                    pending_report = report
+                    break
+            except:
+                continue
+    
+    if not pending_report and trigger_data.payment_intent:
+        all_pending = query.all()
+        for report in all_pending:
+            try:
+                summary = json.loads(report.summary) if report.summary else {}
+                if summary.get("payment_intent") == trigger_data.payment_intent:
+                    pending_report = report
+                    break
+            except:
+                continue
+    
+    if not pending_report:
+        return TriggerReportResponse(
+            status="not_found",
+            message="No pending report found for this payment"
+        )
+    
+    # Mark as generating
+    pending_report.status = ReportStatus.GENERATING
+    db.commit()
+    
+    # Extract context from summary
+    try:
+        report_metadata = json.loads(pending_report.summary) if pending_report.summary else {}
+    except:
+        report_metadata = {}
+    
+    report_context = report_metadata.get("report_context", {})
+    guest_email = report_metadata.get("guest_email")
+    report_type = pending_report.report_type.value
+    
+    # Determine recipient email
+    recipient_email = guest_email
+    if pending_report.user_id:
+        user = db.query(User).filter(User.id == pending_report.user_id).first()
+        if user:
+            recipient_email = user.email
+    
+    # Generate the report
+    try:
+        generator = AIReportGenerator()
+        
+        opportunity_context = {
+            "title": report_context.get("businessConcept", "Business Opportunity"),
+            "category": report_context.get("category", "General"),
+            "city": report_context.get("location", ""),
+            "description": report_context.get("businessConcept", ""),
+            "target_audience": report_context.get("targetMarket", ""),
+        }
+        
+        report_content = ""
+        if report_type in ("market_analysis",):
+            report_content = generator.generate_market_analysis_report(opportunity_context)
+        elif report_type in ("strategic", "strategic_assessment"):
+            report_content = generator.generate_strategic_assessment(opportunity_context)
+        elif report_type in ("pestle", "pestle_analysis"):
+            report_content = generator.generate_pestle_analysis(opportunity_context)
+        elif report_type in ("business_plan",):
+            report_content = generator.generate_business_plan(opportunity_context)
+        elif report_type in ("financial", "financial_model", "financials"):
+            report_content = generator.generate_financial_projections(opportunity_context)
+        elif report_type in ("pitch_deck",):
+            report_content = generator.generate_pitch_deck_content(opportunity_context)
+        elif report_type in ("feasibility", "feasibility_study"):
+            report_content = generator.generate_feasibility_study(opportunity_context)
+        else:
+            report_content = generator.generate_executive_summary(opportunity_context)
+        
+        # Update report
+        pending_report.status = ReportStatus.COMPLETED
+        pending_report.content = report_content
+        pending_report.completed_at = datetime.now(timezone.utc)
+        db.commit()
+        
+        # Send email if we have a recipient
+        if recipient_email:
+            try:
+                report_name = report_type.replace("_", " ").title()
+                email_service.send_email(
+                    to_email=recipient_email,
+                    subject=f"Your {report_name} Report is Ready - OppGrid",
+                    html_content=f"""
+                    <h2>Your {report_name} Report is Ready!</h2>
+                    <p>Thank you for your purchase. Your AI-generated report has been completed.</p>
+                    <p>You can view your report by visiting: <a href="https://oppgrid.replit.app/reports/{pending_report.id}">View Report</a></p>
+                    <p>Report Details:</p>
+                    <ul>
+                        <li>Report Type: {report_name}</li>
+                        <li>Business Concept: {report_context.get('businessConcept', 'N/A')}</li>
+                    </ul>
+                    <p>Thank you for using OppGrid!</p>
+                    """
+                )
+            except Exception as email_err:
+                logger.error(f"Failed to send report email: {email_err}")
+        
+        return TriggerReportResponse(
+            report_id=pending_report.id,
+            status="completed",
+            message="Report generated successfully"
+        )
+        
+    except Exception as gen_err:
+        logger.error(f"Report generation failed: {gen_err}")
+        pending_report.status = ReportStatus.FAILED
+        pending_report.error_message = str(gen_err)
+        db.commit()
+        
+        return TriggerReportResponse(
+            report_id=pending_report.id,
+            status="failed",
+            message=f"Report generation failed: {str(gen_err)}"
+        )
+
+
 @router.post("/purchase-bundle", response_model=PurchaseResponse)
 def create_bundle_purchase(
     purchase_data: BundlePurchaseRequest,
