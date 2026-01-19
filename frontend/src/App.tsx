@@ -46,6 +46,7 @@ import AdminMarketing from './pages/AdminMarketing'
 import AdminExperts from './pages/AdminExperts'
 import AdminAffiliateTools from './pages/AdminAffiliateTools'
 import StripeArchitecture from './pages/StripeArchitecture'
+import BillingReturn from './pages/BillingReturn'
 
 function AdminRedirect() {
   window.location.href = '/admin.html';
@@ -63,7 +64,7 @@ function App() {
         <Route path="discover" element={<Discover />} />
         <Route path="idea-engine" element={<IdeaEngine />} />
         <Route path="services" element={<Services />} />
-        <Route path="network" element={<Navigate to="/network/experts" replace />} />
+        <Route path="network" element={<Navigate to="/network/experts" />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="opportunity/:id" element={<OpportunityDetail />} />
         <Route
@@ -210,12 +211,20 @@ function App() {
         <Route path="auth/callback" element={<AuthCallback />} />
         <Route path="auth/oauth-callback" element={<OAuthCallback />} />
         <Route path="auth/magic" element={<MagicLinkCallback />} />
+        <Route
+          path="billing/return"
+          element={
+            <RequireAuth>
+              <BillingReturn />
+            </RequireAuth>
+          }
+        />
         <Route path="admin" element={<RequireAuth><AdminRedirect /></RequireAuth>} />
         <Route path="admin/marketing" element={<AdminMarketing />} />
         <Route path="admin/experts" element={<AdminExperts />} />
         <Route path="admin/affiliate-tools" element={<AdminAffiliateTools />} />
         <Route path="architecture/stripe" element={<StripeArchitecture />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Route>
     </Routes>
   )

@@ -24,7 +24,7 @@ export default function RequireTier({ children, requiredTier, featureName }: Pro
 
   if (!isAuthenticated) {
     const next = location.pathname + location.search + location.hash
-    return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />
+    return <Navigate to={`/login?next=${encodeURIComponent(next)}`} />
   }
 
   const userTier = (user?.tier || 'free') as Tier

@@ -1,0 +1,176 @@
+Analysis of Your Routing / Payment Navigation Issue
+From the code, your “user routes” and payment flows are mostly governed by:
+
+App.tsx (all routes + protected routes via RequireAuth / RequireTier)
+useInlinePayment (inline Stripe subscription + modal flow)
+UpgradeModal (Stripe Checkout redirect flow)
+PayPerUnlockModal (Stripe Elements inline flow)
+RequireAuth / RequireTier (redirect to login or upgrade)
+There are two likely causes for “back button crashes / wrong route” specifically around payments:
+
+1. Overuse of replace in Critical Redirects
+You are using Navigate with replace in multiple places:
+
+tsx
+<Route path="network" element={<span class="hljs-tag"><<span class="hljs-name">Navigate to="/network/experts" replace /></span></span>} />
+<span class="hljs-tag"><<span class="hljs-name">Route path="*" element={<Navigate to="/" replace /></span>} /></span>
+And in RequireAuth:
+
+tsx
+return <span class="hljs-tag"><<span class="hljs-name">Navigate to={`/login?next=${encodeURIComponent(next)}`} replace /></span></span>
+When replace is used, the current history entry is overwritten instead of pushed. Combined with redirects from Stripe (or after login), this can produce confusing or “broken” back button behavior, because some steps never get a proper history entry.
+
+Fix proposal:
+
+Remove replace in most cases so browser history is consistent, especially for:
+network redirect
+404 (*) redirect
+Possibly the RequireAuth redirect
+Example changes:
+
+tsx
+// App.tsx
+<Route path="network" element={<span class="hljs-tag"><<span class="hljs-name">Navigate to="/network/experts" /></span></span>} />
+<span class="hljs-tag"><<span class="hljs-name">Route path="*" element={<Navigate to="/" /></span>} /></span>
+
+// RequireAuth.tsx
+return <span class="hljs-tag"><<span class="hljs-name">Navigate to={`/login?next=${encodeURIComponent(next)}`} /></span></span>
+This will let the user go “back” to the previous page instead of skipping over it.
+
+2. Full Page Redirects for Payments vs SPA Navigation
+a. UpgradeModal redirects via window.location.href
+ts
+if (data?.url) {
+  window.location.href = data.url // full redirect to Stripe Checkout
+}
+This is correct for Stripe Checkout, but you need to ensure:
+
+success_url and cancel_url (built here):
+ts
+const baseUrl = window.location.origin
+const successUrl = returnUrl ? `<span class="hljs-subst">${baseUrl}${returnUrl}`</span> : `<span class="hljs-subst">${baseUrl}/dashboard?subscription=success`</span>
+const cancelUrl = `<span class="hljs-subst">${baseUrl}/dashboard?subscription=canceled`</span>
+…are real SPA routes handled in App.tsx (your dashboard route is protected by <RequireAuth> and that’s fine). But when the user navigates back from Stripe, the browser back stack includes an external page, which can make “back” feel odd.
+
+To stabilize this:
+
+Use dedicated, simple routes for post-payment:
+
+tsx
+// App.tsx
+<Route path="billing/return" element={
+  <span class="hljs-tag"><<span class="hljs-name">RequireAuth></span>
+    <<span class="hljs-name">Dashboard /></span>  {/* or a lightweight BillingReturn page */}
+  </<span class="hljs-name">RequireAuth></span></span>
+} />
+In UpgradeModal, set:
+
+ts
+const successUrl = `<span class="hljs-subst">${baseUrl}/billing/return?status=success`</span>
+const cancelUrl  = `<span class="hljs-subst">${baseUrl}/billing/return?status=canceled`</span>
+Inside Dashboard (or a small BillingReturn component), read status from location.search and show a toast / banner instead of performing more redirects.
+
+This prevents multiple nested redirects that can confuse the back stack.
+
+b. useInlinePayment uses navigate('/dashboard') / navigate('/dashboard?subscription=success')
+ts
+if (onSuccess) {
+  onSuccess()
+} else {
+  navigate('/dashboard?subscription=success')
+}
+and
+
+ts
+if (onSuccess) {
+  onSuccess()
+} else {
+  navigate('/dashboard')
+}
+These use the SPA router (good), but if someone triggers inline payment from, say, an opportunity page and then hits back, they’ll go back to /dashboard... and not to the original page, which might feel “wrong”.
+
+If you want “return to where I started the payment”, you should:
+
+Accept an optional returnTo parameter in useInlinePayment, or store the origin route before calling startCheckout.
+Use it after successful payment:
+ts
+export function useInlinePayment(<span class="hljs-attr">onSuccess?: () => void, returnTo?: string</span>): UseInlinePaymentReturn {
+  const navigate = useNavigate()
+  ...
+  const handlePaymentConfirmed = useCallback(async (_paymentIntentId: string) => {
+    setState(<span class="hljs-params">s =></span> ({ ...s, paymentModalOpen: false }))
+    if (onSuccess) {
+      onSuccess()
+    } else if (returnTo) {
+      navigate(returnTo)
+    } else {
+      navigate('/dashboard')
+    }
+  }, [navigate, onSuccess, returnTo])
+}
+
+Show more
+And when you use the hook from a page:
+
+ts
+const location = useLocation()
+const { state, startCheckout, ... } = useInlinePayment(undefined, location.pathname + location.search)
+Now a successful payment can return to the originating page, and the back button will behave more intuitively.
+
+3. RequireAuth / RequireTier and Back Navigation
+Current behavior:
+
+Unauthed user hits a protected route → RequireAuth does:
+
+tsx
+return <span class="hljs-tag"><<span class="hljs-name">Navigate to={`/login?next=${encodeURIComponent(next)}`} replace /></span></span>
+After login, you probably use next to go back to the original page.
+
+The replace here means the protected route is not in history, so pressing Back from login may go even further back or into a previous app route and feel “wrong”.
+
+If this is part of your complaint, update it (as noted above) to drop replace:
+
+tsx
+return <span class="hljs-tag"><<span class="hljs-name">Navigate to={`/login?next=${encodeURIComponent(next)}`} /></span></span>
+Then Back from the login screen will reliably take the user back to the protected page they tried to reach, which is what most users expect (even though it will immediately redirect again if they’re still unauthenticated).
+
+4. What I Recommend You Change Now
+Here is a minimal set of concrete edits that should make “back” behavior much saner:
+
+App route redirects
+
+tsx
+// App.tsx
+<Route path="network" element={<span class="hljs-tag"><<span class="hljs-name">Navigate to="/network/experts" /></span></span>} />
+<span class="hljs-tag"><<span class="hljs-name">Route path="*" element={<Navigate to="/" /></span>} /></span>
+Auth redirect
+
+tsx
+// RequireAuth.tsx
+if (!isAuthenticated) {
+  const next = location.pathname + location.search + location.hash
+  return <span class="hljs-tag"><<span class="hljs-name">Navigate to={`/login?next=${encodeURIComponent(next)}`} /></span></span>
+}
+Optional: stabilize post-payment URLs
+
+Add a route in App.tsx like:
+
+tsx
+<Route
+  path="billing/return"
+  element={
+    <span class="hljs-tag"><<span class="hljs-name">RequireAuth></span>
+      <<span class="hljs-name">Dashboard /></span>
+    </<span class="hljs-name">RequireAuth></span></span>
+  }
+/>
+Adjust UpgradeModal:
+
+ts
+const baseUrl = window.location.origin
+const successUrl = `<span class="hljs-subst">${baseUrl}/billing/return?status=success`</span>
+const cancelUrl  = `<span class="hljs-subst">${baseUrl}/billing/return?status=canceled`</span>
+Optional: return-to pattern for inline payment
+
+Extend useInlinePayment to accept and use a returnTo as shown above.
+Pass location.pathname + location.search from the components that open the inline payment modal.

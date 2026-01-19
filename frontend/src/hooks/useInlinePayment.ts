@@ -21,7 +21,7 @@ export interface UseInlinePaymentReturn {
   clearError: () => void
 }
 
-export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn {
+export function useInlinePayment(onSuccess?: () => void, returnTo?: string): UseInlinePaymentReturn {
   const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)
   
@@ -37,7 +37,8 @@ export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn
 
   const startCheckout = useCallback(async (tier: Tier) => {
     if (!token) {
-      navigate(`/signup?plan=${tier}`)
+      const returnPath = returnTo || window.location.pathname + window.location.search
+      navigate(`/signup?plan=${tier}&next=${encodeURIComponent(returnPath)}`)
       return
     }
 
@@ -74,7 +75,7 @@ export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn
         if (onSuccess) {
           onSuccess()
         } else {
-          navigate('/dashboard?subscription=success')
+          navigate(returnTo || '/dashboard?subscription=success')
         }
         return
       }
@@ -90,7 +91,7 @@ export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn
         if (onSuccess) {
           onSuccess()
         } else {
-          navigate('/dashboard?subscription=success')
+          navigate(returnTo || '/dashboard?subscription=success')
         }
         return
       }
@@ -121,7 +122,7 @@ export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn
         error: e instanceof Error ? e.message : 'Unable to start checkout',
       }))
     }
-  }, [token, navigate, onSuccess])
+  }, [token, navigate, onSuccess, returnTo])
 
   const closePaymentModal = useCallback(() => {
     setState(s => ({
@@ -136,9 +137,9 @@ export function useInlinePayment(onSuccess?: () => void): UseInlinePaymentReturn
     if (onSuccess) {
       onSuccess()
     } else {
-      navigate('/dashboard')
+      navigate(returnTo || '/dashboard')
     }
-  }, [navigate, onSuccess])
+  }, [navigate, onSuccess, returnTo])
 
   const clearError = useCallback(() => {
     setState(s => ({ ...s, error: null }))

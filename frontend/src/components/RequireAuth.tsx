@@ -13,7 +13,7 @@ export default function RequireAuth({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated) {
     const next = location.pathname + location.search + location.hash
-    return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />
+    return <Navigate to={`/login?next=${encodeURIComponent(next)}`} />
   }
 
   return <>{children}</>

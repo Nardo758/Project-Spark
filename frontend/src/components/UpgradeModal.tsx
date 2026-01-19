@@ -96,7 +96,9 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
 
     try {
       const baseUrl = window.location.origin
-      const successUrl = returnUrl ? `${baseUrl}${returnUrl}` : `${baseUrl}/dashboard?subscription=success`
+      const returnPath = returnUrl || (window.location.pathname + window.location.search + window.location.hash)
+      const successUrl = `${baseUrl}/billing/return?status=success&return_to=${encodeURIComponent(returnPath)}`
+      const cancelUrl = `${baseUrl}/billing/return?status=canceled&return_to=${encodeURIComponent(returnPath)}`
       const res = await fetch('/api/v1/subscriptions/checkout', {
         method: 'POST',
         headers: {
@@ -106,7 +108,7 @@ export default function UpgradeModal({ isOpen, onClose, feature, context = 'gene
         body: JSON.stringify({
           tier: selectedPlan,
           success_url: successUrl,
-          cancel_url: `${baseUrl}/dashboard?subscription=canceled`,
+          cancel_url: cancelUrl,
         }),
       })
 

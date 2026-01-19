@@ -70,7 +70,7 @@ export default function Dashboard() {
     startCheckout, 
     closePaymentModal, 
     handlePaymentConfirmed 
-  } = useInlinePayment()
+  } = useInlinePayment(undefined, '/dashboard')
 
   // Handle subscription success notification
   useEffect(() => {
