@@ -63,6 +63,7 @@ from .team import (
     Team, TeamMember, TeamInvitation, TeamApiKey,
     TeamRole, InviteStatus
 )
+from .monthly_report_usage import MonthlyReportUsage
 
 __all__ = [
     "User",
@@ -185,4 +186,5 @@ __all__ = [
     "TeamApiKey",
     "TeamRole",
     "InviteStatus",
+    "MonthlyReportUsage",
 ]

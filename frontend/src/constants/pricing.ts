@@ -44,6 +44,7 @@ export interface TierConfig {
   whiteLabel: boolean
   apiAccess: boolean
   commercialUse: boolean
+  freeReportsPerMonth: number
 }
 
 export const TIER_CONFIG: Record<Tier, TierConfig> = {
@@ -58,6 +59,7 @@ export const TIER_CONFIG: Record<Tier, TierConfig> = {
     whiteLabel: false,
     apiAccess: false,
     commercialUse: false,
+    freeReportsPerMonth: 0,
   },
   starter: {
     name: 'Starter',
@@ -70,6 +72,7 @@ export const TIER_CONFIG: Record<Tier, TierConfig> = {
     whiteLabel: false,
     apiAccess: false,
     commercialUse: false,
+    freeReportsPerMonth: 1,
   },
   growth: {
     name: 'Growth',
@@ -82,6 +85,7 @@ export const TIER_CONFIG: Record<Tier, TierConfig> = {
     whiteLabel: false,
     apiAccess: false,
     commercialUse: false,
+    freeReportsPerMonth: 3,
   },
   pro: {
     name: 'Pro',
@@ -94,6 +98,7 @@ export const TIER_CONFIG: Record<Tier, TierConfig> = {
     whiteLabel: false,
     apiAccess: false,
     commercialUse: true,
+    freeReportsPerMonth: 5,
   },
   team: {
     name: 'Team',
@@ -106,6 +111,7 @@ export const TIER_CONFIG: Record<Tier, TierConfig> = {
     whiteLabel: true,
     apiAccess: false,
     commercialUse: true,
+    freeReportsPerMonth: 10,
   },
   business: {
     name: 'Business',
@@ -118,6 +124,7 @@ export const TIER_CONFIG: Record<Tier, TierConfig> = {
     whiteLabel: true,
     apiAccess: true,
     commercialUse: true,
+    freeReportsPerMonth: 20,
   },
   enterprise: {
     name: 'Enterprise',
@@ -130,6 +137,7 @@ export const TIER_CONFIG: Record<Tier, TierConfig> = {
     whiteLabel: true,
     apiAccess: true,
     commercialUse: true,
+    freeReportsPerMonth: -1,
   },
 }
 

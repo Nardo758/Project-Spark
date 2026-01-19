@@ -55,6 +55,7 @@ from app.services.stripe_service import stripe_service, get_stripe_client
 from app.services.usage_service import usage_service
 from app.services.entitlements import get_opportunity_entitlements
 from app.services.audit import log_event
+from app.services.report_usage_service import report_usage_service
 
 router = APIRouter(prefix="/report-pricing", tags=["Report Pricing"])
 
@@ -1304,4 +1305,124 @@ def can_generate_report(
         "reason": "purchase_required",
         "price": price,
         "price_formatted": f"${price / 100:.0f}",
+    }
+
+
+@router.get("/usage")
+def get_report_usage(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Get user's monthly report usage status"""
+    status = report_usage_service.get_usage_status(current_user, db)
+    return status
+
+
+@router.get("/effective-price/{report_type}")
+def get_effective_report_price(
+    report_type: str,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Get effective price for a report considering free allocation and tier discount"""
+    if report_type not in REPORT_PRODUCTS:
+        raise HTTPException(status_code=400, detail=f"Invalid report type: {report_type}")
+    
+    base_price = REPORT_PRODUCTS[report_type].price_cents
+    pricing = report_usage_service.get_effective_price(base_price, current_user, db)
+    
+    return {
+        "report_type": report_type,
+        "report_name": REPORT_PRODUCTS[report_type].name,
+        **pricing,
+    }
+
+
+class FreeReportGenerateRequest(BaseModel):
+    opportunity_id: Optional[int] = None
+    report_type: str
+    idea_description: Optional[str] = None
+    target_market: Optional[str] = None
+    location: Optional[str] = None
+
+
+@router.post("/generate-free-report")
+def generate_free_report(
+    request_data: FreeReportGenerateRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Generate a report using free allocation (no payment required)"""
+    from app.models.generated_report import GeneratedReport, ReportType, ReportStatus
+    
+    free_check = report_usage_service.check_free_available(current_user, db)
+    
+    if not free_check["is_free"]:
+        raise HTTPException(
+            status_code=402,
+            detail="No free reports remaining. Please purchase this report."
+        )
+    
+    if request_data.report_type not in REPORT_PRODUCTS:
+        raise HTTPException(status_code=400, detail=f"Invalid report type: {request_data.report_type}")
+    
+    opportunity = None
+    title_suffix = request_data.idea_description or "General Analysis"
+    
+    if request_data.opportunity_id:
+        opportunity = db.query(Opportunity).filter(Opportunity.id == request_data.opportunity_id).first()
+        if opportunity:
+            title_suffix = opportunity.title
+    
+    report_type_map = {
+        "feasibility_study": ReportType.FEASIBILITY,
+        "market_analysis": ReportType.MARKET_ANALYSIS,
+        "strategic_assessment": ReportType.STRATEGIC,
+        "pestle_analysis": ReportType.PESTLE_ANALYSIS,
+        "business_plan": ReportType.BUSINESS_PLAN,
+        "financial_model": ReportType.FINANCIAL_MODEL,
+        "pitch_deck": ReportType.PITCH_DECK,
+    }
+    
+    report_type_enum = report_type_map.get(request_data.report_type)
+    if not report_type_enum:
+        raise HTTPException(status_code=400, detail=f"Unsupported report type: {request_data.report_type}")
+    
+    report = GeneratedReport(
+        user_id=current_user.id,
+        opportunity_id=request_data.opportunity_id if opportunity else None,
+        report_type=report_type_enum,
+        status=ReportStatus.PENDING,
+        title=f"{REPORT_PRODUCTS[request_data.report_type].name}: {title_suffix}",
+        summary=f"Free report - {free_check['reason']}. {request_data.idea_description or ''}".strip(),
+    )
+    db.add(report)
+    
+    report_usage_service.increment_usage(current_user.id, db)
+    
+    db.commit()
+    db.refresh(report)
+    
+    log_event(
+        db,
+        action="report_pricing.free_report_generated",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="report",
+        resource_id=report.id,
+        metadata={
+            "report_type": request_data.report_type,
+            "opportunity_id": request_data.opportunity_id,
+            "reason": free_check["reason"],
+        },
+    )
+    
+    return {
+        "success": True,
+        "report_id": report.id,
+        "report_type": request_data.report_type,
+        "message": "Report generation started. You will be notified when it's ready.",
+        "usage_reason": free_check["reason"],
     }

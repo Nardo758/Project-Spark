@@ -8,6 +8,43 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass
 
 
+TIER_FREE_REPORTS: Dict[str, int] = {
+    "free": 0,
+    "starter": 1,
+    "growth": 3,
+    "pro": 5,
+    "team": 10,
+    "business": 20,
+    "enterprise": -1,
+}
+
+TIER_REPORT_DISCOUNTS: Dict[str, int] = {
+    "free": 0,
+    "starter": 0,
+    "growth": 10,
+    "pro": 15,
+    "team": 0,
+    "business": 20,
+    "enterprise": 50,
+}
+
+
+def get_tier_free_reports(tier: str) -> int:
+    return TIER_FREE_REPORTS.get(tier.lower(), 0)
+
+
+def get_tier_report_discount(tier: str) -> int:
+    return TIER_REPORT_DISCOUNTS.get(tier.lower(), 0)
+
+
+def calculate_discounted_price(base_price_cents: int, tier: str) -> int:
+    discount_percent = get_tier_report_discount(tier)
+    if discount_percent <= 0:
+        return base_price_cents
+    discount_amount = int(base_price_cents * discount_percent / 100)
+    return base_price_cents - discount_amount
+
+
 class ReportProductType(str, Enum):
     FEASIBILITY_STUDY = "feasibility_study"
     BUSINESS_PLAN = "business_plan"
