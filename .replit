@@ -78,7 +78,7 @@ externalPort = 8000
 run = ["python", "server.py"]
 deploymentTarget = "autoscale"
 ignorePorts = false
-build = ["bash", "-c", "cd backend && alembic upgrade head && cd ../frontend && npm install && npm run build"]
+build = ["bash", "-c", "(cd backend && alembic upgrade head) && (cd frontend && npm install && npm run build)"]
 
 [workflows]
 runButton = "Project"
