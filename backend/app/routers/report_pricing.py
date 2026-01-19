@@ -1426,3 +1426,93 @@ def generate_free_report(
         "message": "Report generation started. You will be notified when it's ready.",
         "usage_reason": free_check["reason"],
     }
+
+
+CLONE_ANALYSIS_BASE_PRICE_CENTS = 4900
+
+
+class CloneAnalysisAccessRequest(BaseModel):
+    source_business: str
+    target_city: str
+    target_state: str
+
+
+@router.post("/clone-analysis/check-access")
+def check_clone_analysis_access(
+    request_data: CloneAnalysisAccessRequest,
+    current_user: User = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Check if user has free access to Clone Analysis or needs to pay"""
+    if not current_user:
+        return {
+            "has_free_access": False,
+            "requires_payment": True,
+            "price_cents": CLONE_ANALYSIS_BASE_PRICE_CENTS,
+            "discounted_price_cents": CLONE_ANALYSIS_BASE_PRICE_CENTS,
+            "discount_percent": 0,
+            "reason": "guest_user",
+        }
+    
+    free_check = report_usage_service.check_free_available(current_user, db)
+    
+    if free_check["is_free"]:
+        return {
+            "has_free_access": True,
+            "requires_payment": False,
+            "price_cents": 0,
+            "reason": free_check["reason"],
+            "free_remaining": free_check.get("free_remaining"),
+        }
+    
+    discount_percent = free_check["discount_percent"]
+    discounted_price = int(CLONE_ANALYSIS_BASE_PRICE_CENTS * (1 - discount_percent / 100))
+    
+    return {
+        "has_free_access": False,
+        "requires_payment": True,
+        "price_cents": CLONE_ANALYSIS_BASE_PRICE_CENTS,
+        "discounted_price_cents": discounted_price,
+        "discount_percent": discount_percent,
+        "reason": free_check["reason"],
+    }
+
+
+@router.post("/clone-analysis/unlock-free")
+def unlock_clone_analysis_free(
+    request_data: CloneAnalysisAccessRequest,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Unlock Clone Analysis using free allocation"""
+    free_check = report_usage_service.check_free_available(current_user, db)
+    
+    if not free_check["is_free"]:
+        raise HTTPException(
+            status_code=402,
+            detail="No free reports remaining. Please purchase this analysis."
+        )
+    
+    report_usage_service.increment_usage(current_user.id, db)
+    
+    log_event(
+        db,
+        action="report_pricing.clone_analysis_free_unlock",
+        actor=current_user,
+        actor_type="user",
+        request=request,
+        resource_type="clone_analysis",
+        metadata={
+            "source_business": request_data.source_business,
+            "target_city": request_data.target_city,
+            "target_state": request_data.target_state,
+            "reason": free_check["reason"],
+        },
+    )
+    
+    return {
+        "success": True,
+        "message": "Clone Analysis unlocked successfully",
+        "usage_reason": free_check["reason"],
+    }

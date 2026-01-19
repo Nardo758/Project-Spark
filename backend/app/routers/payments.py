@@ -23,10 +23,12 @@ from app.models.opportunity import Opportunity
 from app.models.subscription import UnlockedOpportunity, SubscriptionTier
 from app.services.usage_service import usage_service
 from app.services.audit import log_event
+from app.services.report_usage_service import report_usage_service
+from app.core.dependencies import get_current_user_optional
 
 
 class CreateCloneCheckoutRequest(BaseModel):
-    email: str
+    email: Optional[str] = None
     source_business: str
     target_city: str
     target_state: str
@@ -345,16 +347,26 @@ def create_fast_pass_payment_intent(
 def create_clone_checkout_session(
     payload: CreateCloneCheckoutRequest,
     request: Request,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
     """
-    Create a Stripe Checkout session for guest Clone Analysis purchase ($49).
-    No authentication required - email is collected for receipt and results.
+    Create a Stripe Checkout session for Clone Analysis purchase.
+    Authenticated users get tier-based discounts computed server-side.
+    Guests pay full price and must provide email.
     """
     try:
         stripe = get_stripe_client()
     except ValueError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment service not configured")
+    
+    customer_email = None
+    if current_user:
+        customer_email = current_user.email
+    elif payload.email:
+        customer_email = payload.email
+    else:
+        raise HTTPException(status_code=400, detail="Email is required for guest purchases")
     
     domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
     if domain:
@@ -364,6 +376,19 @@ def create_clone_checkout_session(
     
     success_url = f"{base_url}/build/reports?path=clone&unlock=success&session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{base_url}/build/reports?path=clone&unlock=cancelled"
+    
+    base_price = 4900
+    discount = 0
+    
+    if current_user:
+        free_check = report_usage_service.check_free_available(current_user, db)
+        discount = free_check.get("discount_percent", 0)
+        if not isinstance(discount, (int, float)) or discount < 0 or discount > 100:
+            discount = 0
+    
+    final_price = int(base_price * (1 - discount / 100)) if discount > 0 else base_price
+    if final_price < 100:
+        final_price = base_price
     
     try:
         checkout_session = stripe.checkout.Session.create(
@@ -375,20 +400,23 @@ def create_clone_checkout_session(
                         "name": "Clone Success Analysis - Full Unlock",
                         "description": f"Detailed demographics, competition, and market data for locations matching {payload.source_business} in {payload.target_city}, {payload.target_state}",
                     },
-                    "unit_amount": 4900,
+                    "unit_amount": final_price,
                 },
                 "quantity": 1,
             }],
             mode="payment",
             success_url=success_url,
             cancel_url=cancel_url,
-            customer_email=payload.email,
+            customer_email=customer_email,
             metadata={
                 "type": "clone_analysis",
-                "email": payload.email,
+                "email": customer_email,
                 "source_business": payload.source_business,
                 "target_city": payload.target_city,
                 "target_state": payload.target_state,
+                "discount_percent": str(discount),
+                "original_price": str(base_price),
+                "user_id": str(current_user.id) if current_user else "",
             },
         )
         
