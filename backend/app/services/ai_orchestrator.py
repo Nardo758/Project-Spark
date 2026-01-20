@@ -49,6 +49,27 @@ class AIOrchestrator:
             AITaskType.EXPERT_MATCHING,
         }
 
+    @staticmethod
+    def _capture_ai_error(
+        error: Exception,
+        *,
+        service: str,
+        task_type: AITaskType,
+        data: Dict[str, Any],
+        error_type: str,
+    ) -> None:
+        try:
+            import sentry_sdk
+            with sentry_sdk.push_scope() as scope:
+                scope.set_tag("ai_service", service)
+                scope.set_tag("ai_task", task_type.value)
+                scope.set_tag("ai_error_type", error_type)
+                if isinstance(data, dict):
+                    scope.set_extra("payload_keys", list(data.keys()))
+                sentry_sdk.capture_exception(error)
+        except Exception:
+            return
+
     async def process_request(
         self, task_type: AITaskType, data: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -127,8 +148,15 @@ class AIOrchestrator:
                 "usage": usage,
                 "tokens_used": (usage or {}).get("total_tokens"),
             }
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as exc:
             logger.error(f"DeepSeek call timed out after {AI_CALL_TIMEOUT_SECONDS}s")
+            self._capture_ai_error(
+                exc,
+                service="deepseek",
+                task_type=task_type,
+                data=data,
+                error_type="timeout",
+            )
             return {
                 "ai_service": "deepseek",
                 "task_type": task_type.value,
@@ -138,6 +166,13 @@ class AIOrchestrator:
             }
         except Exception as e:
             logger.error(f"DeepSeek processing error: {e}")
+            self._capture_ai_error(
+                e,
+                service="deepseek",
+                task_type=task_type,
+                data=data,
+                error_type="error",
+            )
             return {
                 "ai_service": "deepseek",
                 "task_type": task_type.value,
@@ -169,8 +204,15 @@ class AIOrchestrator:
                 "usage": result.get("usage"),
                 "tokens_used": result.get("tokens_used"),
             }
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as exc:
             logger.error(f"Claude call timed out after {AI_CALL_TIMEOUT_SECONDS}s")
+            self._capture_ai_error(
+                exc,
+                service="claude",
+                task_type=task_type,
+                data=data,
+                error_type="timeout",
+            )
             return {
                 "ai_service": "claude",
                 "task_type": task_type.value,
@@ -180,6 +222,13 @@ class AIOrchestrator:
             }
         except Exception as e:
             logger.error(f"Claude processing error: {e}")
+            self._capture_ai_error(
+                e,
+                service="claude",
+                task_type=task_type,
+                data=data,
+                error_type="error",
+            )
             return {
                 "ai_service": "claude",
                 "task_type": task_type.value,

@@ -59,6 +59,32 @@ def _extract_anthropic_usage(response: Any) -> dict | None:
     }
 
 
+def _capture_ai_exception(error: Exception, *, stage: str, model: str, extra: Optional[dict] = None) -> None:
+    try:
+        import sentry_sdk
+        with sentry_sdk.push_scope() as scope:
+            scope.set_tag("ai_stage", stage)
+            scope.set_tag("ai_model", model)
+            if extra:
+                scope.set_extra("context", extra)
+            sentry_sdk.capture_exception(error)
+    except Exception:
+        return
+
+
+def _capture_ai_warning(message: str, *, stage: str, model: str, extra: Optional[dict] = None) -> None:
+    try:
+        import sentry_sdk
+        with sentry_sdk.push_scope() as scope:
+            scope.set_tag("ai_stage", stage)
+            scope.set_tag("ai_model", model)
+            if extra:
+                scope.set_extra("context", extra)
+            sentry_sdk.capture_message(message, level="warning")
+    except Exception:
+        return
+
+
 class _MatchLLMResult(BaseModel):
     fit_score: int = Field(..., ge=0, le=100)
     confidence: float = Field(..., ge=0)
@@ -245,9 +271,21 @@ Respond only with valid JSON."""
             }
             
         except (ValueError, ValidationError, json.JSONDecodeError) as e:
+            _capture_ai_warning(
+                "LLM match schema invalid",
+                stage="match",
+                model=self.fast_model,
+                extra={"opportunity_id": opportunity_id, "error": str(e)},
+            )
             logger.warning(f"LLM match schema invalid, using heuristic: {e}")
             return heuristic_result
         except Exception as e:
+            _capture_ai_exception(
+                e,
+                stage="match",
+                model=self.fast_model,
+                extra={"opportunity_id": opportunity_id},
+            )
             logger.error(f"LLM match failed, using heuristic: {e}")
             return heuristic_result
     
@@ -339,9 +377,21 @@ Respond only with valid JSON."""
             }
             
         except (ValueError, ValidationError, json.JSONDecodeError) as e:
+            _capture_ai_warning(
+                "LLM roadmap schema invalid",
+                stage="roadmap",
+                model=self.fast_model,
+                extra={"opportunity_id": opportunity_id, "error": str(e)},
+            )
             logger.warning(f"LLM roadmap schema invalid, using heuristic: {e}")
             return heuristic_result
         except Exception as e:
+            _capture_ai_exception(
+                e,
+                stage="roadmap",
+                model=self.fast_model,
+                extra={"opportunity_id": opportunity_id},
+            )
             logger.error(f"LLM roadmap failed, using heuristic: {e}")
             return heuristic_result
     
@@ -427,9 +477,21 @@ Respond only with valid JSON."""
             }
             
         except (ValueError, ValidationError, json.JSONDecodeError) as e:
+            _capture_ai_warning(
+                "LLM validation schema invalid",
+                stage="validate",
+                model=self.model,
+                extra={"opportunity_id": opportunity_id, "error": str(e)},
+            )
             logger.warning(f"LLM validation schema invalid, using heuristic: {e}")
             return heuristic_result
         except Exception as e:
+            _capture_ai_exception(
+                e,
+                stage="validate",
+                model=self.model,
+                extra={"opportunity_id": opportunity_id},
+            )
             logger.error(f"LLM validation failed, using heuristic: {e}")
             return heuristic_result
 
@@ -479,10 +541,12 @@ Respond only with valid JSON."""
             except json.JSONDecodeError:
                 return {"response": response_text, "raw": response_text, "usage": usage, "tokens_used": (usage or {}).get("total_tokens")}
         
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as exc:
             logger.error(f"AI generation timed out after {AI_CALL_TIMEOUT_SECONDS}s")
+            _capture_ai_exception(exc, stage="generate_response", model=model, extra={"prompt_chars": len(prompt)})
             return {"error": "ai_timeout", "error_message": f"AI call timed out after {AI_CALL_TIMEOUT_SECONDS} seconds", "response": None}
         except Exception as e:
+            _capture_ai_exception(e, stage="generate_response", model=model, extra={"prompt_chars": len(prompt)})
             logger.error(f"AI generation failed: {e}")
             return {"error": "ai_error", "error_message": str(e), "response": None}
 

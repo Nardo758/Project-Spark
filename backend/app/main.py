@@ -72,6 +72,26 @@ install_trace_id_factory()
 configure_app_logging()
 logger = logging.getLogger(__name__)
 
+def _init_sentry() -> None:
+    dsn = settings.SENTRY_DSN
+    if not dsn:
+        return
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+        sentry_sdk.init(
+            dsn=dsn,
+            integrations=[FastApiIntegration()],
+            traces_sample_rate=float(settings.SENTRY_TRACES_SAMPLE_RATE or 0.0),
+        )
+        logger.info("Sentry initialized")
+    except Exception as exc:
+        logger.warning("Failed to initialize Sentry: %s", exc)
+
+
+_init_sentry()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",

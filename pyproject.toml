@@ -10,6 +10,7 @@ dependencies = [
     "psycopg2-binary",
     "pydantic",
     "pydantic-settings",
+    "sentry-sdk",
     "python-jose",
     "passlib",
     "python-multipart",
