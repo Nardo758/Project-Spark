@@ -150,6 +150,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const opportunityId = urlParams.get('id');
+        const API_BASE_URL = window.API_BASE_URL || '/api/v1';
 
         function getAuthToken() {
             return localStorage.getItem('access_token') || localStorage.getItem('token');
@@ -193,17 +194,22 @@
                     })
                 ]);
 
-                if (!oppResponse.ok || !matchResponse.ok) {
-                    throw new Error('Failed to load data');
+                const opportunity = await oppResponse.json().catch(() => null);
+                const matchData = await matchResponse.json().catch(() => null);
+                if (!oppResponse.ok) {
+                    throw new Error(opportunity?.detail || 'Failed to load opportunity.');
                 }
-
-                const opportunity = await oppResponse.json();
-                const matchData = await matchResponse.json();
+                if (!matchResponse.ok) {
+                    throw new Error(matchData?.detail || 'Failed to load match analysis.');
+                }
+                if (!opportunity || !matchData) {
+                    throw new Error('Invalid response from server.');
+                }
 
                 renderMatch(opportunity, matchData);
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('loading').innerHTML = '<p style="color: var(--red-500);">Failed to load match analysis. Please try again.</p>';
+                document.getElementById('loading').innerHTML = `<p style="color: var(--red-500);">${error?.message || 'Failed to load match analysis. Please try again.'}</p>`;
             }
         }
 

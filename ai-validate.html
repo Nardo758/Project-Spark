@@ -91,6 +91,7 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const opportunityId = urlParams.get('id');
+    const API_BASE_URL = window.API_BASE_URL || '/api/v1';
 
     const loadingCard = document.getElementById('loadingCard');
     const contentCard = document.getElementById('contentCard');
