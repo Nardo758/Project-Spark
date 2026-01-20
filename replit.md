@@ -20,6 +20,7 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
 *   **Unified Opportunity Hub & WorkHub (AI Co-Founder):** For paid users, combines research and workspace with a visual journey timeline. The WorkHub is a chat-first conversational AI assistant with a 4-stage workflow (Validate/Research/Plan/Execute), context panels, quick actions, and toolkit panels. Supports "Bring Your Own Key" (BYOK) for Anthropic Claude API keys.
 *   **Expert Marketplace & Collaboration:** Features a Leads Marketplace and Network Hub, with an intelligent Expert Recommendation Engine using a weighted scoring algorithm. Facilitates expert interactions with Stripe Connect for payouts, an expert dashboard, and a rating/review system. Expert onboarding supports LinkedIn OAuth pre-population and admin tools for external expert integration (e.g., Upwork).
 *   **Data Management:** Ensures complete signal traceability and indefinite data retention. Implements database-backed caching for AI-driven idea validation with a 7-day TTL.
+*   **Location Validation:** Centralized `location_utils.py` module provides state bounding box validation to detect and correct out-of-state coordinates from SerpAPI or stored data. Automatic fallback to city/state center coordinates with audit logging ensures map accuracy.
 *   **Admin Panel:** Comprehensive tools for managing users, subscriptions, opportunities, leads, and platform statistics.
 
 ## External Dependencies
