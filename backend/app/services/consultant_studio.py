@@ -642,13 +642,17 @@ class ConsultantStudioService:
         
         inferred_category = self._infer_business_category(business_name)
         
+        parsed_city, parsed_state = self._parse_address_components(business_address)
+        
         try:
             opportunity_data = {
                 "id": 0,
                 "title": business_name,
+                "business_description": f"{business_name} in {business_address}",
                 "category": inferred_category,
                 "location": business_address,
-                "city": business_address,
+                "city": parsed_city,
+                "state": parsed_state,
             }
             
             trade_area = await trade_area_analyzer.analyze_async(
@@ -918,21 +922,57 @@ class ConsultantStudioService:
         logger.warning(f"No real location data available for {city}, {state}. Using city center.")
         city_centers = {
             ("west palm beach", "fl"): {"lat": 26.7153, "lng": -80.0534},
+            ("fort walton beach", "fl"): {"lat": 30.4057, "lng": -86.6189},
+            ("destin", "fl"): {"lat": 30.3935, "lng": -86.4958},
+            ("panama city", "fl"): {"lat": 30.1588, "lng": -85.6602},
+            ("pensacola", "fl"): {"lat": 30.4213, "lng": -87.2169},
+            ("tallahassee", "fl"): {"lat": 30.4383, "lng": -84.2807},
             ("tampa", "fl"): {"lat": 27.9506, "lng": -82.4572},
             ("jacksonville", "fl"): {"lat": 30.3322, "lng": -81.6557},
+            ("sarasota", "fl"): {"lat": 27.3364, "lng": -82.5307},
+            ("naples", "fl"): {"lat": 26.1420, "lng": -81.7948},
             ("houston", "tx"): {"lat": 29.7604, "lng": -95.3698},
             ("san antonio", "tx"): {"lat": 29.4241, "lng": -98.4936},
+            ("fort worth", "tx"): {"lat": 32.7555, "lng": -97.3308},
+            ("el paso", "tx"): {"lat": 31.7619, "lng": -106.4850},
             ("phoenix", "az"): {"lat": 33.4484, "lng": -112.0740},
+            ("scottsdale", "az"): {"lat": 33.4942, "lng": -111.9261},
+            ("tucson", "az"): {"lat": 32.2226, "lng": -110.9747},
             ("charlotte", "nc"): {"lat": 35.2271, "lng": -80.8431},
+            ("raleigh", "nc"): {"lat": 35.7796, "lng": -78.6382},
             ("nashville", "tn"): {"lat": 36.1627, "lng": -86.7816},
+            ("memphis", "tn"): {"lat": 35.1495, "lng": -90.0490},
             ("los angeles", "ca"): {"lat": 34.0522, "lng": -118.2437},
             ("san diego", "ca"): {"lat": 32.7157, "lng": -117.1611},
+            ("san francisco", "ca"): {"lat": 37.7749, "lng": -122.4194},
             ("seattle", "wa"): {"lat": 47.6062, "lng": -122.3321},
             ("new york", "ny"): {"lat": 40.7128, "lng": -74.0060},
             ("chicago", "il"): {"lat": 41.8781, "lng": -87.6298},
             ("boston", "ma"): {"lat": 42.3601, "lng": -71.0589},
+            ("las vegas", "nv"): {"lat": 36.1699, "lng": -115.1398},
+            ("portland", "or"): {"lat": 45.5152, "lng": -122.6784},
+            ("salt lake city", "ut"): {"lat": 40.7608, "lng": -111.8910},
         }
-        base = city_centers.get(city_key, {"lat": 33.0, "lng": -97.0})
+        
+        base = city_centers.get(city_key)
+        
+        if not base and serpapi_service.is_configured:
+            try:
+                geocode_result = serpapi_service.google_maps_search(
+                    query=f"{city}, {state}",
+                    location=f"{city}, {state}"
+                )
+                local_results = geocode_result.get("local_results", [])
+                if local_results:
+                    gps = local_results[0].get("gps_coordinates", {})
+                    if gps and "latitude" in gps and "longitude" in gps:
+                        base = {"lat": gps["latitude"], "lng": gps["longitude"]}
+                        logger.info(f"Geocoded {city}, {state} via SerpAPI: {base}")
+            except Exception as e:
+                logger.warning(f"SerpAPI geocoding failed for {city}, {state}: {e}")
+        
+        if not base:
+            base = {"lat": 33.0, "lng": -97.0}
         
         neighborhoods.append({
             "name": f"Downtown {city.title()}",
@@ -1048,6 +1088,39 @@ class ConsultantStudioService:
             return "ONLINE"
         else:
             return "PHYSICAL"
+
+    def _parse_address_components(self, address: str) -> tuple[str, Optional[str]]:
+        """
+        Parse an address string to extract city and state.
+        Handles formats like:
+        - "7550 Okeechobee Blvd, West Palm Beach, FL 33411"
+        - "West Palm Beach, FL"
+        - "Miami, Florida"
+        """
+        import re
+        if not address:
+            return "", None
+        
+        parts = [p.strip() for p in address.split(',')]
+        
+        if len(parts) >= 2:
+            last_part = parts[-1].strip()
+            state_zip_match = re.match(r'^([A-Z]{2})\s*\d{0,5}', last_part.upper())
+            if state_zip_match:
+                state = state_zip_match.group(1)
+                city = parts[-2].strip() if len(parts) >= 2 else ""
+                return city, state
+            
+            if len(last_part) == 2 and last_part.upper() in STATE_ABBREVIATIONS.values():
+                city = parts[-2].strip() if len(parts) >= 2 else ""
+                return city, last_part.upper()
+            
+            state_lower = last_part.lower()
+            if state_lower in STATE_ABBREVIATIONS:
+                city = parts[-2].strip() if len(parts) >= 2 else ""
+                return city, STATE_ABBREVIATIONS[state_lower]
+        
+        return parts[0] if parts else address, None
 
     def _infer_business_category(self, business_description: str) -> str:
         """Infer business category from natural language description"""
