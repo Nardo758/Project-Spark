@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultant Activity · OppGrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --stone-50: #fafaf9; --stone-100: #f5f5f4; --stone-200: #e7e5e4; --stone-300: #d6d3d1;
+      --stone-400: #a8a29e; --stone-500: #78716c; --stone-600: #57534e; --stone-700: #44403c;
+      --stone-800: #292524; --stone-900: #1c1917;
+      --green-100: #dcfce7; --green-600: #16a34a;
+      --amber-100: #fef3c7; --amber-600: #d97706;
+      --violet-100: #ede9fe; --violet-600: #7c3aed;
+      --red-100: #fee2e2; --red-600: #dc2626;
+      --white: #ffffff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--stone-50); color: var(--stone-900); min-height: 100vh; }
+    nav { background: var(--white); border-bottom: 1px solid var(--stone-200); padding: 16px 32px; }
+    .nav-content { max-width: 1200px; margin: 0 auto; display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+    .logo { display:flex; align-items:center; gap: 8px; text-decoration:none; color: var(--stone-900); font-family: 'Roboto Mono', monospace; font-weight: 700; font-size: 1.1rem; }
+    .nav-actions { display:flex; gap: 10px; flex-wrap: wrap; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-family: 'Spectral', serif; font-size: 2.2rem; margin-bottom: 6px; }
+    .subtitle { color: var(--stone-500); margin-bottom: 22px; }
+    .card { background: var(--white); border: 1px solid var(--stone-200); border-radius: 16px; padding: 20px; margin-top: 16px; }
+    .stats-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .stat { padding: 18px; border: 1px solid var(--stone-200); border-radius: 14px; background: var(--stone-50); }
+    .stat-value { font-family: 'Roboto Mono', monospace; font-size: 1.8rem; font-weight: 700; }
+    .stat-label { color: var(--stone-500); font-size: 0.85rem; margin-top: 4px; }
+    .pill { display:inline-flex; align-items:center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--stone-100); color: var(--stone-700); }
+    .pill.violet { background: var(--violet-100); color: var(--violet-600); }
+    .pill.green { background: var(--green-100); color: var(--green-600); }
+    .pill.amber { background: var(--amber-100); color: var(--amber-600); }
+    .pill.red { background: var(--red-100); color: var(--red-600); }
+    .row { display:flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+    .filters { display:flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { border: 1px solid var(--stone-200); background: var(--white); color: var(--stone-700); padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .filter-btn.active { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn { padding: 10px 14px; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; border: 1px solid var(--stone-300); text-decoration: none; background: var(--white); color: var(--stone-900); display:inline-flex; align-items:center; gap: 8px; }
+    .btn-primary { background: var(--stone-900); color: white; border-color: var(--stone-900); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    select { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--stone-200); background: var(--white); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--stone-200); font-size: 0.9rem; }
+    th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--stone-500); }
+    .empty { text-align: center; padding: 24px; color: var(--stone-500); }
+    .error { color: var(--red-600); font-weight: 700; }
+    .meta { color: var(--stone-500); font-size: 0.8rem; }
+    .nowrap { white-space: nowrap; }
+    .break { word-break: break-word; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-content">
+      <a href="index.html" class="logo">OppGrid</a>
+      <div class="nav-actions">
+        <a class="btn" href="idea-engine.html">Idea Engine</a>
+        <a class="btn" href="discover.html">Discover</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Consultant Activity</h1>
+    <p class="subtitle">Track your validations, searches, location analysis, and clone success runs.</p>
+
+    <div class="card" id="errorCard" style="display:none;">
+      <div class="error" id="errorMsg">Unable to load activity.</div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom: 12px;">
+        <h2 style="font-size: 1.1rem;">Usage stats</h2>
+        <span class="meta" id="statsUpdated">Loading…</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-value" id="totalActivities">—</div>
+          <div class="stat-label">Total activities</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="totalTrends">—</div>
+          <div class="stat-label">Trends detected</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="cachedLocations">—</div>
+          <div class="stat-label">Cached locations</div>
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        <div class="meta" style="margin-bottom: 8px;">Activity breakdown</div>
+        <div id="breakdown" class="filters">
+          <span class="pill">Loading…</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom: 16px;">
+        <div class="filters" id="filterGroup">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="validate">Validate</button>
+          <button class="filter-btn" data-filter="search">Search</button>
+          <button class="filter-btn" data-filter="location">Location</button>
+          <button class="filter-btn" data-filter="clone">Clone</button>
+        </div>
+        <div class="row">
+          <label class="meta" for="limitSelect">Show</label>
+          <select id="limitSelect">
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+          <button class="btn btn-primary" id="refreshBtn">Refresh</button>
+        </div>
+      </div>
+
+      <div id="tableWrapper">
+        <table>
+          <thead>
+            <tr>
+              <th class="nowrap">Time</th>
+              <th>Path</th>
+              <th>Action</th>
+              <th>Summary</th>
+              <th class="nowrap">Model</th>
+              <th class="nowrap">Processing</th>
+            </tr>
+          </thead>
+          <tbody id="activityBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty" style="display:none;">No activity recorded yet.</div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const API_BASE_URL = window.API_BASE_URL || '/api/v1';
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token');
+    const errorCard = document.getElementById('errorCard');
+    const errorMsg = document.getElementById('errorMsg');
+
+    const totalActivities = document.getElementById('totalActivities');
+    const totalTrends = document.getElementById('totalTrends');
+    const cachedLocations = document.getElementById('cachedLocations');
+    const breakdown = document.getElementById('breakdown');
+    const statsUpdated = document.getElementById('statsUpdated');
+
+    const activityBody = document.getElementById('activityBody');
+    const emptyState = document.getElementById('emptyState');
+    const filterGroup = document.getElementById('filterGroup');
+    const limitSelect = document.getElementById('limitSelect');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    let currentFilter = 'all';
+    let currentLimit = Number(limitSelect.value);
+
+    function requireAuthOrRedirect() {
+      if (!window.OppGridAuth || !window.OppGridAuth.requireAuth) return true;
+      return window.OppGridAuth.requireAuth({ redirect: 'consultant-activity.html' });
+    }
+
+    function formatPath(path) {
+      const normalized = String(path || '').toLowerCase();
+      if (normalized === 'validate_idea') return 'Validate';
+      if (normalized === 'search_ideas') return 'Search';
+      if (normalized === 'identify_location') return 'Location';
+      if (normalized === 'clone_success') return 'Clone';
+      if (normalized === 'deep_clone') return 'Deep Clone';
+      return path || 'Unknown';
+    }
+
+    function pathToPillClass(path) {
+      const normalized = String(path || '').toLowerCase();
+      if (normalized === 'validate_idea') return 'green';
+      if (normalized === 'search_ideas') return 'violet';
+      if (normalized === 'identify_location') return 'amber';
+      if (normalized.includes('clone')) return 'red';
+      return '';
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '—';
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return iso;
+      return date.toLocaleString();
+    }
+
+    function msToLabel(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return '—';
+      if (num < 1000) return `${num} ms`;
+      return `${(num / 1000).toFixed(1)} s`;
+    }
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorCard.style.display = 'block';
+    }
+
+    function clearError() {
+      errorCard.style.display = 'none';
+      errorMsg.textContent = '';
+    }
+
+    async function fetchJson(url) {
+      const response = await fetch(url, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        if (window.OppGridAuth) {
+          window.OppGridAuth.redirectToSignin({ redirect: 'consultant-activity.html' });
+        }
+        throw new Error('Please sign in to view consultant activity.');
+      }
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.detail || data?.message || 'Request failed.');
+      }
+      return data;
+    }
+
+    async function loadStats() {
+      const url = `${API_BASE_URL}/consultant/stats`;
+      const stats = await fetchJson(url);
+      totalActivities.textContent = stats.total_activities ?? 0;
+      totalTrends.textContent = stats.total_trends_detected ?? 0;
+      cachedLocations.textContent = stats.cached_locations ?? 0;
+
+      const entries = stats.activities_by_path || {};
+      const pills = Object.entries(entries);
+      breakdown.innerHTML = pills.length
+        ? pills.map(([path, count]) => {
+            const cls = pathToPillClass(path);
+            return `<span class="pill ${cls}">${formatPath(path)} · ${count}</span>`;
+          }).join('')
+        : '<span class="pill">No activity yet</span>';
+
+      statsUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    }
+
+    async function loadActivityLog() {
+      activityBody.innerHTML = '';
+      emptyState.style.display = 'none';
+      refreshBtn.disabled = true;
+
+      let pathParam = null;
+      if (currentFilter === 'validate') pathParam = 'validate_idea';
+      if (currentFilter === 'search') pathParam = 'search_ideas';
+      if (currentFilter === 'location') pathParam = 'identify_location';
+      if (currentFilter === 'clone') pathParam = 'clone_success';
+
+      let url = `${API_BASE_URL}/consultant/activity?limit=${encodeURIComponent(String(currentLimit))}`;
+      if (pathParam) url += `&path=${encodeURIComponent(pathParam)}`;
+
+      const data = await fetchJson(url);
+      let rows = Array.isArray(data) ? data : [];
+      if (currentFilter === 'clone') {
+        rows = rows.filter((row) => String(row.path || '').includes('clone'));
+      }
+
+      if (!rows.length) {
+        emptyState.style.display = 'block';
+        refreshBtn.disabled = false;
+        return;
+      }
+
+      activityBody.innerHTML = rows.map((row) => {
+        const pillClass = pathToPillClass(row.path);
+        return `<tr>
+          <td class="nowrap">${formatTime(row.created_at)}</td>
+          <td><span class="pill ${pillClass}">${formatPath(row.path)}</span></td>
+          <td class="break">${row.action || '—'}</td>
+          <td class="break">${row.result_summary || '—'}</td>
+          <td class="nowrap">${row.ai_model_used || '—'}</td>
+          <td class="nowrap">${msToLabel(row.processing_time_ms)}</td>
+        </tr>`;
+      }).join('');
+
+      refreshBtn.disabled = false;
+    }
+
+    async function loadAll() {
+      if (!requireAuthOrRedirect()) return;
+      clearError();
+      try {
+        await Promise.all([loadStats(), loadActivityLog()]);
+      } catch (err) {
+        showError(err?.message || 'Failed to load consultant activity.');
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    }
+
+    filterGroup.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-filter]');
+      if (!button) return;
+      filterGroup.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      currentFilter = button.dataset.filter;
+      loadActivityLog().catch((err) => showError(err?.message || 'Failed to load activity.'));
+    });
+
+    limitSelect.addEventListener('change', () => {
+      currentLimit = Number(limitSelect.value);
+      loadActivityLog().catch((err) => showError(err?.message || 'Failed to load activity.'));
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      loadAll();
+    });
+
+    loadAll();
+  </script>
+</body>
+</html>
