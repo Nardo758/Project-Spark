@@ -975,7 +975,8 @@
                 <p id="resultSummary" class="result-summary"></p>
                 <p id="savedValidationLink" class="result-confidence" style="display:none; margin-top: 12px;"></p>
                 <div class="result-actions">
-                    <button id="downloadReportBtn" class="btn btn-secondary" disabled>Download Report</button>
+                    <button id="downloadPdfBtn" class="btn btn-secondary" disabled>Download PDF</button>
+                    <button id="downloadJsonBtn" class="btn btn-secondary" disabled>Download JSON</button>
                     <a class="btn btn-secondary" href="consultant-activity.html">View Activity Log</a>
                 </div>
             </div>
@@ -1113,6 +1114,7 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="js/auth.js"></script>
     <script>
         const API_BASE_URL = window.API_BASE_URL || '/api/v1';
@@ -1157,7 +1159,8 @@
         const payBtn = document.getElementById('payBtn');
         const startOverBtn = document.getElementById('startOverBtn');
         const newIdeaBtn = document.getElementById('newIdeaBtn');
-        const downloadReportBtn = document.getElementById('downloadReportBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const downloadJsonBtn = document.getElementById('downloadJsonBtn');
 
         ideaInput.addEventListener('input', () => {
             const len = ideaInput.value.length;
@@ -1369,9 +1372,8 @@
                 saved.innerHTML = `Saved as report #${record.id}. <a href="/validations/${record.id}" style="color: var(--blue-600);">Open saved report</a> · <a href="/validations" style="color: var(--blue-600);">View all</a>`;
             }
 
-            if (downloadReportBtn) {
-                downloadReportBtn.disabled = false;
-            }
+            if (downloadPdfBtn) downloadPdfBtn.disabled = false;
+            if (downloadJsonBtn) downloadJsonBtn.disabled = false;
 
             generatedSection.classList.remove('show');
             validationSection.classList.add('show');
@@ -1401,9 +1403,8 @@
             generatedData = null;
             latestValidationRecord = null;
             latestValidationResult = null;
-            if (downloadReportBtn) {
-                downloadReportBtn.disabled = true;
-            }
+            if (downloadPdfBtn) downloadPdfBtn.disabled = true;
+            if (downloadJsonBtn) downloadJsonBtn.disabled = true;
             
             inputSection.style.display = 'block';
             generatedSection.classList.remove('show');
@@ -1414,8 +1415,8 @@
         startOverBtn.addEventListener('click', resetToStart);
         newIdeaBtn.addEventListener('click', resetToStart);
 
-        if (downloadReportBtn) {
-            downloadReportBtn.addEventListener('click', () => {
+        if (downloadJsonBtn) {
+            downloadJsonBtn.addEventListener('click', () => {
                 if (!latestValidationResult) {
                     alert('No validation report available to download.');
                     return;
@@ -1437,6 +1438,103 @@
                 anchor.click();
                 anchor.remove();
                 URL.revokeObjectURL(url);
+            });
+        }
+
+        if (downloadPdfBtn) {
+            downloadPdfBtn.addEventListener('click', () => {
+                if (!latestValidationResult) {
+                    alert('No validation report available to download.');
+                    return;
+                }
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    alert('PDF export is unavailable. Please try again.');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+                const margin = 48;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const maxWidth = pageWidth - margin * 2;
+                const lineHeight = 16;
+                let y = margin;
+
+                const title = latestValidationResult?.title || latestValidationRecord?.title || 'Validation Report';
+                const category = latestValidationResult?.category || latestValidationRecord?.category || 'Uncategorized';
+                const score = latestValidationResult?.opportunity_score ?? '--';
+                const confidence = latestValidationResult?.validation_confidence ?? '--';
+
+                const safeList = (items) => Array.isArray(items) ? items : [];
+                const sections = [
+                    { label: 'Summary', value: latestValidationResult?.summary || '' },
+                    {
+                        label: 'Scores',
+                        value: [
+                            `Opportunity Score: ${score}/100`,
+                            `Confidence: ${confidence}%`,
+                            `Market Size: ${latestValidationResult?.market_size_estimate || '--'}`,
+                            `Competition: ${latestValidationResult?.competition_level || '--'}`,
+                            `Urgency: ${latestValidationResult?.urgency_level || '--'}`,
+                            `Revenue Potential: ${latestValidationResult?.revenue_potential || '--'}`,
+                            `Time to Market: ${latestValidationResult?.time_to_market || '--'}`,
+                            `Pain Intensity: ${latestValidationResult?.pain_intensity || '--'}`,
+                        ],
+                    },
+                    { label: 'Business Model Suggestions', value: safeList(latestValidationResult?.business_model_suggestions) },
+                    { label: 'Competitive Advantages', value: safeList(latestValidationResult?.competitive_advantages) },
+                    { label: 'Key Risks', value: safeList(latestValidationResult?.key_risks) },
+                    { label: 'Next Steps', value: safeList(latestValidationResult?.next_steps) },
+                    { label: 'Market Trends', value: safeList(latestValidationResult?.market_trends) },
+                ];
+
+                const ensureSpace = (linesCount) => {
+                    if (y + linesCount * lineHeight > pageHeight - margin) {
+                        doc.addPage();
+                        y = margin;
+                    }
+                };
+
+                const addParagraph = (text) => {
+                    const lines = doc.splitTextToSize(String(text || ''), maxWidth);
+                    ensureSpace(lines.length);
+                    lines.forEach((line) => {
+                        doc.text(line, margin, y);
+                        y += lineHeight;
+                    });
+                };
+
+                const addSection = (label, value) => {
+                    ensureSpace(2);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(label, margin, y);
+                    y += lineHeight;
+                    doc.setFont('helvetica', 'normal');
+
+                    if (Array.isArray(value)) {
+                        value.forEach((item) => addParagraph(`- ${item}`));
+                    } else {
+                        addParagraph(value);
+                    }
+                    y += lineHeight / 2;
+                };
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.text(title, margin, y);
+                y += lineHeight + 4;
+
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                addParagraph(`Category: ${category}`);
+                addParagraph(`Report ID: ${latestValidationRecord?.id || 'N/A'}`);
+                addParagraph(`Generated: ${new Date().toLocaleString()}`);
+                y += lineHeight;
+
+                sections.forEach((section) => addSection(section.label, section.value));
+
+                doc.save(`oppgrid-validation-${latestValidationRecord?.id || 'report'}.pdf`);
             });
         }
 
