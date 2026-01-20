@@ -11,6 +11,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import cast
 
 from app.core.dependencies import get_current_active_user
 from app.core.sanitization import sanitize_text
@@ -54,7 +55,8 @@ def get_validation(
     row = db.query(IdeaValidation).filter(IdeaValidation.id == idea_validation_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Validation not found")
-    if row.user_id != current_user.id and not current_user.is_admin:
+    row_user_id = cast(int, row.user_id)
+    if row_user_id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     result = None
@@ -111,6 +113,7 @@ def create_validation_payment_intent(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment service not configured")
 
+    row_id = cast(int, row.id)
     intent = stripe.PaymentIntent.create(
         amount=req.amount_cents,
         currency="usd",
@@ -119,7 +122,7 @@ def create_validation_payment_intent(
             "type": "idea_validation",
             "service": "idea_validation",
             "user_id": str(current_user.id),
-            "idea_validation_id": str(row.id),
+            "idea_validation_id": str(row_id),
             "product": "OppGrid Idea Validation",
         },
         automatic_payment_methods={"enabled": True},
@@ -147,7 +150,8 @@ async def run_validation(
     row = db.query(IdeaValidation).filter(IdeaValidation.id == idea_validation_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Validation not found")
-    if row.user_id != current_user.id and not current_user.is_admin:
+    row_user_id = cast(int, row.user_id)
+    if row_user_id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
     if not row.stripe_payment_intent_id or row.stripe_payment_intent_id != req.payment_intent_id:
         raise HTTPException(status_code=400, detail="Payment intent does not match this validation")
