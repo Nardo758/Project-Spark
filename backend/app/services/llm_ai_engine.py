@@ -13,6 +13,7 @@ import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 
 AI_CALL_TIMEOUT_SECONDS = 30
@@ -26,6 +27,63 @@ from app.services.json_codec import loads_json
 from app.services.ai_engine import ai_engine_service
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_json_payload(raw_text: str) -> dict | None:
+    if not raw_text:
+        return None
+    text = raw_text.strip()
+    if text.startswith("```"):
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
+
+
+def _extract_anthropic_usage(response: Any) -> dict | None:
+    usage = getattr(response, "usage", None)
+    if not usage:
+        return None
+    input_tokens = getattr(usage, "input_tokens", None)
+    output_tokens = getattr(usage, "output_tokens", None)
+    total_tokens = None
+    if isinstance(input_tokens, int) and isinstance(output_tokens, int):
+        total_tokens = input_tokens + output_tokens
+    return {
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": total_tokens,
+    }
+
+
+class _MatchLLMResult(BaseModel):
+    fit_score: int = Field(..., ge=0, le=100)
+    confidence: float = Field(..., ge=0)
+    gaps: List[str] = Field(default_factory=list)
+    insights: List[str] = Field(default_factory=list)
+    recommended_actions: List[str] = Field(default_factory=list)
+
+
+class _RoadmapLLMResult(BaseModel):
+    timeline_weeks: int = Field(..., ge=1)
+    milestones: List[dict] = Field(default_factory=list)
+    success_probability: Optional[int] = Field(default=None, ge=0, le=100)
+    capital_estimate_cents: Optional[int] = Field(default=None, ge=0)
+    key_assumptions: List[str] = Field(default_factory=list)
+
+
+class _ValidationLLMResult(BaseModel):
+    validation_score: int = Field(..., ge=0, le=100)
+    verdict: str
+    market_analysis: Optional[str] = None
+    competitive_landscape: Optional[str] = None
+    key_risks: List[str] = Field(default_factory=list)
+    next_steps: List[str] = Field(default_factory=list)
+    success_factors: Optional[str] = None
+    pivot_suggestions: Optional[str] = None
 
 
 def get_anthropic_client():
@@ -163,24 +221,29 @@ Respond only with valid JSON."""
                 messages=[{"role": "user", "content": prompt}]
             )
             
-            response_text = response.content[0].text.strip()
-            if response_text.startswith("```"):
-                response_text = response_text.split("```")[1]
-                if response_text.startswith("json"):
-                    response_text = response_text[4:]
-            
-            llm_result = json.loads(response_text)
-            
+            payload = _extract_json_payload(response.content[0].text)
+            if payload is None:
+                raise ValueError("Invalid JSON payload from LLM")
+
+            parsed = _MatchLLMResult.model_validate(payload)
+            confidence = parsed.confidence
+            if confidence <= 1:
+                confidence = confidence * 100
+            confidence = max(0, min(100, int(round(confidence))))
+
             return {
-                "fit_score": llm_result.get("fit_score", heuristic_result["fit_score"]),
-                "confidence": llm_result.get("confidence", heuristic_result["confidence"]),
-                "gaps": llm_result.get("gaps", heuristic_result["gaps"]),
-                "insights": llm_result.get("insights", []),
-                "recommended_actions": llm_result.get("recommended_actions", []),
+                "fit_score": parsed.fit_score,
+                "confidence": confidence,
+                "gaps": parsed.gaps or heuristic_result["gaps"],
+                "insights": parsed.insights,
+                "recommended_actions": parsed.recommended_actions,
                 "recommended_experts": heuristic_result["recommended_experts"],
                 "llm_enhanced": True,
             }
             
+        except (ValueError, ValidationError, json.JSONDecodeError) as e:
+            logger.warning(f"LLM match schema invalid, using heuristic: {e}")
+            return heuristic_result
         except Exception as e:
             logger.error(f"LLM match failed, using heuristic: {e}")
             return heuristic_result
@@ -252,25 +315,26 @@ Respond only with valid JSON."""
                 messages=[{"role": "user", "content": prompt}]
             )
             
-            response_text = response.content[0].text.strip()
-            if response_text.startswith("```"):
-                response_text = response_text.split("```")[1]
-                if response_text.startswith("json"):
-                    response_text = response_text[4:]
-            
-            llm_result = json.loads(response_text)
-            
+            payload = _extract_json_payload(response.content[0].text)
+            if payload is None:
+                raise ValueError("Invalid JSON payload from LLM")
+
+            parsed = _RoadmapLLMResult.model_validate(payload)
+
             return {
                 "opportunity_id": opportunity_id,
-                "timeline_weeks": llm_result.get("timeline_weeks", heuristic_result["timeline_weeks"]),
-                "milestones": llm_result.get("milestones", heuristic_result["milestones"]),
-                "success_probability": llm_result.get("success_probability", 50),
-                "capital_estimate_cents": llm_result.get("capital_estimate_cents"),
-                "key_assumptions": llm_result.get("key_assumptions", []),
+                "timeline_weeks": parsed.timeline_weeks,
+                "milestones": parsed.milestones or heuristic_result["milestones"],
+                "success_probability": parsed.success_probability,
+                "capital_estimate_cents": parsed.capital_estimate_cents,
+                "key_assumptions": parsed.key_assumptions,
                 "risks": heuristic_result.get("risks", []),
                 "llm_enhanced": True,
             }
             
+        except (ValueError, ValidationError, json.JSONDecodeError) as e:
+            logger.warning(f"LLM roadmap schema invalid, using heuristic: {e}")
+            return heuristic_result
         except Exception as e:
             logger.error(f"LLM roadmap failed, using heuristic: {e}")
             return heuristic_result
@@ -334,27 +398,28 @@ Respond only with valid JSON."""
                 messages=[{"role": "user", "content": prompt}]
             )
             
-            response_text = response.content[0].text.strip()
-            if response_text.startswith("```"):
-                response_text = response_text.split("```")[1]
-                if response_text.startswith("json"):
-                    response_text = response_text[4:]
-            
-            llm_result = json.loads(response_text)
-            
+            payload = _extract_json_payload(response.content[0].text)
+            if payload is None:
+                raise ValueError("Invalid JSON payload from LLM")
+
+            parsed = _ValidationLLMResult.model_validate(payload)
+
             return {
                 "opportunity_id": opportunity_id,
-                "validation_score": llm_result.get("validation_score", heuristic_result["validation_score"]),
-                "verdict": llm_result.get("verdict", heuristic_result["verdict"]),
-                "market_analysis": llm_result.get("market_analysis"),
-                "competitive_landscape": llm_result.get("competitive_landscape"),
-                "key_risks": llm_result.get("key_risks", heuristic_result["key_risks"]),
-                "next_steps": llm_result.get("next_steps", heuristic_result["next_steps"]),
-                "success_factors": llm_result.get("success_factors"),
-                "pivot_suggestions": llm_result.get("pivot_suggestions"),
+                "validation_score": parsed.validation_score,
+                "verdict": parsed.verdict or heuristic_result["verdict"],
+                "market_analysis": parsed.market_analysis,
+                "competitive_landscape": parsed.competitive_landscape,
+                "key_risks": parsed.key_risks or heuristic_result["key_risks"],
+                "next_steps": parsed.next_steps or heuristic_result["next_steps"],
+                "success_factors": parsed.success_factors,
+                "pivot_suggestions": parsed.pivot_suggestions,
                 "llm_enhanced": True,
             }
             
+        except (ValueError, ValidationError, json.JSONDecodeError) as e:
+            logger.warning(f"LLM validation schema invalid, using heuristic: {e}")
+            return heuristic_result
         except Exception as e:
             logger.error(f"LLM validation failed, using heuristic: {e}")
             return heuristic_result
@@ -392,17 +457,18 @@ Respond only with valid JSON."""
             )
             
             response_text = response.content[0].text.strip()
-            
+            usage = _extract_anthropic_usage(response)
+
             if response_text.startswith("```"):
                 response_text = response_text.split("```")[1]
                 if response_text.startswith("json"):
                     response_text = response_text[4:]
-            
+
             try:
                 parsed = json.loads(response_text)
-                return {"response": parsed, "raw": response_text}
+                return {"response": parsed, "raw": response_text, "usage": usage, "tokens_used": (usage or {}).get("total_tokens")}
             except json.JSONDecodeError:
-                return {"response": response_text, "raw": response_text}
+                return {"response": response_text, "raw": response_text, "usage": usage, "tokens_used": (usage or {}).get("total_tokens")}
         
         except asyncio.TimeoutError:
             logger.error(f"AI generation timed out after {AI_CALL_TIMEOUT_SECONDS}s")

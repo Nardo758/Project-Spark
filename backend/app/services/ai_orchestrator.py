@@ -105,6 +105,7 @@ class AIOrchestrator:
             )
             
             response_text = response.choices[0].message.content.strip()
+            usage = self._extract_openai_usage(response)
             
             try:
                 if response_text.startswith("```"):
@@ -121,6 +122,8 @@ class AIOrchestrator:
                 "task_type": task_type.value,
                 "processed": True,
                 "result": result,
+                "usage": usage,
+                "tokens_used": (usage or {}).get("total_tokens"),
             }
         except asyncio.TimeoutError:
             logger.error(f"DeepSeek call timed out after {AI_CALL_TIMEOUT_SECONDS}s")
@@ -161,6 +164,8 @@ class AIOrchestrator:
                 "task_type": task_type.value,
                 "processed": True,
                 "result": result,
+                "usage": result.get("usage"),
+                "tokens_used": result.get("tokens_used"),
             }
         except asyncio.TimeoutError:
             logger.error(f"Claude call timed out after {AI_CALL_TIMEOUT_SECONDS}s")
@@ -213,6 +218,22 @@ class AIOrchestrator:
             AITaskType.EXPERT_MATCHING: f"Find expert matches for this opportunity: {data}",
         }
         return prompts.get(task_type, f"Process this data: {data}")
+
+    @staticmethod
+    def _extract_openai_usage(response: Any) -> Optional[Dict[str, int]]:
+        usage = getattr(response, "usage", None)
+        if not usage:
+            return None
+        prompt_tokens = getattr(usage, "prompt_tokens", None)
+        completion_tokens = getattr(usage, "completion_tokens", None)
+        total_tokens = getattr(usage, "total_tokens", None)
+        if total_tokens is None and isinstance(prompt_tokens, int) and isinstance(completion_tokens, int):
+            total_tokens = prompt_tokens + completion_tokens
+        return {
+            "input_tokens": prompt_tokens,
+            "output_tokens": completion_tokens,
+            "total_tokens": total_tokens,
+        }
 
 
 ai_orchestrator = AIOrchestrator()

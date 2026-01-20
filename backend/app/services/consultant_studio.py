@@ -186,6 +186,13 @@ class ConsultantStudioService:
             recommendation = self._determine_recommendation(online_score, physical_score)
             
             processing_time = int((time.time() - start_time) * 1000)
+            tokens_used = 0
+            pattern_tokens = (pattern_analysis.get("ai_meta") or {}).get("tokens_used")
+            viability_tokens = (viability_report.get("ai_meta") or {}).get("tokens_used")
+            if isinstance(pattern_tokens, int):
+                tokens_used += pattern_tokens
+            if isinstance(viability_tokens, int):
+                tokens_used += viability_tokens
             
             result = {
                 "success": True,
@@ -214,6 +221,7 @@ class ConsultantStudioService:
                 result_summary=f"Recommended: {recommendation}, Online: {online_score}, Physical: {physical_score}",
                 ai_model_used="hybrid",
                 processing_time_ms=processing_time,
+                tokens_used=tokens_used or None,
             )
             
             return result
@@ -1047,6 +1055,10 @@ class ConsultantStudioService:
             "market_signals": result.get("result", {}) if result.get("processed") else {},
             "category_distribution": self._analyze_categories(similar_opps),
             "average_score": sum(o.feasibility_score or 0 for o in similar_opps) / max(len(similar_opps), 1),
+            "ai_meta": {
+                "service": result.get("ai_service"),
+                "tokens_used": result.get("tokens_used"),
+            },
         }
 
     def _calculate_business_type_scores(
@@ -1200,12 +1212,18 @@ class ConsultantStudioService:
                 timeout=15.0
             )
             ai_insights = result.get("result", {}) if result.get("processed") else {}
+            ai_meta = {
+                "service": result.get("ai_service"),
+                "tokens_used": result.get("tokens_used"),
+            }
         except asyncio.TimeoutError:
             logger.warning("Claude viability report timed out after 15s")
             ai_insights = {"status": "Analysis in progress"}
+            ai_meta = {"service": "claude", "tokens_used": None}
         except Exception as e:
             logger.warning(f"Claude viability report failed: {e}")
             ai_insights = {}
+            ai_meta = {"service": "claude", "tokens_used": None}
         
         return {
             "executive_summary": "Viability analysis based on market patterns and business context.",
@@ -1214,6 +1232,7 @@ class ConsultantStudioService:
             "opportunities": ["Growing market segment", "Technology enablers available"],
             "threats": ["Market saturation risk", "Regulatory considerations"],
             "ai_insights": ai_insights,
+            "ai_meta": ai_meta,
             "confidence_score": 75,
         }
 

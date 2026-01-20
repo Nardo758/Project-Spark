@@ -6,6 +6,7 @@ from app.db.database import get_db
 from app.models.user import User
 from app.schemas.ai_engine import MatchRequest, MatchResponse, RoadmapResponse, ValidationResponse
 from app.services.ai_engine import ai_engine_service
+from app.services.llm_ai_engine import llm_ai_engine_service
 
 
 router = APIRouter()
@@ -37,7 +38,9 @@ def match_opportunity(
     db: Session = Depends(get_db),
 ):
     try:
-        result = ai_engine_service.match_opportunity_to_user(db, current_user, payload.opportunity_id)
+        result = llm_ai_engine_service.match_opportunity_to_user_llm(
+            db, current_user, payload.opportunity_id, use_llm=True
+        )
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -50,7 +53,9 @@ def generate_roadmap(
     db: Session = Depends(get_db),
 ):
     try:
-        result = ai_engine_service.generate_roadmap(db, current_user, payload.opportunity_id)
+        result = llm_ai_engine_service.generate_roadmap_llm(
+            db, current_user, payload.opportunity_id, use_llm=True
+        )
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -63,7 +68,9 @@ def validate_opportunity(
     db: Session = Depends(get_db),
 ):
     try:
-        result = ai_engine_service.validate_opportunity(db, current_user, payload.opportunity_id)
+        result = llm_ai_engine_service.validate_opportunity_llm(
+            db, current_user, payload.opportunity_id, use_llm=True
+        )
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
