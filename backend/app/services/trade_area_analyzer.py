@@ -61,8 +61,24 @@ class TradeAreaAnalyzer:
         Returns:
             TradeAreaResult with all analysis data
         """
+        from .location_utils import validate_coordinates_in_state, get_location_coords
+        
         lat = opportunity.get('latitude') or opportunity.get('lat')
         lng = opportunity.get('longitude') or opportunity.get('lng')
+        expected_state = opportunity.get('region') or opportunity.get('state')
+        
+        if lat and lng and expected_state:
+            is_valid, warning = validate_coordinates_in_state(
+                float(lat), float(lng), expected_state,
+                context=f"trade_area_analyzer.analyze for {opportunity.get('city', 'unknown')}, {expected_state}"
+            )
+            if not is_valid:
+                logger.warning(f"Correcting invalid coordinates: {warning}")
+                coords = get_location_coords(
+                    opportunity.get('city'), expected_state,
+                    context="trade_area_analyzer.analyze fallback"
+                )
+                lat, lng = coords["lat"], coords["lng"]
         
         if not lat or not lng:
             lat, lng = self._geocode_location(
@@ -132,10 +148,26 @@ class TradeAreaAnalyzer:
         total_start = time.time()
         
         try:
+            from .location_utils import validate_coordinates_in_state, get_location_coords
+            
             loop = asyncio.get_running_loop()
             
             lat = opportunity.get('latitude') or opportunity.get('lat')
             lng = opportunity.get('longitude') or opportunity.get('lng')
+            expected_state = opportunity.get('region') or opportunity.get('state')
+            
+            if lat and lng and expected_state:
+                is_valid, warning = validate_coordinates_in_state(
+                    float(lat), float(lng), expected_state,
+                    context=f"trade_area_analyzer.analyze_async for {opportunity.get('city', 'unknown')}, {expected_state}"
+                )
+                if not is_valid:
+                    logger.warning(f"Correcting invalid coordinates: {warning}")
+                    coords = get_location_coords(
+                        opportunity.get('city'), expected_state,
+                        context="trade_area_analyzer.analyze_async fallback"
+                    )
+                    lat, lng = coords["lat"], coords["lng"]
             
             if not lat or not lng:
                 geocode_start = time.time()
@@ -331,20 +363,39 @@ class TradeAreaAnalyzer:
             
             logger.info(f"Found {len(local_results)} competitors from SerpAPI")
             
+            from .location_utils import validate_coordinates_in_state, find_state_for_coordinates
+            expected_state = opportunity.get('region') or opportunity.get('state')
+            skipped_count = 0
+            
             for result in local_results[:30]:
                 gps = result.get('gps_coordinates', {})
                 if gps.get('latitude') and gps.get('longitude'):
+                    comp_lat = gps.get('latitude')
+                    comp_lng = gps.get('longitude')
+                    
+                    if expected_state:
+                        is_valid, warning = validate_coordinates_in_state(
+                            comp_lat, comp_lng, expected_state,
+                            context=f"Competitor '{result.get('title', 'unknown')}' for {city}"
+                        )
+                        if not is_valid:
+                            skipped_count += 1
+                            continue
+                    
                     competitors.append({
                         'name': result.get('title', 'Unknown'),
                         'address': result.get('address', ''),
                         'rating': result.get('rating', 0),
                         'reviews': result.get('reviews', 0),
-                        'lat': gps.get('latitude'),
-                        'lng': gps.get('longitude'),
+                        'lat': comp_lat,
+                        'lng': comp_lng,
                         'type': result.get('type', ''),
                         'price_level': result.get('price', ''),
                         'place_id': result.get('place_id', ''),
                     })
+            
+            if skipped_count > 0:
+                logger.warning(f"Skipped {skipped_count} competitors with coordinates outside {expected_state}")
             
             return competitors
             
@@ -604,23 +655,23 @@ class TradeAreaAnalyzer:
         country: Optional[str]
     ) -> Tuple[float, float]:
         """Geocode a location to coordinates (fallback to approximate values)."""
-        us_state_coords = {
-            'CA': (36.7783, -119.4179),
-            'NY': (40.7128, -74.0060),
-            'TX': (31.9686, -99.9018),
-            'FL': (27.6648, -81.5158),
-            'IL': (40.6331, -89.3985),
-            'PA': (41.2033, -77.1945),
-            'OH': (40.4173, -82.9071),
-            'GA': (32.1656, -82.9001),
-            'NC': (35.7596, -79.0193),
-            'MI': (44.3148, -85.6024),
-        }
+        from .location_utils import get_location_coords, log_location_resolution
         
-        if region and region.upper() in us_state_coords:
-            return us_state_coords[region.upper()]
+        coords = get_location_coords(
+            city=city,
+            state=region,
+            context=f"trade_area_analyzer geocode for {city}, {region}"
+        )
         
-        return (39.8283, -98.5795)
+        log_location_resolution(
+            input_location=f"{city or 'unknown'}, {region or 'unknown'}",
+            resolved_lat=coords["lat"],
+            resolved_lng=coords["lng"],
+            resolution_method="location_utils.get_location_coords",
+            context="trade_area_analyzer._geocode_location"
+        )
+        
+        return (coords["lat"], coords["lng"])
     
     def _haversine_distance(
         self,
