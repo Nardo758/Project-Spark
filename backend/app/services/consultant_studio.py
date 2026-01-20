@@ -371,8 +371,14 @@ class ConsultantStudioService:
                         "popup": comp.get("address", ""),
                     })
             
-            center_lat = pins[0]["lat"] if pins else 25.7617
-            center_lng = pins[0]["lng"] if pins else -80.1918
+            if pins:
+                center_lat = pins[0]["lat"]
+                center_lng = pins[0]["lng"]
+            else:
+                parsed_city, parsed_state = parse_city_state(city)
+                fallback_coords = self._get_city_center_coords(parsed_city, parsed_state)
+                center_lat = fallback_coords["lat"]
+                center_lng = fallback_coords["lng"]
             
             map_data = {
                 "city": city,
@@ -1121,6 +1127,78 @@ class ConsultantStudioService:
                 return city, STATE_ABBREVIATIONS[state_lower]
         
         return parts[0] if parts else address, None
+
+    def _get_city_center_coords(self, city: str, state: Optional[str]) -> Dict[str, float]:
+        """
+        Get center coordinates for a city. Returns lat/lng dict.
+        Uses known city centers, then falls back to state center, then US center.
+        """
+        city_centers = {
+            ("west palm beach", "fl"): {"lat": 26.7153, "lng": -80.0534},
+            ("fort walton beach", "fl"): {"lat": 30.4057, "lng": -86.6189},
+            ("destin", "fl"): {"lat": 30.3935, "lng": -86.4958},
+            ("panama city", "fl"): {"lat": 30.1588, "lng": -85.6602},
+            ("pensacola", "fl"): {"lat": 30.4213, "lng": -87.2169},
+            ("tallahassee", "fl"): {"lat": 30.4383, "lng": -84.2807},
+            ("tampa", "fl"): {"lat": 27.9506, "lng": -82.4572},
+            ("jacksonville", "fl"): {"lat": 30.3322, "lng": -81.6557},
+            ("miami", "fl"): {"lat": 25.7617, "lng": -80.1918},
+            ("orlando", "fl"): {"lat": 28.5383, "lng": -81.3792},
+            ("sarasota", "fl"): {"lat": 27.3364, "lng": -82.5307},
+            ("naples", "fl"): {"lat": 26.1420, "lng": -81.7948},
+            ("houston", "tx"): {"lat": 29.7604, "lng": -95.3698},
+            ("dallas", "tx"): {"lat": 32.7767, "lng": -96.7970},
+            ("austin", "tx"): {"lat": 30.2672, "lng": -97.7431},
+            ("san antonio", "tx"): {"lat": 29.4241, "lng": -98.4936},
+            ("fort worth", "tx"): {"lat": 32.7555, "lng": -97.3308},
+            ("phoenix", "az"): {"lat": 33.4484, "lng": -112.0740},
+            ("scottsdale", "az"): {"lat": 33.4942, "lng": -111.9261},
+            ("tucson", "az"): {"lat": 32.2226, "lng": -110.9747},
+            ("charlotte", "nc"): {"lat": 35.2271, "lng": -80.8431},
+            ("raleigh", "nc"): {"lat": 35.7796, "lng": -78.6382},
+            ("nashville", "tn"): {"lat": 36.1627, "lng": -86.7816},
+            ("memphis", "tn"): {"lat": 35.1495, "lng": -90.0490},
+            ("los angeles", "ca"): {"lat": 34.0522, "lng": -118.2437},
+            ("san diego", "ca"): {"lat": 32.7157, "lng": -117.1611},
+            ("san francisco", "ca"): {"lat": 37.7749, "lng": -122.4194},
+            ("seattle", "wa"): {"lat": 47.6062, "lng": -122.3321},
+            ("new york", "ny"): {"lat": 40.7128, "lng": -74.0060},
+            ("chicago", "il"): {"lat": 41.8781, "lng": -87.6298},
+            ("boston", "ma"): {"lat": 42.3601, "lng": -71.0589},
+            ("denver", "co"): {"lat": 39.7392, "lng": -104.9903},
+            ("atlanta", "ga"): {"lat": 33.7490, "lng": -84.3880},
+            ("las vegas", "nv"): {"lat": 36.1699, "lng": -115.1398},
+            ("portland", "or"): {"lat": 45.5152, "lng": -122.6784},
+            ("salt lake city", "ut"): {"lat": 40.7608, "lng": -111.8910},
+        }
+        
+        state_centers = {
+            "FL": {"lat": 27.6648, "lng": -81.5158},
+            "TX": {"lat": 31.9686, "lng": -99.9018},
+            "CA": {"lat": 36.7783, "lng": -119.4179},
+            "NY": {"lat": 40.7128, "lng": -74.0060},
+            "AZ": {"lat": 34.0489, "lng": -111.0937},
+            "CO": {"lat": 39.5501, "lng": -105.7821},
+            "GA": {"lat": 32.1656, "lng": -82.9001},
+            "NC": {"lat": 35.7596, "lng": -79.0193},
+            "TN": {"lat": 35.5175, "lng": -86.5804},
+            "WA": {"lat": 47.7511, "lng": -120.7401},
+            "IL": {"lat": 40.6331, "lng": -89.3985},
+            "MA": {"lat": 42.4072, "lng": -71.3824},
+            "NV": {"lat": 38.8026, "lng": -116.4194},
+            "OR": {"lat": 43.8041, "lng": -120.5542},
+            "UT": {"lat": 39.3210, "lng": -111.0937},
+        }
+        
+        if city and state:
+            city_key = (city.lower().strip(), state.lower().strip())
+            if city_key in city_centers:
+                return city_centers[city_key]
+        
+        if state and state.upper() in state_centers:
+            return state_centers[state.upper()]
+        
+        return {"lat": 39.8283, "lng": -98.5795}
 
     def _infer_business_category(self, business_description: str) -> str:
         """Infer business category from natural language description"""

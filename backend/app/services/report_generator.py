@@ -96,6 +96,70 @@ class ReportGenerator:
     def __init__(self, db: Session):
         self.db = db
     
+    def _get_city_fallback_coords(self, city: Optional[str], state: Optional[str]) -> Dict[str, float]:
+        """Get fallback coordinates for a city/state when opportunity lacks lat/lng."""
+        state_name_to_abbrev = {
+            "florida": "FL", "texas": "TX", "california": "CA", "new york": "NY",
+            "arizona": "AZ", "colorado": "CO", "georgia": "GA", "illinois": "IL",
+            "washington": "WA", "massachusetts": "MA", "tennessee": "TN", 
+            "north carolina": "NC", "nevada": "NV", "oregon": "OR", "utah": "UT",
+        }
+        
+        state_abbrev = None
+        if state:
+            state_clean = state.strip()
+            if len(state_clean) == 2:
+                state_abbrev = state_clean.upper()
+            else:
+                state_abbrev = state_name_to_abbrev.get(state_clean.lower(), state_clean.upper()[:2])
+        
+        city_coords = {
+            ("miami", "fl"): {"lat": 25.7617, "lng": -80.1918},
+            ("orlando", "fl"): {"lat": 28.5383, "lng": -81.3792},
+            ("tampa", "fl"): {"lat": 27.9506, "lng": -82.4572},
+            ("jacksonville", "fl"): {"lat": 30.3322, "lng": -81.6557},
+            ("fort walton beach", "fl"): {"lat": 30.4057, "lng": -86.6189},
+            ("houston", "tx"): {"lat": 29.7604, "lng": -95.3698},
+            ("dallas", "tx"): {"lat": 32.7767, "lng": -96.7970},
+            ("austin", "tx"): {"lat": 30.2672, "lng": -97.7431},
+            ("phoenix", "az"): {"lat": 33.4484, "lng": -112.0740},
+            ("los angeles", "ca"): {"lat": 34.0522, "lng": -118.2437},
+            ("san francisco", "ca"): {"lat": 37.7749, "lng": -122.4194},
+            ("new york", "ny"): {"lat": 40.7128, "lng": -74.0060},
+            ("chicago", "il"): {"lat": 41.8781, "lng": -87.6298},
+            ("seattle", "wa"): {"lat": 47.6062, "lng": -122.3321},
+            ("denver", "co"): {"lat": 39.7392, "lng": -104.9903},
+            ("atlanta", "ga"): {"lat": 33.7490, "lng": -84.3880},
+            ("boston", "ma"): {"lat": 42.3601, "lng": -71.0589},
+            ("nashville", "tn"): {"lat": 36.1627, "lng": -86.7816},
+            ("charlotte", "nc"): {"lat": 35.2271, "lng": -80.8431},
+        }
+        
+        state_coords = {
+            "FL": {"lat": 27.6648, "lng": -81.5158},
+            "TX": {"lat": 31.9686, "lng": -99.9018},
+            "CA": {"lat": 36.7783, "lng": -119.4179},
+            "NY": {"lat": 40.7128, "lng": -74.0060},
+            "AZ": {"lat": 34.0489, "lng": -111.0937},
+            "CO": {"lat": 39.5501, "lng": -105.7821},
+            "GA": {"lat": 32.1656, "lng": -82.9001},
+            "IL": {"lat": 40.6331, "lng": -89.3985},
+            "WA": {"lat": 47.7511, "lng": -120.7401},
+            "MA": {"lat": 42.4072, "lng": -71.3824},
+            "TN": {"lat": 35.5175, "lng": -86.5804},
+            "NC": {"lat": 35.7596, "lng": -79.0193},
+        }
+        
+        if city and state_abbrev:
+            city_key = (city.lower().strip(), state_abbrev.lower())
+            if city_key in city_coords:
+                return city_coords[city_key]
+        
+        if state_abbrev and state_abbrev in state_coords:
+            return state_coords[state_abbrev]
+        
+        return {"lat": 39.8283, "lng": -98.5795}
+    
     def check_entitlement(self, user: User, report_type: ReportType) -> Dict[str, Any]:
         """Check if user has access to generate this report type."""
         user_tier = 'free'
@@ -927,8 +991,13 @@ class ReportGenerator:
     
     def _build_layer2_map_section(self, opp: Opportunity) -> str:
         """Build static map image for Layer 2 geographic analysis."""
-        center_lat = float(opp.latitude) if opp.latitude else 39.8283
-        center_lng = float(opp.longitude) if opp.longitude else -98.5795
+        if opp.latitude and opp.longitude:
+            center_lat = float(opp.latitude)
+            center_lng = float(opp.longitude)
+        else:
+            fallback = self._get_city_fallback_coords(opp.city, opp.region)
+            center_lat = fallback["lat"]
+            center_lng = fallback["lng"]
         
         markers = []
         if opp.latitude and opp.longitude:
