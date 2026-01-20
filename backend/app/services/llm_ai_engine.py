@@ -220,6 +220,7 @@ Respond only with valid JSON."""
                 max_tokens=800,
                 messages=[{"role": "user", "content": prompt}]
             )
+            usage = _extract_anthropic_usage(response)
             
             payload = _extract_json_payload(response.content[0].text)
             if payload is None:
@@ -239,6 +240,8 @@ Respond only with valid JSON."""
                 "recommended_actions": parsed.recommended_actions,
                 "recommended_experts": heuristic_result["recommended_experts"],
                 "llm_enhanced": True,
+                "ai_provider": "claude",
+                "ai_usage": usage,
             }
             
         except (ValueError, ValidationError, json.JSONDecodeError) as e:
@@ -314,6 +317,7 @@ Respond only with valid JSON."""
                 max_tokens=1200,
                 messages=[{"role": "user", "content": prompt}]
             )
+            usage = _extract_anthropic_usage(response)
             
             payload = _extract_json_payload(response.content[0].text)
             if payload is None:
@@ -330,6 +334,8 @@ Respond only with valid JSON."""
                 "key_assumptions": parsed.key_assumptions,
                 "risks": heuristic_result.get("risks", []),
                 "llm_enhanced": True,
+                "ai_provider": "claude",
+                "ai_usage": usage,
             }
             
         except (ValueError, ValidationError, json.JSONDecodeError) as e:
@@ -397,6 +403,7 @@ Respond only with valid JSON."""
                 max_tokens=1500,
                 messages=[{"role": "user", "content": prompt}]
             )
+            usage = _extract_anthropic_usage(response)
             
             payload = _extract_json_payload(response.content[0].text)
             if payload is None:
@@ -415,6 +422,8 @@ Respond only with valid JSON."""
                 "success_factors": parsed.success_factors,
                 "pivot_suggestions": parsed.pivot_suggestions,
                 "llm_enhanced": True,
+                "ai_provider": "claude",
+                "ai_usage": usage,
             }
             
         except (ValueError, ValidationError, json.JSONDecodeError) as e:

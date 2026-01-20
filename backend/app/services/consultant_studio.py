@@ -223,6 +223,32 @@ class ConsultantStudioService:
                 processing_time_ms=processing_time,
                 tokens_used=tokens_used or None,
             )
+
+            from app.services.ai_costs import record_ai_cost
+
+            pattern_meta = pattern_analysis.get("ai_meta") or {}
+            pattern_usage = pattern_meta.get("usage")
+            if pattern_usage:
+                record_ai_cost(
+                    self.db,
+                    user_id=user_id,
+                    provider=str(pattern_meta.get("service") or "deepseek"),
+                    endpoint="consultant.validate_idea.pattern",
+                    task_type="opportunity_validation",
+                    usage=pattern_usage,
+                )
+
+            viability_meta = viability_report.get("ai_meta") or {}
+            viability_usage = viability_meta.get("usage")
+            if viability_usage:
+                record_ai_cost(
+                    self.db,
+                    user_id=user_id,
+                    provider=str(viability_meta.get("service") or "claude"),
+                    endpoint="consultant.validate_idea.viability",
+                    task_type="market_research",
+                    usage=viability_usage,
+                )
             
             return result
             
@@ -1058,6 +1084,7 @@ class ConsultantStudioService:
             "ai_meta": {
                 "service": result.get("ai_service"),
                 "tokens_used": result.get("tokens_used"),
+                "usage": result.get("usage"),
             },
         }
 
@@ -1215,6 +1242,7 @@ class ConsultantStudioService:
             ai_meta = {
                 "service": result.get("ai_service"),
                 "tokens_used": result.get("tokens_used"),
+                "usage": result.get("usage"),
             }
         except asyncio.TimeoutError:
             logger.warning("Claude viability report timed out after 15s")

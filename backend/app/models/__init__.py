@@ -64,6 +64,7 @@ from .team import (
     TeamRole, InviteStatus
 )
 from .monthly_report_usage import MonthlyReportUsage
+from .ai_cost import AICost
 
 __all__ = [
     "User",
@@ -187,4 +188,5 @@ __all__ = [
     "TeamRole",
     "InviteStatus",
     "MonthlyReportUsage",
+    "AICost",
 ]

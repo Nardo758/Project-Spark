@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     CACHE_CLEANUP_JOB_ENABLED: bool = True
     CACHE_CLEANUP_JOB_INTERVAL_SECONDS: int = 86400  # daily
 
+    # AI cost tracking (optional, per 1k tokens)
+    DEEPSEEK_COST_PER_1K_TOKENS: Optional[float] = None
+    CLAUDE_COST_PER_1K_TOKENS: Optional[float] = None
+
     # Stripe subscription reconciliation (defense-in-depth for missed webhooks)
     STRIPE_RECONCILE_JOB_ENABLED: bool = False
     STRIPE_RECONCILE_JOB_INTERVAL_SECONDS: int = 21600  # 6 hours
