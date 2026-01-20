@@ -609,6 +609,14 @@
             margin-top: 16px;
         }
 
+        .result-actions {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
         .result-section {
             background: var(--white);
             border: 1px solid var(--stone-200);
@@ -966,6 +974,10 @@
                 <div class="result-confidence">Validation Confidence: <span id="confidence">0</span>%</div>
                 <p id="resultSummary" class="result-summary"></p>
                 <p id="savedValidationLink" class="result-confidence" style="display:none; margin-top: 12px;"></p>
+                <div class="result-actions">
+                    <button id="downloadReportBtn" class="btn btn-secondary" disabled>Download Report</button>
+                    <a class="btn btn-secondary" href="consultant-activity.html">View Activity Log</a>
+                </div>
             </div>
 
             <div class="result-section fade-in-up stagger-1">
@@ -1111,6 +1123,8 @@
         let cardElement = null;
         let generatedData = null;
         let currentIdeaValidationId = null;
+        let latestValidationRecord = null;
+        let latestValidationResult = null;
 
         function getAuthHeaders() {
             const token = localStorage.getItem('access_token');
@@ -1143,6 +1157,7 @@
         const payBtn = document.getElementById('payBtn');
         const startOverBtn = document.getElementById('startOverBtn');
         const newIdeaBtn = document.getElementById('newIdeaBtn');
+        const downloadReportBtn = document.getElementById('downloadReportBtn');
 
         ideaInput.addEventListener('input', () => {
             const len = ideaInput.value.length;
@@ -1326,6 +1341,8 @@
         }
 
         function displayValidationResult(data, record) {
+            latestValidationRecord = record || null;
+            latestValidationResult = data || null;
             document.getElementById('finalScore').textContent = data.opportunity_score;
             document.getElementById('confidence').textContent = data.validation_confidence;
             document.getElementById('resultSummary').textContent = data.summary;
@@ -1350,6 +1367,10 @@
             if (saved && record && record.id) {
                 saved.style.display = 'block';
                 saved.innerHTML = `Saved as report #${record.id}. <a href="/validations/${record.id}" style="color: var(--blue-600);">Open saved report</a> · <a href="/validations" style="color: var(--blue-600);">View all</a>`;
+            }
+
+            if (downloadReportBtn) {
+                downloadReportBtn.disabled = false;
             }
 
             generatedSection.classList.remove('show');
@@ -1378,6 +1399,11 @@
             charCount.textContent = '0';
             generateBtn.disabled = true;
             generatedData = null;
+            latestValidationRecord = null;
+            latestValidationResult = null;
+            if (downloadReportBtn) {
+                downloadReportBtn.disabled = true;
+            }
             
             inputSection.style.display = 'block';
             generatedSection.classList.remove('show');
@@ -1387,6 +1413,32 @@
 
         startOverBtn.addEventListener('click', resetToStart);
         newIdeaBtn.addEventListener('click', resetToStart);
+
+        if (downloadReportBtn) {
+            downloadReportBtn.addEventListener('click', () => {
+                if (!latestValidationResult) {
+                    alert('No validation report available to download.');
+                    return;
+                }
+                const report = {
+                    generated_at: new Date().toISOString(),
+                    idea_validation_id: latestValidationRecord?.id || null,
+                    title: latestValidationResult?.title || latestValidationRecord?.title || '',
+                    category: latestValidationResult?.category || latestValidationRecord?.category || '',
+                    summary: latestValidationResult?.summary || '',
+                    result: latestValidationResult,
+                };
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.download = `oppgrid-validation-${latestValidationRecord?.id || 'report'}.json`;
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                URL.revokeObjectURL(url);
+            });
+        }
 
         initStripe();
         

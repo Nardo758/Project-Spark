@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Consultant Activity · OppGrid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-400: #a8a29e;
+            --stone-500: #78716c;
+            --stone-600: #57534e;
+            --stone-700: #44403c;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --emerald-600: #059669;
+            --blue-600: #2563eb;
+            --white: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--stone-50);
+            color: var(--stone-900);
+            line-height: 1.5;
+        }
+
+        .header {
+            background: var(--white);
+            border-bottom: 1px solid var(--stone-200);
+            padding: 16px 24px;
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .logo {
+            font-family: 'Spectral', serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--stone-900);
+            text-decoration: none;
+        }
+
+        .nav {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav a {
+            color: var(--stone-600);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav a:hover { color: var(--stone-900); }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px 48px;
+        }
+
+        .page-title {
+            font-family: 'Spectral', serif;
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+
+        .page-subtitle {
+            color: var(--stone-500);
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--white);
+            border: 1px solid var(--stone-200);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--stone-500);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .control-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        select, button {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--stone-200);
+            background: var(--white);
+            font-size: 14px;
+        }
+
+        button {
+            cursor: pointer;
+            background: var(--stone-100);
+            font-weight: 500;
+        }
+
+        button:hover { background: var(--stone-200); }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--stone-200);
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .table th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--stone-500);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--stone-100);
+            font-size: 12px;
+            color: var(--stone-700);
+        }
+
+        .error {
+            color: #b91c1c;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            color: var(--stone-500);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="index.html" class="logo">OppGrid</a>
+            <nav class="nav">
+                <a href="idea-engine.html">Idea Engine</a>
+                <a href="ai-validate.html">AI Validate</a>
+                <a href="ai-match.html">AI Match</a>
+                <a href="ai-roadmap.html">AI Roadmap</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="page">
+        <h1 class="page-title">Consultant Activity</h1>
+        <p class="page-subtitle">Recent validation, search, and analysis activity from your Consultant Studio tools.</p>
+
+        <div class="stats-grid">
+            <div class="card">
+                <div class="stat-label">Total Activities</div>
+                <div class="stat-value" id="statTotal">--</div>
+            </div>
+            <div class="card">
+                <div class="stat-label">Trends Detected</div>
+                <div class="stat-value" id="statTrends">--</div>
+            </div>
+            <div class="card">
+                <div class="stat-label">Cached Locations</div>
+                <div class="stat-value" id="statLocations">--</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="controls">
+                <div class="control-left">
+                    <label for="pathFilter" style="font-size: 14px; color: var(--stone-600);">Filter:</label>
+                    <select id="pathFilter">
+                        <option value="">All</option>
+                        <option value="validate_idea">Validate Idea</option>
+                        <option value="search_ideas">Search Ideas</option>
+                        <option value="identify_location">Identify Location</option>
+                        <option value="clone_success">Clone Success</option>
+                        <option value="deep_clone">Deep Clone</option>
+                    </select>
+                </div>
+                <button id="refreshBtn">Refresh</button>
+            </div>
+
+            <div id="activityError" class="error" style="display:none;"></div>
+            <div id="activityLoading" class="loading">Loading activity…</div>
+
+            <table class="table" id="activityTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Path</th>
+                        <th>Action</th>
+                        <th>Summary</th>
+                        <th>Model</th>
+                        <th>Time (ms)</th>
+                    </tr>
+                </thead>
+                <tbody id="activityRows"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        const API_BASE_URL = window.API_BASE_URL || '/api/v1';
+        const pathFilter = document.getElementById('pathFilter');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const activityRows = document.getElementById('activityRows');
+        const activityTable = document.getElementById('activityTable');
+        const activityLoading = document.getElementById('activityLoading');
+        const activityError = document.getElementById('activityError');
+
+        const statTotal = document.getElementById('statTotal');
+        const statTrends = document.getElementById('statTrends');
+        const statLocations = document.getElementById('statLocations');
+
+        function getToken() {
+            return localStorage.getItem('access_token') || localStorage.getItem('token');
+        }
+
+        async function fetchJson(url) {
+            const token = getToken();
+            const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data?.detail || 'Request failed.');
+            }
+            return data;
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '--';
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return iso;
+            return d.toLocaleString();
+        }
+
+        async function loadStats() {
+            const stats = await fetchJson(`${API_BASE_URL}/consultant/stats`);
+            statTotal.textContent = stats.total_activities ?? '--';
+            statTrends.textContent = stats.total_trends_detected ?? '--';
+            statLocations.textContent = stats.cached_locations ?? '--';
+        }
+
+        function renderRows(items) {
+            if (!Array.isArray(items) || items.length === 0) {
+                activityRows.innerHTML = '<tr><td colspan="6" style="color: var(--stone-500);">No activity yet.</td></tr>';
+                return;
+            }
+            activityRows.innerHTML = items.map(item => {
+                const summary = item.result_summary ? String(item.result_summary) : '--';
+                const model = item.ai_model_used ? String(item.ai_model_used) : '--';
+                const ms = item.processing_time_ms ?? '--';
+                return `
+                    <tr>
+                        <td>${formatDate(item.created_at)}</td>
+                        <td><span class="pill">${item.path}</span></td>
+                        <td>${item.action}</td>
+                        <td>${summary}</td>
+                        <td>${model}</td>
+                        <td>${ms}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadActivity() {
+            activityError.style.display = 'none';
+            activityLoading.style.display = 'block';
+            activityTable.style.display = 'none';
+            try {
+                const path = pathFilter.value;
+                const params = new URLSearchParams({ limit: '30' });
+                if (path) params.set('path', path);
+                const items = await fetchJson(`${API_BASE_URL}/consultant/activity?${params.toString()}`);
+                renderRows(items);
+                activityTable.style.display = 'table';
+            } catch (err) {
+                activityError.textContent = err?.message || 'Failed to load activity.';
+                activityError.style.display = 'block';
+            } finally {
+                activityLoading.style.display = 'none';
+            }
+        }
+
+        async function loadAll() {
+            await Promise.all([loadStats(), loadActivity()]);
+        }
+
+        pathFilter.addEventListener('change', loadActivity);
+        refreshBtn.addEventListener('click', loadAll);
+
+        if (!window.OppGridAuth?.requireAuth) {
+            window.location.href = 'signin.html';
+        } else if (window.OppGridAuth.requireAuth({ redirect: 'consultant-activity.html' })) {
+            loadAll();
+        }
+    </script>
+</body>
+</html>
