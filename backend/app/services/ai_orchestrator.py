@@ -25,6 +25,7 @@ class AITaskType(Enum):
     DOCUMENT_GENERATION = "document_generation"
     LEAD_SCORING = "lead_scoring"
     EXPERT_MATCHING = "expert_matching"
+    TREND_DETECTION = "trend_detection"
 
 
 class AIOrchestrator:
@@ -35,6 +36,7 @@ class AIOrchestrator:
             AITaskType.PLATFORM_COORDINATION,
             AITaskType.OPPORTUNITY_VALIDATION,
             AITaskType.LEAD_SCORING,
+            AITaskType.TREND_DETECTION,
         }
         self.claude_tasks = {
             AITaskType.BUSINESS_PLAN_GENERATION,
@@ -216,6 +218,13 @@ class AIOrchestrator:
             AITaskType.DOCUMENT_GENERATION: f"Generate a professional document for: {data}",
             AITaskType.LEAD_SCORING: f"Score this lead based on quality indicators: {data}",
             AITaskType.EXPERT_MATCHING: f"Find expert matches for this opportunity: {data}",
+            AITaskType.TREND_DETECTION: (
+                "Identify emerging market trends from these opportunities. "
+                "Return ONLY valid JSON (array of trends). Each trend must include: "
+                "name, description, strength (0-100), growth_rate (numeric percent or string), "
+                "opportunities_count, category (optional), keywords (array, optional), confidence (0-100, optional). "
+                f"Data: {data}"
+            ),
         }
         return prompts.get(task_type, f"Process this data: {data}")
 

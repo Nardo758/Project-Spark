@@ -1293,41 +1293,165 @@ class ConsultantStudioService:
     async def _detect_trends(
         self, opportunities: List[Opportunity], filters: Dict[str, Any]
     ) -> List[DetectedTrend]:
-        """DeepSeek trend detection from opportunities"""
+        """DeepSeek trend detection from opportunities with fallback heuristics"""
         from .ai_orchestrator import ai_orchestrator, AITaskType
-        
+        from app.services.ai_costs import record_ai_cost
+        from pydantic import BaseModel, Field, ValidationError
+
+        if len(opportunities) < 5:
+            return []
+
+        class TrendItem(BaseModel):
+            name: str
+            description: str | None = None
+            strength: int = Field(..., ge=0, le=100)
+            growth_rate: float | str | None = None
+            opportunities_count: int | None = None
+            category: str | None = None
+            keywords: List[str] = []
+            confidence: int | None = Field(default=None, ge=0, le=100)
+
+        def _parse_trend_items(payload: Any) -> List[TrendItem]:
+            if isinstance(payload, dict) and "trends" in payload:
+                items = payload.get("trends")
+            else:
+                items = payload
+            if not isinstance(items, list):
+                return []
+
+            normalized: List[TrendItem] = []
+            for raw in items:
+                if not isinstance(raw, dict):
+                    continue
+                mapped = {
+                    "name": raw.get("name") or raw.get("trend_name") or raw.get("title"),
+                    "description": raw.get("description") or raw.get("summary"),
+                    "strength": raw.get("strength") or raw.get("trend_strength") or 0,
+                    "growth_rate": raw.get("growth_rate"),
+                    "opportunities_count": raw.get("opportunities_count") or raw.get("count"),
+                    "category": raw.get("category"),
+                    "keywords": raw.get("keywords") or [],
+                    "confidence": raw.get("confidence") or raw.get("confidence_score"),
+                }
+                if not mapped["name"]:
+                    continue
+                try:
+                    normalized.append(TrendItem.model_validate(mapped))
+                except ValidationError:
+                    continue
+            return normalized
+
+        trends: List[DetectedTrend] = []
+
+        # AI-driven trend detection (DeepSeek)
+        try:
+            opp_summaries = [
+                {
+                    "id": o.id,
+                    "title": o.title,
+                    "category": o.category,
+                    "score": o.feasibility_score or 0,
+                    "created_at": o.created_at.isoformat() if o.created_at else None,
+                    "validation_count": o.validation_count or 0,
+                }
+                for o in opportunities[:50]
+            ]
+            ai_data = {
+                "opportunities": opp_summaries,
+                "filters": filters,
+                "total_count": len(opportunities),
+            }
+            ai_result = await ai_orchestrator.process_request(
+                AITaskType.TREND_DETECTION, ai_data
+            )
+            parsed_payload = (ai_result.get("result") or {}).get("response")
+            parsed_items = _parse_trend_items(parsed_payload)
+            if parsed_items:
+                usage = ai_result.get("usage")
+                if usage:
+                    record_ai_cost(
+                        self.db,
+                        user_id=None,
+                        provider=str(ai_result.get("ai_service") or "deepseek"),
+                        endpoint="consultant.search_ideas.trends",
+                        task_type="trend_detection",
+                        usage=usage,
+                    )
+
+                for item in parsed_items[:10]:
+                    trend_name = item.name.strip()
+                    existing = self.db.query(DetectedTrend).filter(
+                        DetectedTrend.trend_name == trend_name
+                    ).first()
+                    growth_value = None
+                    if isinstance(item.growth_rate, (int, float)):
+                        growth_value = float(item.growth_rate)
+                    trend_payload = {
+                        "trend_name": trend_name,
+                        "trend_strength": int(item.strength),
+                        "description": item.description,
+                        "category": item.category or filters.get("category"),
+                        "opportunities_count": item.opportunities_count or len(opportunities),
+                        "growth_rate": growth_value,
+                        "keywords": item.keywords or None,
+                        "confidence_score": item.confidence,
+                        "source_type": "deepseek",
+                        "ai_signature": {
+                            "provider": ai_result.get("ai_service"),
+                            "raw": item.model_dump(),
+                            "usage": ai_result.get("usage"),
+                        },
+                    }
+                    if existing:
+                        for key, value in trend_payload.items():
+                            setattr(existing, key, value)
+                        trends.append(existing)
+                    else:
+                        trend = DetectedTrend(**trend_payload)
+                        self.db.add(trend)
+                        trends.append(trend)
+
+                self.db.commit()
+                return trends
+        except Exception as e:
+            logger.warning(f"DeepSeek trend detection failed, using fallback: {e}")
+            self.db.rollback()
+
+        # Fallback: heuristic trends by category counts
         categories = {}
         for opp in opportunities:
             cat = opp.category or "Unknown"
             categories[cat] = categories.get(cat, 0) + 1
-        
+
         top_categories = sorted(categories.items(), key=lambda x: x[1], reverse=True)[:5]
-        
-        trends = []
+
         for cat_name, count in top_categories:
+            trend_name = f"{cat_name} Growth"
             existing = self.db.query(DetectedTrend).filter(
-                DetectedTrend.trend_name == f"{cat_name} Growth"
+                DetectedTrend.trend_name == trend_name
             ).first()
-            
+
             if not existing:
                 trend = DetectedTrend(
-                    trend_name=f"{cat_name} Growth",
+                    trend_name=trend_name,
                     trend_strength=min(100, count * 10),
                     description=f"Growing opportunities in {cat_name} category",
                     category=cat_name,
                     opportunities_count=count,
                     growth_rate=round(count / max(len(opportunities), 1) * 100, 2),
                     confidence_score=70,
+                    source_type="heuristic",
                 )
                 self.db.add(trend)
                 trends.append(trend)
             else:
                 existing.opportunities_count = count
                 existing.trend_strength = min(100, count * 10)
+                existing.source_type = "heuristic"
                 trends.append(existing)
-        
+
         self.db.commit()
-        
+
         return trends
 
     async def _claude_trend_synthesis(
