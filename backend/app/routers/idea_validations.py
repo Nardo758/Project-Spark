@@ -54,13 +54,14 @@ def get_validation(
     row = db.query(IdeaValidation).filter(IdeaValidation.id == idea_validation_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Validation not found")
-    if row.user_id != current_user.id and not current_user.is_admin:
+    if row.user_id != current_user.id and not getattr(current_user, 'is_admin', False):
         raise HTTPException(status_code=403, detail="Not authorized")
 
     result = None
-    if row.result_json:
+    result_json_value = getattr(row, 'result_json', None)
+    if result_json_value:
         try:
-            result = json.loads(row.result_json)
+            result = json.loads(str(result_json_value))
         except Exception:
             result = None
 
@@ -147,9 +148,10 @@ async def run_validation(
     row = db.query(IdeaValidation).filter(IdeaValidation.id == idea_validation_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="Validation not found")
-    if row.user_id != current_user.id and not current_user.is_admin:
+    if row.user_id != current_user.id and not getattr(current_user, 'is_admin', False):
         raise HTTPException(status_code=403, detail="Not authorized")
-    if not row.stripe_payment_intent_id or row.stripe_payment_intent_id != req.payment_intent_id:
+    stored_intent_id = getattr(row, 'stripe_payment_intent_id', None)
+    if not stored_intent_id or stored_intent_id != req.payment_intent_id:
         raise HTTPException(status_code=400, detail="Payment intent does not match this validation")
 
     # Verify payment intent status (defense in depth; webhook can also mark PAID)
@@ -172,20 +174,22 @@ async def run_validation(
     if metadata.get("user_id") and metadata.get("user_id") != str(current_user.id):
         raise HTTPException(status_code=403, detail="Payment intent belongs to another user")
 
-    if row.status == IdeaValidationStatus.COMPLETED and row.result_json:
+    current_status = getattr(row, 'status', None)
+    current_result = getattr(row, 'result_json', None)
+    if current_status == IdeaValidationStatus.COMPLETED and current_result:
         # Idempotent return
         return get_validation(idea_validation_id, current_user=current_user, db=db)
 
     # Ensure payment fields/status are up to date even if webhook hasn't run yet.
-    if row.status == IdeaValidationStatus.PENDING_PAYMENT:
-        row.status = IdeaValidationStatus.PAID
-    if not row.amount_cents:
-        row.amount_cents = pi.get("amount")
-    if not row.currency:
-        row.currency = pi.get("currency", "usd")
+    if current_status == IdeaValidationStatus.PENDING_PAYMENT:
+        row.status = IdeaValidationStatus.PAID  # type: ignore[assignment]
+    if not getattr(row, 'amount_cents', None):
+        row.amount_cents = pi.get("amount")  # type: ignore[assignment]
+    if not getattr(row, 'currency', None):
+        row.currency = pi.get("currency", "usd")  # type: ignore[assignment]
     db.commit()
 
-    row.status = IdeaValidationStatus.PROCESSING
+    row.status = IdeaValidationStatus.PROCESSING  # type: ignore[assignment]
     db.commit()
 
     # Reuse the existing idea_engine validation logic/prompt by importing + calling it.
@@ -209,7 +213,8 @@ Provide a comprehensive, actionable validation analysis."""
             messages=[{"role": "user", "content": user_prompt}],
         )
 
-        response_text = response.content[0].text
+        content_block = response.content[0]
+        response_text = getattr(content_block, 'text', '') if hasattr(content_block, 'text') else str(content_block)
         start_idx = response_text.find("{")
         end_idx = response_text.rfind("}") + 1
         if start_idx == -1 or end_idx <= start_idx:
@@ -219,22 +224,22 @@ Provide a comprehensive, actionable validation analysis."""
         result = json.loads(json_str)
 
         # Persist
-        row.result_json = json.dumps(result)
-        row.opportunity_score = int(result.get("opportunity_score", 0) or 0)
-        row.summary = str(result.get("summary", "") or "")[:255]
-        row.market_size_estimate = str(result.get("market_size_estimate", "") or "")[:100]
-        row.competition_level = str(result.get("competition_level", "") or "")[:50]
-        row.urgency_level = str(result.get("urgency_level", "") or "")[:50]
-        row.validation_confidence = int(result.get("validation_confidence", 0) or 0)
-        row.status = IdeaValidationStatus.COMPLETED
-        row.error_message = None
+        row.result_json = json.dumps(result)  # type: ignore[assignment]
+        row.opportunity_score = int(result.get("opportunity_score", 0) or 0)  # type: ignore[assignment]
+        row.summary = str(result.get("summary", "") or "")[:255]  # type: ignore[assignment]
+        row.market_size_estimate = str(result.get("market_size_estimate", "") or "")[:100]  # type: ignore[assignment]
+        row.competition_level = str(result.get("competition_level", "") or "")[:50]  # type: ignore[assignment]
+        row.urgency_level = str(result.get("urgency_level", "") or "")[:50]  # type: ignore[assignment]
+        row.validation_confidence = int(result.get("validation_confidence", 0) or 0)  # type: ignore[assignment]
+        row.status = IdeaValidationStatus.COMPLETED  # type: ignore[assignment]
+        row.error_message = None  # type: ignore[assignment]
         db.commit()
 
         return get_validation(idea_validation_id, current_user=current_user, db=db)
     except Exception as e:
         logger.error(f"Idea validation failed: {e}")
-        row.status = IdeaValidationStatus.FAILED
-        row.error_message = str(e)
+        row.status = IdeaValidationStatus.FAILED  # type: ignore[assignment]
+        row.error_message = str(e)  # type: ignore[assignment]
         db.commit()
         raise HTTPException(status_code=500, detail="Validation failed")
 
