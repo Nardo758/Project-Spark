@@ -6,6 +6,7 @@ Three-path validation system: Validate Idea, Search Ideas, Identify Location
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user, get_current_admin_user
@@ -44,6 +45,8 @@ class SearchIdeasRequest(BaseModel):
     time_range: Optional[str] = None
     quality_filter: Optional[str] = None
     session_id: Optional[str] = None
+    page: int = Field(default=0, ge=0)
+    page_size: int = Field(default=20, ge=1, le=100)
 
 
 class SearchIdeasResponse(BaseModel):
@@ -52,6 +55,8 @@ class SearchIdeasResponse(BaseModel):
     trends: Optional[List[Dict[str, Any]]] = None
     synthesis: Optional[Dict[str, Any]] = None
     total_count: Optional[int] = None
+    page: Optional[int] = None
+    page_size: Optional[int] = None
     processing_time_ms: Optional[int] = None
     error: Optional[str] = None
 
@@ -212,12 +217,16 @@ async def search_ideas(
     
     filters = {k: v for k, v in filters.items() if v is not None}
     
+    page = max(0, request.page)
+    page_size = min(100, max(1, request.page_size))
     try:
         result = await asyncio.wait_for(
             service.search_ideas(
                 user_id=user_id,
                 filters=filters,
                 session_id=safe_session_id,
+                page=page,
+                page_size=page_size,
             ),
             timeout=15.0
         )
@@ -439,7 +448,9 @@ async def get_consultant_stats(
     ).group_by(ConsultantActivity.path).all()
     
     total_trends = db.query(func.count(DetectedTrend.id)).scalar() or 0
-    cached_locations = db.query(func.count(LocationAnalysisCache.id)).scalar() or 0
+    cached_locations = db.query(func.count(LocationAnalysisCache.id)).filter(
+        LocationAnalysisCache.expires_at > datetime.utcnow()
+    ).scalar() or 0
     
     return {
         "total_activities": total_activities,

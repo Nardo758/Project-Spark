@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.database import SessionLocal
 from app.models.job_run import JobRun
+from app.models.idea_validation_cache import IdeaValidationCache
+from app.models.location_analysis_cache import LocationAnalysisCache
 from app.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
 from app.models.transaction import Transaction, TransactionStatus, TransactionType
 
@@ -230,6 +232,23 @@ async def _stripe_subscription_reconcile_job(db: Session) -> dict:
     return {"enabled": True, "checked": checked, "updated": updated, "errors": errors[:25]}
 
 
+async def _cache_cleanup_job(db: Session) -> dict:
+    """Purge expired cache entries."""
+    cutoff = datetime.utcnow()
+    idea_deleted = db.query(IdeaValidationCache).filter(
+        IdeaValidationCache.expires_at < cutoff
+    ).delete(synchronize_session=False)
+    location_deleted = db.query(LocationAnalysisCache).filter(
+        LocationAnalysisCache.expires_at < cutoff
+    ).delete(synchronize_session=False)
+    if idea_deleted or location_deleted:
+        db.commit()
+    return {
+        "idea_validation_deleted": idea_deleted,
+        "location_analysis_deleted": location_deleted,
+    }
+
+
 async def _loop(job_name: str, interval_seconds: int, fn: Callable[[Session], Awaitable[dict]]) -> None:
     # Stagger initial run slightly so startup can settle.
     await asyncio.sleep(3)
@@ -264,4 +283,8 @@ def start_background_jobs() -> None:
     if settings.STRIPE_RECONCILE_JOB_ENABLED:
         loop.create_task(_loop("stripe_subscription_reconcile", settings.STRIPE_RECONCILE_JOB_INTERVAL_SECONDS, _stripe_subscription_reconcile_job))
         logger.info("Started job: stripe_subscription_reconcile")
+
+    if settings.CACHE_CLEANUP_JOB_ENABLED:
+        loop.create_task(_loop("cache_cleanup", settings.CACHE_CLEANUP_JOB_INTERVAL_SECONDS, _cache_cleanup_job))
+        logger.info("Started job: cache_cleanup")
 

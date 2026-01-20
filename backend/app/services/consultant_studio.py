@@ -227,6 +227,8 @@ class ConsultantStudioService:
         user_id: int,
         filters: Dict[str, Any],
         session_id: Optional[str] = None,
+        page: int = 0,
+        page_size: int = 20,
     ) -> Dict[str, Any]:
         """
         Path 2: Search Ideas - Database exploration with trend detection
@@ -236,7 +238,7 @@ class ConsultantStudioService:
         start_time = time.time()
         
         try:
-            opportunities = await self._search_opportunities(filters)
+            opportunities, total_count = await self._search_opportunities(filters, page, page_size)
             
             trends = await self._detect_trends(opportunities, filters)
             
@@ -269,7 +271,9 @@ class ConsultantStudioService:
                     for t in trends
                 ],
                 "synthesis": synthesis,
-                "total_count": len(opportunities),
+                "total_count": total_count,
+                "page": page,
+                "page_size": page_size,
                 "processing_time_ms": processing_time,
             }
             
@@ -1213,13 +1217,18 @@ class ConsultantStudioService:
             "confidence_score": 75,
         }
 
-    async def _search_opportunities(self, filters: Dict[str, Any]) -> List[Opportunity]:
+    async def _search_opportunities(
+        self,
+        filters: Dict[str, Any],
+        page: int,
+        page_size: int,
+    ) -> tuple[List[Opportunity], int]:
         """Search opportunities based on filters"""
         query = self.db.query(Opportunity)
         
         if filters.get("category"):
             query = query.filter(Opportunity.category == filters["category"])
-        if filters.get("min_score"):
+        if filters.get("min_score") is not None:
             query = query.filter(Opportunity.feasibility_score >= filters["min_score"])
         if filters.get("query"):
             search_term = f"%{filters['query']}%"
@@ -1227,8 +1236,12 @@ class ConsultantStudioService:
                 Opportunity.title.ilike(search_term) |
                 Opportunity.description.ilike(search_term)
             )
-        
-        return query.order_by(Opportunity.feasibility_score.desc().nullslast()).limit(50).all()
+
+        total_count = query.order_by(None).count()
+        items = query.order_by(
+            Opportunity.feasibility_score.desc().nullslast()
+        ).offset(page * page_size).limit(page_size).all()
+        return items, total_count
 
     async def _detect_trends(
         self, opportunities: List[Opportunity], filters: Dict[str, Any]

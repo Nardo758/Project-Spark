@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     APIFY_ACTOR_ID: str = "trudax/reddit-scraper-lite"
     AI_ANALYSIS_JOB_ENABLED: bool = True
     AI_ANALYSIS_BATCH_SIZE: int = 20
+    CACHE_CLEANUP_JOB_ENABLED: bool = True
+    CACHE_CLEANUP_JOB_INTERVAL_SECONDS: int = 86400  # daily
 
     # Stripe subscription reconciliation (defense-in-depth for missed webhooks)
     STRIPE_RECONCILE_JOB_ENABLED: bool = False
