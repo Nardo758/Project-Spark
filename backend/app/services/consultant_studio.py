@@ -54,9 +54,9 @@ class ConsultantStudioService:
     def __init__(self, db: Session):
         self.db = db
 
-    def _get_cache_key(self, idea_description: str, context: Optional[Dict] = None) -> str:
+    def _get_cache_key(self, user_id: int, idea_description: str, context: Optional[Dict] = None) -> str:
         """Generate a cache key for validation results"""
-        content = idea_description.lower().strip()
+        content = f"{user_id}:{idea_description.lower().strip()}"
         if context:
             content += json.dumps(context, sort_keys=True)
         return hashlib.sha256(content.encode()).hexdigest()
@@ -154,7 +154,7 @@ class ConsultantStudioService:
         import time
         start_time = time.time()
         
-        cache_key = self._get_cache_key(idea_description, business_context)
+        cache_key = self._get_cache_key(user_id, idea_description, business_context)
         cached_result = self._get_cached_validation(cache_key)
         if cached_result:
             cached_result['from_cache'] = True

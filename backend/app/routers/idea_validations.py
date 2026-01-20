@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_active_user
+from app.core.sanitization import sanitize_text
 from app.db.database import get_db
 from app.models.idea_validation import IdeaValidation, IdeaValidationStatus
 from app.models.user import User
@@ -78,11 +79,15 @@ def create_validation_payment_intent(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    if not req.idea or len(req.idea.strip()) < 10:
+    safe_idea = sanitize_text(req.idea, max_length=5000) or ""
+    safe_title = sanitize_text(req.title, max_length=255) or ""
+    safe_category = sanitize_text(req.category, max_length=100) or ""
+
+    if not safe_idea or len(safe_idea) < 10:
         raise HTTPException(status_code=400, detail="Idea is too short")
-    if not req.title or len(req.title.strip()) < 3:
+    if not safe_title or len(safe_title) < 3:
         raise HTTPException(status_code=400, detail="Title is required")
-    if not req.category or len(req.category.strip()) < 2:
+    if not safe_category or len(safe_category) < 2:
         raise HTTPException(status_code=400, detail="Category is required")
     if req.amount_cents < 50:
         raise HTTPException(status_code=400, detail="amount_cents must be >= 50")
@@ -90,9 +95,9 @@ def create_validation_payment_intent(
     # Create a persisted validation record first
     row = IdeaValidation(
         user_id=current_user.id,
-        idea=req.idea.strip(),
-        title=req.title.strip()[:255],
-        category=req.category.strip()[:100],
+        idea=safe_idea,
+        title=safe_title[:255],
+        category=safe_category[:100],
         amount_cents=req.amount_cents,
         currency="usd",
         status=IdeaValidationStatus.PENDING_PAYMENT,
@@ -158,8 +163,14 @@ async def run_validation(
 
     if pi.status != "succeeded":
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=f"Payment not completed. Status: {pi.status}")
-    if (pi.metadata or {}).get("service") != "idea_validation":
+
+    metadata = pi.metadata or {}
+    if metadata.get("service") and metadata.get("service") != "idea_validation":
         raise HTTPException(status_code=400, detail="Invalid payment intent for idea validation")
+    if metadata.get("idea_validation_id") and metadata.get("idea_validation_id") != str(row.id):
+        raise HTTPException(status_code=400, detail="Payment intent does not match validation record")
+    if metadata.get("user_id") and metadata.get("user_id") != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Payment intent belongs to another user")
 
     if row.status == IdeaValidationStatus.COMPLETED and row.result_json:
         # Idempotent return
