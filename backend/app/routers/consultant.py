@@ -8,9 +8,11 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_current_active_user, get_current_admin_user
 from app.db.database import get_db
 from app.services.consultant_studio import ConsultantStudioService
 from app.models.consultant_activity import ConsultantActivity
+from app.models.user import User
 
 router = APIRouter(prefix="/consultant", tags=["Consultant Studio"])
 
@@ -143,7 +145,7 @@ class ActivityLogResponse(BaseModel):
 async def validate_idea(
     request: ValidateIdeaRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Path 1: Validate Idea - Online vs Physical decision engine
@@ -157,6 +159,7 @@ async def validate_idea(
     """
     import asyncio
     service = ConsultantStudioService(db)
+    user_id = current_user.id
     
     try:
         result = await asyncio.wait_for(
@@ -169,31 +172,20 @@ async def validate_idea(
             timeout=25.0
         )
         return ValidateIdeaResponse(**result)
-    except asyncio.TimeoutError:
-        return ValidateIdeaResponse(
-            success=False,
-            error="Analysis timed out. Please try again.",
-            idea_description=request.idea_description,
-            recommendation="hybrid",
-            online_score=50,
-            physical_score=50,
-        )
-    except Exception as e:
-        return ValidateIdeaResponse(
-            success=False,
-            error=f"Analysis failed: {str(e)}",
-            idea_description=request.idea_description,
-            recommendation="hybrid",
-            online_score=50,
-            physical_score=50,
-        )
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="Analysis took too long. Please try again or simplify your description.",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(exc)}") from exc
 
 
 @router.post("/search-ideas", response_model=SearchIdeasResponse)
 async def search_ideas(
     request: SearchIdeasRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Path 2: Search Ideas - Database exploration with trend detection
@@ -203,6 +195,7 @@ async def search_ideas(
     """
     import asyncio
     service = ConsultantStudioService(db)
+    user_id = current_user.id
     
     filters = {
         "query": request.query,
@@ -240,7 +233,7 @@ async def search_ideas(
 async def identify_location(
     request: IdentifyLocationRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Path 3: Identify Location - Geographic intelligence
@@ -253,6 +246,7 @@ async def identify_location(
     """
     import asyncio
     service = ConsultantStudioService(db)
+    user_id = current_user.id
     
     try:
         result = await asyncio.wait_for(
@@ -286,7 +280,7 @@ async def identify_location(
 async def clone_success(
     request: CloneSuccessRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Path 4: Clone Success - Replicate successful business models
@@ -297,6 +291,7 @@ async def clone_success(
     """
     import asyncio
     service = ConsultantStudioService(db)
+    user_id = current_user.id
     
     try:
         result = await asyncio.wait_for(
@@ -330,7 +325,7 @@ async def clone_success(
 async def deep_clone_analysis(
     request: DeepCloneRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_active_user),
     paid: bool = False,
 ):
     """
@@ -342,13 +337,11 @@ async def deep_clone_analysis(
     - Competition comparison
     - Match score and key factors
     """
-    from app.models import User
-    
-    user = db.query(User).filter(User.id == user_id).first()
+    user_id = current_user.id
     has_premium_access = False
-    
-    if user and user.subscription:
-        has_premium_access = user.subscription.tier in ['growth', 'pro', 'team', 'business', 'enterprise']
+
+    if current_user.subscription:
+        has_premium_access = current_user.subscription.tier in ['growth', 'pro', 'team', 'business', 'enterprise']
     
     if not has_premium_access and not paid:
         return DeepCloneResponse(
@@ -375,9 +368,10 @@ async def get_activity_log(
     limit: int = 20,
     path: Optional[str] = None,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get user's consultant activity history"""
+    user_id = current_user.id
     query = db.query(ConsultantActivity).filter(
         ConsultantActivity.user_id == user_id
     )
@@ -406,9 +400,10 @@ async def get_activity_log(
 @router.get("/stats")
 async def get_consultant_stats(
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get consultant studio usage statistics"""
+    user_id = current_user.id
     from sqlalchemy import func
     from app.models.detected_trend import DetectedTrend
     from app.models.location_analysis_cache import LocationAnalysisCache
@@ -439,6 +434,7 @@ async def get_consultant_stats(
 async def get_consultant_analytics(
     days: int = 30,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
 ):
     """
     Admin analytics for Consultant Studio usage.

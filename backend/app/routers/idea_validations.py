@@ -158,8 +158,14 @@ async def run_validation(
 
     if pi.status != "succeeded":
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=f"Payment not completed. Status: {pi.status}")
-    if (pi.metadata or {}).get("service") != "idea_validation":
+
+    metadata = pi.metadata or {}
+    if metadata.get("service") and metadata.get("service") != "idea_validation":
         raise HTTPException(status_code=400, detail="Invalid payment intent for idea validation")
+    if metadata.get("idea_validation_id") and metadata.get("idea_validation_id") != str(row.id):
+        raise HTTPException(status_code=400, detail="Payment intent does not match validation record")
+    if metadata.get("user_id") and metadata.get("user_id") != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Payment intent belongs to another user")
 
     if row.status == IdeaValidationStatus.COMPLETED and row.result_json:
         # Idempotent return
