@@ -399,7 +399,7 @@ export default function WorkHub() {
     center: null,
     radius: 1,
     layers: [],
-    activeLayerTab: 'ai'
+    activeLayerTab: 'deep_clone'
   })
   const [aiLayerLoading, setAiLayerLoading] = useState(false)
   const [aiLayerMessage, setAiLayerMessage] = useState<string | null>(null)
