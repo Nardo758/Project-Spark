@@ -162,26 +162,49 @@ class ConsultantStudioService:
             return cached_result
         
         try:
+            import asyncio
+            
             similar_opportunities = await self._find_similar_opportunities(idea_description)
             
-            pattern_analysis = await self._deepseek_pattern_analysis(
-                idea_description, 
-                similar_opportunities,
-                business_context
-            )
+            try:
+                pattern_analysis = await asyncio.wait_for(
+                    self._deepseek_pattern_analysis(
+                        idea_description, 
+                        similar_opportunities,
+                        business_context
+                    ),
+                    timeout=20.0
+                )
+            except asyncio.TimeoutError:
+                logger.warning("DeepSeek pattern analysis timed out, using fallback")
+                pattern_analysis = {
+                    "patterns_found": len(similar_opportunities),
+                    "market_signals": {},
+                    "category_distribution": self._analyze_categories(similar_opportunities),
+                    "average_score": sum(o.feasibility_score or 0 for o in similar_opportunities) / max(len(similar_opportunities), 1),
+                }
             
             online_score, physical_score = self._calculate_business_type_scores(
                 pattern_analysis,
                 business_context
             )
             
-            viability_report = await self._claude_viability_report(
-                idea_description,
-                pattern_analysis,
-                online_score,
-                physical_score,
-                business_context
-            )
+            try:
+                viability_report = await asyncio.wait_for(
+                    self._claude_viability_report(
+                        idea_description,
+                        pattern_analysis,
+                        online_score,
+                        physical_score,
+                        business_context
+                    ),
+                    timeout=20.0
+                )
+            except asyncio.TimeoutError:
+                logger.warning("Claude viability report timed out, using fallback")
+                viability_report = self._generate_fallback_viability_report(
+                    idea_description, online_score, physical_score, business_context
+                )
             
             recommendation = self._determine_recommendation(online_score, physical_score)
             
@@ -1084,6 +1107,48 @@ class ConsultantStudioService:
         physical_score = min(100, max(0, physical_score))
         
         return online_score, physical_score
+
+    def _generate_fallback_viability_report(
+        self,
+        idea_description: str,
+        online_score: int,
+        physical_score: int,
+        context: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Generate a fallback viability report when AI times out"""
+        context = context or {}
+        
+        strengths = ["Clear business concept", "Market demand exists"]
+        weaknesses = ["Requires further validation", "Competition analysis needed"]
+        opportunities = ["Growing market segment", "Technology-enabled solutions"]
+        threats = ["Market saturation risk", "Economic uncertainty"]
+        
+        if online_score > physical_score:
+            strengths.append("Strong online potential")
+            opportunities.append("Global reach possible")
+        elif physical_score > online_score:
+            strengths.append("Local market opportunity")
+            opportunities.append("Community presence advantage")
+        else:
+            strengths.append("Flexible business model")
+            opportunities.append("Multi-channel approach viable")
+        
+        if context.get("global_scalability"):
+            opportunities.append("Scalable business model")
+        if context.get("location_dependent"):
+            threats.append("Geographic limitations")
+        
+        confidence = min(85, max(55, (online_score + physical_score) // 2))
+        
+        return {
+            "strengths": strengths,
+            "weaknesses": weaknesses,
+            "opportunities": opportunities,
+            "threats": threats,
+            "confidence_score": confidence,
+            "summary": f"Initial analysis of '{idea_description[:50]}...' shows potential. Further research recommended.",
+            "fallback": True,
+        }
 
     def _determine_recommendation(self, online_score: int, physical_score: int) -> str:
         """Determine business type recommendation"""
