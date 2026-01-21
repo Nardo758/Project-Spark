@@ -1197,8 +1197,8 @@ export default function WorkHub() {
           {/* Location Finder - Map with Layer Panel */}
           {activeToolView === 'locationFinder' && (
             <div className="flex-1 flex bg-stone-100">
-              <div className="w-80 p-4 bg-white border-r border-stone-200 flex-shrink-0">
-                <div className="flex items-center justify-between mb-4">
+              <div className="w-80 bg-white border-r border-stone-200 flex-shrink-0 flex flex-col h-full">
+                <div className="flex items-center justify-between p-4 pb-0 flex-shrink-0">
                   <h3 className="font-semibold text-stone-900">Location Finder</h3>
                   <button
                     onClick={() => setActiveToolView('chat')}
@@ -1207,13 +1207,15 @@ export default function WorkHub() {
                     Back to Chat
                   </button>
                 </div>
-                <LayerPanel
+                <div className="flex-1 min-h-0 p-4 pt-2">
+                  <LayerPanel
                   state={locationFinderState}
                   onStateChange={setLocationFinderState}
                   onAiPrompt={handleAiLayerPrompt}
                   aiLoading={aiLayerLoading}
                   aiMessage={aiLayerMessage}
                 />
+                </div>
               </div>
               <div className="flex-1 relative">
                 <LocationFinderMap

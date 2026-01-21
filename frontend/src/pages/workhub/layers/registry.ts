@@ -11,23 +11,11 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     aiKeywords: ['clone', 'copy', 'replicate', 'business model', 'franchise', 'similar'],
     inputs: [
       {
-        key: 'sourceBusiness',
-        label: 'Source Business to Clone',
-        type: 'text',
-        placeholder: 'e.g., Crumbl Cookies, Planet Fitness...',
-        required: true
-      },
-      {
-        key: 'sourceLocation',
-        label: 'Source Location (where it\'s successful)',
-        type: 'address',
-        placeholder: 'e.g., Salt Lake City, UT'
-      },
-      {
         key: 'businessCategory',
         label: 'Business Category',
         type: 'combobox',
         placeholder: 'Type or select a category...',
+        required: true,
         options: [
           { value: 'restaurant', label: 'Restaurant' },
           { value: 'fast_food', label: 'Fast Food' },
@@ -58,8 +46,19 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
           { value: 'coworking', label: 'Coworking Space' },
           { value: 'hotel', label: 'Hotel / Lodging' },
           { value: 'other', label: 'Other' }
-        ],
-        defaultValue: 'restaurant'
+        ]
+      },
+      {
+        key: 'sourceBusiness',
+        label: 'Source Business to Clone',
+        type: 'text',
+        placeholder: 'e.g., Crumbl Cookies, Planet Fitness...'
+      },
+      {
+        key: 'sourceLocation',
+        label: 'Source Location (where it\'s successful)',
+        type: 'address',
+        placeholder: 'e.g., Salt Lake City, UT'
       },
       {
         key: 'includeCompetitors',
