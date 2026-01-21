@@ -149,9 +149,10 @@ class ConsultantStudioService:
         """
         Path 1: Validate Idea - Online vs Physical decision engine
         Uses DeepSeek for pattern analysis + Claude for viability report
-        OPTIMIZED: Parallel AI calls and caching for faster response
+        OPTIMIZED: Parallel AI calls for faster response (DeepSeek + Claude run concurrently)
         """
         import time
+        import asyncio
         start_time = time.time()
         
         cache_key = self._get_cache_key(idea_description, business_context)
@@ -164,24 +165,37 @@ class ConsultantStudioService:
         try:
             similar_opportunities = await self._find_similar_opportunities(idea_description)
             
-            pattern_analysis = await self._deepseek_pattern_analysis(
+            pattern_task = self._deepseek_pattern_analysis(
                 idea_description, 
                 similar_opportunities,
                 business_context
             )
+            
+            viability_task = self._claude_viability_report_parallel(
+                idea_description,
+                business_context
+            )
+            
+            pattern_analysis, viability_report = await asyncio.gather(
+                pattern_task,
+                viability_task,
+                return_exceptions=True
+            )
+            
+            if isinstance(pattern_analysis, Exception):
+                logger.warning(f"DeepSeek pattern analysis failed: {pattern_analysis}")
+                pattern_analysis = {}
+            if isinstance(viability_report, Exception):
+                logger.warning(f"Claude viability report failed: {viability_report}")
+                viability_report = {}
             
             online_score, physical_score = self._calculate_business_type_scores(
                 pattern_analysis,
                 business_context
             )
             
-            viability_report = await self._claude_viability_report(
-                idea_description,
-                pattern_analysis,
-                online_score,
-                physical_score,
-                business_context
-            )
+            if viability_report and online_score and physical_score:
+                viability_report["confidence_score"] = min(95, max(60, (online_score + physical_score) // 2 + 20))
             
             recommendation = self._determine_recommendation(online_score, physical_score)
             
@@ -1218,6 +1232,55 @@ class ConsultantStudioService:
             "opportunities": ["Growing market segment", "Technology enablers available"],
             "threats": ["Market saturation risk", "Regulatory considerations"],
             "ai_insights": ai_insights,
+            "confidence_score": 75,
+        }
+
+    async def _claude_viability_report_parallel(
+        self,
+        idea: str,
+        context: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """
+        Claude generates viability report in parallel with DeepSeek.
+        Does not require pattern_analysis or scores - runs concurrently.
+        """
+        import asyncio
+        from .ai_orchestrator import ai_orchestrator, AITaskType
+        
+        data = {
+            "idea": idea,
+            "context": context or {},
+            "request": "Generate a comprehensive SWOT viability analysis with strengths, weaknesses, opportunities, and threats for this business idea.",
+        }
+        
+        try:
+            result = await asyncio.wait_for(
+                ai_orchestrator.process_request(AITaskType.MARKET_RESEARCH, data),
+                timeout=15.0
+            )
+            ai_insights = result.get("result", {}) if result.get("processed") else {}
+            
+            if ai_insights:
+                return {
+                    "executive_summary": ai_insights.get("summary", "Viability analysis based on market patterns."),
+                    "strengths": ai_insights.get("strengths", ["Market demand validated", "Clear target audience"]),
+                    "weaknesses": ai_insights.get("weaknesses", ["Competition level unknown", "Requires further research"]),
+                    "opportunities": ai_insights.get("opportunities", ["Growing market segment", "Technology enablers available"]),
+                    "threats": ai_insights.get("threats", ["Market saturation risk", "Regulatory considerations"]),
+                    "ai_insights": ai_insights,
+                    "confidence_score": ai_insights.get("confidence", 75),
+                }
+        except asyncio.TimeoutError:
+            logger.warning("Claude parallel viability report timed out after 15s")
+        except Exception as e:
+            logger.warning(f"Claude parallel viability report failed: {e}")
+        
+        return {
+            "executive_summary": "Viability analysis based on market patterns and business context.",
+            "strengths": ["Market demand validated", "Clear target audience"],
+            "weaknesses": ["Competition level unknown", "Requires further market research"],
+            "opportunities": ["Growing market segment", "Technology enablers available"],
+            "threats": ["Market saturation risk", "Regulatory considerations"],
             "confidence_score": 75,
         }
 
