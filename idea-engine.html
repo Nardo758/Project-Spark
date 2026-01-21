@@ -1100,12 +1100,10 @@
         </div>
     </div>
 
-    <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        const API_BASE_URL = window.API_BASE_URL || '/api/v1';
-        const API_BASE = `${API_BASE_URL}/idea-engine`;
-        const API_VALIDATIONS = `${API_BASE_URL}/idea-validations`;
+        const API_BASE = '/api/v1/idea-engine';
+        const API_VALIDATIONS = '/api/v1/idea-validations';
         let stripe = null;
         let elements = null;
         let cardElement = null;
@@ -1117,18 +1115,6 @@
             const headers = { 'Content-Type': 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
             return headers;
-        }
-
-        async function parseJsonResponse(response, fallbackMessage) {
-            const data = await response.json().catch(() => null);
-            if (!response.ok) {
-                const message = data?.detail || data?.message || fallbackMessage;
-                throw new Error(message);
-            }
-            if (!data) {
-                throw new Error(fallbackMessage);
-            }
-            return data;
         }
 
         const ideaInput = document.getElementById('ideaInput');
@@ -1164,11 +1150,13 @@
                     body: JSON.stringify({ idea })
                 });
 
-                generatedData = await parseJsonResponse(response, 'Failed to generate idea.');
+                if (!response.ok) throw new Error('Generation failed');
+
+                generatedData = await response.json();
                 displayGeneratedIdea(generatedData);
                 updateSteps(2);
             } catch (error) {
-                alert(error?.message || 'Failed to generate idea. Please try again.');
+                alert('Failed to generate idea. Please try again.');
                 console.error(error);
             } finally {
                 generateBtn.disabled = false;
@@ -1205,8 +1193,9 @@
         async function initStripe() {
             try {
                 const response = await fetch(`${API_BASE}/stripe-key`);
-                const payload = await parseJsonResponse(response, 'Payment service unavailable.');
-                const { publishable_key } = payload;
+                if (!response.ok) return;
+                
+                const { publishable_key } = await response.json();
                 stripe = Stripe(publishable_key);
                 elements = stripe.elements();
                 cardElement = elements.create('card');
@@ -1263,8 +1252,9 @@
                     if (window.OppGridAuth) OppGridAuth.redirectToSignin({ redirect: 'idea-engine.html' });
                     throw new Error('Not authenticated');
                 }
-                const intentPayload = await parseJsonResponse(intentResponse, 'Failed to create payment.');
-                const { client_secret, payment_intent_id, idea_validation_id } = intentPayload;
+                if (!intentResponse.ok) throw new Error('Failed to create payment');
+
+                const { client_secret, payment_intent_id, idea_validation_id } = await intentResponse.json();
                 currentIdeaValidationId = idea_validation_id;
 
                 const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
@@ -1305,13 +1295,15 @@
                     if (window.OppGridAuth) OppGridAuth.redirectToSignin({ redirect: 'idea-engine.html' });
                     throw new Error('Not authenticated');
                 }
-                const record = await parseJsonResponse(response, 'Validation failed.');
+                if (!response.ok) throw new Error('Validation failed');
+
+                const record = await response.json(); // IdeaValidationDetail
                 const result = record.result || null;
                 if (!result) throw new Error('Validation result missing');
                 displayValidationResult(result, record);
                 updateSteps(3);
             } catch (error) {
-                alert(error?.message || 'Validation failed. Please try again.');
+                alert('Validation failed. Please try again.');
                 console.error(error);
             } finally {
                 validateBtn.disabled = false;

@@ -125,7 +125,6 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const opportunityId = urlParams.get('id');
-        const API_BASE_URL = window.API_BASE_URL || '/api/v1';
 
         function getAuthToken() {
             return localStorage.getItem('access_token') || localStorage.getItem('token');
@@ -170,22 +169,17 @@
                     })
                 ]);
 
-                const opportunity = await oppResponse.json().catch(() => null);
-                const roadmapData = await roadmapResponse.json().catch(() => null);
-                if (!oppResponse.ok) {
-                    throw new Error(opportunity?.detail || 'Failed to load opportunity.');
+                if (!oppResponse.ok || !roadmapResponse.ok) {
+                    throw new Error('Failed to load data');
                 }
-                if (!roadmapResponse.ok) {
-                    throw new Error(roadmapData?.detail || 'Failed to generate roadmap.');
-                }
-                if (!opportunity || !roadmapData) {
-                    throw new Error('Invalid response from server.');
-                }
+
+                const opportunity = await oppResponse.json();
+                const roadmapData = await roadmapResponse.json();
 
                 renderRoadmap(opportunity, roadmapData);
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('loading').innerHTML = `<p style="color: var(--red-500);">${error?.message || 'Failed to generate roadmap. Please try again.'}</p>`;
+                document.getElementById('loading').innerHTML = '<p style="color: var(--red-500);">Failed to generate roadmap. Please try again.</p>';
             }
         }
 

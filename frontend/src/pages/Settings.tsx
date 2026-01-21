@@ -110,14 +110,6 @@ export default function Settings() {
   const [loadingSubscription, setLoadingSubscription] = useState(false)
   const [loadingPortal, setLoadingPortal] = useState(false)
 
-  const [hasPassword, setHasPassword] = useState<boolean | null>(null)
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordLoading, setPasswordLoading] = useState(false)
-  const [passwordError, setPasswordError] = useState('')
-  const [passwordSuccess, setPasswordSuccess] = useState('')
-  const [showPasswordForm, setShowPasswordForm] = useState(false)
-
   const [twoFactorStatus, setTwoFactorStatus] = useState<TwoFactorStatus | null>(null)
   const [loading2FA, setLoading2FA] = useState(false)
   const [show2FASetup, setShow2FASetup] = useState(false)
@@ -136,66 +128,8 @@ export default function Settings() {
     }
     if (activeTab === 'security' && token) {
       fetch2FAStatus()
-      fetchPasswordStatus()
     }
   }, [activeTab, token])
-
-  async function fetchPasswordStatus() {
-    if (!token) return
-    try {
-      const res = await fetch('/api/v1/auth/has-password', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setHasPassword(data.has_password)
-      }
-    } catch (err) {
-      console.error('Failed to check password status:', err)
-    }
-  }
-
-  async function handleSetPassword() {
-    if (!token) return
-    setPasswordError('')
-    setPasswordSuccess('')
-
-    if (newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters')
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match')
-      return
-    }
-
-    setPasswordLoading(true)
-    try {
-      const res = await fetch('/api/v1/auth/set-password', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ new_password: newPassword })
-      })
-      if (res.ok) {
-        setPasswordSuccess('Password set successfully! You can now sign in with your email and password.')
-        setHasPassword(true)
-        setNewPassword('')
-        setConfirmPassword('')
-        setShowPasswordForm(false)
-      } else {
-        const data = await res.json()
-        setPasswordError(data.detail || 'Failed to set password')
-      }
-    } catch (err) {
-      console.error('Failed to set password:', err)
-      setPasswordError('An error occurred. Please try again.')
-    } finally {
-      setPasswordLoading(false)
-    }
-  }
 
   async function fetchSubscriptionInfo() {
     if (!token) return
@@ -576,85 +510,20 @@ export default function Settings() {
                   </div>
                 )}
 
-                {passwordSuccess && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700 text-sm">
-                    <Check className="w-4 h-4" />
-                    {passwordSuccess}
-                  </div>
-                )}
-
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-gray-900">Password</p>
-                        <p className="text-sm text-gray-500">
-                          {hasPassword === null ? 'Checking...' : hasPassword ? 'Password is set' : 'No password set (signed up via Google/OAuth)'}
-                        </p>
+                        <p className="text-sm text-gray-500">Manage your account password</p>
                       </div>
-                      <button
-                        onClick={() => setShowPasswordForm(!showPasswordForm)}
+                      <a 
+                        href={`/reset-password.html?email=${encodeURIComponent(user?.email || '')}`}
                         className="text-sm font-medium text-gray-900 hover:underline"
                       >
-                        {hasPassword ? 'Change' : 'Set Password'}
-                      </button>
+                        Change
+                      </a>
                     </div>
-
-                    {showPasswordForm && (
-                      <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-                        {passwordError && (
-                          <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                            {passwordError}
-                          </div>
-                        )}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            New Password
-                          </label>
-                          <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Enter new password"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Confirm Password
-                          </label>
-                          <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm new password"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-500">Must be at least 8 characters</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleSetPassword}
-                            disabled={passwordLoading}
-                            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm font-medium disabled:opacity-50 flex items-center gap-2"
-                          >
-                            {passwordLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {hasPassword ? 'Update Password' : 'Set Password'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowPasswordForm(false)
-                              setNewPassword('')
-                              setConfirmPassword('')
-                              setPasswordError('')
-                            }}
-                            className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">

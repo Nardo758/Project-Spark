@@ -9,7 +9,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-from app.core.security import decode_access_token
 
 @dataclass
 class _Bucket:
@@ -33,20 +32,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Tighten limits on high-risk endpoints.
         self._overrides = {
-            ("POST", "/api/v1/auth/login"): 10,
-            ("POST", "/api/v1/auth/register"): 5,
+            ("POST", "/api/v1/auth/login"): 20,
+            ("POST", "/api/v1/auth/register"): 10,
             ("POST", "/api/v1/2fa/verify"): 30,
             ("POST", "/api/v1/magic-link/request"): 20,
             ("POST", "/api/v1/subscriptions/pay-per-unlock"): 60,
             ("POST", "/api/v1/subscriptions/confirm-pay-per-unlock"): 60,
-            ("POST", "/api/v1/consultant/validate-idea"): 5,
-            ("POST", "/api/v1/consultant/search-ideas"): 20,
-            ("POST", "/api/v1/consultant/identify-location"): 5,
-            ("POST", "/api/v1/consultant/clone-success"): 5,
-            ("POST", "/api/v1/consultant/deep-clone"): 2,
-            ("GET", "/api/v1/consultant/activity"): 60,
-            ("GET", "/api/v1/consultant/stats"): 30,
-            ("GET", "/api/v1/consultant/admin/analytics"): 10,
         }
 
         # Do not rate-limit provider callbacks/webhooks (providers will retry).
@@ -66,20 +57,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return xff.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
 
-    def _client_identity(self, request: Request) -> str:
-        auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
-        if auth_header and auth_header.lower().startswith("bearer "):
-            token = auth_header.split(" ", 1)[1].strip()
-            payload = decode_access_token(token)
-            if payload:
-                user_id = payload.get("user_id")
-                if user_id is not None:
-                    return f"user:{user_id}"
-                sub = payload.get("sub")
-                if sub:
-                    return f"user:{sub}"
-        return f"ip:{self._client_ip(request)}"
-
     def _limit_for(self, method: str, path: str) -> int:
         return self._overrides.get((method, path), self.default_limit)
 
@@ -96,11 +73,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
         method = request.method.upper()
-        principal = self._client_identity(request)
+        ip = self._client_ip(request)
 
         # Fixed 60s window.
         now = time.time()
-        key = (principal, path)
+        key = (ip, path)
         limit = self._limit_for(method, path)
 
         with self._lock:

@@ -139,7 +139,7 @@ app.include_router(contact.router, prefix=f"{settings.API_V1_PREFIX}/contact", t
 app.include_router(leads.router, prefix=f"{settings.API_V1_PREFIX}/admin/leads", tags=["Admin Leads"])
 app.include_router(leads_marketplace.router, prefix=f"{settings.API_V1_PREFIX}/marketplace/leads", tags=["Leads Marketplace"])
 app.include_router(lifecycle.router, prefix=settings.API_V1_PREFIX, tags=["Lifecycle"])
-app.include_router(generated_reports.router, prefix=f"{settings.API_V1_PREFIX}/generated-reports", tags=["Generated Reports"])
+app.include_router(generated_reports.router, prefix=f"{settings.API_V1_PREFIX}/reports", tags=["Generated Reports"])
 app.include_router(consultant.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Consultant Studio"])
 app.include_router(quick_actions.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Quick Actions"])
 app.include_router(webhooks.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Data Webhooks"])

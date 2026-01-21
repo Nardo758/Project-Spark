@@ -5,7 +5,6 @@ from typing import List
 from app.db.database import get_db
 from app.models.user import User
 from app.models.validation import Validation
-from app.models.subscription import Subscription, SubscriptionStatus
 from app.schemas.user import User as UserSchema, UserUpdate, BadgeInfo
 from app.core.dependencies import get_current_active_user
 from app.services.badges import BadgeService
@@ -14,23 +13,11 @@ router = APIRouter()
 
 
 def enrich_user_with_stats(user: User, db: Session) -> User:
-    """Add computed stats to user object including subscription tier"""
+    """Add computed stats to user object"""
     # Count validations
     validation_count = db.query(Validation).filter(Validation.user_id == user.id).count()
+    # Add as attribute for Pydantic to pick up
     user.validation_count = validation_count
-    
-    # Fetch fresh tier from subscriptions table
-    subscription = db.query(Subscription).filter(
-        Subscription.user_id == user.id,
-        Subscription.status == SubscriptionStatus.ACTIVE
-    ).first()
-    
-    if subscription and subscription.tier:
-        tier_value = subscription.tier.value if hasattr(subscription.tier, 'value') else str(subscription.tier)
-        user.tier = tier_value.lower()
-    else:
-        user.tier = "free"
-    
     return user
 
 

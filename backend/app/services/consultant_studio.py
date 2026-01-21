@@ -54,9 +54,9 @@ class ConsultantStudioService:
     def __init__(self, db: Session):
         self.db = db
 
-    def _get_cache_key(self, user_id: int, idea_description: str, context: Optional[Dict] = None) -> str:
+    def _get_cache_key(self, idea_description: str, context: Optional[Dict] = None) -> str:
         """Generate a cache key for validation results"""
-        content = f"{user_id}:{idea_description.lower().strip()}"
+        content = idea_description.lower().strip()
         if context:
             content += json.dumps(context, sort_keys=True)
         return hashlib.sha256(content.encode()).hexdigest()
@@ -154,7 +154,7 @@ class ConsultantStudioService:
         import time
         start_time = time.time()
         
-        cache_key = self._get_cache_key(user_id, idea_description, business_context)
+        cache_key = self._get_cache_key(idea_description, business_context)
         cached_result = self._get_cached_validation(cache_key)
         if cached_result:
             cached_result['from_cache'] = True
@@ -162,51 +162,26 @@ class ConsultantStudioService:
             return cached_result
         
         try:
-            import asyncio
-            
             similar_opportunities = await self._find_similar_opportunities(idea_description)
             
-            pattern_analysis = {
-                "patterns_found": len(similar_opportunities),
-                "market_signals": {},
-                "category_distribution": self._analyze_categories(similar_opportunities),
-                "average_score": sum(o.feasibility_score or 0 for o in similar_opportunities) / max(len(similar_opportunities), 1),
-            }
-            
-            try:
-                ai_pattern = await asyncio.wait_for(
-                    self._deepseek_pattern_analysis(
-                        idea_description, 
-                        similar_opportunities,
-                        business_context
-                    ),
-                    timeout=12.0
-                )
-                pattern_analysis.update(ai_pattern)
-            except (asyncio.TimeoutError, Exception) as e:
-                logger.warning(f"DeepSeek pattern analysis failed: {e}, using fallback")
+            pattern_analysis = await self._deepseek_pattern_analysis(
+                idea_description, 
+                similar_opportunities,
+                business_context
+            )
             
             online_score, physical_score = self._calculate_business_type_scores(
                 pattern_analysis,
                 business_context
             )
             
-            try:
-                viability_report = await asyncio.wait_for(
-                    self._claude_viability_report(
-                        idea_description,
-                        pattern_analysis,
-                        online_score,
-                        physical_score,
-                        business_context
-                    ),
-                    timeout=12.0
-                )
-            except (asyncio.TimeoutError, Exception) as e:
-                logger.warning(f"Claude viability report failed: {e}, using fallback")
-                viability_report = self._generate_fallback_viability_report(
-                    idea_description, online_score, physical_score, business_context
-                )
+            viability_report = await self._claude_viability_report(
+                idea_description,
+                pattern_analysis,
+                online_score,
+                physical_score,
+                business_context
+            )
             
             recommendation = self._determine_recommendation(online_score, physical_score)
             
@@ -999,22 +974,15 @@ class ConsultantStudioService:
         if not base:
             base = {"lat": 33.0, "lng": -97.0}
         
-        fallback_areas = [
-            {"name": f"Downtown {city.title()}", "offset_lat": 0.0, "offset_lng": 0.0, "base_score": 78},
-            {"name": f"North {city.title()}", "offset_lat": 0.035, "offset_lng": 0.01, "base_score": 72},
-            {"name": f"South {city.title()}", "offset_lat": -0.03, "offset_lng": -0.015, "base_score": 68},
-        ]
-        
-        for area in fallback_areas:
-            neighborhoods.append({
-                "name": area["name"],
-                "city": city.title(),
-                "state": state.upper(),
-                "lat": round(base["lat"] + area["offset_lat"], 6),
-                "lng": round(base["lng"] + area["offset_lng"], 6),
-                "address": f"{area['name']}, {city.title()}, {state.upper()}",
-                "base_score": area["base_score"],
-            })
+        neighborhoods.append({
+            "name": f"Downtown {city.title()}",
+            "city": city.title(),
+            "state": state.upper(),
+            "lat": base["lat"],
+            "lng": base["lng"],
+            "address": f"City Center, {city.title()}, {state.upper()}",
+            "base_score": 75,
+        })
         
         return neighborhoods
     
@@ -1109,48 +1077,6 @@ class ConsultantStudioService:
         physical_score = min(100, max(0, physical_score))
         
         return online_score, physical_score
-
-    def _generate_fallback_viability_report(
-        self,
-        idea_description: str,
-        online_score: int,
-        physical_score: int,
-        context: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """Generate a fallback viability report when AI times out"""
-        context = context or {}
-        
-        strengths = ["Clear business concept", "Market demand exists"]
-        weaknesses = ["Requires further validation", "Competition analysis needed"]
-        opportunities = ["Growing market segment", "Technology-enabled solutions"]
-        threats = ["Market saturation risk", "Economic uncertainty"]
-        
-        if online_score > physical_score:
-            strengths.append("Strong online potential")
-            opportunities.append("Global reach possible")
-        elif physical_score > online_score:
-            strengths.append("Local market opportunity")
-            opportunities.append("Community presence advantage")
-        else:
-            strengths.append("Flexible business model")
-            opportunities.append("Multi-channel approach viable")
-        
-        if context.get("global_scalability"):
-            opportunities.append("Scalable business model")
-        if context.get("location_dependent"):
-            threats.append("Geographic limitations")
-        
-        confidence = min(85, max(55, (online_score + physical_score) // 2))
-        
-        return {
-            "strengths": strengths,
-            "weaknesses": weaknesses,
-            "opportunities": opportunities,
-            "threats": threats,
-            "confidence_score": confidence,
-            "summary": f"Initial analysis of '{idea_description[:50]}...' shows potential. Further research recommended.",
-            "fallback": True,
-        }
 
     def _determine_recommendation(self, online_score: int, physical_score: int) -> str:
         """Determine business type recommendation"""
@@ -1550,20 +1476,6 @@ class ConsultantStudioService:
             "key_insights": insights if insights else ["Market data collected", "Review opportunities for details"],
         }
 
-    def _safe_int(self, value: Any, default: int = 0) -> int:
-        """Safely convert value to int, handling strings and None"""
-        if value is None:
-            return default
-        if isinstance(value, (int, float)):
-            return int(value)
-        if isinstance(value, str):
-            cleaned = value.replace(",", "").replace("$", "").replace("%", "").strip()
-            try:
-                return int(float(cleaned)) if cleaned else default
-            except (ValueError, TypeError):
-                return default
-        return default
-
     def _generate_quick_market_report(
         self,
         city: str,
@@ -1577,8 +1489,8 @@ class ConsultantStudioService:
         market_indicators = geo_analysis.get("market_indicators", {})
         
         competition_level = "low" if len(competitors) < 3 else "moderate" if len(competitors) < 8 else "high"
-        median_income = self._safe_int(demographics.get("median_income"), 50000)
-        population = self._safe_int(demographics.get("population"), 0)
+        median_income = demographics.get("median_income", 50000)
+        population = demographics.get("population", 0)
         
         market_score = 70
         if median_income > 75000:
@@ -1607,7 +1519,7 @@ class ConsultantStudioService:
             "demographics_summary": {
                 "median_income": median_income,
                 "population": population,
-                "median_age": self._safe_int(demographics.get("median_age"), 35),
+                "median_age": demographics.get("median_age", 35),
             },
             "key_insights": insights if insights else ["Market analysis available", "Review competitor data for positioning"],
             "recommendation": "favorable" if market_score >= 70 else "moderate" if market_score >= 50 else "challenging",

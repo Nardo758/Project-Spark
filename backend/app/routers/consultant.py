@@ -8,12 +8,9 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_active_user, get_current_admin_user
-from app.core.sanitization import sanitize_json, sanitize_text
 from app.db.database import get_db
 from app.services.consultant_studio import ConsultantStudioService
 from app.models.consultant_activity import ConsultantActivity
-from app.models.user import User
 
 router = APIRouter(prefix="/consultant", tags=["Consultant Studio"])
 
@@ -146,7 +143,7 @@ class ActivityLogResponse(BaseModel):
 async def validate_idea(
     request: ValidateIdeaRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    user_id: int = 1,
 ):
     """
     Path 1: Validate Idea - Online vs Physical decision engine
@@ -160,36 +157,43 @@ async def validate_idea(
     """
     import asyncio
     service = ConsultantStudioService(db)
-    user_id = current_user.id
-    safe_idea = sanitize_text(request.idea_description, max_length=5000) or ""
-    safe_context = sanitize_json(request.business_context) if request.business_context else None
-    safe_session_id = sanitize_text(request.session_id, max_length=100) if request.session_id else None
     
     try:
         result = await asyncio.wait_for(
             service.validate_idea(
                 user_id=user_id,
-                idea_description=safe_idea,
-                business_context=safe_context,
-                session_id=safe_session_id,
+                idea_description=request.idea_description,
+                business_context=request.business_context,
+                session_id=request.session_id,
             ),
             timeout=25.0
         )
         return ValidateIdeaResponse(**result)
-    except asyncio.TimeoutError as exc:
-        raise HTTPException(
-            status_code=504,
-            detail="Analysis took too long. Please try again or simplify your description.",
-        ) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(exc)}") from exc
+    except asyncio.TimeoutError:
+        return ValidateIdeaResponse(
+            success=False,
+            error="Analysis timed out. Please try again.",
+            idea_description=request.idea_description,
+            recommendation="hybrid",
+            online_score=50,
+            physical_score=50,
+        )
+    except Exception as e:
+        return ValidateIdeaResponse(
+            success=False,
+            error=f"Analysis failed: {str(e)}",
+            idea_description=request.idea_description,
+            recommendation="hybrid",
+            online_score=50,
+            physical_score=50,
+        )
 
 
 @router.post("/search-ideas", response_model=SearchIdeasResponse)
 async def search_ideas(
     request: SearchIdeasRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    user_id: int = 1,
 ):
     """
     Path 2: Search Ideas - Database exploration with trend detection
@@ -199,16 +203,14 @@ async def search_ideas(
     """
     import asyncio
     service = ConsultantStudioService(db)
-    user_id = current_user.id
     
     filters = {
-        "query": sanitize_text(request.query, max_length=200) if request.query else None,
-        "category": sanitize_text(request.category, max_length=100) if request.category else None,
+        "query": request.query,
+        "category": request.category,
         "min_score": request.min_score,
-        "time_range": sanitize_text(request.time_range, max_length=20) if request.time_range else None,
-        "quality_filter": sanitize_text(request.quality_filter, max_length=20) if request.quality_filter else None,
+        "time_range": request.time_range,
+        "quality_filter": request.quality_filter,
     }
-    safe_session_id = sanitize_text(request.session_id, max_length=100) if request.session_id else None
     
     filters = {k: v for k, v in filters.items() if v is not None}
     
@@ -217,7 +219,7 @@ async def search_ideas(
             service.search_ideas(
                 user_id=user_id,
                 filters=filters,
-                session_id=safe_session_id,
+                session_id=request.session_id,
             ),
             timeout=15.0
         )
@@ -238,7 +240,7 @@ async def search_ideas(
 async def identify_location(
     request: IdentifyLocationRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    user_id: int = 1,
 ):
     """
     Path 3: Identify Location - Geographic intelligence
@@ -251,20 +253,15 @@ async def identify_location(
     """
     import asyncio
     service = ConsultantStudioService(db)
-    user_id = current_user.id
-    safe_city = sanitize_text(request.city, max_length=255) or ""
-    safe_business_description = sanitize_text(request.business_description, max_length=500) or ""
-    safe_additional_params = sanitize_json(request.additional_params) if request.additional_params else None
-    safe_session_id = sanitize_text(request.session_id, max_length=100) if request.session_id else None
     
     try:
         result = await asyncio.wait_for(
             service.identify_location(
                 user_id=user_id,
-                city=safe_city,
-                business_description=safe_business_description,
-                additional_params=safe_additional_params,
-                session_id=safe_session_id,
+                city=request.city,
+                business_description=request.business_description,
+                additional_params=request.additional_params,
+                session_id=request.session_id,
             ),
             timeout=25.0
         )
@@ -289,7 +286,7 @@ async def identify_location(
 async def clone_success(
     request: CloneSuccessRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    user_id: int = 1,
 ):
     """
     Path 4: Clone Success - Replicate successful business models
@@ -300,23 +297,17 @@ async def clone_success(
     """
     import asyncio
     service = ConsultantStudioService(db)
-    user_id = current_user.id
-    safe_business_name = sanitize_text(request.business_name, max_length=255) or ""
-    safe_business_address = sanitize_text(request.business_address, max_length=500) or ""
-    safe_target_city = sanitize_text(request.target_city, max_length=255) if request.target_city else None
-    safe_target_state = sanitize_text(request.target_state, max_length=2) if request.target_state else None
-    safe_session_id = sanitize_text(request.session_id, max_length=100) if request.session_id else None
     
     try:
         result = await asyncio.wait_for(
             service.clone_success(
                 user_id=user_id,
-                business_name=safe_business_name,
-                business_address=safe_business_address,
-                target_city=safe_target_city,
-                target_state=safe_target_state,
+                business_name=request.business_name,
+                business_address=request.business_address,
+                target_city=request.target_city,
+                target_state=request.target_state,
                 radius_miles=request.radius_miles,
-                session_id=safe_session_id,
+                session_id=request.session_id,
             ),
             timeout=25.0
         )
@@ -339,7 +330,7 @@ async def clone_success(
 async def deep_clone_analysis(
     request: DeepCloneRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    user_id: int = 1,
     paid: bool = False,
 ):
     """
@@ -351,15 +342,13 @@ async def deep_clone_analysis(
     - Competition comparison
     - Match score and key factors
     """
-    user_id = current_user.id
+    from app.models import User
+    
+    user = db.query(User).filter(User.id == user_id).first()
     has_premium_access = False
-    safe_source_name = sanitize_text(request.source_business_name, max_length=255) or ""
-    safe_source_address = sanitize_text(request.source_business_address, max_length=500) or ""
-    safe_target_city = sanitize_text(request.target_city, max_length=255) or ""
-    safe_session_id = sanitize_text(request.session_id, max_length=100) if request.session_id else None
-
-    if current_user.subscription:
-        has_premium_access = current_user.subscription.tier in ['growth', 'pro', 'team', 'business', 'enterprise']
+    
+    if user and user.subscription:
+        has_premium_access = user.subscription.tier in ['growth', 'pro', 'team', 'business', 'enterprise']
     
     if not has_premium_access and not paid:
         return DeepCloneResponse(
@@ -372,10 +361,10 @@ async def deep_clone_analysis(
     
     result = await service.deep_clone_analysis(
         user_id=user_id,
-        source_business_name=safe_source_name,
-        source_business_address=safe_source_address,
-        target_city=safe_target_city,
-        session_id=safe_session_id,
+        source_business_name=request.source_business_name,
+        source_business_address=request.source_business_address,
+        target_city=request.target_city,
+        session_id=request.session_id,
     )
     
     return DeepCloneResponse(**result)
@@ -386,17 +375,15 @@ async def get_activity_log(
     limit: int = 20,
     path: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    user_id: int = 1,
 ):
     """Get user's consultant activity history"""
-    user_id = current_user.id
-    safe_path = sanitize_text(path, max_length=50) if path else None
     query = db.query(ConsultantActivity).filter(
         ConsultantActivity.user_id == user_id
     )
     
-    if safe_path:
-        query = query.filter(ConsultantActivity.path == safe_path)
+    if path:
+        query = query.filter(ConsultantActivity.path == path)
     
     activities = query.order_by(
         ConsultantActivity.created_at.desc()
@@ -419,10 +406,9 @@ async def get_activity_log(
 @router.get("/stats")
 async def get_consultant_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    user_id: int = 1,
 ):
     """Get consultant studio usage statistics"""
-    user_id = current_user.id
     from sqlalchemy import func
     from app.models.detected_trend import DetectedTrend
     from app.models.location_analysis_cache import LocationAnalysisCache
@@ -453,7 +439,6 @@ async def get_consultant_stats(
 async def get_consultant_analytics(
     days: int = 30,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin_user),
 ):
     """
     Admin analytics for Consultant Studio usage.

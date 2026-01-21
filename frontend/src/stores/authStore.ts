@@ -133,22 +133,27 @@ export const useAuthStore = create<AuthState>()(
             return
           }
 
-          // 2) Always fetch fresh user data from backend to get current tier
-          const res = await fetch('/api/v1/users/me', {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          if (!res.ok) {
-            throw new Error('Unauthorized')
-          }
-          const data = await res.json().catch(() => ({}))
-          const user = normalizeUser(data)
-          if (user) {
-            set({ user, isAuthenticated: true })
-            try {
-              localStorage.setItem('user', JSON.stringify(user))
-            } catch {
-              // ignore
+          // 2) Hydrate user from backend (authoritative) if missing.
+          if (!get().user) {
+            const res = await fetch('/api/v1/users/me', {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (!res.ok) {
+              throw new Error('Unauthorized')
             }
+            const data = await res.json().catch(() => ({}))
+            const user = normalizeUser(data)
+            if (user) {
+              set({ user, isAuthenticated: true })
+              try {
+                localStorage.setItem('user', JSON.stringify(user))
+              } catch {
+                // ignore
+              }
+            }
+          } else {
+            // Ensure flags line up if token exists.
+            set({ isAuthenticated: true })
           }
         } catch {
           // Token invalid/expired; clear local auth state

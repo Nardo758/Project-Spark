@@ -7,7 +7,6 @@ import logging
 
 from app.db.database import get_db
 from app.models.user import User
-from app.core.dependencies import get_current_active_user
 from app.schemas.user import UserCreate, User as UserSchema
 from app.schemas.token import Token
 from app.core.security import verify_password, get_password_hash, create_access_token
@@ -39,10 +38,6 @@ class RequestPasswordResetRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    new_password: str
-
-
-class SetPasswordRequest(BaseModel):
     new_password: str
 
 
@@ -309,34 +304,3 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
         "message": "Password reset successfully",
         "email": user.email
     }
-
-
-@router.post("/set-password")
-def set_password(
-    request: SetPasswordRequest,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    """Set password for OAuth users who don't have one, or update existing password"""
-    if len(request.new_password) < 8:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters long"
-        )
-
-    current_user.hashed_password = get_password_hash(request.new_password)  # type: ignore[assignment]
-    db.commit()
-
-    return {
-        "message": "Password set successfully",
-        "has_password": True
-    }
-
-
-@router.get("/has-password")
-def check_has_password(
-    current_user: User = Depends(get_current_active_user)
-):
-    """Check if the current user has a password set"""
-    has_password = bool(getattr(current_user, 'hashed_password', None))
-    return {"has_password": has_password}
