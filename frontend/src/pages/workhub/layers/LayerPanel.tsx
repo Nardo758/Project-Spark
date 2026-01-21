@@ -45,6 +45,14 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
   const [addressLoading, setAddressLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
+  useEffect(() => {
+    if (state.center?.address) {
+      setAddressInput(state.center.address)
+    } else if (!state.center) {
+      setAddressInput('')
+    }
+  }, [state.center])
+
   const doAddressSearch = useCallback(async (query: string) => {
     if (query.length < 3) {
       setAddressSuggestions([])

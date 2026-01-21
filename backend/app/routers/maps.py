@@ -161,7 +161,7 @@ class LayerCommandResponse(BaseModel):
     message: str | None = None
 
 
-SUPPORTED_LAYER_TYPES = {"center_point", "deep_clone", "demographics", "competition", "traffic"}
+SUPPORTED_LAYER_TYPES = {"deep_clone", "demographics", "competition", "traffic"}
 
 LAYER_KEYWORDS: dict[str, list[str]] = {
     "demographics": ["demographics", "population", "income", "census", "people", "age", "household"],
