@@ -244,19 +244,26 @@ async def _analyze_target_location(
     target_location: str,
     radius_miles: float
 ) -> LocationScore:
-    """Analyze a target location for clone potential"""
+    """Analyze a target location for clone potential using deterministic scoring"""
     
-    import random
+    import hashlib
     
-    base_score = random.uniform(60, 95)
-    market_fit = random.uniform(0.6, 0.95)
-    demographic_match = random.uniform(0.5, 0.9)
+    location_hash = hashlib.md5(f"{target_location}{target_lat}{target_lng}{business_type}".encode()).hexdigest()
+    hash_int = int(location_hash[:8], 16)
+    
+    def deterministic_value(seed_offset: int, min_val: float, max_val: float) -> float:
+        seeded = (hash_int + seed_offset) % 10000 / 10000.0
+        return min_val + (seeded * (max_val - min_val))
+    
+    base_score = deterministic_value(0, 60, 95)
+    market_fit = deterministic_value(1, 0.6, 0.95)
+    demographic_match = deterministic_value(2, 0.5, 0.9)
     
     competition_levels = ["Low", "Moderate", "High"]
-    competition = random.choice(competition_levels)
+    competition = competition_levels[(hash_int + 3) % 3]
     
     growth_levels = ["Stable", "Growing", "Rapidly Growing"]
-    growth = random.choice(growth_levels)
+    growth = growth_levels[(hash_int + 4) % 3]
     
     strengths = []
     weaknesses = []
@@ -304,15 +311,24 @@ async def _calculate_location_score(
     latitude: float,
     longitude: float
 ) -> Dict[str, Any]:
-    """Calculate an overall score for a location"""
+    """Calculate an overall score for a location using deterministic scoring"""
     
-    import random
+    import hashlib
+    
+    location_hash = hashlib.md5(f"{latitude}{longitude}{business_type}".encode()).hexdigest()
+    hash_int = int(location_hash[:8], 16)
+    
+    def deterministic_value(seed_offset: int, min_val: float, max_val: float) -> float:
+        seeded = (hash_int + seed_offset) % 10000 / 10000.0
+        return min_val + (seeded * (max_val - min_val))
+    
+    growth_trends = ["declining", "stable", "growing", "booming"]
     
     return {
-        "overall_score": round(random.uniform(50, 95), 1),
-        "market_potential": round(random.uniform(0.5, 1.0), 2),
-        "competition_density": round(random.uniform(0.2, 0.8), 2),
-        "demographic_fit": round(random.uniform(0.4, 0.9), 2),
-        "accessibility": round(random.uniform(0.5, 1.0), 2),
-        "growth_trend": random.choice(["declining", "stable", "growing", "booming"])
+        "overall_score": round(deterministic_value(0, 50, 95), 1),
+        "market_potential": round(deterministic_value(1, 0.5, 1.0), 2),
+        "competition_density": round(deterministic_value(2, 0.2, 0.8), 2),
+        "demographic_fit": round(deterministic_value(3, 0.4, 0.9), 2),
+        "accessibility": round(deterministic_value(4, 0.5, 1.0), 2),
+        "growth_trend": growth_trends[(hash_int + 5) % 4]
     }

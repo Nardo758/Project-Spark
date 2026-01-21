@@ -132,6 +132,58 @@ export default function MapWorkspace() {
     }
   }
   
+  async function fetchComparisonData() {
+    if (!token || !opportunity) return
+    
+    try {
+      const res = await fetch('/api/v1/deep-clone/analyze', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          source: {
+            business_type: opportunity.category || 'retail',
+            source_latitude: opportunity.location_lat || viewport.center[1],
+            source_longitude: opportunity.location_lng || viewport.center[0],
+            source_location: opportunity.location || 'Current Location'
+          },
+          targets: [
+            {
+              target_latitude: 30.2672,
+              target_longitude: -97.7431,
+              target_location: 'Austin, TX'
+            },
+            {
+              target_latitude: 39.7392,
+              target_longitude: -104.9903,
+              target_location: 'Denver, CO'
+            },
+            {
+              target_latitude: 33.7490,
+              target_longitude: -84.3880,
+              target_location: 'Atlanta, GA'
+            }
+          ]
+        })
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        setComparisonLocations(data.target_analyses || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch comparison data:', err)
+    }
+  }
+  
+  useEffect(() => {
+    if (showComparison && comparisonLocations.length === 0 && opportunity) {
+      fetchComparisonData()
+    }
+  }, [showComparison, opportunity])
+  
   async function sendMessage() {
     if (!inputValue.trim() || sending || !token) return
     
@@ -376,37 +428,24 @@ export default function MapWorkspace() {
               )}
             </div>
             
-            {showComparison && (
-              <div className="p-3 border-t border-gray-700">
+          </div>
+        )}
+        
+        {showComparison && (
+          <div className="w-80 border-r border-gray-700 bg-gray-800/50 flex flex-col shrink-0">
+            <div className="p-3 border-b border-gray-700 flex items-center justify-between">
+              <span className="font-medium text-sm">Location Comparison</span>
+              <button
+                onClick={() => setShowComparison(false)}
+                className="p-1 hover:bg-gray-700 rounded"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              {comparisonLocations.length > 0 ? (
                 <CityComparisonCards
-                  locations={comparisonLocations.length > 0 ? comparisonLocations : [
-                    {
-                      location: "Austin, TX",
-                      latitude: 30.2672,
-                      longitude: -97.7431,
-                      overall_score: 87,
-                      market_fit: 0.89,
-                      competition_level: "Moderate",
-                      demographic_match: 0.82,
-                      growth_potential: "Rapidly Growing",
-                      strengths: ["Strong tech ecosystem", "Young demographics"],
-                      weaknesses: ["Increasing competition"],
-                      recommendation: "Highly Recommended"
-                    },
-                    {
-                      location: "Denver, CO",
-                      latitude: 39.7392,
-                      longitude: -104.9903,
-                      overall_score: 78,
-                      market_fit: 0.75,
-                      competition_level: "Low",
-                      demographic_match: 0.71,
-                      growth_potential: "Growing",
-                      strengths: ["Low competition", "Outdoor lifestyle appeal"],
-                      weaknesses: ["Smaller market size"],
-                      recommendation: "Worth Considering"
-                    }
-                  ]}
+                  locations={comparisonLocations}
                   onSelectLocation={(loc) => {
                     setViewport({
                       center: [loc.longitude, loc.latitude],
@@ -414,8 +453,12 @@ export default function MapWorkspace() {
                     })
                   }}
                 />
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                </div>
+              )}
+            </div>
           </div>
         )}
         
