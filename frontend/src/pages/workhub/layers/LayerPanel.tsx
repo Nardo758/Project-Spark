@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Sparkles, Plus, X, Eye, EyeOff, MapPin, Loader2, Send } from 'lucide-react'
+import { Sparkles, Plus, X, Eye, EyeOff, MapPin, Loader2, Send, FileText, TrendingUp, Users, Store, CheckCircle } from 'lucide-react'
 import { layerRegistry, defaultLayerTabs, createLayerInstance } from './registry'
 import type { LayerType, LayerInstance, LocationFinderState } from './types'
 import { LayerInputRenderer } from './LayerInputRenderer'
@@ -45,6 +45,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
   const [addressLoading, setAddressLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [analyzingLayers, setAnalyzingLayers] = useState<Record<string, boolean>>({})
+  const [showSummaryModal, setShowSummaryModal] = useState(false)
 
   useEffect(() => {
     if (state.center?.address) {
@@ -382,16 +383,37 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                 return (
                   <div
                     key={layer.id}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs ${
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs group ${
                       layer.visible ? 'bg-stone-100 text-stone-700' : 'bg-stone-50 text-stone-400'
                     }`}
                   >
                     <Icon className="w-3 h-3" />
                     <span>{def.label}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleRemoveLayer(layer.id)
+                      }}
+                      className="ml-0.5 p-0.5 rounded hover:bg-stone-200 text-stone-400 hover:text-stone-600 transition-colors"
+                      title={`Remove ${def.label} layer`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
                 )
               })}
             </div>
+
+            <button
+              onClick={() => setShowSummaryModal(true)}
+              disabled={!state.center || state.layers.length === 0 || !state.layers.some(l => 
+                l.config?.analysisResult || l.data
+              )}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
+            >
+              <FileText className="w-4 h-4" />
+              Generate Summary
+            </button>
           </div>
         )}
       </div>
@@ -434,6 +456,217 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
           </button>
         </div>
       </div>
+
+      {showSummaryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-white" />
+                <h2 className="text-lg font-semibold text-white">Location Analysis Summary</h2>
+              </div>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="p-1 hover:bg-white/20 rounded transition-colors"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-4">
+              {(() => {
+                const deepCloneLayer = state.layers.find(l => l.type === 'deep_clone')
+                const deepCloneResult = deepCloneLayer?.config?.analysisResult
+                const competitionLayer = state.layers.find(l => l.type === 'competition')
+                const competitorCount = competitionLayer?.data?.length || deepCloneResult?.competitor_count || deepCloneResult?.three_mile_analysis?.competitor_count || 0
+                const hasAnalysisData = deepCloneResult || competitionLayer?.data
+
+                if (hasAnalysisData) {
+                  return (
+                    <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl p-4 border border-indigo-100">
+                      <h3 className="font-semibold text-stone-800 mb-3 flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-indigo-600" />
+                        Analysis Overview
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {deepCloneResult && (
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <div className="text-xs text-stone-500 mb-1">Clone Viability</div>
+                            <div className={`text-2xl font-bold ${
+                              deepCloneResult.match_score >= 75 ? 'text-emerald-600' :
+                              deepCloneResult.match_score >= 50 ? 'text-amber-600' : 'text-red-600'
+                            }`}>
+                              {deepCloneResult.match_score}%
+                            </div>
+                          </div>
+                        )}
+                        {deepCloneResult?.three_mile_analysis?.population && (
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <div className="text-xs text-stone-500 mb-1">3-Mile Population</div>
+                            <div className="text-2xl font-bold text-stone-800">
+                              {deepCloneResult.three_mile_analysis.population.toLocaleString()}
+                            </div>
+                          </div>
+                        )}
+                        {deepCloneResult?.three_mile_analysis?.median_income && (
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <div className="text-xs text-stone-500 mb-1">Median Income</div>
+                            <div className="text-2xl font-bold text-stone-800">
+                              ${deepCloneResult.three_mile_analysis.median_income.toLocaleString()}
+                            </div>
+                          </div>
+                        )}
+                        {competitorCount > 0 && (
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <div className="text-xs text-stone-500 mb-1">Nearby Competitors</div>
+                            <div className="text-2xl font-bold text-stone-800">{competitorCount}</div>
+                          </div>
+                        )}
+                      </div>
+                      {deepCloneResult?.key_factors && deepCloneResult.key_factors.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-indigo-100">
+                          <div className="text-xs text-stone-500 mb-2">Key Insights</div>
+                          <ul className="space-y-1">
+                            {deepCloneResult.key_factors.slice(0, 3).map((factor: string, i: number) => (
+                              <li key={i} className="text-sm text-stone-700 flex items-start gap-2">
+                                <span className="text-indigo-500 font-bold">•</span>
+                                {factor}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                return null
+              })()}
+
+              {state.center && (
+                <div className="bg-stone-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-stone-500 mb-1">
+                    <MapPin className="w-4 h-4" />
+                    <span className="text-xs font-medium">Target Location</span>
+                  </div>
+                  <p className="text-sm text-stone-800">{state.center.address || `${state.center.lat.toFixed(4)}, ${state.center.lng.toFixed(4)}`}</p>
+                  <p className="text-xs text-stone-500 mt-1">Search Radius: {state.radius} mi</p>
+                </div>
+              )}
+
+              {state.layers.map(layer => {
+                const def = layerRegistry[layer.type]
+                const Icon = def.icon
+                const deepCloneResult = layer.type === 'deep_clone' ? layer.config?.analysisResult : null
+
+                return (
+                  <div key={layer.id} className="border border-stone-200 rounded-lg overflow-hidden">
+                    <div className="bg-stone-100 px-3 py-2 flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-stone-600" />
+                      <span className="font-medium text-stone-800 text-sm">{def.label}</span>
+                      {layer.visible && (
+                        <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">Active</span>
+                      )}
+                    </div>
+                    <div className="p-3 text-sm">
+                      {layer.type === 'deep_clone' && (
+                        <div className="space-y-2">
+                          <p className="text-stone-600"><span className="font-medium">Business:</span> {layer.config?.sourceBusiness || 'Not set'}</p>
+                          {deepCloneResult ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                <span className="font-semibold text-emerald-700">Match Score: {deepCloneResult.match_score}%</span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="flex items-center gap-1.5">
+                                  <Users className="w-3.5 h-3.5 text-stone-400" />
+                                  <span>Pop: {deepCloneResult.three_mile_analysis?.population?.toLocaleString() || 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <TrendingUp className="w-3.5 h-3.5 text-stone-400" />
+                                  <span>Income: ${deepCloneResult.three_mile_analysis?.median_income?.toLocaleString() || 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Store className="w-3.5 h-3.5 text-stone-400" />
+                                  <span>Competitors: {deepCloneResult.competitor_count ?? deepCloneResult.three_mile_analysis?.competitor_count ?? 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <TrendingUp className="w-3.5 h-3.5 text-stone-400" />
+                                  <span>Growth: {deepCloneResult.three_mile_analysis?.growth_rate != null ? `${deepCloneResult.three_mile_analysis.growth_rate}%` : 'N/A'}</span>
+                                </div>
+                              </div>
+                              {deepCloneResult.key_factors && deepCloneResult.key_factors.length > 0 && (
+                                <div className="pt-2 border-t border-stone-100">
+                                  <p className="text-xs text-stone-500 mb-1">Key Factors:</p>
+                                  <ul className="text-xs space-y-0.5">
+                                    {deepCloneResult.key_factors.slice(0, 3).map((factor: string, i: number) => (
+                                      <li key={i} className="flex items-start gap-1.5 text-stone-600">
+                                        <span className="text-emerald-500">•</span>
+                                        {factor}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-stone-400 italic">Analysis not yet run</p>
+                          )}
+                        </div>
+                      )}
+
+                      {layer.type === 'demographics' && (
+                        <div className="text-stone-600">
+                          <p><span className="font-medium">Data Type:</span> {layer.config?.dataType || 'population'}</p>
+                          {layer.data ? (
+                            <p className="text-xs text-emerald-600 mt-1">Data loaded</p>
+                          ) : (
+                            <p className="text-xs text-stone-400 italic mt-1">No data loaded</p>
+                          )}
+                        </div>
+                      )}
+
+                      {layer.type === 'competition' && (
+                        <div className="text-stone-600">
+                          <p><span className="font-medium">Category:</span> {layer.config?.category || 'Not set'}</p>
+                          {layer.data && layer.data.length > 0 ? (
+                            <p className="text-xs text-emerald-600 mt-1">{layer.data.length} competitors found</p>
+                          ) : (
+                            <p className="text-xs text-stone-400 italic mt-1">No competitors loaded</p>
+                          )}
+                        </div>
+                      )}
+
+                      {layer.type === 'traffic' && (
+                        <div className="text-stone-600">
+                          <p className="text-xs text-stone-400 italic">Traffic layer active</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+
+              {state.layers.length === 0 && (
+                <div className="text-center py-8 text-stone-400">
+                  <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No layers added yet</p>
+                  <p className="text-xs mt-1">Add layers to generate a summary</p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-stone-200 p-4 bg-stone-50 flex justify-end gap-2">
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-lg text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
