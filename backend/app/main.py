@@ -69,6 +69,7 @@ from app.routers import (
     ai_preferences,
     workspace_map,
     workspace_digital,
+    deep_clone,
 )
 
 install_trace_id_factory()
@@ -167,6 +168,7 @@ app.include_router(public_api.router, prefix=f"{settings.API_V1_PREFIX}/public",
 app.include_router(ai_preferences.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Preferences"])
 app.include_router(workspace_map.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Workspace Map"])
 app.include_router(workspace_digital.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Workspace Digital"])
+app.include_router(deep_clone.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Deep Clone"])
 
 
 @app.get("/")

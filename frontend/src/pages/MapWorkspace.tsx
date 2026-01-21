@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
+import RealmSwitcher from '../components/RealmSwitcher'
+import CityComparisonCards from '../components/CityComparisonCards'
 import {
   Send,
   Loader2,
@@ -9,13 +11,11 @@ import {
   MessageSquare,
   X,
   ChevronLeft,
-  ChevronRight,
   Compass,
   Target,
-  Building2,
-  Users,
-  TrendingUp,
-  HelpCircle
+  Globe,
+  Copy,
+  BarChart3
 } from 'lucide-react'
 
 interface ChatMessage {
@@ -59,6 +59,9 @@ export default function MapWorkspace() {
   
   const [chatPanelOpen, setChatPanelOpen] = useState(true)
   const [layersPanelOpen, setLayersPanelOpen] = useState(false)
+  const [currentRealm, setCurrentRealm] = useState<'physical' | 'digital'>('physical')
+  const [comparisonLocations, setComparisonLocations] = useState<any[]>([])
+  const [showComparison, setShowComparison] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -282,7 +285,23 @@ export default function MapWorkspace() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <RealmSwitcher
+            currentRealm={currentRealm}
+            onRealmChange={setCurrentRealm}
+          />
+          
+          <div className="h-6 w-px bg-gray-700" />
+          
+          <button
+            onClick={() => setShowComparison(!showComparison)}
+            className={`p-2 rounded-lg transition-colors ${
+              showComparison ? 'bg-purple-600' : 'hover:bg-gray-700'
+            }`}
+            title="Compare locations"
+          >
+            <BarChart3 className="w-5 h-5" />
+          </button>
           <button
             onClick={() => setLayersPanelOpen(!layersPanelOpen)}
             className={`p-2 rounded-lg transition-colors ${
@@ -356,14 +375,56 @@ export default function MapWorkspace() {
                 ))
               )}
             </div>
+            
+            {showComparison && (
+              <div className="p-3 border-t border-gray-700">
+                <CityComparisonCards
+                  locations={comparisonLocations.length > 0 ? comparisonLocations : [
+                    {
+                      location: "Austin, TX",
+                      latitude: 30.2672,
+                      longitude: -97.7431,
+                      overall_score: 87,
+                      market_fit: 0.89,
+                      competition_level: "Moderate",
+                      demographic_match: 0.82,
+                      growth_potential: "Rapidly Growing",
+                      strengths: ["Strong tech ecosystem", "Young demographics"],
+                      weaknesses: ["Increasing competition"],
+                      recommendation: "Highly Recommended"
+                    },
+                    {
+                      location: "Denver, CO",
+                      latitude: 39.7392,
+                      longitude: -104.9903,
+                      overall_score: 78,
+                      market_fit: 0.75,
+                      competition_level: "Low",
+                      demographic_match: 0.71,
+                      growth_potential: "Growing",
+                      strengths: ["Low competition", "Outdoor lifestyle appeal"],
+                      weaknesses: ["Smaller market size"],
+                      recommendation: "Worth Considering"
+                    }
+                  ]}
+                  onSelectLocation={(loc) => {
+                    setViewport({
+                      center: [loc.longitude, loc.latitude],
+                      zoom: 12
+                    })
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
         
         <div className="flex-1 relative bg-gray-900">
-          <div
-            ref={mapContainerRef}
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}
+          {currentRealm === 'physical' ? (
+            <div
+              ref={mapContainerRef}
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}
           >
             <div className="text-center">
               <Compass className="w-16 h-16 text-gray-600 mx-auto mb-4" />
@@ -383,9 +444,37 @@ export default function MapWorkspace() {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #1e1e3f 0%, #2d1b4e 100%)' }}
+            >
+              <div className="text-center max-w-md">
+                <Globe className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">Digital Realm Workspace</h3>
+                <p className="text-gray-400 mb-4">
+                  Design online business models, create wireframes, and analyze digital opportunities
+                </p>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="p-3 bg-gray-800/50 rounded-lg text-left">
+                    <Copy className="w-5 h-5 text-purple-400 mb-2" />
+                    <div className="text-sm font-medium text-white">Business Model Canvas</div>
+                    <div className="text-xs text-gray-400">Visual planning tool</div>
+                  </div>
+                  <div className="p-3 bg-gray-800/50 rounded-lg text-left">
+                    <Layers className="w-5 h-5 text-purple-400 mb-2" />
+                    <div className="text-sm font-medium text-white">Wireframing</div>
+                    <div className="text-xs text-gray-400">Excalidraw canvas</div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Excalidraw integration coming soon
+                </p>
+              </div>
+            </div>
+          )}
           
-          {layers.length > 0 && (
+          {currentRealm === 'physical' && layers.length > 0 && (
             <div className="absolute bottom-4 left-4 bg-gray-800/90 backdrop-blur rounded-lg p-3 max-w-xs">
               <div className="text-xs text-gray-400 mb-2">Active Layers</div>
               <div className="flex flex-wrap gap-2">
