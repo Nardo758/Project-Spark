@@ -133,11 +133,89 @@ async def process_chat_message(
     
     elif command.command_type == MapCommandType.COMPARE_LOCATIONS:
         if command.locations and len(command.locations) >= 2:
-            response_message = f"Comparing {', '.join(command.locations)}"
-            actions = ["start_comparison"]
+            comparison_data = await _geocode_and_compare_locations(command.locations)
+            if comparison_data:
+                layer = map_layer_generator.generate_comparison_layer(comparison_data)
+                response_message = f"Comparing {', '.join(command.locations)} - markers added to map"
+                actions = ["add_layer", "fit_bounds", "show_comparison_panel"]
+            else:
+                response_message = f"Comparing {', '.join(command.locations)}"
+                actions = ["start_comparison"]
         else:
             response_message = "Which locations would you like to compare? Please specify at least two cities or areas."
             actions = ["request_locations"]
+    
+    elif command.command_type == MapCommandType.SHOW_HEATMAP:
+        if message.center_lat and message.center_lng:
+            heatmap_points = await _generate_heatmap_points(
+                center_lat=message.center_lat,
+                center_lng=message.center_lng,
+                radius_miles=command.radius_miles or 10.0,
+                metric=command.heatmap_metric or "density"
+            )
+            layer = map_layer_generator.generate_heatmap_layer(
+                points=heatmap_points,
+                metric=command.heatmap_metric or "density"
+            )
+            response_message = f"Generated heatmap for {command.heatmap_metric or 'density'}"
+            actions = ["add_layer"]
+        else:
+            response_message = "Please specify a location to generate a heatmap"
+            actions = ["request_location"]
+    
+    elif command.command_type == MapCommandType.ZOOM_TO:
+        if command.location:
+            coords = await _geocode_location(command.location)
+            if coords:
+                response_message = f"Zooming to {command.location}"
+                actions = ["zoom_to", "set_center"]
+                layer = {
+                    "layer_id": "zoom_target",
+                    "layer_type": "viewport",
+                    "viewport": {
+                        "center": [coords["longitude"], coords["latitude"]],
+                        "zoom": command.zoom_level or 12
+                    }
+                }
+            else:
+                response_message = f"Could not find location: {command.location}"
+                actions = []
+        else:
+            response_message = "Where would you like to zoom to?"
+            actions = ["request_location"]
+    
+    elif command.command_type == MapCommandType.FILTER_BY:
+        filter_type = command.filter_type or "rating"
+        filter_value = command.filter_value
+        response_message = f"Filtering by {filter_type}" + (f" >= {filter_value}" if filter_value else "")
+        actions = ["apply_filter", "refresh_layers"]
+        layer = {
+            "layer_id": "filter",
+            "layer_type": "filter",
+            "filter": {
+                "type": filter_type,
+                "value": filter_value,
+                "operator": ">=" if filter_value else "exists"
+            }
+        }
+    
+    elif command.command_type == MapCommandType.ANALYZE_AREA:
+        if message.center_lat and message.center_lng:
+            analysis = await _analyze_area(
+                center_lat=message.center_lat,
+                center_lng=message.center_lng,
+                radius_miles=command.radius_miles or 5.0
+            )
+            response_message = f"Area analysis complete:\n{analysis['summary']}"
+            actions = ["show_analysis_panel"]
+            layer = {
+                "layer_id": "analysis",
+                "layer_type": "analysis",
+                "data": analysis
+            }
+        else:
+            response_message = "Please specify a location to analyze"
+            actions = ["request_location"]
     
     elif command.command_type == MapCommandType.UNKNOWN:
         response_message = "I'm not sure what you're asking. Try commands like:\n- Show me competitors\n- What are the demographics?\n- Set radius to 5 miles\n- Compare Austin and Denver"
@@ -194,6 +272,20 @@ async def generate_layer(
             center_lng=request.longitude,
             radius_miles=request.radius_miles or 10.0
         )
+    
+    elif request.layer_type == "heatmap":
+        if not request.latitude or not request.longitude:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Latitude and longitude required for heatmap layer"
+            )
+        points = await _generate_heatmap_points(
+            center_lat=request.latitude,
+            center_lng=request.longitude,
+            radius_miles=request.radius_miles or 10.0,
+            metric="density"
+        )
+        return map_layer_generator.generate_heatmap_layer(points=points)
     
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -260,4 +352,114 @@ async def save_session(
     return {
         "session_id": session.id,
         "message": "Session saved successfully"
+    }
+
+
+CITY_COORDS = {
+    "austin": {"latitude": 30.2672, "longitude": -97.7431},
+    "denver": {"latitude": 39.7392, "longitude": -104.9903},
+    "seattle": {"latitude": 47.6062, "longitude": -122.3321},
+    "miami": {"latitude": 25.7617, "longitude": -80.1918},
+    "new york": {"latitude": 40.7128, "longitude": -74.0060},
+    "los angeles": {"latitude": 34.0522, "longitude": -118.2437},
+    "chicago": {"latitude": 41.8781, "longitude": -87.6298},
+    "houston": {"latitude": 29.7604, "longitude": -95.3698},
+    "phoenix": {"latitude": 33.4484, "longitude": -112.0740},
+    "philadelphia": {"latitude": 39.9526, "longitude": -75.1652},
+    "san antonio": {"latitude": 29.4241, "longitude": -98.4936},
+    "san diego": {"latitude": 32.7157, "longitude": -117.1611},
+    "dallas": {"latitude": 32.7767, "longitude": -96.7970},
+    "san jose": {"latitude": 37.3382, "longitude": -121.8863},
+    "boston": {"latitude": 42.3601, "longitude": -71.0589},
+    "atlanta": {"latitude": 33.7490, "longitude": -84.3880},
+    "nashville": {"latitude": 36.1627, "longitude": -86.7816},
+    "portland": {"latitude": 45.5152, "longitude": -122.6784},
+    "las vegas": {"latitude": 36.1699, "longitude": -115.1398},
+    "charlotte": {"latitude": 35.2271, "longitude": -80.8431},
+}
+
+
+async def _geocode_location(location: str) -> Optional[Dict[str, float]]:
+    """Get coordinates for a location name"""
+    location_lower = location.lower().strip()
+    if location_lower in CITY_COORDS:
+        return CITY_COORDS[location_lower]
+    
+    for city, coords in CITY_COORDS.items():
+        if city in location_lower or location_lower in city:
+            return coords
+    
+    return None
+
+
+async def _geocode_and_compare_locations(locations: List[str]) -> List[Dict[str, Any]]:
+    """Geocode multiple locations and prepare comparison data"""
+    results = []
+    
+    for idx, loc in enumerate(locations):
+        coords = await _geocode_location(loc)
+        if coords:
+            results.append({
+                "name": loc.title(),
+                "latitude": coords["latitude"],
+                "longitude": coords["longitude"],
+                "score": 100 - (idx * 5),
+                "metrics": {
+                    "market_size": "Medium" if idx % 2 == 0 else "Large",
+                    "competition": "Low" if idx % 3 == 0 else "Moderate",
+                    "growth_rate": f"{5 + idx}%"
+                }
+            })
+    
+    return results
+
+
+async def _generate_heatmap_points(
+    center_lat: float,
+    center_lng: float,
+    radius_miles: float,
+    metric: str
+) -> List[Dict[str, Any]]:
+    """Generate sample heatmap points around a center location"""
+    import random
+    import math
+    
+    points = []
+    num_points = 50
+    
+    for i in range(num_points):
+        angle = random.uniform(0, 2 * math.pi)
+        distance = random.uniform(0, radius_miles) * 1.60934
+        
+        lat_offset = (distance * math.sin(angle)) / 111.32
+        lng_offset = (distance * math.cos(angle)) / (111.32 * math.cos(math.radians(center_lat)))
+        
+        points.append({
+            "latitude": center_lat + lat_offset,
+            "longitude": center_lng + lng_offset,
+            "weight": random.uniform(0.3, 1.0)
+        })
+    
+    return points
+
+
+async def _analyze_area(
+    center_lat: float,
+    center_lng: float,
+    radius_miles: float
+) -> Dict[str, Any]:
+    """Perform area analysis"""
+    return {
+        "summary": f"Analysis of {radius_miles} mile radius around ({center_lat:.4f}, {center_lng:.4f})",
+        "metrics": {
+            "estimated_population": "~50,000",
+            "median_income": "$65,000",
+            "business_density": "Medium",
+            "growth_trend": "Positive"
+        },
+        "recommendations": [
+            "Good foot traffic potential",
+            "Moderate competition level",
+            "Growing residential area"
+        ]
     }

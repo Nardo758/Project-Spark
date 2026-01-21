@@ -37,6 +37,10 @@ class MapCommand:
     layer_name: Optional[str] = None
     demographic_metrics: Optional[List[str]] = None
     filters: Optional[Dict[str, Any]] = None
+    heatmap_metric: Optional[str] = None
+    zoom_level: Optional[int] = None
+    filter_type: Optional[str] = None
+    filter_value: Optional[Any] = None
     raw_query: str = ""
     confidence: float = 0.0
     explanation: str = ""

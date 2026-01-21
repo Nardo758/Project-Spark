@@ -68,6 +68,7 @@ from app.routers import (
     public_api,
     ai_preferences,
     workspace_map,
+    workspace_digital,
 )
 
 install_trace_id_factory()
@@ -165,6 +166,7 @@ app.include_router(teams.router, prefix=f"{settings.API_V1_PREFIX}/teams", tags=
 app.include_router(public_api.router, prefix=f"{settings.API_V1_PREFIX}/public", tags=["Public API"])
 app.include_router(ai_preferences.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Preferences"])
 app.include_router(workspace_map.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Workspace Map"])
+app.include_router(workspace_digital.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Workspace Digital"])
 
 
 @app.get("/")

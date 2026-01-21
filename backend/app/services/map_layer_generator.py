@@ -15,6 +15,60 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
+STATE_CENTERS = {
+    "01": {"lat": 32.806671, "lng": -86.791130},
+    "02": {"lat": 61.370716, "lng": -152.404419},
+    "04": {"lat": 33.729759, "lng": -111.431221},
+    "05": {"lat": 34.969704, "lng": -92.373123},
+    "06": {"lat": 36.116203, "lng": -119.681564},
+    "08": {"lat": 39.059811, "lng": -105.311104},
+    "09": {"lat": 41.597782, "lng": -72.755371},
+    "10": {"lat": 39.318523, "lng": -75.507141},
+    "12": {"lat": 27.766279, "lng": -81.686783},
+    "13": {"lat": 33.040619, "lng": -83.643074},
+    "15": {"lat": 21.094318, "lng": -157.498337},
+    "16": {"lat": 44.240459, "lng": -114.478828},
+    "17": {"lat": 40.349457, "lng": -88.986137},
+    "18": {"lat": 39.849426, "lng": -86.258278},
+    "19": {"lat": 42.011539, "lng": -93.210526},
+    "20": {"lat": 38.526600, "lng": -96.726486},
+    "21": {"lat": 37.668140, "lng": -84.670067},
+    "22": {"lat": 31.169546, "lng": -91.867805},
+    "23": {"lat": 44.693947, "lng": -69.381927},
+    "24": {"lat": 39.063946, "lng": -76.802101},
+    "25": {"lat": 42.230171, "lng": -71.530106},
+    "26": {"lat": 43.326618, "lng": -84.536095},
+    "27": {"lat": 45.694454, "lng": -93.900192},
+    "28": {"lat": 32.741646, "lng": -89.678696},
+    "29": {"lat": 38.456085, "lng": -92.288368},
+    "30": {"lat": 46.921925, "lng": -110.454353},
+    "31": {"lat": 41.125370, "lng": -98.268082},
+    "32": {"lat": 38.313515, "lng": -117.055374},
+    "33": {"lat": 43.452492, "lng": -71.563896},
+    "34": {"lat": 40.298904, "lng": -74.521011},
+    "35": {"lat": 34.840515, "lng": -106.248482},
+    "36": {"lat": 42.165726, "lng": -74.948051},
+    "37": {"lat": 35.630066, "lng": -79.806419},
+    "38": {"lat": 47.528912, "lng": -99.784012},
+    "39": {"lat": 40.388783, "lng": -82.764915},
+    "40": {"lat": 35.565342, "lng": -96.928917},
+    "41": {"lat": 44.572021, "lng": -122.070938},
+    "42": {"lat": 40.590752, "lng": -77.209755},
+    "44": {"lat": 41.680893, "lng": -71.511780},
+    "45": {"lat": 33.856892, "lng": -80.945007},
+    "46": {"lat": 44.299782, "lng": -99.438828},
+    "47": {"lat": 35.747845, "lng": -86.692345},
+    "48": {"lat": 31.054487, "lng": -97.563461},
+    "49": {"lat": 40.150032, "lng": -111.862434},
+    "50": {"lat": 44.045876, "lng": -72.710686},
+    "51": {"lat": 37.769337, "lng": -78.169968},
+    "53": {"lat": 47.400902, "lng": -121.490494},
+    "54": {"lat": 38.491226, "lng": -80.954456},
+    "55": {"lat": 44.268543, "lng": -89.616508},
+    "56": {"lat": 42.755966, "lng": -107.302490},
+}
+
+
 @dataclass
 class GeoJSONFeature:
     """Single GeoJSON feature"""
@@ -138,7 +192,7 @@ class MapLayerGenerator:
         state_fips: str,
         metrics: Optional[List[str]] = None
     ) -> Dict[str, Any]:
-        """Generate demographics data for a state"""
+        """Generate demographics data for a state as GeoJSON"""
         
         if not metrics:
             metrics = ["population", "median_income", "median_age"]
@@ -152,9 +206,27 @@ class MapLayerGenerator:
             except Exception as e:
                 logger.error(f"Failed to fetch census data: {e}")
         
+        state_center = STATE_CENTERS.get(state_fips, {"lat": 39.8283, "lng": -98.5795})
+        
+        feature = GeoJSONFeature(
+            geometry={
+                "type": "Point",
+                "coordinates": [state_center["lng"], state_center["lat"]]
+            },
+            properties={
+                "id": f"demo_{state_fips}",
+                "state_fips": state_fips,
+                "layer_type": "demographics",
+                **demographics
+            }
+        )
+        
+        collection = GeoJSONFeatureCollection(features=[feature])
+        
         return {
             "layer_id": "demographics",
-            "layer_type": "data",
+            "layer_type": "demographics",
+            "geojson": collection.to_dict(),
             "data": demographics,
             "metadata": {
                 "state_fips": state_fips,
