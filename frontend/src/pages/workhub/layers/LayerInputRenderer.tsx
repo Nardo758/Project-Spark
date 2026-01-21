@@ -45,9 +45,20 @@ export function LayerInputRenderer({ definition, config, onChange, loading, onAn
   const [activeAddressField, setActiveAddressField] = useState<string | null>(null)
   const [comboboxOpen, setComboboxOpen] = useState<string | null>(null)
   const [comboboxSearch, setComboboxSearch] = useState('')
+  const analysisResultRef = useRef<HTMLDivElement>(null)
+  const prevAnalysisResultRef = useRef<any>(null)
 
   const isDeepClone = definition.type === 'deep_clone'
   const canAnalyze = isDeepClone && config.sourceBusiness?.trim() && targetLocation
+
+  useEffect(() => {
+    if (config.analysisResult && config.analysisResult !== prevAnalysisResultRef.current) {
+      setTimeout(() => {
+        analysisResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+    prevAnalysisResultRef.current = config.analysisResult
+  }, [config.analysisResult])
 
   const doAddressSearch = useCallback(async (query: string) => {
     if (query.length < 3) {
@@ -322,7 +333,7 @@ export function LayerInputRenderer({ definition, config, onChange, loading, onAn
           )}
 
           {config.analysisResult && (
-            <div className="mt-4 space-y-3">
+            <div ref={analysisResultRef} className="mt-4 space-y-3">
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-emerald-600" />
