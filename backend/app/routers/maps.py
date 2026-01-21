@@ -293,3 +293,108 @@ async def parse_layer_command(request: LayerCommandRequest):
         actions=actions,
         message=message
     )
+
+
+class PlacesNearbyRequest(BaseModel):
+    lat: float
+    lng: float
+    radius_miles: float = 1.0
+    business_type: str = "restaurant"
+    limit: int = 20
+
+
+class PlaceResult(BaseModel):
+    id: str
+    name: str
+    lat: float
+    lng: float
+    rating: float | None = None
+    review_count: int | None = None
+    address: str | None = None
+    category: str | None = None
+
+
+class PlacesNearbyResponse(BaseModel):
+    places: list[PlaceResult]
+    total: int
+
+
+@router.post("/places/nearby", response_model=PlacesNearbyResponse)
+def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db)):
+    """
+    Get nearby businesses/places for the Deep Clone and Competition layers.
+    Returns mock data based on location for now.
+    """
+    import random
+    import math
+    
+    business_names = {
+        "restaurant": ["The Local Kitchen", "Urban Eats", "Flavor House", "Bistro 99", "The Grill Room", 
+                      "Tasty Corner", "Fresh Bites", "Downtown Diner", "Savory Spot", "Comfort Food Co"],
+        "cafe": ["Morning Brew", "Coffee Corner", "Bean & Leaf", "The Daily Grind", "Espresso Lane"],
+        "gym": ["FitLife", "PowerHouse Gym", "Core Fitness", "Peak Performance", "Strong Studio"],
+        "retail": ["Main Street Shop", "Urban Goods", "Local Market", "Style Boutique", "The Corner Store"],
+        "business": ["Metro Business Center", "Innovation Hub", "Pro Services", "Local Agency", "Community Co-op"]
+    }
+    
+    names = business_names.get(request.business_type, business_names["business"])
+    
+    places = []
+    for i in range(min(request.limit, 15)):
+        angle = random.uniform(0, 2 * math.pi)
+        distance = random.uniform(0.1, request.radius_miles) * 0.01449
+        
+        place_lat = request.lat + distance * math.cos(angle)
+        place_lng = request.lng + distance * math.sin(angle) / math.cos(math.radians(request.lat))
+        
+        places.append(PlaceResult(
+            id=f"{request.business_type}_{i}_{int(request.lat*100)}_{int(request.lng*100)}",
+            name=f"{random.choice(names)} {chr(65 + i)}",
+            lat=place_lat,
+            lng=place_lng,
+            rating=round(random.uniform(3.5, 5.0), 1),
+            review_count=random.randint(10, 500),
+            address=f"{random.randint(100, 9999)} {random.choice(['Main', 'Oak', 'Park', 'Center', 'First'])} St",
+            category=request.business_type
+        ))
+    
+    return PlacesNearbyResponse(places=places, total=len(places))
+
+
+class DemographicsRequest(BaseModel):
+    lat: float
+    lng: float
+    radius_miles: float = 1.0
+    metrics: list[str] = ["population", "income"]
+
+
+class DemographicsResponse(BaseModel):
+    population: int | None = None
+    median_income: int | None = None
+    median_age: float | None = None
+    households: int | None = None
+    education_bachelors_pct: float | None = None
+    employment_rate: float | None = None
+    area_sq_miles: float | None = None
+
+
+@router.post("/demographics", response_model=DemographicsResponse)
+def get_demographics(request: DemographicsRequest):
+    """
+    Get demographic data for an area.
+    Returns estimated data based on location.
+    """
+    import random
+    
+    area = 3.14159 * (request.radius_miles ** 2)
+    pop_density = random.randint(2000, 8000)
+    
+    return DemographicsResponse(
+        population=int(area * pop_density),
+        median_income=random.randint(45000, 120000),
+        median_age=round(random.uniform(28, 45), 1),
+        households=int(area * pop_density / 2.5),
+        education_bachelors_pct=round(random.uniform(25, 55), 1),
+        employment_rate=round(random.uniform(92, 98), 1),
+        area_sq_miles=round(area, 2)
+    )

@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { LayerPanel, createLayerInstance } from './workhub/layers'
+import { LocationFinderMap } from './workhub/layers/LocationFinderMap'
+import { fetchLayerData, shouldRefetchLayer } from './workhub/layers/layerService'
 import type { LocationFinderState, LayerType } from './workhub/layers/types'
 
 type WorkspaceStatus = 'researching' | 'validating' | 'planning' | 'building' | 'launched' | 'paused' | 'archived'
@@ -403,6 +405,7 @@ export default function WorkHub() {
   })
   const [aiLayerLoading, setAiLayerLoading] = useState(false)
   const [aiLayerMessage, setAiLayerMessage] = useState<string | null>(null)
+  const prevLocationFinderStateRef = useRef<LocationFinderState | null>(null)
   const [agentName, setAgentName] = useState(() => {
     try {
       return localStorage.getItem('agent-name') || 'Atlas'
@@ -543,6 +546,65 @@ export default function WorkHub() {
       setActiveStage(workspaceQuery.data.status)
     }
   }, [workspaceQuery.data?.status])
+
+  const layerVisibilityKey = locationFinderState.layers
+    .map(l => `${l.id}:${l.visible}:${l.data ? 'has' : 'no'}`)
+    .join(',')
+
+  useEffect(() => {
+    const fetchLayersData = async () => {
+      if (!locationFinderState.center) return
+
+      const layersToFetch = locationFinderState.layers.filter(layer => {
+        if (!layer.visible) return false
+        if (layer.loading) return false
+        if (!layer.data && !layer.error) return true
+        return shouldRefetchLayer(layer, prevLocationFinderStateRef.current, locationFinderState)
+      })
+
+      if (layersToFetch.length === 0) {
+        prevLocationFinderStateRef.current = locationFinderState
+        return
+      }
+
+      for (const layer of layersToFetch) {
+        setLocationFinderState(prev => ({
+          ...prev,
+          layers: prev.layers.map(l => 
+            l.id === layer.id ? { ...l, loading: true, error: null } : l
+          )
+        }))
+
+        const result = await fetchLayerData(layer.type, {
+          center: locationFinderState.center!,
+          radius: locationFinderState.radius,
+          config: layer.config
+        })
+
+        setLocationFinderState(prev => ({
+          ...prev,
+          layers: prev.layers.map(l => 
+            l.id === layer.id 
+              ? { ...l, loading: false, data: result.data, error: result.error || null }
+              : l
+          )
+        }))
+      }
+
+      prevLocationFinderStateRef.current = locationFinderState
+    }
+
+    fetchLayersData()
+  }, [locationFinderState.center, locationFinderState.radius, layerVisibilityKey])
+
+  const handleLayerDataUpdate = (layerId: string, data: any, error?: string) => {
+    setLocationFinderState(prev => ({
+      ...prev,
+      layers: prev.layers.map(l => 
+        l.id === layerId ? { ...l, data, error: error || null, loading: false } : l
+      )
+    }))
+  }
 
   const handleSendMessage = () => {
     if (!chatMessage.trim() || sendMessageMutation.isPending) return
@@ -1154,22 +1216,10 @@ export default function WorkHub() {
                 />
               </div>
               <div className="flex-1 relative">
-                <div className="absolute inset-0 flex items-center justify-center bg-stone-200">
-                  <div className="text-center">
-                    <MapPin className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-stone-900 mb-2">Map Preview</h3>
-                    <p className="text-stone-600 text-sm max-w-md">
-                      {locationFinderState.center?.address 
-                        ? `Center: ${locationFinderState.center.address.slice(0, 50)}...`
-                        : 'Set a center point to begin analyzing locations'}
-                    </p>
-                    {locationFinderState.center && (
-                      <p className="text-xs text-stone-500 mt-2">
-                        Radius: {locationFinderState.radius} mile(s) | {locationFinderState.layers.filter(l => l.visible).length} active layer(s)
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <LocationFinderMap
+                  state={locationFinderState}
+                  onLayerDataUpdate={handleLayerDataUpdate}
+                />
               </div>
             </div>
           )}
