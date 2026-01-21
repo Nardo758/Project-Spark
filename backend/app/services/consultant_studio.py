@@ -1068,9 +1068,17 @@ class ConsultantStudioService:
             physical_score += 20
         
         categories = pattern_analysis.get("category_distribution", {})
-        if categories.get("Technology", 0) > 0.3:
+        try:
+            tech_score = float(categories.get("Technology", 0) or 0)
+        except (ValueError, TypeError):
+            tech_score = 0.0
+        try:
+            local_score = float(categories.get("Local Services", 0) or 0)
+        except (ValueError, TypeError):
+            local_score = 0.0
+        if tech_score > 0.3:
             online_score += 10
-        if categories.get("Local Services", 0) > 0.3:
+        if local_score > 0.3:
             physical_score += 10
         
         online_score = min(100, max(0, online_score))
@@ -1489,8 +1497,14 @@ class ConsultantStudioService:
         market_indicators = geo_analysis.get("market_indicators", {})
         
         competition_level = "low" if len(competitors) < 3 else "moderate" if len(competitors) < 8 else "high"
-        median_income = demographics.get("median_income", 50000)
-        population = demographics.get("population", 0)
+        try:
+            median_income = int(demographics.get("median_income", 50000) or 50000)
+        except (ValueError, TypeError):
+            median_income = 50000
+        try:
+            population = int(demographics.get("population", 0) or 0)
+        except (ValueError, TypeError):
+            population = 0
         
         market_score = 70
         if median_income > 75000:
