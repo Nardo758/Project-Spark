@@ -43,6 +43,10 @@ class OpenAIKeyUpdate(BaseModel):
     api_key: str = Field(..., min_length=20, description="OpenAI API key")
 
 
+class ClaudeKeyUpdate(BaseModel):
+    api_key: str = Field(..., min_length=20, description="Anthropic Claude API key")
+
+
 class KeyValidationResponse(BaseModel):
     valid: bool
     message: str
@@ -209,6 +213,99 @@ async def remove_openai_api_key(
     ai_provider_service.clear_cache(current_user.id)
     
     return {"message": "OpenAI API key removed successfully"}
+
+
+@router.post("/claude-key", response_model=KeyValidationResponse)
+async def set_claude_api_key(
+    key_update: ClaudeKeyUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Set and validate Claude API key for BYOK"""
+    import anthropic
+    from app.models.user import get_fernet
+    
+    api_key = key_update.api_key.strip()
+    if not api_key.startswith("sk-ant-"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Anthropic API key format. Key should start with 'sk-ant-'"
+        )
+    
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=10,
+            messages=[{"role": "user", "content": "Hi"}]
+        )
+        if not response.content:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Could not validate API key - no response received"
+            )
+    except anthropic.AuthenticationError as e:
+        logger.error(f"Claude key validation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Claude API key: Authentication failed"
+        )
+    except Exception as e:
+        logger.error(f"Claude key validation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid Claude API key: {str(e)}"
+        )
+    
+    fernet = get_fernet()
+    current_user.encrypted_claude_api_key = fernet.encrypt(api_key.encode()).decode()
+    current_user.claude_key_validated_at = datetime.utcnow()
+    
+    prefs = db.query(UserAIPreference).filter(
+        UserAIPreference.user_id == current_user.id
+    ).first()
+    
+    if not prefs:
+        prefs = UserAIPreference(user_id=current_user.id)
+        db.add(prefs)
+    
+    prefs.provider = "claude"
+    prefs.mode = "byok"
+    
+    db.commit()
+    
+    from app.services.ai_provider_service import ai_provider_service
+    ai_provider_service.clear_cache(current_user.id)
+    
+    return KeyValidationResponse(
+        valid=True,
+        message="Claude API key validated and saved successfully",
+        provider="claude"
+    )
+
+
+@router.delete("/claude-key")
+async def remove_claude_api_key(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Remove stored Claude API key"""
+    current_user.encrypted_claude_api_key = None
+    current_user.claude_key_validated_at = None
+    
+    prefs = db.query(UserAIPreference).filter(
+        UserAIPreference.user_id == current_user.id
+    ).first()
+    
+    if prefs and prefs.provider == "claude" and prefs.mode == "byok":
+        prefs.mode = "replit"
+    
+    db.commit()
+    
+    from app.services.ai_provider_service import ai_provider_service
+    ai_provider_service.clear_cache(current_user.id)
+    
+    return {"message": "Claude API key removed successfully"}
 
 
 @router.get("/available-providers")

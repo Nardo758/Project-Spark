@@ -7,10 +7,17 @@ from app.db.database import Base
 
 
 def get_fernet():
-    """Get Fernet instance for encryption/decryption"""
+    """Get Fernet instance for encryption/decryption.
+    
+    Raises RuntimeError if ENCRYPTION_KEY is not set to prevent
+    data loss from generating ephemeral keys.
+    """
     key = os.environ.get("ENCRYPTION_KEY")
     if not key:
-        key = Fernet.generate_key().decode()
+        raise RuntimeError(
+            "ENCRYPTION_KEY environment variable is required for API key encryption. "
+            "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+        )
     return Fernet(key.encode() if isinstance(key, str) else key)
 
 
