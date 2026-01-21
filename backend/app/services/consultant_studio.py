@@ -1476,6 +1476,20 @@ class ConsultantStudioService:
             "key_insights": insights if insights else ["Market data collected", "Review opportunities for details"],
         }
 
+    def _safe_int(self, value: Any, default: int = 0) -> int:
+        """Safely convert value to int, handling strings and None"""
+        if value is None:
+            return default
+        if isinstance(value, (int, float)):
+            return int(value)
+        if isinstance(value, str):
+            cleaned = value.replace(",", "").replace("$", "").replace("%", "").strip()
+            try:
+                return int(float(cleaned)) if cleaned else default
+            except (ValueError, TypeError):
+                return default
+        return default
+
     def _generate_quick_market_report(
         self,
         city: str,
@@ -1489,8 +1503,8 @@ class ConsultantStudioService:
         market_indicators = geo_analysis.get("market_indicators", {})
         
         competition_level = "low" if len(competitors) < 3 else "moderate" if len(competitors) < 8 else "high"
-        median_income = demographics.get("median_income", 50000)
-        population = demographics.get("population", 0)
+        median_income = self._safe_int(demographics.get("median_income"), 50000)
+        population = self._safe_int(demographics.get("population"), 0)
         
         market_score = 70
         if median_income > 75000:
@@ -1519,7 +1533,7 @@ class ConsultantStudioService:
             "demographics_summary": {
                 "median_income": median_income,
                 "population": population,
-                "median_age": demographics.get("median_age", 35),
+                "median_age": self._safe_int(demographics.get("median_age"), 35),
             },
             "key_insights": insights if insights else ["Market analysis available", "Review competitor data for positioning"],
             "recommendation": "favorable" if market_score >= 70 else "moderate" if market_score >= 50 else "challenging",
