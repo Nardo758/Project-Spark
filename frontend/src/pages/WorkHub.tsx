@@ -403,6 +403,7 @@ export default function WorkHub() {
     layers: [],
     activeLayerTab: 'deep_clone'
   })
+  const [clickToSetLocation, setClickToSetLocation] = useState(true)
   const [aiLayerLoading, setAiLayerLoading] = useState(false)
   const [aiLayerMessage, setAiLayerMessage] = useState<string | null>(null)
   const prevLocationFinderStateRef = useRef<LocationFinderState | null>(null)
@@ -554,6 +555,14 @@ export default function WorkHub() {
   const layerConfigKey = locationFinderState.layers
     .map(l => `${l.id}:${l.config?.businessCategory || ''}:${l.config?.category || ''}`)
     .join(',')
+
+  useEffect(() => {
+    if (locationFinderState.center) {
+      setClickToSetLocation(false)
+    } else {
+      setClickToSetLocation(true)
+    }
+  }, [locationFinderState.center])
 
   useEffect(() => {
     const fetchLayersData = async () => {
@@ -1225,11 +1234,13 @@ export default function WorkHub() {
                 <LocationFinderMap
                   state={locationFinderState}
                   onLayerDataUpdate={handleLayerDataUpdate}
+                  clickToSetEnabled={clickToSetLocation}
                   onCenterChange={(center) => {
                     setLocationFinderState(prev => ({
                       ...prev,
                       center: center
                     }))
+                    setClickToSetLocation(false)
                   }}
                 />
               </div>

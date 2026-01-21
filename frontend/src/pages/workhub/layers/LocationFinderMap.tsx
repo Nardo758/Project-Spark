@@ -11,9 +11,10 @@ interface LocationFinderMapProps {
   state: LocationFinderState
   onLayerDataUpdate?: (layerId: string, data: any, error?: string) => void
   onCenterChange?: (center: { lat: number; lng: number; address?: string }) => void
+  clickToSetEnabled?: boolean
 }
 
-export function LocationFinderMap({ state, onCenterChange }: LocationFinderMapProps) {
+export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = false }: LocationFinderMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const centerMarkerRef = useRef<mapboxgl.Marker | null>(null)
@@ -44,7 +45,6 @@ export function LocationFinderMap({ state, onCenterChange }: LocationFinderMapPr
       mapRef.current.on('load', () => {
         setMapLoaded(true)
       })
-
 
       mapRef.current.on('error', (e) => {
         console.error('Map error:', e)
@@ -96,6 +96,46 @@ export function LocationFinderMap({ state, onCenterChange }: LocationFinderMapPr
       })
     }
   }, [state.center, mapLoaded])
+
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return
+    
+    const map = mapRef.current
+    
+    const handleClick = async (e: mapboxgl.MapMouseEvent) => {
+      if (!clickToSetEnabled || !onCenterChange) return
+      
+      const { lng, lat } = e.lngLat
+      
+      let address: string | undefined
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&types=address,place,locality`
+        )
+        const data = await response.json()
+        if (data.features && data.features.length > 0) {
+          address = data.features[0].place_name
+        }
+      } catch (err) {
+        console.error('Reverse geocoding failed:', err)
+      }
+      
+      onCenterChange({ lat, lng, address })
+    }
+    
+    map.on('click', handleClick)
+    
+    if (clickToSetEnabled) {
+      map.getCanvas().style.cursor = 'crosshair'
+    } else {
+      map.getCanvas().style.cursor = ''
+    }
+    
+    return () => {
+      map.off('click', handleClick)
+      map.getCanvas().style.cursor = ''
+    }
+  }, [clickToSetEnabled, mapLoaded, onCenterChange])
 
   useEffect(() => {
     if (!mapRef.current || !mapLoaded || !state.center) return

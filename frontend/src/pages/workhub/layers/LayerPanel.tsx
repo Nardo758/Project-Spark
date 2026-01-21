@@ -217,6 +217,19 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
           {addressLoading && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 animate-spin" />
           )}
+          {!addressLoading && state.center && (
+            <button
+              onClick={() => {
+                setAddressInput('')
+                setAddressSuggestions([])
+                onStateChange({ ...state, center: null })
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-stone-100"
+              title="Clear location"
+            >
+              <X className="w-4 h-4 text-stone-400 hover:text-stone-600" />
+            </button>
+          )}
           {showSuggestions && addressSuggestions.length > 0 && (
             <div className="absolute z-20 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
               {addressSuggestions.map((suggestion, i) => (
@@ -231,6 +244,13 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
             </div>
           )}
         </div>
+        
+        {!state.center && (
+          <p className="text-xs text-violet-600 mb-2 flex items-center gap-1">
+            <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
+            Click on the map to set location
+          </p>
+        )}
         
         {state.center && (
           <p className="text-xs text-emerald-600 mb-2">
