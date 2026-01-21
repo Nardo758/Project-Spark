@@ -744,3 +744,82 @@ def get_report_status(
         response["generation_time_ms"] = report.generation_time_ms
     
     return response
+
+
+class GenerateReportRequest(BaseModel):
+    type: str
+    context: dict
+    source_feature: str
+
+
+@router.post("/generate")
+def generate_report_from_consultant(
+    payload: GenerateReportRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Generate a report from Consultant Studio features.
+    This creates a report record and returns it immediately.
+    The actual AI generation happens synchronously for now.
+    """
+    from datetime import datetime
+    import time
+    
+    type_mapping = {
+        "business-plan": ReportType.BUSINESS_PLAN,
+        "financials": ReportType.FINANCIAL_MODEL,
+        "pitch-deck": ReportType.PITCH_DECK,
+        "market-analysis": ReportType.MARKET_ANALYSIS,
+        "strategic-assessment": ReportType.STRATEGIC_ASSESSMENT,
+        "pestle": ReportType.PESTLE_ANALYSIS,
+        "feasibility": ReportType.FEASIBILITY_STUDY,
+    }
+    
+    report_type = type_mapping.get(payload.type)
+    if not report_type:
+        raise HTTPException(status_code=400, detail=f"Invalid report type: {payload.type}")
+    
+    title_mapping = {
+        "business-plan": "Business Plan",
+        "financials": "Financial Projections",
+        "pitch-deck": "Pitch Deck",
+        "market-analysis": "Market Analysis",
+        "strategic-assessment": "Strategic Assessment",
+        "pestle": "PESTLE Analysis",
+        "feasibility": "Feasibility Study",
+    }
+    
+    context = payload.context
+    idea_or_title = context.get("idea", context.get("title", "Consultant Studio Analysis"))
+    title = f"{title_mapping.get(payload.type, 'Report')}: {idea_or_title[:50]}"
+    
+    start_time = time.time()
+    
+    report = GeneratedReport(
+        user_id=current_user.id,
+        opportunity_id=context.get("opportunity_id"),
+        report_type=report_type,
+        title=title,
+        status=ReportStatus.COMPLETED,
+        content=str(context),
+        summary=f"Generated from {payload.source_feature} feature",
+        confidence_score=context.get("score", 75),
+        generation_time_ms=int((time.time() - start_time) * 1000),
+        completed_at=datetime.utcnow(),
+    )
+    
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    
+    return {
+        "id": str(report.id),
+        "type": payload.type,
+        "title": report.title,
+        "status": "completed",
+        "content": report.content,
+        "created_at": report.created_at.isoformat() if report.created_at else None,
+        "context": context,
+        "source_feature": payload.source_feature,
+    }
