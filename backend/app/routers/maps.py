@@ -161,59 +161,127 @@ class LayerCommandResponse(BaseModel):
     message: str | None = None
 
 
-@router.post("/parse-layer-command", response_model=LayerCommandResponse)
-async def parse_layer_command(request: LayerCommandRequest):
-    """Parse natural language prompt into layer actions."""
-    prompt_lower = request.prompt.lower()
-    actions: list[LayerAction] = []
-    
+SUPPORTED_LAYER_TYPES = {"center_point", "deep_clone", "demographics", "competition", "traffic"}
+
+LAYER_KEYWORDS: dict[str, list[str]] = {
+    "demographics": ["demographics", "population", "income", "census", "people", "age", "household"],
+    "competition": ["competition", "competitors", "competitor", "nearby", "similar", "businesses", "rivals"],
+    "deep_clone": ["clone", "copy", "replicate", "franchise", "model", "template"],
+    "traffic": ["traffic", "footfall", "foot traffic", "busy", "transit", "pedestrian"],
+}
+
+RADIUS_KEYWORDS: dict[str, float] = {
+    "quarter mile": 0.25, "0.25 mile": 0.25, "0.25mi": 0.25,
+    "half mile": 0.5, "0.5 mile": 0.5, "0.5mi": 0.5,
+    "1 mile": 1.0, "one mile": 1.0, "1mi": 1.0,
+    "2 mile": 2.0, "two mile": 2.0, "2mi": 2.0,
+    "3 mile": 3.0, "three mile": 3.0, "3mi": 3.0,
+    "5 mile": 5.0, "five mile": 5.0, "5mi": 5.0,
+    "10 mile": 10.0, "ten mile": 10.0, "10mi": 10.0,
+}
+
+BUSINESS_TYPES = ["coffee", "restaurant", "gym", "pizza", "cafe", "shop", "store", "bakery", "bar", "salon", "spa"]
+
+
+def _parse_center(prompt_lower: str) -> LayerAction | None:
+    """Extract center location from prompt."""
     for city, coords in _KNOWN_CENTERS.items():
         if city in prompt_lower:
-            actions.append(LayerAction(
+            return LayerAction(
                 action="set_center",
                 center={"lat": coords[0], "lng": coords[1]},
                 address=city.title()
-            ))
-            break
-    
-    radius_keywords = {
-        "quarter mile": 0.25, "0.25 mile": 0.25,
-        "half mile": 0.5, "0.5 mile": 0.5,
-        "1 mile": 1, "one mile": 1,
-        "2 mile": 2, "two mile": 2,
-        "5 mile": 5, "five mile": 5,
-        "10 mile": 10, "ten mile": 10,
-    }
-    for keyword, radius in radius_keywords.items():
+            )
+    return None
+
+
+def _parse_radius(prompt_lower: str) -> LayerAction | None:
+    """Extract radius from prompt."""
+    for keyword, radius in RADIUS_KEYWORDS.items():
         if keyword in prompt_lower:
-            actions.append(LayerAction(action="set_radius", radius=radius))
-            break
+            return LayerAction(action="set_radius", radius=radius)
+    return None
+
+
+def _parse_layers(prompt_lower: str, active_layers: list[str]) -> list[LayerAction]:
+    """Extract layer actions from prompt."""
+    actions: list[LayerAction] = []
     
-    layer_keywords = {
-        "demographics": ["demographics", "population", "income", "census", "people"],
-        "competition": ["competition", "competitors", "competitor", "nearby", "similar", "businesses"],
-        "deep_clone": ["clone", "copy", "replicate", "franchise", "model"],
-        "traffic": ["traffic", "footfall", "foot traffic", "busy", "transit"],
-    }
+    for layer_type, keywords in LAYER_KEYWORDS.items():
+        if layer_type in active_layers:
+            continue
+        for keyword in keywords:
+            if keyword in prompt_lower:
+                config: dict[str, Any] = {}
+                if layer_type == "competition":
+                    for word in BUSINESS_TYPES:
+                        if word in prompt_lower:
+                            config["searchQuery"] = word
+                            break
+                actions.append(LayerAction(
+                    action="add_layer",
+                    layer_type=layer_type,
+                    config=config if config else None
+                ))
+                break
     
-    for layer_type, keywords in layer_keywords.items():
-        if layer_type not in request.active_layers:
-            for keyword in keywords:
-                if keyword in prompt_lower:
-                    config = {}
-                    if layer_type == "competition":
-                        for word in ["coffee", "restaurant", "gym", "pizza", "cafe", "shop", "store"]:
-                            if word in prompt_lower:
-                                config["searchQuery"] = word
-                                break
-                    actions.append(LayerAction(
-                        action="add_layer",
-                        layer_type=layer_type,
-                        config=config if config else None
-                    ))
-                    break
+    return actions
+
+
+@router.post("/parse-layer-command", response_model=LayerCommandResponse)
+async def parse_layer_command(request: LayerCommandRequest):
+    """Parse natural language prompt into layer actions.
+    
+    Supports:
+    - Setting center point to known cities (Austin, NYC, SF, etc.)
+    - Setting radius (0.25 to 10 miles)
+    - Adding layers (demographics, competition, deep_clone, traffic)
+    - Configuring competition search queries
+    """
+    prompt_lower = request.prompt.lower().strip()
+    
+    if not prompt_lower:
+        return LayerCommandResponse(
+            actions=[],
+            message="Please provide a description of what you'd like to see on the map."
+        )
+    
+    actions: list[LayerAction] = []
+    
+    center_action = _parse_center(prompt_lower)
+    if center_action:
+        actions.append(center_action)
+    
+    radius_action = _parse_radius(prompt_lower)
+    if radius_action:
+        actions.append(radius_action)
+    
+    layer_actions = _parse_layers(prompt_lower, request.active_layers)
+    actions.extend(layer_actions)
+    
+    if not actions:
+        suggestions = [
+            "Try mentioning a city name (Austin, NYC, Miami, etc.)",
+            "Specify a radius like '1 mile' or '5 miles'",
+            "Ask for layers: demographics, competition, traffic, or clone"
+        ]
+        return LayerCommandResponse(
+            actions=[],
+            message=f"I couldn't understand that request. {suggestions[0]}. {suggestions[1]}. {suggestions[2]}."
+        )
+    
+    action_descriptions = []
+    for action in actions:
+        if action.action == "set_center":
+            action_descriptions.append(f"center to {action.address}")
+        elif action.action == "set_radius":
+            action_descriptions.append(f"{action.radius} mile radius")
+        elif action.action == "add_layer":
+            action_descriptions.append(f"add {action.layer_type} layer")
+    
+    message = f"Applied: {', '.join(action_descriptions)}"
     
     return LayerCommandResponse(
         actions=actions,
-        message=f"Parsed {len(actions)} action(s) from prompt"
+        message=message
     )

@@ -9,9 +9,10 @@ interface LayerPanelProps {
   onStateChange: (state: LocationFinderState) => void
   onAiPrompt: (prompt: string) => void
   aiLoading?: boolean
+  aiMessage?: string | null
 }
 
-export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading }: LayerPanelProps) {
+export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMessage }: LayerPanelProps) {
   const [aiPromptText, setAiPromptText] = useState('')
 
   const handleTabChange = (tab: LayerType | 'ai') => {
@@ -157,6 +158,15 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading }: Laye
                   </>
                 )}
               </button>
+              {aiMessage && (
+                <div className={`p-3 rounded-lg text-sm ${
+                  aiMessage.includes("couldn't") || aiMessage.includes("Please provide")
+                    ? 'bg-amber-50 border border-amber-200 text-amber-700'
+                    : 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                }`}>
+                  {aiMessage}
+                </div>
+              )}
             </div>
 
             <div className="pt-4 border-t border-stone-100">

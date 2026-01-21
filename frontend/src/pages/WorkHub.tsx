@@ -402,6 +402,7 @@ export default function WorkHub() {
     activeLayerTab: 'center_point'
   })
   const [aiLayerLoading, setAiLayerLoading] = useState(false)
+  const [aiLayerMessage, setAiLayerMessage] = useState<string | null>(null)
   const [agentName, setAgentName] = useState(() => {
     try {
       return localStorage.getItem('agent-name') || 'Atlas'
@@ -552,6 +553,7 @@ export default function WorkHub() {
 
   const handleAiLayerPrompt = async (prompt: string) => {
     setAiLayerLoading(true)
+    setAiLayerMessage(null)
     try {
       const centerPointLayer = locationFinderState.layers.find(l => l.type === 'center_point')
       const currentCenter = centerPointLayer?.config?.coordinates
@@ -571,10 +573,18 @@ export default function WorkHub() {
       })
 
       if (response.ok) {
-        const actions = await response.json()
+        const result = await response.json()
+        const actions = result.actions || []
+        
+        if (actions.length === 0 && result.message) {
+          setAiLayerMessage(result.message)
+          return
+        }
+        
+        setAiLayerMessage(result.message || null)
         let newState = { ...locationFinderState }
 
-        for (const action of actions.actions || []) {
+        for (const action of actions) {
           if (action.action === 'add_layer' && action.layer_type) {
             const existingLayer = newState.layers.find(l => l.type === action.layer_type)
             if (!existingLayer) {
@@ -608,6 +618,7 @@ export default function WorkHub() {
       }
     } catch (error) {
       console.error('AI layer prompt error:', error)
+      setAiLayerMessage('Something went wrong. Please try again.')
     } finally {
       setAiLayerLoading(false)
     }
@@ -1154,6 +1165,7 @@ export default function WorkHub() {
                   onStateChange={setLocationFinderState}
                   onAiPrompt={handleAiLayerPrompt}
                   aiLoading={aiLayerLoading}
+                  aiMessage={aiLayerMessage}
                 />
               </div>
               <div className="flex-1 relative">
