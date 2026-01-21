@@ -45,26 +45,6 @@ export function LocationFinderMap({ state, onCenterChange }: LocationFinderMapPr
         setMapLoaded(true)
       })
 
-      mapRef.current.on('click', async (e) => {
-        if (!onCenterChange) return
-        
-        const { lng, lat } = e.lngLat
-        
-        let address: string | undefined
-        try {
-          const response = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&types=address,place,locality`
-          )
-          const data = await response.json()
-          if (data.features && data.features.length > 0) {
-            address = data.features[0].place_name
-          }
-        } catch (err) {
-          console.error('Reverse geocoding failed:', err)
-        }
-        
-        onCenterChange({ lat, lng, address })
-      })
 
       mapRef.current.on('error', (e) => {
         console.error('Map error:', e)

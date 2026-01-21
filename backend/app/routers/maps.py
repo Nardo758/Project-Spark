@@ -370,10 +370,17 @@ def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db
         "retail": ["Main Street Shop", "Urban Goods", "Local Market", "Style Boutique", "The Corner Store"],
         "salon": ["Style Studio", "Chic Cuts", "Beauty Bar", "Glamour Salon", "Hair Studio"],
         "spa": ["Serenity Spa", "Wellness Retreat", "Relax & Renew", "Zen Day Spa", "Pure Bliss"],
+        "self_storage": ["Extra Space Storage", "Public Storage", "CubeSmart", "Life Storage", "U-Haul Storage", 
+                        "StorQuest", "SecureSpace", "StorageMart", "Prime Storage", "Metro Self Storage"],
+        "storage": ["Extra Space Storage", "Public Storage", "CubeSmart", "Life Storage", "U-Haul Storage", 
+                   "StorQuest", "SecureSpace", "StorageMart", "Prime Storage", "Metro Self Storage"],
+        "laundromat": ["Spin Cycle", "Clean & Fresh Laundry", "QuickWash", "Laundry Express", "Suds & Bubbles"],
+        "car_wash": ["Sparkle Car Wash", "Clean Machine", "Quick Shine", "Express Auto Spa", "Diamond Wash"],
         "business": ["Metro Business Center", "Innovation Hub", "Pro Services", "Local Agency", "Community Co-op"]
     }
     
-    names = business_names.get(request.business_type, business_names.get("business", ["Local Business"]))
+    normalized_type = request.business_type.lower().replace(" ", "_").replace("-", "_")
+    names = business_names.get(normalized_type, business_names.get("business", ["Local Business"]))
     
     seed = int(abs(request.lat * 1000) + abs(request.lng * 1000))
     random.seed(seed)
@@ -402,14 +409,14 @@ def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db
         street_type = random.choice(street_types)
         
         places.append(PlaceResult(
-            id=f"{request.business_type}_{i}_{int(request.lat*100)}_{int(request.lng*100)}",
+            id=f"{normalized_type}_{i}_{int(request.lat*100)}_{int(request.lng*100)}",
             name=f"{random.choice(names)}",
             lat=place_lat,
             lng=place_lng,
             rating=round(random.uniform(3.5, 5.0), 1),
             review_count=random.randint(10, 500),
             address=f"{street_num} {street_name} {street_type}",
-            category=request.business_type
+            category=normalized_type
         ))
     
     random.seed()
@@ -505,16 +512,22 @@ def analyze_deep_clone(request: DeepCloneRequest):
     median_income = random.randint(55000, 135000)
     median_age = round(random.uniform(28, 42), 1)
     
+    normalized_category = request.business_category.lower().replace(" ", "_").replace("-", "_")
     category_competition = {
         "restaurant": random.randint(8, 25),
         "fast_food": random.randint(5, 15),
         "fast_casual": random.randint(4, 12),
         "cafe": random.randint(6, 20),
         "fitness": random.randint(3, 10),
+        "gym": random.randint(3, 10),
         "retail": random.randint(10, 30),
         "salon": random.randint(5, 15),
+        "self_storage": random.randint(2, 8),
+        "storage": random.randint(2, 8),
+        "laundromat": random.randint(2, 6),
+        "car_wash": random.randint(3, 10),
     }
-    competitors = category_competition.get(request.business_category, random.randint(5, 15))
+    competitors = category_competition.get(normalized_category, random.randint(5, 15))
     
     if competitors <= 5:
         competition_level = "Low"
