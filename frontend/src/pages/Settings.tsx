@@ -137,7 +137,9 @@ export default function Settings() {
   const [loadingAI, setLoadingAI] = useState(false)
   const [savingAI, setSavingAI] = useState(false)
   const [openaiKey, setOpenaiKey] = useState('')
+  const [claudeKey, setClaudeKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
+  const [showClaudeKey, setShowClaudeKey] = useState(false)
   const [aiError, setAIError] = useState('')
   const [aiSuccess, setAISuccess] = useState('')
 
@@ -451,6 +453,63 @@ export default function Settings() {
       }
     } catch (err) {
       console.error('Failed to delete OpenAI key:', err)
+      setAIError('An error occurred. Please try again.')
+    } finally {
+      setSavingAI(false)
+    }
+  }
+
+  async function validateAndSaveClaudeKey() {
+    if (!token || !claudeKey.trim()) return
+    setSavingAI(true)
+    setAIError('')
+    setAISuccess('')
+    try {
+      const res = await fetch('/api/v1/ai-preferences/claude-key', {
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ api_key: claudeKey.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setAIError(data.detail || 'Invalid Claude API key')
+        setSavingAI(false)
+        return
+      }
+      setAISuccess(data.message || 'Claude API key validated and saved successfully')
+      setClaudeKey('')
+      fetchAIPreferences()
+      setTimeout(() => setAISuccess(''), 3000)
+    } catch (err) {
+      console.error('Failed to validate Claude key:', err)
+      setAIError('An error occurred. Please try again.')
+    } finally {
+      setSavingAI(false)
+    }
+  }
+
+  async function deleteClaudeKey() {
+    if (!token) return
+    setSavingAI(true)
+    setAIError('')
+    try {
+      const res = await fetch('/api/v1/ai-preferences/claude-key', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        setAISuccess('Claude API key removed')
+        fetchAIPreferences()
+        setTimeout(() => setAISuccess(''), 3000)
+      } else {
+        const error = await res.json()
+        setAIError(error.detail || 'Failed to remove key')
+      }
+    } catch (err) {
+      console.error('Failed to delete Claude key:', err)
       setAIError('An error occurred. Please try again.')
     } finally {
       setSavingAI(false)
@@ -974,6 +1033,66 @@ export default function Settings() {
                       </div>
                     </div>
 
+                    {aiPreferences?.provider === 'claude' && (
+                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 className="font-medium text-gray-900 mb-3">Claude API Key (Optional)</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Use your own Anthropic API key to track your usage and billing separately. 
+                          If not provided, OppGrid's shared credits will be used.
+                        </p>
+                        
+                        {aiPreferences.has_claude_key ? (
+                          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Key className="w-4 h-4 text-green-600" />
+                              <span className="text-sm text-green-700 font-medium">Your Claude API key is configured</span>
+                            </div>
+                            <button
+                              onClick={deleteClaudeKey}
+                              disabled={savingAI}
+                              className="text-sm text-red-600 hover:text-red-700 font-medium"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="relative">
+                              <input
+                                type={showClaudeKey ? 'text' : 'password'}
+                                value={claudeKey}
+                                onChange={(e) => setClaudeKey(e.target.value)}
+                                placeholder="sk-ant-..."
+                                className="w-full px-4 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowClaudeKey(!showClaudeKey)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                {showClaudeKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                            <button
+                              onClick={validateAndSaveClaudeKey}
+                              disabled={!claudeKey.trim() || savingAI}
+                              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                              {savingAI ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Key className="w-4 h-4" />
+                              )}
+                              Validate & Save Key
+                            </button>
+                            <p className="text-xs text-gray-500">
+                              Your API key is encrypted and securely stored. We never see or log your key.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {aiPreferences?.provider === 'openai' && (
                       <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 className="font-medium text-gray-900 mb-3">OpenAI API Key (Optional)</h3>
@@ -1038,7 +1157,8 @@ export default function Settings() {
                       <p className="text-sm text-blue-800">
                         <strong>Current configuration:</strong> Using{' '}
                         {aiPreferences?.provider === 'claude' ? 'Claude' : 'OpenAI'}{' '}
-                        {aiPreferences?.mode === 'byok' && aiPreferences?.has_openai_key
+                        {(aiPreferences?.provider === 'claude' && aiPreferences?.has_claude_key) ||
+                         (aiPreferences?.provider === 'openai' && aiPreferences?.has_openai_key)
                           ? '(your API key)'
                           : '(OppGrid credits)'
                         }
