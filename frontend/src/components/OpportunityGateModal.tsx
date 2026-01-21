@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { X, Mail, Lock, Sparkles, FileText, Target, TrendingUp, ArrowRight, User, Globe, BarChart3 } from 'lucide-react'
+import { useState } from 'react'
+import { X, Mail, Lock, Sparkles, FileText, Target, TrendingUp, ArrowRight, User, Globe, BarChart3, DollarSign } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 
@@ -21,54 +21,14 @@ type ReportOption = {
 }
 
 const allReports: ReportOption[] = [
-  { id: 'feasibility', name: 'Feasibility Study', price: 0, description: 'Quick viability check', icon: Target },
+  { id: 'feasibility', name: 'Feasibility Study', price: 0, description: 'Quick viability check', icon: Target, recommended: true },
   { id: 'market-analysis', name: 'Market Analysis', price: 99, description: 'Industry & competitor insights', icon: TrendingUp },
   { id: 'strategic-assessment', name: 'Strategic Assessment', price: 89, description: 'SWOT & strategic positioning', icon: BarChart3 },
   { id: 'pestle', name: 'PESTLE Analysis', price: 79, description: 'External factors analysis', icon: Globe },
   { id: 'business-plan', name: 'Business Plan', price: 149, description: 'Comprehensive strategy', icon: FileText },
+  { id: 'financials', name: 'Financial Model', price: 129, description: 'Revenue & cost projections', icon: DollarSign },
+  { id: 'pitch-deck', name: 'Pitch Deck', price: 79, description: 'Investor presentation', icon: BarChart3 },
 ]
-
-const getRecommendedReports = (category?: string): ReportOption[] => {
-  const cat = category?.toLowerCase() || ''
-  
-  if (cat.includes('tech') || cat.includes('software') || cat.includes('saas')) {
-    return [
-      { ...allReports[0], recommended: true },
-      { ...allReports[1], recommended: true },
-      { ...allReports[4] },
-    ]
-  }
-  
-  if (cat.includes('retail') || cat.includes('food') || cat.includes('restaurant')) {
-    return [
-      { ...allReports[0], recommended: true },
-      { ...allReports[1], recommended: true },
-      { ...allReports[2] },
-    ]
-  }
-  
-  if (cat.includes('health') || cat.includes('medical') || cat.includes('fitness')) {
-    return [
-      { ...allReports[0], recommended: true },
-      { ...allReports[3], recommended: true },
-      { ...allReports[4] },
-    ]
-  }
-  
-  if (cat.includes('entertainment') || cat.includes('media') || cat.includes('event')) {
-    return [
-      { ...allReports[0], recommended: true },
-      { ...allReports[1] },
-      { ...allReports[2], recommended: true },
-    ]
-  }
-  
-  return [
-    { ...allReports[0], recommended: true },
-    { ...allReports[1] },
-    { ...allReports[4] },
-  ]
-}
 
 type Props = {
   isOpen: boolean
@@ -84,11 +44,6 @@ export default function OpportunityGateModal({ isOpen, onClose, opportunity, onP
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
-  
-  const recommendedReports = useMemo(() => 
-    getRecommendedReports(opportunity?.category), 
-    [opportunity?.category]
-  )
 
   if (!isOpen || !opportunity) return null
 
@@ -179,7 +134,7 @@ export default function OpportunityGateModal({ isOpen, onClose, opportunity, onP
                 Get detailed intelligence on this opportunity with AI-powered reports:
               </p>
               <div className="space-y-2">
-                {recommendedReports.map((report) => (
+                {allReports.map((report: ReportOption) => (
                   <button
                     key={report.id}
                     onClick={() => handleReportPurchase(report.id)}
@@ -226,7 +181,7 @@ export default function OpportunityGateModal({ isOpen, onClose, opportunity, onP
                 </p>
               </div>
               <div className="space-y-2">
-                {recommendedReports.map((report) => (
+                {allReports.map((report: ReportOption) => (
                   <button
                     key={report.id}
                     onClick={() => handleReportPurchase(report.id, email)}
