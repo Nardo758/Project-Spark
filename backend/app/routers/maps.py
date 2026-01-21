@@ -139,3 +139,81 @@ def location_analysis(
     )
     return LocationAnalysisResponse(query=q, mapData=map_data)
 
+
+class LayerCommandRequest(BaseModel):
+    prompt: str
+    current_center: dict[str, float] | None = None
+    current_radius: float = 1.0
+    active_layers: list[str] = Field(default_factory=list)
+
+
+class LayerAction(BaseModel):
+    action: str
+    layer_type: str | None = None
+    config: dict[str, Any] | None = None
+    center: dict[str, float] | None = None
+    address: str | None = None
+    radius: float | None = None
+
+
+class LayerCommandResponse(BaseModel):
+    actions: list[LayerAction]
+    message: str | None = None
+
+
+@router.post("/parse-layer-command", response_model=LayerCommandResponse)
+async def parse_layer_command(request: LayerCommandRequest):
+    """Parse natural language prompt into layer actions."""
+    prompt_lower = request.prompt.lower()
+    actions: list[LayerAction] = []
+    
+    for city, coords in _KNOWN_CENTERS.items():
+        if city in prompt_lower:
+            actions.append(LayerAction(
+                action="set_center",
+                center={"lat": coords[0], "lng": coords[1]},
+                address=city.title()
+            ))
+            break
+    
+    radius_keywords = {
+        "quarter mile": 0.25, "0.25 mile": 0.25,
+        "half mile": 0.5, "0.5 mile": 0.5,
+        "1 mile": 1, "one mile": 1,
+        "2 mile": 2, "two mile": 2,
+        "5 mile": 5, "five mile": 5,
+        "10 mile": 10, "ten mile": 10,
+    }
+    for keyword, radius in radius_keywords.items():
+        if keyword in prompt_lower:
+            actions.append(LayerAction(action="set_radius", radius=radius))
+            break
+    
+    layer_keywords = {
+        "demographics": ["demographics", "population", "income", "census", "people"],
+        "competition": ["competition", "competitors", "competitor", "nearby", "similar", "businesses"],
+        "deep_clone": ["clone", "copy", "replicate", "franchise", "model"],
+        "traffic": ["traffic", "footfall", "foot traffic", "busy", "transit"],
+    }
+    
+    for layer_type, keywords in layer_keywords.items():
+        if layer_type not in request.active_layers:
+            for keyword in keywords:
+                if keyword in prompt_lower:
+                    config = {}
+                    if layer_type == "competition":
+                        for word in ["coffee", "restaurant", "gym", "pizza", "cafe", "shop", "store"]:
+                            if word in prompt_lower:
+                                config["searchQuery"] = word
+                                break
+                    actions.append(LayerAction(
+                        action="add_layer",
+                        layer_type=layer_type,
+                        config=config if config else None
+                    ))
+                    break
+    
+    return LayerCommandResponse(
+        actions=actions,
+        message=f"Parsed {len(actions)} action(s) from prompt"
+    )

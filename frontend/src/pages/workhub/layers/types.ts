@@ -1,0 +1,56 @@
+import { LucideIcon } from 'lucide-react'
+
+export type LayerType = 
+  | 'center_point'
+  | 'deep_clone'
+  | 'demographics'
+  | 'competition'
+  | 'traffic'
+  | 'custom'
+
+export interface LayerInputField {
+  key: string
+  label: string
+  type: 'text' | 'number' | 'select' | 'toggle' | 'radius' | 'address'
+  placeholder?: string
+  options?: { value: string; label: string }[]
+  defaultValue?: any
+  required?: boolean
+}
+
+export interface LayerDefinition {
+  type: LayerType
+  label: string
+  description: string
+  icon: LucideIcon
+  inputs: LayerInputField[]
+  aiKeywords: string[]
+  defaultConfig: Record<string, any>
+  color: string
+}
+
+export interface LayerInstance {
+  id: string
+  type: LayerType
+  config: Record<string, any>
+  visible: boolean
+  loading: boolean
+  data: any | null
+  error: string | null
+}
+
+export interface LayerAction {
+  action: 'add_layer' | 'update_layer' | 'remove_layer' | 'toggle_layer' | 'set_center' | 'set_radius'
+  layerType?: LayerType
+  layerId?: string
+  config?: Record<string, any>
+  center?: { lat: number; lng: number }
+  radius?: number
+}
+
+export interface LocationFinderState {
+  center: { lat: number; lng: number; address?: string } | null
+  radius: number
+  layers: LayerInstance[]
+  activeLayerTab: LayerType | 'ai'
+}

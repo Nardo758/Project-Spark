@@ -4,24 +4,17 @@ import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, BarChart3, BookOpen, Briefcase, CheckCircle, CheckCircle2,
   ChevronRight, Copy, DollarSign, ExternalLink, FileText, Globe,
-  Loader2, Map, PanelLeftClose, PanelLeftOpen, ClipboardList,
+  Loader2, MapPin, PanelLeftClose, PanelLeftOpen, ClipboardList,
   Rocket, Search, Send, Settings, Sparkles, Target, 
   TrendingUp, Users, Wrench, X, Zap, Layers
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import DeepCloneInputPanel from './workhub/DeepCloneInputPanel'
+import { LayerPanel, createLayerInstance } from './workhub/layers'
+import type { LocationFinderState, LayerType } from './workhub/layers/types'
 
 type WorkspaceStatus = 'researching' | 'validating' | 'planning' | 'building' | 'launched' | 'paused' | 'archived'
 
-type WorkspaceToolView = 'chat' | 'deepClone' | 'map' | 'digital' | 'savedLayers'
-
-type DeepCloneContext = {
-  sourceBusiness: string | null
-  targetLocation: string | null
-  targetCoords: { lat: number; lng: number } | null
-  analyzing: boolean
-  results: unknown | null
-}
+type WorkspaceToolView = 'chat' | 'locationFinder' | 'digital' | 'savedLayers'
 
 type Opportunity = {
   id: number
@@ -382,8 +375,7 @@ const stageQuickActions: Record<WorkspaceStatus, { label: string; icon: typeof C
 }
 
 const workspaceTools: { id: WorkspaceToolView; label: string; icon: typeof Copy; description: string; color: string }[] = [
-  { id: 'deepClone', label: 'Deep Clone', icon: Copy, description: 'Clone a business model to new location', color: 'blue' },
-  { id: 'map', label: 'Map Analysis', icon: Map, description: 'Analyze physical locations', color: 'emerald' },
+  { id: 'locationFinder', label: 'Location Finder', icon: MapPin, description: 'Find and analyze physical locations', color: 'emerald' },
   { id: 'digital', label: 'Digital Canvas', icon: Globe, description: 'Design digital business flows', color: 'purple' },
   { id: 'savedLayers', label: 'Saved Layers', icon: Layers, description: 'View saved map analyses', color: 'amber' },
 ]
@@ -403,13 +395,13 @@ export default function WorkHub() {
   const [showSettings, setShowSettings] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [activeToolView, setActiveToolView] = useState<WorkspaceToolView>('chat')
-  const [deepCloneContext, setDeepCloneContext] = useState<DeepCloneContext>({
-    sourceBusiness: null,
-    targetLocation: null,
-    targetCoords: null,
-    analyzing: false,
-    results: null,
+  const [locationFinderState, setLocationFinderState] = useState<LocationFinderState>({
+    center: null,
+    radius: 1,
+    layers: [createLayerInstance('center_point')],
+    activeLayerTab: 'center_point'
   })
+  const [aiLayerLoading, setAiLayerLoading] = useState(false)
   const [agentName, setAgentName] = useState(() => {
     try {
       return localStorage.getItem('agent-name') || 'Atlas'
@@ -556,6 +548,69 @@ export default function WorkHub() {
     setIsTyping(true)
     sendMessageMutation.mutate(chatMessage.trim())
     setChatMessage('')
+  }
+
+  const handleAiLayerPrompt = async (prompt: string) => {
+    setAiLayerLoading(true)
+    try {
+      const centerPointLayer = locationFinderState.layers.find(l => l.type === 'center_point')
+      const currentCenter = centerPointLayer?.config?.coordinates
+
+      const response = await fetch('/api/v1/maps/parse-layer-command', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          prompt,
+          current_center: currentCenter,
+          current_radius: locationFinderState.radius,
+          active_layers: locationFinderState.layers.map(l => l.type)
+        })
+      })
+
+      if (response.ok) {
+        const actions = await response.json()
+        let newState = { ...locationFinderState }
+
+        for (const action of actions.actions || []) {
+          if (action.action === 'add_layer' && action.layer_type) {
+            const existingLayer = newState.layers.find(l => l.type === action.layer_type)
+            if (!existingLayer) {
+              const newLayer = createLayerInstance(action.layer_type as LayerType)
+              if (action.config) {
+                newLayer.config = { ...newLayer.config, ...action.config }
+              }
+              newState.layers = [...newState.layers, newLayer]
+            }
+            newState.activeLayerTab = action.layer_type as LayerType
+          } else if (action.action === 'set_center' && action.center) {
+            const cpLayer = newState.layers.find(l => l.type === 'center_point')
+            if (cpLayer) {
+              cpLayer.config = {
+                ...cpLayer.config,
+                address: action.address || '',
+                coordinates: action.center
+              }
+            }
+            newState.center = { ...action.center, address: action.address }
+          } else if (action.action === 'set_radius' && action.radius) {
+            newState.radius = action.radius
+            const cpLayer = newState.layers.find(l => l.type === 'center_point')
+            if (cpLayer) {
+              cpLayer.config = { ...cpLayer.config, radius: action.radius }
+            }
+          }
+        }
+
+        setLocationFinderState(newState)
+      }
+    } catch (error) {
+      console.error('AI layer prompt error:', error)
+    } finally {
+      setAiLayerLoading(false)
+    }
   }
 
   const handleQuickAction = (action: string) => {
@@ -1081,40 +1136,43 @@ export default function WorkHub() {
             </div>
           )}
 
-          {/* Deep Clone Panel */}
-          {activeToolView === 'deepClone' && (
-            <DeepCloneInputPanel
-              isAnalyzing={deepCloneContext.analyzing}
-              onAnalyze={(sourceBusiness, targetLocation, coords) => {
-                setDeepCloneContext({
-                  sourceBusiness,
-                  targetLocation,
-                  targetCoords: coords,
-                  analyzing: true,
-                  results: null,
-                })
-                setActiveToolView('map')
-              }}
-            />
-          )}
-
-          {/* Map Workspace Placeholder */}
-          {activeToolView === 'map' && (
-            <div className="flex-1 flex items-center justify-center bg-stone-100">
-              <div className="text-center p-8">
-                <Map className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-stone-900 mb-2">Map Workspace</h3>
-                <p className="text-stone-600 mb-4">
-                  {deepCloneContext.targetLocation 
-                    ? `Analyzing: ${deepCloneContext.sourceBusiness} in ${deepCloneContext.targetLocation}`
-                    : 'Physical location analysis workspace'}
-                </p>
-                <button
-                  onClick={() => setActiveToolView('chat')}
-                  className="text-sm text-violet-600 hover:text-violet-700 font-medium"
-                >
-                  Back to AI Chat
-                </button>
+          {/* Location Finder - Map with Layer Panel */}
+          {activeToolView === 'locationFinder' && (
+            <div className="flex-1 flex bg-stone-100">
+              <div className="w-80 p-4 bg-white border-r border-stone-200 flex-shrink-0">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-stone-900">Location Finder</h3>
+                  <button
+                    onClick={() => setActiveToolView('chat')}
+                    className="text-xs text-stone-500 hover:text-stone-700"
+                  >
+                    Back to Chat
+                  </button>
+                </div>
+                <LayerPanel
+                  state={locationFinderState}
+                  onStateChange={setLocationFinderState}
+                  onAiPrompt={handleAiLayerPrompt}
+                  aiLoading={aiLayerLoading}
+                />
+              </div>
+              <div className="flex-1 relative">
+                <div className="absolute inset-0 flex items-center justify-center bg-stone-200">
+                  <div className="text-center">
+                    <MapPin className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-stone-900 mb-2">Map Preview</h3>
+                    <p className="text-stone-600 text-sm max-w-md">
+                      {locationFinderState.center?.address 
+                        ? `Center: ${locationFinderState.center.address.slice(0, 50)}...`
+                        : 'Set a center point to begin analyzing locations'}
+                    </p>
+                    {locationFinderState.center && (
+                      <p className="text-xs text-stone-500 mt-2">
+                        Radius: {locationFinderState.radius} mile(s) | {locationFinderState.layers.filter(l => l.visible).length} active layer(s)
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
