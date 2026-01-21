@@ -183,14 +183,22 @@ RADIUS_KEYWORDS: dict[str, float] = {
 BUSINESS_TYPES = ["coffee", "restaurant", "gym", "pizza", "cafe", "shop", "store", "bakery", "bar", "salon", "spa"]
 
 
+CITY_DISPLAY_NAMES: dict[str, str] = {
+    "sf": "San Francisco",
+    "nyc": "New York City",
+    "la": "Los Angeles",
+}
+
+
 def _parse_center(prompt_lower: str) -> LayerAction | None:
     """Extract center location from prompt."""
     for city, coords in _KNOWN_CENTERS.items():
         if city in prompt_lower:
+            display_name = CITY_DISPLAY_NAMES.get(city, city.title())
             return LayerAction(
                 action="set_center",
                 center={"lat": coords[0], "lng": coords[1]},
-                address=city.title()
+                address=display_name
             )
     return None
 

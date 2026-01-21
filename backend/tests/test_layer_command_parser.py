@@ -29,7 +29,7 @@ class TestParseCenterFunction:
     def test_parse_known_city_nyc(self):
         result = _parse_center("show me nyc area")
         assert result is not None
-        assert result.address == "Nyc"
+        assert result.address == "New York City"
         assert result.center["lat"] == pytest.approx(40.7128, rel=1e-3)
 
     def test_parse_known_city_san_francisco(self):
