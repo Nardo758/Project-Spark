@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Bookmark, Filter, FileText, ChevronRight, Lock, Sparkles, Target, TrendingUp, Users } from 'lucide-react'
+import { Search, Bookmark, Filter, FileText, ChevronRight, Lock, Sparkles, Target, TrendingUp, Users, MapPin, Globe } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import type { AccessInfo } from '../types/paywall'
@@ -84,6 +84,7 @@ export default function Discover() {
   const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedFreshness, setSelectedFreshness] = useState('All')
+  const [selectedRealm, setSelectedRealm] = useState<'all' | 'physical' | 'digital'>('all')
   const [showFilters, setShowFilters] = useState(true)
   const navigate = useNavigate()
 
@@ -166,12 +167,13 @@ export default function Discover() {
   const categories = ['All', ...(categoriesQuery.data || [])]
 
   const opportunitiesQuery = useQuery({
-    queryKey: ['opportunities', { q: searchQuery, category: selectedCategory, status: selectedFreshness, isAuthenticated }],
+    queryKey: ['opportunities', { q: searchQuery, category: selectedCategory, status: selectedFreshness, realm: selectedRealm, isAuthenticated }],
     queryFn: async (): Promise<OpportunityList> => {
       const params = new URLSearchParams()
       params.set('limit', '50')
       params.set('skip', '0')
       if (selectedCategory !== 'All') params.set('category', selectedCategory)
+      if (selectedRealm !== 'all') params.set('realm_type', selectedRealm)
       const headers: Record<string, string> = {}
       if (token) headers.Authorization = `Bearer ${token}`
       const res = await fetch(`/api/v1/opportunities/?${params.toString()}`, { headers })
@@ -411,6 +413,40 @@ export default function Discover() {
                   />
                 </div>
                 <div className="flex gap-3">
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                    <button
+                      onClick={() => setSelectedRealm('all')}
+                      className={`px-3 py-2 text-sm font-medium transition-colors ${
+                        selectedRealm === 'all'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setSelectedRealm('physical')}
+                      className={`px-3 py-2 text-sm font-medium flex items-center gap-1 transition-colors ${
+                        selectedRealm === 'physical'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <MapPin className="w-3 h-3" />
+                      Physical
+                    </button>
+                    <button
+                      onClick={() => setSelectedRealm('digital')}
+                      className={`px-3 py-2 text-sm font-medium flex items-center gap-1 transition-colors ${
+                        selectedRealm === 'digital'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-white text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Globe className="w-3 h-3" />
+                      Digital
+                    </button>
+                  </div>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}

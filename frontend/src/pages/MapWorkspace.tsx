@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import RealmSwitcher from '../components/RealmSwitcher'
+import WorkspaceTabs from '../components/WorkspaceTabs'
 import CityComparisonCards from '../components/CityComparisonCards'
+import DeepClonePanel from '../components/DeepClonePanel'
 import {
   Send,
   Loader2,
@@ -13,7 +14,8 @@ import {
   ChevronLeft,
   Compass,
   Target,
-  BarChart3
+  BarChart3,
+  Copy
 } from 'lucide-react'
 
 const ExcalidrawCanvas = lazy(() => import('../components/ExcalidrawCanvas'))
@@ -65,6 +67,7 @@ export default function MapWorkspace() {
   const [comparisonTargets, setComparisonTargets] = useState<Array<{name: string, lat: number, lng: number}>>([])
   const [newLocationInput, setNewLocationInput] = useState('')
   const [loadingComparison, setLoadingComparison] = useState(false)
+  const [deepClonePanelOpen, setDeepClonePanelOpen] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -360,13 +363,22 @@ export default function MapWorkspace() {
         </div>
         
         <div className="flex items-center gap-3">
-          <RealmSwitcher
+          <WorkspaceTabs
             currentRealm={currentRealm}
             onRealmChange={setCurrentRealm}
           />
           
           <div className="h-6 w-px bg-gray-700" />
           
+          <button
+            onClick={() => setDeepClonePanelOpen(!deepClonePanelOpen)}
+            className={`p-2 rounded-lg transition-colors ${
+              deepClonePanelOpen ? 'bg-blue-600' : 'hover:bg-gray-700'
+            }`}
+            title="Deep Clone - Replicate business model"
+          >
+            <Copy className="w-5 h-5" />
+          </button>
           <button
             onClick={() => setShowComparison(!showComparison)}
             className={`p-2 rounded-lg transition-colors ${
@@ -398,6 +410,18 @@ export default function MapWorkspace() {
       </header>
       
       <div className="flex-1 flex overflow-hidden">
+        <DeepClonePanel
+          isOpen={deepClonePanelOpen}
+          onClose={() => setDeepClonePanelOpen(false)}
+          opportunity={opportunity}
+          onAnalyze={(targets) => {
+            setComparisonTargets(targets)
+            fetchComparisonData(targets)
+            setShowComparison(true)
+          }}
+          isAnalyzing={loadingComparison}
+        />
+        
         {layersPanelOpen && (
           <div className="w-64 border-r border-gray-700 bg-gray-800/50 flex flex-col shrink-0">
             <div className="p-3 border-b border-gray-700 flex items-center justify-between">
