@@ -33,7 +33,17 @@ export async function fetchLayerData(
 
 async function fetchDeepCloneData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
   const { center, radius, config } = params
-  const businessType = config.businessType || 'restaurant'
+  const businessCategory = config.businessCategory
+  
+  if (!businessCategory) {
+    return {
+      data: {
+        type: 'FeatureCollection',
+        features: [],
+        metadata: { count: 0, layerType: 'deep_clone', awaiting_category: true }
+      }
+    }
+  }
   
   const response = await fetch(`${API_BASE}/maps/places/nearby`, {
     method: 'POST',
@@ -43,7 +53,7 @@ async function fetchDeepCloneData(params: LayerFetchParams): Promise<{ data: any
       lat: center.lat,
       lng: center.lng,
       radius_miles: radius,
-      business_type: businessType,
+      business_type: businessCategory,
       limit: 20
     })
   })

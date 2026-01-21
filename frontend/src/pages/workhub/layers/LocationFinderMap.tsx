@@ -199,6 +199,8 @@ export function LocationFinderMap({ state, onCenterChange }: LocationFinderMapPr
   }, [layerDataKey, mapLoaded])
 
   const renderLayerOnMap = (map: mapboxgl.Map, layer: LayerInstance) => {
+    if (!map.isStyleLoaded()) return
+    
     const sourceId = `layer-${layer.id}`
     const def = layerRegistry[layer.type]
     const pointLayerId = `${sourceId}-points`

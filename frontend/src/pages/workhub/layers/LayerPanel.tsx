@@ -290,7 +290,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
         })}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 min-h-0">
+      <div className="flex-1 overflow-y-auto overflow-x-visible p-3 min-h-0">
         {activeDefinition && (
           <div className="space-y-3">
             <div className="flex items-start justify-between">

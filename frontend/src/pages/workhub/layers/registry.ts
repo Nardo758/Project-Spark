@@ -78,7 +78,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
       sourceBusiness: '',
       sourceLocation: '',
       sourceLocationCoordinates: null,
-      businessCategory: 'restaurant',
+      businessCategory: '',
       includeCompetitors: true,
       includeDemographics: true,
       analysisResult: null

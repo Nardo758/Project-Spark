@@ -177,7 +177,7 @@ export function LayerInputRenderer({ definition, config, onChange, loading, onAn
               <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
             {isOpen && filteredOptions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute z-50 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
                 {filteredOptions.map((opt) => (
                   <button
                     key={opt.value}
