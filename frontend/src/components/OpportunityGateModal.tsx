@@ -102,7 +102,7 @@ export default function OpportunityGateModal({ isOpen, onClose, opportunity, onP
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white relative">
           <button
             onClick={onClose}
@@ -127,7 +127,7 @@ export default function OpportunityGateModal({ isOpen, onClose, opportunity, onP
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           {isAuthenticated ? (
             <div className="space-y-4">
               <p className="text-gray-600 text-sm">
