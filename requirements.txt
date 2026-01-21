@@ -99,3 +99,4 @@ gql
 aiohttp
 resend
 stripe==14.1.0
+openai
