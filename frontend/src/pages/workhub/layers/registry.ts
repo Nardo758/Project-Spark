@@ -12,21 +12,51 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     inputs: [
       {
         key: 'sourceBusiness',
-        label: 'Source Business',
+        label: 'Source Business Name',
         type: 'text',
-        placeholder: 'Search for a business to clone...',
+        placeholder: 'e.g., Sweetgreen, Orange Theory, etc.',
         required: true
+      },
+      {
+        key: 'sourceAddress',
+        label: 'Business Address',
+        type: 'address',
+        placeholder: 'Enter the address of the business to clone...'
       },
       {
         key: 'businessType',
         label: 'Business Category',
-        type: 'select',
+        type: 'combobox',
+        placeholder: 'Type or select a category...',
         options: [
           { value: 'restaurant', label: 'Restaurant' },
+          { value: 'fast_food', label: 'Fast Food' },
+          { value: 'fast_casual', label: 'Fast Casual' },
+          { value: 'fine_dining', label: 'Fine Dining' },
+          { value: 'cafe', label: 'Cafe / Coffee Shop' },
+          { value: 'bakery', label: 'Bakery' },
+          { value: 'bar', label: 'Bar / Nightclub' },
+          { value: 'food_truck', label: 'Food Truck' },
           { value: 'retail', label: 'Retail Store' },
-          { value: 'service', label: 'Service Business' },
-          { value: 'fitness', label: 'Fitness/Gym' },
-          { value: 'healthcare', label: 'Healthcare' },
+          { value: 'clothing', label: 'Clothing / Apparel' },
+          { value: 'grocery', label: 'Grocery Store' },
+          { value: 'convenience', label: 'Convenience Store' },
+          { value: 'pharmacy', label: 'Pharmacy' },
+          { value: 'fitness', label: 'Fitness / Gym' },
+          { value: 'yoga', label: 'Yoga / Pilates Studio' },
+          { value: 'spa', label: 'Spa / Wellness' },
+          { value: 'salon', label: 'Hair Salon / Barbershop' },
+          { value: 'nail_salon', label: 'Nail Salon' },
+          { value: 'healthcare', label: 'Healthcare / Medical' },
+          { value: 'dental', label: 'Dental Office' },
+          { value: 'veterinary', label: 'Veterinary / Pet' },
+          { value: 'auto', label: 'Auto Service / Repair' },
+          { value: 'car_wash', label: 'Car Wash' },
+          { value: 'laundry', label: 'Laundry / Dry Cleaning' },
+          { value: 'childcare', label: 'Childcare / Daycare' },
+          { value: 'tutoring', label: 'Tutoring / Education' },
+          { value: 'coworking', label: 'Coworking Space' },
+          { value: 'hotel', label: 'Hotel / Lodging' },
           { value: 'other', label: 'Other' }
         ],
         defaultValue: 'restaurant'
@@ -40,6 +70,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     ],
     defaultConfig: {
       sourceBusiness: '',
+      sourceAddress: '',
       businessType: 'restaurant',
       analyzeCompetitors: true
     }

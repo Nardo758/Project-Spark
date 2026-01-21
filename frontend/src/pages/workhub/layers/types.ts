@@ -10,7 +10,7 @@ export type LayerType =
 export interface LayerInputField {
   key: string
   label: string
-  type: 'text' | 'number' | 'select' | 'toggle' | 'radius' | 'address'
+  type: 'text' | 'number' | 'select' | 'toggle' | 'radius' | 'address' | 'combobox'
   placeholder?: string
   options?: { value: string; label: string }[]
   defaultValue?: any

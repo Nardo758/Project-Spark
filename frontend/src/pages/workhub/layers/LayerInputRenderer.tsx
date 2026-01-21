@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Search, MapPin, Loader2 } from 'lucide-react'
+import { Search, MapPin, Loader2, ChevronDown } from 'lucide-react'
 import type { LayerDefinition, LayerInputField } from './types'
 
 function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
@@ -39,6 +39,9 @@ export function LayerInputRenderer({ definition, config, onChange, loading }: La
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
   const [addressLoading, setAddressLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [activeAddressField, setActiveAddressField] = useState<string | null>(null)
+  const [comboboxOpen, setComboboxOpen] = useState<string | null>(null)
+  const [comboboxSearch, setComboboxSearch] = useState('')
 
   const doAddressSearch = useCallback(async (query: string) => {
     if (query.length < 3) {
@@ -63,16 +66,17 @@ export function LayerInputRenderer({ definition, config, onChange, loading }: La
 
   const searchAddress = useDebounce(doAddressSearch, 300)
 
-  const handleAddressSelect = (suggestion: any) => {
+  const handleAddressSelect = (fieldKey: string, suggestion: any) => {
     onChange({
-      address: suggestion.display_name,
-      coordinates: {
+      [fieldKey]: suggestion.display_name,
+      [`${fieldKey}Coordinates`]: {
         lat: parseFloat(suggestion.lat),
         lng: parseFloat(suggestion.lon)
       }
     })
     setShowSuggestions(false)
     setAddressSuggestions([])
+    setActiveAddressField(null)
   }
 
   const renderInput = (field: LayerInputField) => {
@@ -80,6 +84,7 @@ export function LayerInputRenderer({ definition, config, onChange, loading }: La
 
     switch (field.type) {
       case 'address':
+        const coordsKey = `${field.key}Coordinates`
         return (
           <div className="relative">
             <div className="relative">
@@ -88,23 +93,28 @@ export function LayerInputRenderer({ definition, config, onChange, loading }: La
                 type="text"
                 value={value || ''}
                 onChange={(e) => {
-                  onChange({ [field.key]: e.target.value, coordinates: null })
+                  onChange({ [field.key]: e.target.value, [coordsKey]: null })
+                  setActiveAddressField(field.key)
                   searchAddress(e.target.value)
                 }}
-                onFocus={() => addressSuggestions.length > 0 && setShowSuggestions(true)}
+                onFocus={() => {
+                  setActiveAddressField(field.key)
+                  if (addressSuggestions.length > 0) setShowSuggestions(true)
+                }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 placeholder={field.placeholder}
                 className="w-full pl-9 pr-10 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
               />
-              {addressLoading && (
+              {addressLoading && activeAddressField === field.key && (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 animate-spin" />
               )}
             </div>
-            {showSuggestions && addressSuggestions.length > 0 && (
+            {showSuggestions && activeAddressField === field.key && addressSuggestions.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                 {addressSuggestions.map((suggestion, i) => (
                   <button
                     key={i}
-                    onClick={() => handleAddressSelect(suggestion)}
+                    onClick={() => handleAddressSelect(field.key, suggestion)}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-0"
                   >
                     <span className="line-clamp-2">{suggestion.display_name}</span>
@@ -112,10 +122,72 @@ export function LayerInputRenderer({ definition, config, onChange, loading }: La
                 ))}
               </div>
             )}
-            {config.coordinates && (
+            {config[coordsKey] && (
               <p className="mt-1 text-xs text-emerald-600">
-                Location set: {config.coordinates.lat.toFixed(4)}, {config.coordinates.lng.toFixed(4)}
+                Location set: {config[coordsKey].lat.toFixed(4)}, {config[coordsKey].lng.toFixed(4)}
               </p>
+            )}
+          </div>
+        )
+
+      case 'combobox':
+        const filteredOptions = field.options?.filter(opt => 
+          comboboxSearch === '' || 
+          opt.label.toLowerCase().includes(comboboxSearch.toLowerCase()) ||
+          opt.value.toLowerCase().includes(comboboxSearch.toLowerCase())
+        ) || []
+        const selectedOption = field.options?.find(opt => opt.value === value)
+        const isOpen = comboboxOpen === field.key
+        
+        return (
+          <div className="relative">
+            <div className="relative">
+              <input
+                type="text"
+                value={isOpen ? comboboxSearch : (selectedOption?.label || value || '')}
+                onChange={(e) => {
+                  setComboboxSearch(e.target.value)
+                  setComboboxOpen(field.key)
+                  const exactMatch = field.options?.find(opt => 
+                    opt.label.toLowerCase() === e.target.value.toLowerCase()
+                  )
+                  if (exactMatch) {
+                    onChange({ [field.key]: exactMatch.value })
+                  } else if (e.target.value) {
+                    onChange({ [field.key]: e.target.value })
+                  }
+                }}
+                onFocus={() => {
+                  setComboboxOpen(field.key)
+                  setComboboxSearch('')
+                }}
+                onBlur={() => setTimeout(() => {
+                  setComboboxOpen(null)
+                  setComboboxSearch('')
+                }, 200)}
+                placeholder={field.placeholder}
+                className="w-full pl-3 pr-8 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+              />
+              <ChevronDown className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </div>
+            {isOpen && filteredOptions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                {filteredOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      onChange({ [field.key]: opt.value })
+                      setComboboxOpen(null)
+                      setComboboxSearch('')
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-violet-50 border-b border-stone-100 last:border-0 ${
+                      value === opt.value ? 'bg-violet-50 text-violet-700' : ''
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         )
