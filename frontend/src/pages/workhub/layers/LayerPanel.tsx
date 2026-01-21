@@ -290,9 +290,9 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
         })}
       </div>
 
-      <div className="flex-1 overflow-y-scroll overflow-x-visible p-3 min-h-0 scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-transparent hover:scrollbar-thumb-stone-400" style={{ scrollbarWidth: 'thin', scrollbarColor: '#d6d3d1 transparent' }}>
+      <div className="flex-1 overflow-y-scroll overflow-x-visible p-3 pb-6 min-h-0 scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-transparent hover:scrollbar-thumb-stone-400" style={{ scrollbarWidth: 'thin', scrollbarColor: '#d6d3d1 transparent' }}>
         {activeDefinition && (
-          <div className="space-y-3">
+          <div className="space-y-3 pb-4">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-semibold text-stone-900 text-sm">{activeDefinition.label}</h3>
