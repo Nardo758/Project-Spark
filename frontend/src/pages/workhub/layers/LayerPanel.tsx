@@ -137,7 +137,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
     setAnalyzingLayers(prev => ({ ...prev, [layerId]: true }))
 
     try {
-      const response = await fetch('/api/maps/deep-clone-analysis', {
+      const response = await fetch('/api/v1/maps/deep-clone-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
