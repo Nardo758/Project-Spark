@@ -45,7 +45,9 @@ body {
     color-adjust: exact !important;
   }
   
-  body {
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
     background-color: white !important;
     font-family: 'Inter', system-ui, sans-serif !important;
     margin: 0 !important;
@@ -54,6 +56,28 @@ body {
   
   .print\:hidden {
     display: none !important;
+  }
+  
+  .fixed {
+    position: static !important;
+  }
+  
+  .overflow-y-auto,
+  .overflow-hidden,
+  .overflow-auto {
+    overflow: visible !important;
+  }
+  
+  .max-h-\[90vh\],
+  .max-h-\[85vh\],
+  .max-h-\[80vh\] {
+    max-height: none !important;
+  }
+  
+  .bg-black\/50,
+  .backdrop-blur-sm {
+    background: transparent !important;
+    backdrop-filter: none !important;
   }
   
   .report-modal {
@@ -69,9 +93,25 @@ body {
     margin: 0 !important;
   }
   
-  .report-modal > div {
+  .report-modal > div,
+  .report-modal * {
     max-height: none !important;
     overflow: visible !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  
+  p, li {
+    orphans: 3 !important;
+    widows: 3 !important;
+  }
+  
+  ul, ol, table, figure, .prose > * {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
   
   .report-header {

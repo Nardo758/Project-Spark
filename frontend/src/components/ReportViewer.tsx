@@ -141,14 +141,88 @@ export default function ReportViewer({
         <head>
           <title>${opportunityTitle} - ${layerConfig[selectedLayer].title}</title>
           <style>
-            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; max-width: 900px; margin: 0 auto; }
-            h1, h2, h3 { color: #1a1a1a; }
-            h1 { border-bottom: 2px solid #7c3aed; padding-bottom: 10px; }
+            * {
+              box-sizing: border-box;
+            }
+            html, body {
+              height: auto !important;
+              overflow: visible !important;
+              margin: 0;
+              padding: 0;
+            }
+            body { 
+              font-family: system-ui, -apple-system, sans-serif; 
+              padding: 40px; 
+              max-width: 900px; 
+              margin: 0 auto;
+              line-height: 1.6;
+            }
+            h1, h2, h3, h4, h5, h6 { 
+              color: #1a1a1a; 
+              page-break-after: avoid;
+              break-after: avoid;
+            }
+            h1 { border-bottom: 2px solid #7c3aed; padding-bottom: 10px; margin-top: 0; }
             h2 { color: #7c3aed; margin-top: 30px; }
-            p { line-height: 1.6; color: #374151; }
-            ul, ol { color: #374151; }
-            .section { margin-bottom: 30px; }
-            @media print { body { padding: 20px; } }
+            h3 { margin-top: 24px; }
+            p { 
+              line-height: 1.7; 
+              color: #374151; 
+              orphans: 3;
+              widows: 3;
+            }
+            ul, ol { 
+              color: #374151; 
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            li {
+              margin-bottom: 4px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              page-break-inside: avoid;
+              break-inside: avoid;
+              margin: 16px 0;
+            }
+            th, td {
+              border: 1px solid #d1d5db;
+              padding: 8px 12px;
+              text-align: left;
+            }
+            th {
+              background-color: #f3f4f6;
+              font-weight: 600;
+            }
+            .section { 
+              margin-bottom: 30px; 
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+              page-break-inside: avoid;
+            }
+            @media print { 
+              body { 
+                padding: 0.5in; 
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              @page {
+                margin: 0.5in;
+                size: letter;
+              }
+              h1, h2, h3 {
+                page-break-after: avoid !important;
+              }
+              p, li {
+                orphans: 3;
+                widows: 3;
+              }
+            }
           </style>
         </head>
         <body>
