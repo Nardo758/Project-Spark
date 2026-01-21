@@ -163,31 +163,32 @@ class ConsultantStudioService:
             return cached_result
         
         try:
-            similar_opportunities = await self._find_similar_opportunities(idea_description)
-            
-            pattern_task = self._deepseek_pattern_analysis(
-                idea_description, 
-                similar_opportunities,
-                business_context
-            )
-            
+            similar_task = self._find_similar_opportunities(idea_description)
             viability_task = self._claude_viability_report_parallel(
                 idea_description,
                 business_context
             )
+            pattern_task = self._deepseek_pattern_analysis_parallel(
+                idea_description,
+                business_context
+            )
             
-            pattern_analysis, viability_report = await asyncio.gather(
-                pattern_task,
+            similar_opportunities, viability_report, pattern_analysis = await asyncio.gather(
+                similar_task,
                 viability_task,
+                pattern_task,
                 return_exceptions=True
             )
             
-            if isinstance(pattern_analysis, Exception):
-                logger.warning(f"DeepSeek pattern analysis failed: {pattern_analysis}")
-                pattern_analysis = {}
+            if isinstance(similar_opportunities, Exception):
+                logger.warning(f"Similar opportunities search failed: {similar_opportunities}")
+                similar_opportunities = []
             if isinstance(viability_report, Exception):
                 logger.warning(f"Claude viability report failed: {viability_report}")
                 viability_report = {}
+            if isinstance(pattern_analysis, Exception):
+                logger.warning(f"DeepSeek pattern analysis failed: {pattern_analysis}")
+                pattern_analysis = {}
             
             online_score, physical_score = self._calculate_business_type_scores(
                 pattern_analysis,
@@ -1059,6 +1060,54 @@ class ConsultantStudioService:
             "average_score": sum(o.feasibility_score or 0 for o in similar_opps) / max(len(similar_opps), 1),
         }
 
+    async def _deepseek_pattern_analysis_parallel(
+        self,
+        idea: str,
+        context: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """
+        DeepSeek pattern analysis that runs in parallel (no dependency on similar_opps).
+        Analyzes the idea description directly for online/physical patterns.
+        """
+        import asyncio
+        from .ai_orchestrator import ai_orchestrator, AITaskType
+        
+        data = {
+            "idea": idea,
+            "similar_opportunities": [],
+            "context": context or {},
+            "request": "Analyze this business idea for online vs physical business model patterns.",
+        }
+        
+        try:
+            result = await asyncio.wait_for(
+                ai_orchestrator.process_request(AITaskType.OPPORTUNITY_VALIDATION, data),
+                timeout=30.0
+            )
+            
+            return {
+                "patterns_found": 0,
+                "market_signals": result.get("result", {}) if result.get("processed") else {},
+                "category_distribution": {},
+                "average_score": 0,
+            }
+        except asyncio.TimeoutError:
+            logger.warning("DeepSeek pattern analysis timed out after 30s")
+            return {
+                "patterns_found": 0,
+                "market_signals": {},
+                "category_distribution": {},
+                "average_score": 0,
+            }
+        except Exception as e:
+            logger.warning(f"DeepSeek pattern analysis failed: {e}")
+            return {
+                "patterns_found": 0,
+                "market_signals": {},
+                "category_distribution": {},
+                "average_score": 0,
+            }
+
     def _calculate_business_type_scores(
         self, pattern_analysis: Dict[str, Any], context: Optional[Dict[str, Any]]
     ) -> tuple:
@@ -1256,7 +1305,7 @@ class ConsultantStudioService:
         try:
             result = await asyncio.wait_for(
                 ai_orchestrator.process_request(AITaskType.MARKET_RESEARCH, data),
-                timeout=15.0
+                timeout=30.0
             )
             ai_insights = result.get("result", {}) if result.get("processed") else {}
             
@@ -1271,7 +1320,7 @@ class ConsultantStudioService:
                     "confidence_score": ai_insights.get("confidence", 75),
                 }
         except asyncio.TimeoutError:
-            logger.warning("Claude parallel viability report timed out after 15s")
+            logger.warning("Claude parallel viability report timed out after 30s")
         except Exception as e:
             logger.warning(f"Claude parallel viability report failed: {e}")
         

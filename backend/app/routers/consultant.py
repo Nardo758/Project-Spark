@@ -166,7 +166,7 @@ async def validate_idea(
                 business_context=request.business_context,
                 session_id=request.session_id,
             ),
-            timeout=25.0
+            timeout=40.0
         )
         return ValidateIdeaResponse(**result)
     except asyncio.TimeoutError:
