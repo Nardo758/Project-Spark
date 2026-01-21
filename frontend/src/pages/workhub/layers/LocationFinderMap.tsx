@@ -1,26 +1,42 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, TrendingUp, Users, Store, X, ChevronDown, ChevronUp } from 'lucide-react'
 import type { LocationFinderState, LayerInstance } from './types'
 import { layerRegistry } from './registry'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
+
+interface AnalysisResult {
+  match_score: number
+  competitor_count?: number
+  three_mile_analysis?: {
+    population?: number
+    median_income?: number
+    competition_level?: string
+    growth_rate?: number
+    competitor_count?: number
+  }
+  key_factors?: string[]
+}
 
 interface LocationFinderMapProps {
   state: LocationFinderState
   onLayerDataUpdate?: (layerId: string, data: any, error?: string) => void
   onCenterChange?: (center: { lat: number; lng: number; address?: string }) => void
   clickToSetEnabled?: boolean
+  analysisResult?: AnalysisResult | null
+  onClearAnalysis?: () => void
 }
 
-export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = false }: LocationFinderMapProps) {
+export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = false, analysisResult, onClearAnalysis }: LocationFinderMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const centerMarkerRef = useRef<mapboxgl.Marker | null>(null)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [resultCardExpanded, setResultCardExpanded] = useState(true)
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
@@ -378,6 +394,12 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     )
   }
 
+  const getScoreBg = (score: number) => {
+    if (score >= 75) return 'from-emerald-500 to-teal-500'
+    if (score >= 50) return 'from-amber-500 to-orange-500'
+    return 'from-red-500 to-rose-500'
+  }
+
   return (
     <div className="absolute inset-0">
       <div ref={mapContainerRef} className="w-full h-full" />
@@ -390,6 +412,102 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
         <div className="absolute top-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
           <span className="text-sm text-stone-600">Loading layer data...</span>
+        </div>
+      )}
+
+      {analysisResult && (
+        <div className="absolute top-4 right-4 bg-white rounded-xl shadow-xl border border-stone-200 overflow-hidden max-w-xs animate-in slide-in-from-top-2 duration-300 z-10">
+          <div 
+            className={`bg-gradient-to-r ${getScoreBg(analysisResult.match_score)} p-3 flex items-center justify-between cursor-pointer`}
+            onClick={() => setResultCardExpanded(!resultCardExpanded)}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">{analysisResult.match_score}%</span>
+              </div>
+              <div>
+                <div className="text-white font-semibold text-sm">Clone Viability</div>
+                <div className="text-white/80 text-xs">Match Score</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {resultCardExpanded ? (
+                <ChevronUp className="w-5 h-5 text-white/80" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-white/80" />
+              )}
+              {onClearAnalysis && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onClearAnalysis()
+                  }}
+                  className="p-1 hover:bg-white/20 rounded transition-colors"
+                >
+                  <X className="w-4 h-4 text-white/80" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {resultCardExpanded && (
+            <div className="p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-stone-50 rounded-lg p-2">
+                  <div className="flex items-center gap-1.5 text-stone-500 mb-1">
+                    <Users className="w-3.5 h-3.5" />
+                    <span className="text-xs">Population</span>
+                  </div>
+                  <div className="font-semibold text-stone-900 text-sm">
+                    {analysisResult.three_mile_analysis?.population?.toLocaleString() || 'N/A'}
+                  </div>
+                </div>
+                <div className="bg-stone-50 rounded-lg p-2">
+                  <div className="flex items-center gap-1.5 text-stone-500 mb-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span className="text-xs">Med. Income</span>
+                  </div>
+                  <div className="font-semibold text-stone-900 text-sm">
+                    ${analysisResult.three_mile_analysis?.median_income?.toLocaleString() || 'N/A'}
+                  </div>
+                </div>
+                <div className="bg-stone-50 rounded-lg p-2">
+                  <div className="flex items-center gap-1.5 text-stone-500 mb-1">
+                    <Store className="w-3.5 h-3.5" />
+                    <span className="text-xs">Competitors</span>
+                  </div>
+                  <div className="font-semibold text-stone-900 text-sm">
+                    {analysisResult.competitor_count ?? analysisResult.three_mile_analysis?.competitor_count ?? 'N/A'}
+                  </div>
+                </div>
+                <div className="bg-stone-50 rounded-lg p-2">
+                  <div className="flex items-center gap-1.5 text-stone-500 mb-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span className="text-xs">Growth</span>
+                  </div>
+                  <div className="font-semibold text-stone-900 text-sm">
+                    {analysisResult.three_mile_analysis?.growth_rate != null 
+                      ? `${analysisResult.three_mile_analysis.growth_rate}%` 
+                      : 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              {analysisResult.key_factors && analysisResult.key_factors.length > 0 && (
+                <div className="pt-2 border-t border-stone-100">
+                  <div className="text-xs text-stone-500 mb-1.5">Key Factors</div>
+                  <ul className="space-y-1">
+                    {analysisResult.key_factors.slice(0, 3).map((factor, i) => (
+                      <li key={i} className="text-xs text-stone-700 flex items-start gap-1.5">
+                        <span className="text-emerald-500 mt-0.5">•</span>
+                        {factor}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1242,6 +1242,17 @@ export default function WorkHub() {
                     }))
                     setClickToSetLocation(false)
                   }}
+                  analysisResult={locationFinderState.layers.find(l => l.type === 'deep_clone')?.config?.analysisResult}
+                  onClearAnalysis={() => {
+                    setLocationFinderState(prev => ({
+                      ...prev,
+                      layers: prev.layers.map(l => 
+                        l.type === 'deep_clone' 
+                          ? { ...l, config: { ...l.config, analysisResult: null } }
+                          : l
+                      )
+                    }))
+                  }}
                 />
               </div>
             </div>
