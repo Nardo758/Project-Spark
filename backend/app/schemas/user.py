@@ -42,6 +42,7 @@ class User(UserBase):
     is_verified: bool = False
     is_admin: bool = False
     created_at: datetime
+    tier: Optional[str] = None
 
     class Config:
         from_attributes = True
