@@ -67,6 +67,7 @@ from app.routers import (
     affiliate_tools,
     public_api,
     ai_preferences,
+    workspace_map,
 )
 
 install_trace_id_factory()
@@ -163,6 +164,7 @@ app.include_router(reports.router, tags=["Report Templates"])
 app.include_router(teams.router, prefix=f"{settings.API_V1_PREFIX}/teams", tags=["Teams"])
 app.include_router(public_api.router, prefix=f"{settings.API_V1_PREFIX}/public", tags=["Public API"])
 app.include_router(ai_preferences.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Preferences"])
+app.include_router(workspace_map.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Workspace Map"])
 
 
 @app.get("/")

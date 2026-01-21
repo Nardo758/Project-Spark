@@ -47,6 +47,7 @@ import AdminExperts from './pages/AdminExperts'
 import AdminAffiliateTools from './pages/AdminAffiliateTools'
 import StripeArchitecture from './pages/StripeArchitecture'
 import BillingReturn from './pages/BillingReturn'
+import MapWorkspace from './pages/MapWorkspace'
 
 function AdminRedirect() {
   window.location.href = '/admin.html';
@@ -80,6 +81,22 @@ function App() {
           element={
             <RequireAuth>
               <OpportunityHub />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="opportunity/:opportunityId/map"
+          element={
+            <RequireAuth>
+              <MapWorkspace />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="map-workspace"
+          element={
+            <RequireAuth>
+              <MapWorkspace />
             </RequireAuth>
           }
         />
