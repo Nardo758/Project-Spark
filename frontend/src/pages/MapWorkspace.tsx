@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import RealmSwitcher from '../components/RealmSwitcher'
@@ -13,10 +13,10 @@ import {
   ChevronLeft,
   Compass,
   Target,
-  Globe,
-  Copy,
   BarChart3
 } from 'lucide-react'
+
+const ExcalidrawCanvas = lazy(() => import('../components/ExcalidrawCanvas'))
 
 interface ChatMessage {
   id: string
@@ -62,6 +62,9 @@ export default function MapWorkspace() {
   const [currentRealm, setCurrentRealm] = useState<'physical' | 'digital'>('physical')
   const [comparisonLocations, setComparisonLocations] = useState<any[]>([])
   const [showComparison, setShowComparison] = useState(false)
+  const [comparisonTargets, setComparisonTargets] = useState<Array<{name: string, lat: number, lng: number}>>([])
+  const [newLocationInput, setNewLocationInput] = useState('')
+  const [loadingComparison, setLoadingComparison] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -132,9 +135,10 @@ export default function MapWorkspace() {
     }
   }
   
-  async function fetchComparisonData() {
-    if (!token || !opportunity) return
+  async function fetchComparisonData(targets: Array<{name: string, lat: number, lng: number}>) {
+    if (!token || !opportunity || targets.length === 0) return
     
+    setLoadingComparison(true)
     try {
       const res = await fetch('/api/v1/deep-clone/analyze', {
         method: 'POST',
@@ -149,23 +153,11 @@ export default function MapWorkspace() {
             source_longitude: opportunity.location_lng || viewport.center[0],
             source_location: opportunity.location || 'Current Location'
           },
-          targets: [
-            {
-              target_latitude: 30.2672,
-              target_longitude: -97.7431,
-              target_location: 'Austin, TX'
-            },
-            {
-              target_latitude: 39.7392,
-              target_longitude: -104.9903,
-              target_location: 'Denver, CO'
-            },
-            {
-              target_latitude: 33.7490,
-              target_longitude: -84.3880,
-              target_location: 'Atlanta, GA'
-            }
-          ]
+          targets: targets.map(t => ({
+            target_latitude: t.lat,
+            target_longitude: t.lng,
+            target_location: t.name
+          }))
         })
       })
       
@@ -175,14 +167,44 @@ export default function MapWorkspace() {
       }
     } catch (err) {
       console.error('Failed to fetch comparison data:', err)
+    } finally {
+      setLoadingComparison(false)
     }
   }
   
-  useEffect(() => {
-    if (showComparison && comparisonLocations.length === 0 && opportunity) {
-      fetchComparisonData()
+  async function addComparisonLocation(locationName: string) {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}&limit=1`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.length > 0) {
+          const loc = data[0]
+          const newTarget = {
+            name: loc.display_name.split(',').slice(0, 2).join(','),
+            lat: parseFloat(loc.lat),
+            lng: parseFloat(loc.lon)
+          }
+          setComparisonTargets(prev => [...prev, newTarget])
+          setNewLocationInput('')
+        }
+      }
+    } catch (err) {
+      console.error('Failed to geocode location:', err)
     }
-  }, [showComparison, opportunity])
+  }
+  
+  function removeComparisonTarget(index: number) {
+    setComparisonTargets(prev => prev.filter((_, i) => i !== index))
+    setComparisonLocations([])
+  }
+  
+  useEffect(() => {
+    if (comparisonTargets.length > 0 && opportunity) {
+      fetchComparisonData(comparisonTargets)
+    } else {
+      setComparisonLocations([])
+    }
+  }, [comparisonTargets, opportunity])
   
   async function sendMessage() {
     if (!inputValue.trim() || sending || !token) return
@@ -442,8 +464,56 @@ export default function MapWorkspace() {
                 <X className="w-4 h-4" />
               </button>
             </div>
+            
+            <div className="p-3 border-b border-gray-700">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newLocationInput}
+                  onChange={(e) => setNewLocationInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newLocationInput.trim()) {
+                      addComparisonLocation(newLocationInput.trim())
+                    }
+                  }}
+                  placeholder="Add city (e.g. Austin, TX)"
+                  className="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                />
+                <button
+                  onClick={() => newLocationInput.trim() && addComparisonLocation(newLocationInput.trim())}
+                  className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm font-medium"
+                >
+                  Add
+                </button>
+              </div>
+              
+              {comparisonTargets.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {comparisonTargets.map((target, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 rounded text-xs"
+                    >
+                      <MapPin className="w-3 h-3 text-purple-400" />
+                      {target.name.split(',')[0]}
+                      <button
+                        onClick={() => removeComparisonTarget(idx)}
+                        className="ml-1 text-gray-400 hover:text-red-400"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             <div className="flex-1 overflow-y-auto p-3">
-              {comparisonLocations.length > 0 ? (
+              {loadingComparison ? (
+                <div className="flex items-center justify-center h-32">
+                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                </div>
+              ) : comparisonLocations.length > 0 ? (
                 <CityComparisonCards
                   locations={comparisonLocations}
                   onSelectLocation={(loc) => {
@@ -454,8 +524,10 @@ export default function MapWorkspace() {
                   }}
                 />
               ) : (
-                <div className="flex items-center justify-center h-32">
-                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>Add locations above to compare</p>
+                  <p className="text-xs mt-1 text-gray-500">Enter city names to analyze market fit</p>
                 </div>
               )}
             </div>
@@ -489,31 +561,14 @@ export default function MapWorkspace() {
             </div>
             </div>
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #1e1e3f 0%, #2d1b4e 100%)' }}
-            >
-              <div className="text-center max-w-md">
-                <Globe className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">Digital Realm Workspace</h3>
-                <p className="text-gray-400 mb-4">
-                  Design online business models, create wireframes, and analyze digital opportunities
-                </p>
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="p-3 bg-gray-800/50 rounded-lg text-left">
-                    <Copy className="w-5 h-5 text-purple-400 mb-2" />
-                    <div className="text-sm font-medium text-white">Business Model Canvas</div>
-                    <div className="text-xs text-gray-400">Visual planning tool</div>
-                  </div>
-                  <div className="p-3 bg-gray-800/50 rounded-lg text-left">
-                    <Layers className="w-5 h-5 text-purple-400 mb-2" />
-                    <div className="text-sm font-medium text-white">Wireframing</div>
-                    <div className="text-xs text-gray-400">Excalidraw canvas</div>
-                  </div>
+            <div className="absolute inset-0">
+              <Suspense fallback={
+                <div className="h-full w-full flex items-center justify-center bg-gray-900">
+                  <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
                 </div>
-                <p className="text-sm text-gray-500">
-                  Excalidraw integration coming soon
-                </p>
-              </div>
+              }>
+                <ExcalidrawCanvas opportunityId={opportunityId} />
+              </Suspense>
             </div>
           )}
           
