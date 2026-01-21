@@ -166,23 +166,25 @@ class ConsultantStudioService:
             
             similar_opportunities = await self._find_similar_opportunities(idea_description)
             
+            pattern_analysis = {
+                "patterns_found": len(similar_opportunities),
+                "market_signals": {},
+                "category_distribution": self._analyze_categories(similar_opportunities),
+                "average_score": sum(o.feasibility_score or 0 for o in similar_opportunities) / max(len(similar_opportunities), 1),
+            }
+            
             try:
-                pattern_analysis = await asyncio.wait_for(
+                ai_pattern = await asyncio.wait_for(
                     self._deepseek_pattern_analysis(
                         idea_description, 
                         similar_opportunities,
                         business_context
                     ),
-                    timeout=20.0
+                    timeout=12.0
                 )
-            except asyncio.TimeoutError:
-                logger.warning("DeepSeek pattern analysis timed out, using fallback")
-                pattern_analysis = {
-                    "patterns_found": len(similar_opportunities),
-                    "market_signals": {},
-                    "category_distribution": self._analyze_categories(similar_opportunities),
-                    "average_score": sum(o.feasibility_score or 0 for o in similar_opportunities) / max(len(similar_opportunities), 1),
-                }
+                pattern_analysis.update(ai_pattern)
+            except (asyncio.TimeoutError, Exception) as e:
+                logger.warning(f"DeepSeek pattern analysis failed: {e}, using fallback")
             
             online_score, physical_score = self._calculate_business_type_scores(
                 pattern_analysis,
@@ -198,10 +200,10 @@ class ConsultantStudioService:
                         physical_score,
                         business_context
                     ),
-                    timeout=20.0
+                    timeout=12.0
                 )
-            except asyncio.TimeoutError:
-                logger.warning("Claude viability report timed out, using fallback")
+            except (asyncio.TimeoutError, Exception) as e:
+                logger.warning(f"Claude viability report failed: {e}, using fallback")
                 viability_report = self._generate_fallback_viability_report(
                     idea_description, online_score, physical_score, business_context
                 )
