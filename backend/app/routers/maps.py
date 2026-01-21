@@ -5,9 +5,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from typing import Any, Literal
 import hashlib
+import logging
 
 from app.db.database import get_db
 from app.models.opportunity import Opportunity
+from app.services.serpapi_service import SerpAPIService
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/maps", tags=["Maps"])
@@ -349,31 +353,18 @@ def _get_landward_bias(lat: float, lng: float) -> tuple[float, float]:
     return (0, 2 * math.pi)
 
 
-@router.post("/places/nearby", response_model=PlacesNearbyResponse)
-def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db)):
-    """
-    Get nearby businesses/places for the Deep Clone and Competition layers.
-    Returns mock data based on location for now.
-    """
+def _generate_mock_places(request: PlacesNearbyRequest) -> list[PlaceResult]:
+    """Generate mock place data as fallback when SerpAPI is unavailable."""
     import random
     import math
     
     business_names = {
-        "restaurant": ["The Local Kitchen", "Urban Eats", "Flavor House", "Bistro 99", "The Grill Room", 
-                      "Tasty Corner", "Fresh Bites", "Downtown Diner", "Savory Spot", "Comfort Food Co"],
+        "restaurant": ["The Local Kitchen", "Urban Eats", "Flavor House", "Bistro 99", "The Grill Room"],
         "cafe": ["Morning Brew", "Coffee Corner", "Bean & Leaf", "The Daily Grind", "Espresso Lane"],
         "gym": ["FitLife", "PowerHouse Gym", "Core Fitness", "Peak Performance", "Strong Studio"],
         "fitness": ["Iron Fitness", "CrossFit Zone", "Anytime Fitness", "LA Fitness", "Planet Fitness"],
-        "bakery": ["Sweet Delights", "Artisan Bakery", "The Bread Shop", "Sugar & Flour", "Daily Bake"],
-        "fast_food": ["Quick Bites", "Fast Lane Grill", "Express Eats", "Drive-Thru Deli", "Speedy Burger"],
-        "fast_casual": ["Fresh & Fast", "Bowl Spot", "Quick Kitchen", "Urban Bowls", "Craft Casual"],
-        "retail": ["Main Street Shop", "Urban Goods", "Local Market", "Style Boutique", "The Corner Store"],
-        "salon": ["Style Studio", "Chic Cuts", "Beauty Bar", "Glamour Salon", "Hair Studio"],
-        "spa": ["Serenity Spa", "Wellness Retreat", "Relax & Renew", "Zen Day Spa", "Pure Bliss"],
-        "self_storage": ["Extra Space Storage", "Public Storage", "CubeSmart", "Life Storage", "U-Haul Storage", 
-                        "StorQuest", "SecureSpace", "StorageMart", "Prime Storage", "Metro Self Storage"],
-        "storage": ["Extra Space Storage", "Public Storage", "CubeSmart", "Life Storage", "U-Haul Storage", 
-                   "StorQuest", "SecureSpace", "StorageMart", "Prime Storage", "Metro Self Storage"],
+        "self_storage": ["Extra Space Storage", "Public Storage", "CubeSmart", "Life Storage", "U-Haul Storage"],
+        "storage": ["Extra Space Storage", "Public Storage", "CubeSmart", "Life Storage", "U-Haul Storage"],
         "laundromat": ["Spin Cycle", "Clean & Fresh Laundry", "QuickWash", "Laundry Express", "Suds & Bubbles"],
         "car_wash": ["Sparkle Car Wash", "Clean Machine", "Quick Shine", "Express Auto Spa", "Diamond Wash"],
         "business": ["Metro Business Center", "Innovation Hub", "Pro Services", "Local Agency", "Community Co-op"]
@@ -391,36 +382,86 @@ def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db
         angle_range += 2 * math.pi
     
     places = []
-    street_names = ['Main', 'Oak', 'Park', 'Center', 'First', 'Second', 'Third', 'Maple', 'Pine', 'Cedar',
-                    'Washington', 'Lincoln', 'Jefferson', 'Adams', 'Madison', 'Commerce', 'Market', 'Broadway']
-    street_types = ['St', 'Ave', 'Blvd', 'Dr', 'Rd', 'Way', 'Ln', 'Pl']
+    street_names = ['Main', 'Oak', 'Park', 'Center', 'First', 'Second', 'Third', 'Maple', 'Pine', 'Cedar']
+    street_types = ['St', 'Ave', 'Blvd', 'Dr', 'Rd']
     
     for i in range(min(request.limit, 15)):
         base_angle = random.uniform(0, 1) * angle_range + min_angle
         angle = base_angle + random.uniform(-0.3, 0.3)
-        
         distance = random.uniform(0.2, 0.85) * request.radius_miles * 0.01449
-        
         place_lat = request.lat + distance * math.cos(angle)
         place_lng = request.lng + distance * math.sin(angle) / math.cos(math.radians(request.lat))
         
-        street_num = random.randint(100, 9999)
-        street_name = random.choice(street_names)
-        street_type = random.choice(street_types)
-        
         places.append(PlaceResult(
             id=f"{normalized_type}_{i}_{int(request.lat*100)}_{int(request.lng*100)}",
-            name=f"{random.choice(names)}",
+            name=random.choice(names),
             lat=place_lat,
             lng=place_lng,
             rating=round(random.uniform(3.5, 5.0), 1),
             review_count=random.randint(10, 500),
-            address=f"{street_num} {street_name} {street_type}",
+            address=f"{random.randint(100, 9999)} {random.choice(street_names)} {random.choice(street_types)}",
             category=normalized_type
         ))
     
     random.seed()
+    return places
+
+
+@router.post("/places/nearby", response_model=PlacesNearbyResponse)
+def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db)):
+    """
+    Get nearby businesses/places for the Deep Clone and Competition layers.
+    Uses SerpAPI Google Maps search for real data, falls back to mock data if unavailable.
+    """
+    serpapi = SerpAPIService()
+    normalized_type = request.business_type.lower().replace(" ", "_").replace("-", "_")
     
+    if serpapi.is_configured:
+        try:
+            import math
+            zoom = max(10, min(17, int(15 - math.log2(max(0.5, request.radius_miles)))))
+            ll = f"@{request.lat},{request.lng},{zoom}z"
+            
+            search_query = request.business_type.replace("_", " ")
+            
+            result = serpapi.google_maps_search(
+                query=search_query,
+                ll=ll
+            )
+            
+            local_results = result.get("local_results", [])
+            
+            if local_results:
+                places = []
+                for i, place in enumerate(local_results[:request.limit]):
+                    gps = place.get("gps_coordinates", {})
+                    place_lat = gps.get("latitude", request.lat)
+                    place_lng = gps.get("longitude", request.lng)
+                    
+                    place_id = place.get("data_id") or place.get("place_id") or f"{normalized_type}_{i}"
+                    address = place.get("address") or place.get("formatted_address") or ""
+                    
+                    places.append(PlaceResult(
+                        id=place_id,
+                        name=place.get("title", place.get("name", "Unknown Business")),
+                        lat=place_lat,
+                        lng=place_lng,
+                        rating=float(place.get("rating", 0.0) or 0.0),
+                        review_count=int(place.get("reviews", 0) or 0),
+                        address=address,
+                        category=normalized_type
+                    ))
+                
+                logger.info(f"SerpAPI returned {len(places)} places for '{search_query}' at zoom {zoom}")
+                return PlacesNearbyResponse(places=places, total=len(places))
+            else:
+                logger.warning(f"SerpAPI returned no results for '{search_query}', using mock data")
+        except Exception as e:
+            logger.error(f"SerpAPI error: {e}, falling back to mock data")
+    else:
+        logger.info("SerpAPI not configured, using mock data")
+    
+    places = _generate_mock_places(request)
     return PlacesNearbyResponse(places=places, total=len(places))
 
 
