@@ -551,6 +551,10 @@ export default function WorkHub() {
     .map(l => `${l.id}:${l.visible}:${l.data ? 'has' : 'no'}`)
     .join(',')
 
+  const layerConfigKey = locationFinderState.layers
+    .map(l => `${l.id}:${l.config?.businessCategory || ''}:${l.config?.category || ''}`)
+    .join(',')
+
   useEffect(() => {
     const fetchLayersData = async () => {
       if (!locationFinderState.center) return
@@ -595,7 +599,7 @@ export default function WorkHub() {
     }
 
     fetchLayersData()
-  }, [locationFinderState.center, locationFinderState.radius, layerVisibilityKey])
+  }, [locationFinderState.center, locationFinderState.radius, layerVisibilityKey, layerConfigKey])
 
   const handleLayerDataUpdate = (layerId: string, data: any, error?: string) => {
     setLocationFinderState(prev => ({

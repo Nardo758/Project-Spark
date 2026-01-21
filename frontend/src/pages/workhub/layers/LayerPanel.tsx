@@ -150,7 +150,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
           },
           target_address: state.center.address || null,
           business_category: layer.config.businessCategory || 'restaurant',
-          radius_miles: state.radiusMiles,
+          radius_miles: state.radius,
           include_competitors: layer.config.includeCompetitors !== false,
           include_demographics: layer.config.includeDemographics !== false
         })
