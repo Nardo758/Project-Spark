@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, memo } from 'react'
 import { Excalidraw, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw'
 
 interface ExcalidrawCanvasProps {
@@ -6,8 +6,8 @@ interface ExcalidrawCanvasProps {
   onSave?: (elements: readonly any[]) => void
 }
 
-export default function ExcalidrawCanvas({ onSave }: ExcalidrawCanvasProps) {
-  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null)
+function ExcalidrawCanvas({ onSave }: ExcalidrawCanvasProps) {
+  const [, setExcalidrawAPI] = useState<any>(null)
   const [elements, setElements] = useState<readonly any[]>([])
 
   const handleChange = useCallback((
@@ -73,3 +73,5 @@ export default function ExcalidrawCanvas({ onSave }: ExcalidrawCanvasProps) {
     </div>
   )
 }
+
+export default memo(ExcalidrawCanvas)

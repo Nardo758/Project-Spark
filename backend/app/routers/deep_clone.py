@@ -72,6 +72,7 @@ async def analyze_clone_targets(
     db: Session = Depends(get_db)
 ):
     """Analyze potential locations to clone a successful business model"""
+    import asyncio
     
     source_analysis = await _analyze_source_business(
         business_type=request.source.business_type,
@@ -80,9 +81,8 @@ async def analyze_clone_targets(
         location=request.source.source_location
     )
     
-    target_analyses = []
-    for target in request.targets:
-        analysis = await _analyze_target_location(
+    async def analyze_target(target):
+        return await _analyze_target_location(
             business_type=request.source.business_type,
             source_metrics=source_analysis,
             target_lat=target.target_latitude,
@@ -90,9 +90,9 @@ async def analyze_clone_targets(
             target_location=target.target_location,
             radius_miles=target.radius_miles
         )
-        target_analyses.append(analysis)
     
-    target_analyses.sort(key=lambda x: x.overall_score, reverse=True)
+    target_analyses = await asyncio.gather(*[analyze_target(t) for t in request.targets])
+    target_analyses = sorted(target_analyses, key=lambda x: x.overall_score, reverse=True)
     best_match = target_analyses[0].location if target_analyses else None
     
     return CloneAnalysisResponse(
@@ -102,7 +102,7 @@ async def analyze_clone_targets(
             "location": request.source.source_location,
             "metrics": source_analysis
         },
-        target_analyses=target_analyses,
+        target_analyses=list(target_analyses),
         best_match=best_match,
         generated_at=datetime.utcnow().isoformat()
     )

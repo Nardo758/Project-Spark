@@ -4,8 +4,14 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.core.security import decode_access_token
 from app.models.user import User
+from typing import Optional, Any
+from cachetools import TTLCache
+import threading
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+_subscription_cache: TTLCache = TTLCache(maxsize=1000, ttl=300)
+_cache_lock = threading.Lock()
 
 
 async def get_current_user(
@@ -23,7 +29,7 @@ async def get_current_user(
     if payload is None:
         raise credentials_exception
 
-    email: str = payload.get("sub")
+    email: Optional[str] = payload.get("sub")
     if email is None:
         raise credentials_exception
 
@@ -72,7 +78,7 @@ async def get_current_user_optional(
     if payload is None:
         return None
     
-    email: str = payload.get("sub")
+    email: Optional[str] = payload.get("sub")
     if email is None:
         return None
     
@@ -86,19 +92,40 @@ from functools import wraps
 
 
 def get_user_subscription_tier(user: User, db: Session) -> SubscriptionTier:
-    """Get user's current subscription tier"""
+    """Get user's current subscription tier with caching (5 min TTL)"""
     from datetime import datetime, timezone
+    
+    cache_key = f"tier_{user.id}"
+    
+    with _cache_lock:
+        cached = _subscription_cache.get(cache_key)
+        if cached is not None:
+            return cached
     
     subscription = db.query(Subscription).filter(
         Subscription.user_id == user.id,
         Subscription.status == SubscriptionStatus.ACTIVE
     ).first()
     
+    tier = SubscriptionTier.FREE
     if subscription:
-        if subscription.current_period_end and subscription.current_period_end < datetime.now(timezone.utc):
-            return SubscriptionTier.FREE
-        return subscription.tier
-    return SubscriptionTier.FREE
+        period_end = subscription.current_period_end
+        if period_end is not None and period_end < datetime.now(timezone.utc):
+            tier = SubscriptionTier.FREE
+        else:
+            tier = SubscriptionTier(subscription.tier) if isinstance(subscription.tier, str) else subscription.tier
+    
+    with _cache_lock:
+        _subscription_cache[cache_key] = tier
+    
+    return tier
+
+
+def invalidate_subscription_cache(user_id: int) -> None:
+    """Invalidate cached subscription tier for a user"""
+    cache_key = f"tier_{user_id}"
+    with _cache_lock:
+        _subscription_cache.pop(cache_key, None)
 
 
 class RequireSubscription:

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo, useCallback } from 'react'
 import {
   MapPin,
   TrendingUp,
@@ -70,7 +70,7 @@ function getGrowthIcon(potential: string) {
   return <TrendingUp className="w-4 h-4 text-gray-400" />
 }
 
-export default function CityComparisonCards({
+function CityComparisonCards({
   locations,
   onSelectLocation,
   selectedLocation
@@ -246,3 +246,5 @@ export default function CityComparisonCards({
     </div>
   )
 }
+
+export default memo(CityComparisonCards)
