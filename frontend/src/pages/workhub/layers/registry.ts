@@ -1,36 +1,7 @@
-import { MapPin, Copy, Users, Store, Car, Layers } from 'lucide-react'
+import { Copy, Users, Store, Car, Layers } from 'lucide-react'
 import type { LayerDefinition, LayerType } from './types'
 
 export const layerRegistry: Record<LayerType, LayerDefinition> = {
-  center_point: {
-    type: 'center_point',
-    label: 'Center Point',
-    description: 'Set the center location and analysis radius',
-    icon: MapPin,
-    color: 'violet',
-    aiKeywords: ['center', 'location', 'address', 'radius', 'area', 'mile'],
-    inputs: [
-      {
-        key: 'address',
-        label: 'Address or Landmark',
-        type: 'address',
-        placeholder: 'Enter address, city, or landmark...',
-        required: true
-      },
-      {
-        key: 'radius',
-        label: 'Analysis Radius',
-        type: 'radius',
-        defaultValue: 1
-      }
-    ],
-    defaultConfig: {
-      address: '',
-      coordinates: null,
-      radius: 1
-    }
-  },
-
   deep_clone: {
     type: 'deep_clone',
     label: 'Deep Clone',
@@ -242,7 +213,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
   }
 }
 
-export const defaultLayerTabs: LayerType[] = ['center_point', 'deep_clone', 'demographics', 'competition']
+export const defaultLayerTabs: LayerType[] = ['deep_clone', 'demographics', 'competition', 'traffic']
 
 export function getLayerDefinition(type: LayerType): LayerDefinition {
   return layerRegistry[type]

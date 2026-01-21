@@ -1,7 +1,6 @@
 import { LucideIcon } from 'lucide-react'
 
 export type LayerType = 
-  | 'center_point'
   | 'deep_clone'
   | 'demographics'
   | 'competition'

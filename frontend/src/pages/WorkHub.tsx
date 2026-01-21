@@ -398,8 +398,8 @@ export default function WorkHub() {
   const [locationFinderState, setLocationFinderState] = useState<LocationFinderState>({
     center: null,
     radius: 1,
-    layers: [createLayerInstance('center_point')],
-    activeLayerTab: 'center_point'
+    layers: [],
+    activeLayerTab: 'ai'
   })
   const [aiLayerLoading, setAiLayerLoading] = useState(false)
   const [aiLayerMessage, setAiLayerMessage] = useState<string | null>(null)
@@ -555,9 +555,6 @@ export default function WorkHub() {
     setAiLayerLoading(true)
     setAiLayerMessage(null)
     try {
-      const centerPointLayer = locationFinderState.layers.find(l => l.type === 'center_point')
-      const currentCenter = centerPointLayer?.config?.coordinates
-
       const response = await fetch('/api/v1/maps/parse-layer-command', {
         method: 'POST',
         headers: {
@@ -566,7 +563,7 @@ export default function WorkHub() {
         },
         body: JSON.stringify({
           prompt,
-          current_center: currentCenter,
+          current_center: locationFinderState.center,
           current_radius: locationFinderState.radius,
           active_layers: locationFinderState.layers.map(l => l.type)
         })
@@ -596,21 +593,9 @@ export default function WorkHub() {
             }
             newState.activeLayerTab = action.layer_type as LayerType
           } else if (action.action === 'set_center' && action.center) {
-            const cpLayer = newState.layers.find(l => l.type === 'center_point')
-            if (cpLayer) {
-              cpLayer.config = {
-                ...cpLayer.config,
-                address: action.address || '',
-                coordinates: action.center
-              }
-            }
             newState.center = { ...action.center, address: action.address }
           } else if (action.action === 'set_radius' && action.radius) {
             newState.radius = action.radius
-            const cpLayer = newState.layers.find(l => l.type === 'center_point')
-            if (cpLayer) {
-              cpLayer.config = { ...cpLayer.config, radius: action.radius }
-            }
           }
         }
 

@@ -1,8 +1,34 @@
-import { useState } from 'react'
-import { Sparkles, Plus, X, Eye, EyeOff, ChevronRight } from 'lucide-react'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { Sparkles, Plus, X, Eye, EyeOff, ChevronRight, MapPin, Loader2 } from 'lucide-react'
 import { layerRegistry, defaultLayerTabs, createLayerInstance } from './registry'
 import type { LayerType, LayerInstance, LocationFinderState } from './types'
 import { LayerInputRenderer } from './LayerInputRenderer'
+
+function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  const debouncedFn = useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => fn(...args), delay)
+  }, [fn, delay])
+  
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
+  
+  return debouncedFn
+}
+
+const radiusOptions = [
+  { value: 0.25, label: '0.25 mi' },
+  { value: 0.5, label: '0.5 mi' },
+  { value: 1, label: '1 mi' },
+  { value: 2, label: '2 mi' },
+  { value: 5, label: '5 mi' },
+  { value: 10, label: '10 mi' }
+]
 
 interface LayerPanelProps {
   state: LocationFinderState
@@ -14,6 +40,49 @@ interface LayerPanelProps {
 
 export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMessage }: LayerPanelProps) {
   const [aiPromptText, setAiPromptText] = useState('')
+  const [addressInput, setAddressInput] = useState(state.center?.address || '')
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
+  const [addressLoading, setAddressLoading] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const doAddressSearch = useCallback(async (query: string) => {
+    if (query.length < 3) {
+      setAddressSuggestions([])
+      return
+    }
+    
+    setAddressLoading(true)
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=us`
+      )
+      const data = await response.json()
+      setAddressSuggestions(data)
+      setShowSuggestions(true)
+    } catch (error) {
+      console.error('Address search error:', error)
+    } finally {
+      setAddressLoading(false)
+    }
+  }, [])
+
+  const searchAddress = useDebounce(doAddressSearch, 300)
+
+  const handleAddressSelect = (suggestion: any) => {
+    const newCenter = {
+      lat: parseFloat(suggestion.lat),
+      lng: parseFloat(suggestion.lon),
+      address: suggestion.display_name
+    }
+    setAddressInput(suggestion.display_name)
+    onStateChange({ ...state, center: newCenter })
+    setShowSuggestions(false)
+    setAddressSuggestions([])
+  }
+
+  const handleRadiusChange = (radius: number) => {
+    onStateChange({ ...state, radius })
+  }
 
   const handleTabChange = (tab: LayerType | 'ai') => {
     onStateChange({ ...state, activeLayerTab: tab })
@@ -35,7 +104,9 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
 
   const handleRemoveLayer = (layerId: string) => {
     const updatedLayers = state.layers.filter(layer => layer.id !== layerId)
-    onStateChange({ ...state, layers: updatedLayers })
+    const remainingTypes = updatedLayers.map(l => l.type)
+    const newActiveTab = remainingTypes.length > 0 ? remainingTypes[0] : 'ai'
+    onStateChange({ ...state, layers: updatedLayers, activeLayerTab: newActiveTab })
   }
 
   const handleAddLayer = (type: LayerType) => {
@@ -64,15 +135,75 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
   }
 
   const activeLayer = state.activeLayerTab !== 'ai' 
-    ? getLayerByType(state.activeLayerTab)
+    ? getLayerByType(state.activeLayerTab as LayerType)
     : null
 
   const activeDefinition = state.activeLayerTab !== 'ai'
-    ? layerRegistry[state.activeLayerTab]
+    ? layerRegistry[state.activeLayerTab as LayerType]
     : null
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg border border-stone-200 overflow-hidden">
+      <div className="p-3 border-b border-stone-200 bg-gradient-to-r from-violet-50 to-purple-50">
+        <div className="flex items-center gap-2 mb-2">
+          <MapPin className="w-4 h-4 text-violet-600" />
+          <span className="text-sm font-medium text-stone-700">Center Point</span>
+        </div>
+        
+        <div className="relative mb-2">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <input
+            type="text"
+            value={addressInput}
+            onChange={(e) => {
+              setAddressInput(e.target.value)
+              searchAddress(e.target.value)
+            }}
+            onFocus={() => addressSuggestions.length > 0 && setShowSuggestions(true)}
+            placeholder="Enter address, city, or landmark..."
+            className="w-full pl-9 pr-10 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white"
+          />
+          {addressLoading && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 animate-spin" />
+          )}
+          {showSuggestions && addressSuggestions.length > 0 && (
+            <div className="absolute z-20 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              {addressSuggestions.map((suggestion, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleAddressSelect(suggestion)}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-stone-50 border-b border-stone-100 last:border-0"
+                >
+                  <span className="line-clamp-2">{suggestion.display_name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {state.center && (
+          <p className="text-xs text-emerald-600 mb-2">
+            {state.center.lat.toFixed(4)}, {state.center.lng.toFixed(4)}
+          </p>
+        )}
+        
+        <div className="flex gap-1">
+          {radiusOptions.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => handleRadiusChange(opt.value)}
+              className={`flex-1 px-2 py-1.5 rounded text-xs font-medium transition-all ${
+                state.radius === opt.value
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex items-center gap-2 p-3 border-b border-stone-200 bg-stone-50 overflow-x-auto">
         {defaultLayerTabs.map(type => {
           const def = layerRegistry[type]
@@ -210,15 +341,13 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                       <EyeOff className="w-4 h-4 text-stone-400" />
                     )}
                   </button>
-                  {activeLayer.type !== 'center_point' && (
-                    <button
-                      onClick={() => handleRemoveLayer(activeLayer.id)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-stone-400 hover:text-red-500"
-                      title="Remove layer"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleRemoveLayer(activeLayer.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-stone-400 hover:text-red-500"
+                    title="Remove layer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               )}
             </div>
