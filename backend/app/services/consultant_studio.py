@@ -974,15 +974,22 @@ class ConsultantStudioService:
         if not base:
             base = {"lat": 33.0, "lng": -97.0}
         
-        neighborhoods.append({
-            "name": f"Downtown {city.title()}",
-            "city": city.title(),
-            "state": state.upper(),
-            "lat": base["lat"],
-            "lng": base["lng"],
-            "address": f"City Center, {city.title()}, {state.upper()}",
-            "base_score": 75,
-        })
+        fallback_areas = [
+            {"name": f"Downtown {city.title()}", "offset_lat": 0.0, "offset_lng": 0.0, "base_score": 78},
+            {"name": f"North {city.title()}", "offset_lat": 0.035, "offset_lng": 0.01, "base_score": 72},
+            {"name": f"South {city.title()}", "offset_lat": -0.03, "offset_lng": -0.015, "base_score": 68},
+        ]
+        
+        for area in fallback_areas:
+            neighborhoods.append({
+                "name": area["name"],
+                "city": city.title(),
+                "state": state.upper(),
+                "lat": round(base["lat"] + area["offset_lat"], 6),
+                "lng": round(base["lng"] + area["offset_lng"], 6),
+                "address": f"{area['name']}, {city.title()}, {state.upper()}",
+                "base_score": area["base_score"],
+            })
         
         return neighborhoods
     
