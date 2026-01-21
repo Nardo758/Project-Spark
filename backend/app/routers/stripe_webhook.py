@@ -685,18 +685,28 @@ def handle_subscription_updated(stripe_subscription: dict, db: Session):
     subscriptions when Stripe confirms status is 'active' or 'trialing'.
     """
     subscription_id = stripe_subscription.get("id")
+    customer_id = stripe_subscription.get("customer")
     status = stripe_subscription.get("status")
     cancel_at_period_end = stripe_subscription.get("cancel_at_period_end", False)
     current_period_end = stripe_subscription.get("current_period_end")
     
-    logger.info(f"Subscription updated: {subscription_id}, status: {status}")
+    logger.info(f"Subscription updated: {subscription_id}, customer: {customer_id}, status: {status}")
     
     subscription = db.query(Subscription).filter(
         Subscription.stripe_subscription_id == subscription_id
     ).first()
     
+    if not subscription and customer_id:
+        logger.info(f"Subscription not found by ID, trying customer ID: {customer_id}")
+        subscription = db.query(Subscription).filter(
+            Subscription.stripe_customer_id == customer_id
+        ).first()
+        if subscription:
+            subscription.stripe_subscription_id = subscription_id
+            logger.info(f"Linked subscription {subscription_id} to user {subscription.user_id} via customer ID")
+    
     if not subscription:
-        logger.warning(f"Subscription {subscription_id} not found in database")
+        logger.warning(f"Subscription {subscription_id} not found in database (customer: {customer_id})")
         return
     
     status_map = {
@@ -798,15 +808,28 @@ def _map_payment_type_to_transaction_type(payment_type: str) -> TransactionType 
 
 
 def _map_price_to_tier(price_id: str) -> SubscriptionTier | None:
-    """Map Stripe price ID to subscription tier."""
-    price_pro = os.getenv("STRIPE_PRICE_PRO")
-    price_business = os.getenv("STRIPE_PRICE_BUSINESS")
+    """Map Stripe price ID to subscription tier.
     
-    if price_id == price_pro:
-        return SubscriptionTier.PRO
-    elif price_id == price_business:
-        return SubscriptionTier.BUSINESS
-    return None
+    Supports all 6 subscription tiers:
+    - Individual Track: Starter, Growth, Pro
+    - Business Track: Team, Business, Enterprise
+    """
+    price_mappings = {
+        os.getenv("STRIPE_PRICE_STARTER"): SubscriptionTier.STARTER,
+        os.getenv("STRIPE_PRICE_GROWTH"): SubscriptionTier.GROWTH,
+        os.getenv("STRIPE_PRICE_PRO"): SubscriptionTier.PRO,
+        os.getenv("STRIPE_PRICE_TEAM"): SubscriptionTier.TEAM,
+        os.getenv("STRIPE_PRICE_BUSINESS"): SubscriptionTier.BUSINESS,
+        os.getenv("STRIPE_PRICE_ENTERPRISE"): SubscriptionTier.ENTERPRISE,
+    }
+    
+    tier = price_mappings.get(price_id)
+    if tier:
+        logger.info(f"Mapped price {price_id} to tier {tier.value}")
+    else:
+        logger.warning(f"Unknown price ID: {price_id}, available mappings: {list(k for k in price_mappings.keys() if k)}")
+    
+    return tier
 
 
 def _fulfill_pay_per_unlock(payment_intent: dict, metadata: dict, db: Session):

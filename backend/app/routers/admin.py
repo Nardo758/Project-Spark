@@ -2397,3 +2397,71 @@ Important:
         "errors": error_count,
         "results": results
     }
+
+
+@router.get("/report-usage-stats")
+async def get_report_usage_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+    days: int = Query(default=30, ge=1, le=365, description="Number of days to look back"),
+):
+    """Get comprehensive report usage statistics for admin dashboard."""
+    from app.models.generated_report import GeneratedReport, ReportStatus
+    from app.models.subscription import Subscription
+    
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+    
+    total_reports = db.query(func.count(GeneratedReport.id)).filter(
+        GeneratedReport.created_at >= cutoff_date,
+        GeneratedReport.status == ReportStatus.COMPLETED
+    ).scalar() or 0
+    
+    reports_by_type = db.query(
+        GeneratedReport.report_type,
+        func.count(GeneratedReport.id).label("count")
+    ).filter(
+        GeneratedReport.created_at >= cutoff_date,
+        GeneratedReport.status == ReportStatus.COMPLETED
+    ).group_by(GeneratedReport.report_type).all()
+    
+    reports_by_user = db.query(
+        User.id,
+        User.email,
+        User.name,
+        Subscription.tier,
+        func.count(GeneratedReport.id).label("report_count")
+    ).join(
+        GeneratedReport, GeneratedReport.user_id == User.id
+    ).outerjoin(
+        Subscription, Subscription.user_id == User.id
+    ).filter(
+        GeneratedReport.created_at >= cutoff_date,
+        GeneratedReport.status == ReportStatus.COMPLETED
+    ).group_by(
+        User.id, User.email, User.name, Subscription.tier
+    ).order_by(desc("report_count")).limit(50).all()
+    
+    reports_by_day = db.query(
+        func.date(GeneratedReport.created_at).label("date"),
+        func.count(GeneratedReport.id).label("count")
+    ).filter(
+        GeneratedReport.created_at >= cutoff_date,
+        GeneratedReport.status == ReportStatus.COMPLETED
+    ).group_by(func.date(GeneratedReport.created_at)).order_by("date").all()
+    
+    return {
+        "period_days": days,
+        "total_reports": total_reports,
+        "by_type": [{"type": str(r[0].value) if r[0] else "unknown", "count": r[1]} for r in reports_by_type],
+        "by_user": [
+            {
+                "user_id": r[0],
+                "email": r[1],
+                "name": r[2],
+                "tier": str(r[3].value) if r[3] else "free",
+                "report_count": r[4]
+            }
+            for r in reports_by_user
+        ],
+        "by_day": [{"date": str(r[0]), "count": r[1]} for r in reports_by_day],
+    }
