@@ -3,14 +3,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, BarChart3, BookOpen, Briefcase, CheckCircle, CheckCircle2,
-  ChevronRight, DollarSign, ExternalLink, FileText, 
-  Loader2, PanelLeftClose, PanelLeftOpen, ClipboardList,
+  ChevronRight, Copy, DollarSign, ExternalLink, FileText, Globe,
+  Loader2, Map, PanelLeftClose, PanelLeftOpen, ClipboardList,
   Rocket, Search, Send, Settings, Sparkles, Target, 
-  TrendingUp, Users, Wrench, X, Zap
+  TrendingUp, Users, Wrench, X, Zap, Layers
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import DeepCloneInputPanel from './workhub/DeepCloneInputPanel'
 
 type WorkspaceStatus = 'researching' | 'validating' | 'planning' | 'building' | 'launched' | 'paused' | 'archived'
+
+type WorkspaceToolView = 'chat' | 'deepClone' | 'map' | 'digital' | 'savedLayers'
+
+type DeepCloneContext = {
+  sourceBusiness: string | null
+  targetLocation: string | null
+  targetCoords: { lat: number; lng: number } | null
+  analyzing: boolean
+  results: unknown | null
+}
 
 type Opportunity = {
   id: number
@@ -370,6 +381,13 @@ const stageQuickActions: Record<WorkspaceStatus, { label: string; icon: typeof C
   archived: [],
 }
 
+const workspaceTools: { id: WorkspaceToolView; label: string; icon: typeof Copy; description: string; color: string }[] = [
+  { id: 'deepClone', label: 'Deep Clone', icon: Copy, description: 'Clone a business model to new location', color: 'blue' },
+  { id: 'map', label: 'Map Analysis', icon: Map, description: 'Analyze physical locations', color: 'emerald' },
+  { id: 'digital', label: 'Digital Canvas', icon: Globe, description: 'Design digital business flows', color: 'purple' },
+  { id: 'savedLayers', label: 'Saved Layers', icon: Layers, description: 'View saved map analyses', color: 'amber' },
+]
+
 export default function WorkHub() {
   const { id } = useParams()
   const opportunityId = Number(id)
@@ -384,6 +402,14 @@ export default function WorkHub() {
   const [latestInlineCards, setLatestInlineCards] = useState<InlineCards | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [activeToolView, setActiveToolView] = useState<WorkspaceToolView>('chat')
+  const [deepCloneContext, setDeepCloneContext] = useState<DeepCloneContext>({
+    sourceBusiness: null,
+    targetLocation: null,
+    targetCoords: null,
+    analyzing: false,
+    results: null,
+  })
   const [agentName, setAgentName] = useState(() => {
     try {
       return localStorage.getItem('agent-name') || 'Atlas'
@@ -873,6 +899,39 @@ export default function WorkHub() {
               </div>
             )}
 
+            {/* Workspace Tools */}
+            <div className="mb-6">
+              <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Workspace Tools</h3>
+              <div className="space-y-1">
+                {workspaceTools.map(tool => (
+                  <button
+                    key={tool.id}
+                    onClick={() => setActiveToolView(tool.id)}
+                    className={`w-full flex items-center gap-2 p-2 text-sm rounded-lg transition-colors ${
+                      activeToolView === tool.id
+                        ? `bg-${tool.color}-50 text-${tool.color}-700 border border-${tool.color}-200`
+                        : 'text-stone-600 hover:bg-stone-50'
+                    }`}
+                  >
+                    <tool.icon className="w-4 h-4" />
+                    <div className="text-left">
+                      <p className="font-medium">{tool.label}</p>
+                      <p className="text-xs text-stone-500">{tool.description}</p>
+                    </div>
+                  </button>
+                ))}
+                {activeToolView !== 'chat' && (
+                  <button
+                    onClick={() => setActiveToolView('chat')}
+                    className="w-full flex items-center gap-2 p-2 text-xs text-violet-600 hover:text-violet-700 font-medium mt-2"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    Back to AI Chat
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Quick Links */}
             <div>
               <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Quick Links</h3>
@@ -1022,7 +1081,81 @@ export default function WorkHub() {
             </div>
           )}
 
+          {/* Deep Clone Panel */}
+          {activeToolView === 'deepClone' && (
+            <DeepCloneInputPanel
+              isAnalyzing={deepCloneContext.analyzing}
+              onAnalyze={(sourceBusiness, targetLocation, coords) => {
+                setDeepCloneContext({
+                  sourceBusiness,
+                  targetLocation,
+                  targetCoords: coords,
+                  analyzing: true,
+                  results: null,
+                })
+                setActiveToolView('map')
+              }}
+            />
+          )}
+
+          {/* Map Workspace Placeholder */}
+          {activeToolView === 'map' && (
+            <div className="flex-1 flex items-center justify-center bg-stone-100">
+              <div className="text-center p-8">
+                <Map className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-stone-900 mb-2">Map Workspace</h3>
+                <p className="text-stone-600 mb-4">
+                  {deepCloneContext.targetLocation 
+                    ? `Analyzing: ${deepCloneContext.sourceBusiness} in ${deepCloneContext.targetLocation}`
+                    : 'Physical location analysis workspace'}
+                </p>
+                <button
+                  onClick={() => setActiveToolView('chat')}
+                  className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  Back to AI Chat
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Digital Canvas Placeholder */}
+          {activeToolView === 'digital' && (
+            <div className="flex-1 flex items-center justify-center bg-stone-100">
+              <div className="text-center p-8">
+                <Globe className="w-16 h-16 text-purple-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-stone-900 mb-2">Digital Canvas</h3>
+                <p className="text-stone-600 mb-4">Design digital business flows with Excalidraw</p>
+                <button
+                  onClick={() => setActiveToolView('chat')}
+                  className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  Back to AI Chat
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Saved Layers Placeholder */}
+          {activeToolView === 'savedLayers' && (
+            <div className="flex-1 flex items-center justify-center bg-stone-100">
+              <div className="text-center p-8">
+                <Layers className="w-16 h-16 text-amber-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-stone-900 mb-2">Saved Layers</h3>
+                <p className="text-stone-600 mb-4">View and load saved map analyses</p>
+                <button
+                  onClick={() => setActiveToolView('chat')}
+                  className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  Back to AI Chat
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Chat Messages */}
+          {activeToolView === 'chat' && (
+          <>
           <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             {chatMessages.length === 0 && !isTyping && (
               <div className="text-center py-12">
@@ -1144,6 +1277,8 @@ export default function WorkHub() {
               </div>
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
 
