@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Search, MapPin, Loader2, ChevronDown } from 'lucide-react'
+import { Search, MapPin, Loader2, ChevronDown, Zap, TrendingUp, Users, Store, CheckCircle, AlertCircle } from 'lucide-react'
 import type { LayerDefinition, LayerInputField } from './types'
 
 function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
@@ -24,6 +24,9 @@ interface LayerInputRendererProps {
   config: Record<string, any>
   onChange: (config: Record<string, any>) => void
   loading?: boolean
+  onAnalyze?: () => void
+  analyzing?: boolean
+  targetLocation?: { lat: number; lng: number; address?: string } | null
 }
 
 const radiusOptions = [
@@ -35,13 +38,16 @@ const radiusOptions = [
   { value: 10, label: '10 mi' }
 ]
 
-export function LayerInputRenderer({ definition, config, onChange, loading }: LayerInputRendererProps) {
+export function LayerInputRenderer({ definition, config, onChange, loading, onAnalyze, analyzing, targetLocation }: LayerInputRendererProps) {
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
   const [addressLoading, setAddressLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeAddressField, setActiveAddressField] = useState<string | null>(null)
   const [comboboxOpen, setComboboxOpen] = useState<string | null>(null)
   const [comboboxSearch, setComboboxSearch] = useState('')
+
+  const isDeepClone = definition.type === 'deep_clone'
+  const canAnalyze = isDeepClone && config.sourceBusiness?.trim() && targetLocation
 
   const doAddressSearch = useCallback(async (query: string) => {
     if (query.length < 3) {
@@ -286,7 +292,102 @@ export function LayerInputRenderer({ definition, config, onChange, loading }: La
         </div>
       ))}
 
-      {loading && (
+      {isDeepClone && (
+        <div className="pt-2 border-t border-stone-100">
+          {!targetLocation && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>Set a target location above to analyze clone viability</span>
+            </div>
+          )}
+          
+          {targetLocation && (
+            <button
+              onClick={onAnalyze}
+              disabled={!canAnalyze || analyzing}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" />
+                  Analyze Clone Viability
+                </>
+              )}
+            </button>
+          )}
+
+          {config.analysisResult && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                  <span className="font-semibold text-stone-800">Match Score</span>
+                </div>
+                <span className="text-2xl font-bold text-emerald-600">
+                  {config.analysisResult.match_score}%
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2 bg-stone-50 rounded-lg">
+                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
+                    <Users className="w-3 h-3" />
+                    Population
+                  </div>
+                  <p className="text-sm font-medium text-stone-800">
+                    {config.analysisResult.three_mile_analysis?.population?.toLocaleString() || 'N/A'}
+                  </p>
+                </div>
+                <div className="p-2 bg-stone-50 rounded-lg">
+                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Median Income
+                  </div>
+                  <p className="text-sm font-medium text-stone-800">
+                    ${config.analysisResult.three_mile_analysis?.median_income?.toLocaleString() || 'N/A'}
+                  </p>
+                </div>
+                <div className="p-2 bg-stone-50 rounded-lg">
+                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
+                    <Store className="w-3 h-3" />
+                    Competition
+                  </div>
+                  <p className="text-sm font-medium text-stone-800">
+                    {config.analysisResult.three_mile_analysis?.competition_level || 'N/A'}
+                  </p>
+                </div>
+                <div className="p-2 bg-stone-50 rounded-lg">
+                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Growth Rate
+                  </div>
+                  <p className="text-sm font-medium text-stone-800">
+                    {config.analysisResult.three_mile_analysis?.growth_rate}%
+                  </p>
+                </div>
+              </div>
+
+              {config.analysisResult.key_factors && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs font-medium text-blue-800 mb-1">Key Success Factors</p>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    {config.analysisResult.key_factors.slice(0, 3).map((factor: string, i: number) => (
+                      <li key={i}>• {factor}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {loading && !isDeepClone && (
         <div className="flex items-center justify-center py-4">
           <Loader2 className="w-5 h-5 text-violet-600 animate-spin" />
           <span className="ml-2 text-sm text-stone-500">Loading layer data...</span>

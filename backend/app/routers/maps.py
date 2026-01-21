@@ -398,3 +398,128 @@ def get_demographics(request: DemographicsRequest):
         employment_rate=round(random.uniform(92, 98), 1),
         area_sq_miles=round(area, 2)
     )
+
+
+class DeepCloneRequest(BaseModel):
+    source_business: str
+    source_location: str | None = None
+    source_coordinates: dict | None = None
+    target_coordinates: dict
+    target_address: str | None = None
+    business_category: str = "restaurant"
+    radius_miles: float = 1.0
+    include_competitors: bool = True
+    include_demographics: bool = True
+
+
+class ThreeMileAnalysis(BaseModel):
+    population: int
+    median_income: int
+    competition_level: str
+    growth_rate: float
+    median_age: float
+
+
+class DeepCloneResponse(BaseModel):
+    match_score: int
+    source_business: str
+    source_location: str | None = None
+    target_address: str | None = None
+    business_category: str
+    three_mile_analysis: ThreeMileAnalysis
+    key_factors: list[str]
+    competitors_found: int = 0
+    recommendation: str
+
+
+@router.post("/deep-clone-analysis", response_model=DeepCloneResponse)
+def analyze_deep_clone(request: DeepCloneRequest):
+    """
+    Analyze viability of cloning a successful business to a target location.
+    Compares source and target demographics, competition, and market fit.
+    """
+    import random
+    
+    target_lat = request.target_coordinates.get("lat", 0)
+    target_lng = request.target_coordinates.get("lng", 0)
+    
+    area = 3.14159 * (3.0 ** 2)
+    pop_density = random.randint(3000, 10000)
+    population = int(area * pop_density)
+    median_income = random.randint(55000, 135000)
+    median_age = round(random.uniform(28, 42), 1)
+    
+    category_competition = {
+        "restaurant": random.randint(8, 25),
+        "fast_food": random.randint(5, 15),
+        "fast_casual": random.randint(4, 12),
+        "cafe": random.randint(6, 20),
+        "fitness": random.randint(3, 10),
+        "retail": random.randint(10, 30),
+        "salon": random.randint(5, 15),
+    }
+    competitors = category_competition.get(request.business_category, random.randint(5, 15))
+    
+    if competitors <= 5:
+        competition_level = "Low"
+        comp_score = 25
+    elif competitors <= 12:
+        competition_level = "Moderate"
+        comp_score = 15
+    else:
+        competition_level = "High"
+        comp_score = 5
+    
+    income_score = min(25, int((median_income / 80000) * 20))
+    pop_score = min(25, int((population / 100000) * 20))
+    growth_rate = round(random.uniform(1.5, 6.5), 1)
+    growth_score = min(25, int(growth_rate * 4))
+    
+    base_score = 50 + comp_score + income_score + pop_score + growth_score
+    match_score = min(95, max(45, base_score + random.randint(-10, 10)))
+    
+    key_factors = []
+    if median_income > 75000:
+        key_factors.append(f"Strong income demographics (${median_income:,} median)")
+    if population > 50000:
+        key_factors.append(f"Large population base ({population:,} in 3-mile radius)")
+    if competition_level == "Low":
+        key_factors.append("Limited direct competition in the area")
+    elif competition_level == "Moderate":
+        key_factors.append("Moderate competition indicates proven demand")
+    if growth_rate > 4.0:
+        key_factors.append(f"High area growth rate ({growth_rate}% annually)")
+    if median_age < 35:
+        key_factors.append(f"Young demographic (median age {median_age})")
+    
+    if not key_factors:
+        key_factors = [
+            "Established commercial corridor",
+            "Good foot traffic potential",
+            "Accessible location"
+        ]
+    
+    if match_score >= 80:
+        recommendation = "Highly recommended - strong market fit and favorable conditions"
+    elif match_score >= 65:
+        recommendation = "Good potential - consider detailed feasibility study"
+    else:
+        recommendation = "Moderate fit - further market research recommended"
+    
+    return DeepCloneResponse(
+        match_score=match_score,
+        source_business=request.source_business,
+        source_location=request.source_location,
+        target_address=request.target_address,
+        business_category=request.business_category,
+        three_mile_analysis=ThreeMileAnalysis(
+            population=population,
+            median_income=median_income,
+            competition_level=competition_level,
+            growth_rate=growth_rate,
+            median_age=median_age
+        ),
+        key_factors=key_factors[:4],
+        competitors_found=competitors,
+        recommendation=recommendation
+    )

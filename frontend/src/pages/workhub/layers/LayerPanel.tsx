@@ -44,6 +44,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
   const [addressLoading, setAddressLoading] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [analyzingLayers, setAnalyzingLayers] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (state.center?.address) {
@@ -129,6 +130,53 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
     })
   }
 
+  const handleDeepCloneAnalysis = async (layerId: string) => {
+    const layer = state.layers.find(l => l.id === layerId)
+    if (!layer || !state.center) return
+
+    setAnalyzingLayers(prev => ({ ...prev, [layerId]: true }))
+
+    try {
+      const response = await fetch('/api/maps/deep-clone-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_business: layer.config.sourceBusiness,
+          source_location: layer.config.sourceLocation || null,
+          source_coordinates: layer.config.sourceLocationCoordinates || null,
+          target_coordinates: {
+            lat: state.center.lat,
+            lng: state.center.lng
+          },
+          target_address: state.center.address || null,
+          business_category: layer.config.businessCategory || 'restaurant',
+          radius_miles: state.radiusMiles,
+          include_competitors: layer.config.includeCompetitors !== false,
+          include_demographics: layer.config.includeDemographics !== false
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Analysis failed')
+      }
+
+      const result = await response.json()
+
+      const updatedLayers = state.layers.map(l =>
+        l.id === layerId ? { ...l, config: { ...l.config, analysisResult: result } } : l
+      )
+      onStateChange({ ...state, layers: updatedLayers })
+    } catch (error) {
+      console.error('Deep clone analysis error:', error)
+      const updatedLayers = state.layers.map(l =>
+        l.id === layerId ? { ...l, error: 'Analysis failed. Please try again.' } : l
+      )
+      onStateChange({ ...state, layers: updatedLayers })
+    } finally {
+      setAnalyzingLayers(prev => ({ ...prev, [layerId]: false }))
+    }
+  }
+
   const handleAiSubmit = () => {
     if (aiPromptText.trim()) {
       onAiPrompt(aiPromptText.trim())
@@ -146,11 +194,12 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg border border-stone-200">
-      <div className="flex-shrink-0 p-3 border-b border-stone-200 bg-gradient-to-r from-violet-50 to-purple-50">
-        <div className="flex items-center gap-2 mb-2">
-          <MapPin className="w-4 h-4 text-violet-600" />
-          <span className="text-sm font-medium text-stone-700">Center Point</span>
+      <div className="flex-shrink-0 p-3 border-b border-stone-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+        <div className="flex items-center gap-2 mb-1">
+          <MapPin className="w-4 h-4 text-emerald-600" />
+          <span className="text-sm font-medium text-stone-700">Target Location</span>
         </div>
+        <p className="text-xs text-stone-500 mb-2">Where do you want to open your business?</p>
         
         <div className="relative mb-2">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
@@ -162,8 +211,8 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
               searchAddress(e.target.value)
             }}
             onFocus={() => addressSuggestions.length > 0 && setShowSuggestions(true)}
-            placeholder="Enter address, city, or landmark..."
-            className="w-full pl-9 pr-10 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white"
+            placeholder="Enter target city, address, or area..."
+            className="w-full pl-9 pr-10 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
           />
           {addressLoading && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 animate-spin" />
@@ -196,7 +245,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
               onClick={() => handleRadiusChange(opt.value)}
               className={`flex-1 px-1 py-1.5 rounded text-xs font-medium transition-all ${
                 state.radius === opt.value
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-emerald-600 text-white'
                   : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
               }`}
             >
@@ -279,6 +328,9 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                 config={activeLayer.config}
                 onChange={(config: Record<string, any>) => handleLayerConfigChange(activeLayer.id, config)}
                 loading={activeLayer.loading}
+                onAnalyze={() => handleDeepCloneAnalysis(activeLayer.id)}
+                analyzing={analyzingLayers[activeLayer.id] || false}
+                targetLocation={state.center}
               />
             ) : (
               <div className="text-center py-6">

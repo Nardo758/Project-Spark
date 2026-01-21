@@ -5,26 +5,26 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
   deep_clone: {
     type: 'deep_clone',
     label: 'Deep Clone',
-    description: 'Clone a successful business model to this location',
+    description: 'Clone a successful business to your target location',
     icon: Copy,
-    color: 'emerald',
+    color: '#10b981',
     aiKeywords: ['clone', 'copy', 'replicate', 'business model', 'franchise', 'similar'],
     inputs: [
       {
         key: 'sourceBusiness',
-        label: 'Source Business Name',
+        label: 'Source Business to Clone',
         type: 'text',
-        placeholder: 'e.g., Sweetgreen, Orange Theory, etc.',
+        placeholder: 'e.g., Crumbl Cookies, Planet Fitness...',
         required: true
       },
       {
-        key: 'sourceAddress',
-        label: 'Business Address',
+        key: 'sourceLocation',
+        label: 'Source Location (where it\'s successful)',
         type: 'address',
-        placeholder: 'Enter the address of the business to clone...'
+        placeholder: 'e.g., Salt Lake City, UT'
       },
       {
-        key: 'businessType',
+        key: 'businessCategory',
         label: 'Business Category',
         type: 'combobox',
         placeholder: 'Type or select a category...',
@@ -62,17 +62,26 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
         defaultValue: 'restaurant'
       },
       {
-        key: 'analyzeCompetitors',
-        label: 'Include Competitor Analysis',
+        key: 'includeCompetitors',
+        label: 'Show Competitors in Target Area',
+        type: 'toggle',
+        defaultValue: true
+      },
+      {
+        key: 'includeDemographics',
+        label: 'Compare Demographics',
         type: 'toggle',
         defaultValue: true
       }
     ],
     defaultConfig: {
       sourceBusiness: '',
-      sourceAddress: '',
-      businessType: 'restaurant',
-      analyzeCompetitors: true
+      sourceLocation: '',
+      sourceLocationCoordinates: null,
+      businessCategory: 'restaurant',
+      includeCompetitors: true,
+      includeDemographics: true,
+      analysisResult: null
     }
   },
 
@@ -81,7 +90,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     label: 'Demographics',
     description: 'Population, income, and age distribution data',
     icon: Users,
-    color: 'blue',
+    color: '#3b82f6',
     aiKeywords: ['demographics', 'population', 'income', 'age', 'census', 'people'],
     inputs: [
       {
@@ -127,7 +136,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     label: 'Competition',
     description: 'Find competitors and similar businesses nearby',
     icon: Store,
-    color: 'orange',
+    color: '#f97316',
     aiKeywords: ['competition', 'competitors', 'nearby', 'similar', 'businesses', 'stores'],
     inputs: [
       {
@@ -175,7 +184,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     label: 'Traffic',
     description: 'Foot traffic and transportation patterns',
     icon: Car,
-    color: 'amber',
+    color: '#f59e0b',
     aiKeywords: ['traffic', 'footfall', 'transportation', 'busy', 'transit'],
     inputs: [
       {
@@ -215,7 +224,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     label: 'Custom Layer',
     description: 'Create a custom data layer',
     icon: Layers,
-    color: 'gray',
+    color: '#6b7280',
     aiKeywords: ['custom', 'create', 'new', 'layer'],
     inputs: [
       {
