@@ -1,7 +1,17 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from cryptography.fernet import Fernet
+import os
 from app.db.database import Base
+
+
+def get_fernet():
+    """Get Fernet instance for encryption/decryption"""
+    key = os.environ.get("ENCRYPTION_KEY")
+    if not key:
+        key = Fernet.generate_key().decode()
+    return Fernet(key.encode() if isinstance(key, str) else key)
 
 
 class User(Base):
@@ -73,3 +83,53 @@ class User(Base):
     opportunity_notes = relationship("OpportunityNote", back_populates="user", cascade="all, delete-orphan")
     copilot_messages = relationship("GlobalChatMessage", back_populates="user", cascade="all, delete-orphan", order_by="GlobalChatMessage.created_at")
     monthly_report_usage = relationship("MonthlyReportUsage", back_populates="user", cascade="all, delete-orphan")
+    ai_preference = relationship("UserAIPreference", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+
+class UserAIPreference(Base):
+    """User AI provider preferences for the Dual-Realm Workspace"""
+    __tablename__ = "user_ai_preferences"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    
+    provider = Column(String(50), default="claude")
+    mode = Column(String(50), default="replit")
+    model = Column(String(100), nullable=True)
+    
+    encrypted_openai_api_key = Column(Text, nullable=True)
+    openai_key_validated_at = Column(DateTime(timezone=True), nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    user = relationship("User", back_populates="ai_preference")
+    
+    def set_openai_api_key(self, api_key: str):
+        """Encrypt and store OpenAI API key"""
+        if api_key:
+            fernet = get_fernet()
+            self.encrypted_openai_api_key = fernet.encrypt(api_key.encode()).decode()
+    
+    def get_openai_api_key(self) -> str | None:
+        """Decrypt and return OpenAI API key"""
+        if self.encrypted_openai_api_key:
+            try:
+                fernet = get_fernet()
+                return fernet.decrypt(self.encrypted_openai_api_key.encode()).decode()
+            except Exception:
+                return None
+        return None
+    
+    def get_api_key(self) -> str | None:
+        """Get the appropriate API key based on provider"""
+        if self.provider == "openai":
+            return self.get_openai_api_key()
+        elif self.provider == "claude":
+            if self.user and hasattr(self.user, 'encrypted_claude_api_key') and self.user.encrypted_claude_api_key:
+                try:
+                    fernet = get_fernet()
+                    return fernet.decrypt(self.user.encrypted_claude_api_key.encode()).decode()
+                except Exception:
+                    return None
+        return None
