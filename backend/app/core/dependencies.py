@@ -87,12 +87,16 @@ from functools import wraps
 
 def get_user_subscription_tier(user: User, db: Session) -> SubscriptionTier:
     """Get user's current subscription tier"""
+    from datetime import datetime, timezone
+    
     subscription = db.query(Subscription).filter(
         Subscription.user_id == user.id,
         Subscription.status == SubscriptionStatus.ACTIVE
     ).first()
     
     if subscription:
+        if subscription.current_period_end and subscription.current_period_end < datetime.now(timezone.utc):
+            return SubscriptionTier.FREE
         return subscription.tier
     return SubscriptionTier.FREE
 
