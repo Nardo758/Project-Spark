@@ -10,27 +10,28 @@ I want iterative development, with a focus on delivering core features quickly a
 OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, TailwindCSS) on Port 5000 and a Python FastAPI backend (SQLAlchemy ORM) on Port 8000, backed by a Replit PostgreSQL database. Client-side state is managed with Zustand, and routing with React Router v6. The frontend proxies `/api/*` requests to the backend.
 
 **Key Architectural Decisions & Features:**
-*   **Monetization & Access Control:** Implements a 3-gate revenue model with multi-tier subscriptions, opportunity slot credits, and pay-per-report features, including white-label and commercial use rights for business tiers.
-*   **Team & Access Management:** Supports team creation, role-based access control (owner/admin/member), invitation systems, and API access for business track subscribers with key management and usage tracking.
-*   **AI Engine & Analysis:** Integrates with LLMs for idea generation, validation, expert matching, and detailed opportunity analysis. Features an 8-stage "Signal-to-Opportunity" algorithm, automated data pipeline, and AI reliability system with timeouts and structured error handling.
-*   **Opportunity Reporting:** Provides 20 AI-generated report templates organized into categories, accessible via a Report Library and Consultant Studio. Includes a "Clone Success" feature for replicating business models with location intelligence and demographic analysis, supporting guest purchases.
-*   **Authentication & Security:** Uses Replit's OIDC patterns with database-backed user authentication, including LinkedIn OAuth, password reset functionality, and TOTP-based Two-Factor Authentication (2FA). Webhook security is hardened with production-only secrets and legacy endpoint deprecation.
+*   **Monetization & Access Control:** Implements a 3-gate revenue model with multi-tier subscriptions, opportunity slot credits, and pay-per-report features, including white-label and commercial use rights.
+*   **Team & Access Management:** Supports team creation, role-based access control (owner/admin/member), invitation systems, and API access for business track subscribers.
+*   **AI Engine & Analysis:** Integrates with LLMs for idea generation, validation, expert matching, and detailed opportunity analysis, featuring an 8-stage "Signal-to-Opportunity" algorithm and automated data pipeline.
+*   **Opportunity Reporting:** Provides 20 AI-generated report templates accessible via a Report Library and Consultant Studio, including a "Clone Success" feature.
+*   **Authentication & Security:** Uses Replit's OIDC patterns with database-backed user authentication, including LinkedIn OAuth, password reset, and TOTP-based 2FA.
 *   **User Interface & Experience:** Features a professional dark-themed design with a deep dive console, dynamic navigation, and interactive mapping.
-*   **Content Moderation:** Implements a quality control workflow requiring admin approval for opportunities to be publicly visible, including side-by-side content comparison and inline editing.
-*   **Unified Opportunity Hub & WorkHub (AI Co-Founder):** For paid users, combines research and workspace with a visual journey timeline. The WorkHub is a chat-first conversational AI assistant with a 4-stage workflow (Validate/Research/Plan/Execute), context panels, quick actions, and toolkit panels. Supports "Bring Your Own Key" (BYOK) for Anthropic Claude API keys.
-*   **Expert Marketplace & Collaboration:** Features a Leads Marketplace and Network Hub, with an intelligent Expert Recommendation Engine using a weighted scoring algorithm. Facilitates expert interactions with Stripe Connect for payouts, an expert dashboard, and a rating/review system. Expert onboarding supports LinkedIn OAuth pre-population and admin tools for external expert integration (e.g., Upwork).
-*   **Data Management:** Ensures complete signal traceability and indefinite data retention. Implements database-backed caching for AI-driven idea validation with a 7-day TTL.
-*   **Location Validation:** Centralized `location_utils.py` module provides state bounding box validation to detect and correct out-of-state coordinates from SerpAPI or stored data. Automatic fallback to city/state center coordinates with audit logging ensures map accuracy.
+*   **Content Moderation:** Implements a quality control workflow requiring admin approval for public visibility of opportunities.
+*   **Unified Opportunity Hub & WorkHub (AI Co-Founder):** For paid users, combines research and workspace with a visual journey timeline and a chat-first conversational AI assistant with a 4-stage workflow (Validate/Research/Plan/Execute). Supports "Bring Your Own Key" (BYOK) for Anthropic Claude API keys.
+*   **Expert Marketplace & Collaboration:** Features a Leads Marketplace and Network Hub with an intelligent Expert Recommendation Engine, facilitating expert interactions with Stripe Connect for payouts and an expert dashboard.
+*   **Data Management:** Ensures complete signal traceability, indefinite data retention, and database-backed caching for AI-driven idea validation.
+*   **Location Validation:** Centralized `location_utils.py` module for state bounding box validation and automatic fallback for map accuracy.
 *   **Admin Panel:** Comprehensive tools for managing users, subscriptions, opportunities, leads, and platform statistics.
+*   **Dual-Realm Workspace Architecture:** Supports both Physical (location-based) and Digital (online) business opportunities, incorporating Mapbox for physical realms and Excalidraw for digital wireframing. This includes an AI Provider Abstraction Layer for flexible LLM integration (Claude, OpenAI) and data services for map commands, census data, SerpAPI, and Excalidraw storage.
 
 ## External Dependencies
 *   **PostgreSQL:** Managed database provided by Replit.
 *   **Stripe:** Payment gateway for subscriptions, pay-per-unlock, and expert service transactions (including Stripe Connect).
-*   **Resend:** Email service for transactional emails and automation.
-*   **Apify:** Web scraping platform for automated data collection.
-*   **SerpAPI:** Google Search and Google Maps Reviews API for location-based business intelligence.
+*   **Resend:** Email service for transactional emails.
+*   **Apify:** Web scraping platform.
+*   **SerpAPI:** Google Search and Google Maps Reviews API.
 *   **OpenAI/Anthropic (LLMs):** Integrated for various AI capabilities.
 *   **LinkedIn OAuth:** For professional network authentication.
-*   **Census Bureau ACS 5-Year API:** Provides demographic data for opportunity analysis.
+*   **Census Bureau ACS 5-Year API:** Provides demographic data.
 *   **Mapbox:** Used for map visualizations.
 *   **SBA (Small Business Administration):** Provides curated loan program data and financing course information.
