@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, or_
 from typing import List, Optional
 import json
 
@@ -66,6 +66,7 @@ async def get_opportunities(
     geographic_scope: Optional[str] = None,
     country: Optional[str] = None,
     completion_status: Optional[str] = None,
+    realm_type: Optional[str] = Query(None, regex="^(physical|digital)$"),
     current_user: User = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
@@ -102,6 +103,16 @@ async def get_opportunities(
     # Filter by completion status
     if completion_status:
         query = query.filter(Opportunity.completion_status == completion_status)
+
+    # Filter by realm type (physical shows physical+both, digital shows digital+both)
+    if realm_type:
+        query = query.filter(
+            or_(
+                Opportunity.realm_type == realm_type,
+                Opportunity.realm_type == "both",
+                Opportunity.realm_type.is_(None)
+            )
+        )
 
     # Sorting
     if sort_by == "recent":

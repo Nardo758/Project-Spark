@@ -12,6 +12,9 @@ class OpportunityBase(BaseModel):
     market_size: Optional[str] = None
     is_anonymous: bool = False
 
+    # Realm Type (Physical/Digital/Both)
+    realm_type: str = "both"
+
     # Geographic Information
     geographic_scope: str = "online"  # local, regional, national, international, online
     country: Optional[str] = None
@@ -31,6 +34,7 @@ class OpportunityUpdate(BaseModel):
     severity: Optional[int] = None
     market_size: Optional[str] = None
     status: Optional[str] = None
+    realm_type: Optional[str] = None
 
     # Geographic Information
     geographic_scope: Optional[str] = None

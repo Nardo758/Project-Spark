@@ -1,8 +1,15 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Text, Float, ForeignKey, Boolean, Enum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db.database import Base
+import enum
+
+
+class RealmType(enum.Enum):
+    physical = "physical"
+    digital = "digital"
+    both = "both"
 
 
 class Opportunity(Base):
@@ -11,6 +18,9 @@ class Opportunity(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(500), nullable=False, index=True)
     description = Column(Text, nullable=False)
+
+    # Realm Type (Physical/Digital/Both)
+    realm_type = Column(String(20), default="both", index=True)
 
     # Categorization
     category = Column(String(100), nullable=False, index=True)
