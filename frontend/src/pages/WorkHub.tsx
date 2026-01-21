@@ -1219,6 +1219,12 @@ export default function WorkHub() {
                 <LocationFinderMap
                   state={locationFinderState}
                   onLayerDataUpdate={handleLayerDataUpdate}
+                  onCenterChange={(center) => {
+                    setLocationFinderState(prev => ({
+                      ...prev,
+                      center: center
+                    }))
+                  }}
                 />
               </div>
             </div>

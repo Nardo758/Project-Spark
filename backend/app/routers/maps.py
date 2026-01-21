@@ -319,6 +319,36 @@ class PlacesNearbyResponse(BaseModel):
     total: int
 
 
+def _get_landward_bias(lat: float, lng: float) -> tuple[float, float]:
+    """
+    Returns angle range biases (min_angle, max_angle in radians) to avoid placing points in water.
+    Uses simple coastal detection heuristics for major US coastal cities.
+    """
+    import math
+    
+    coastal_zones = [
+        {"name": "Miami/SE Florida", "lat_range": (25.5, 26.5), "lng_range": (-80.5, -80.0), 
+         "water_direction": "east", "bias_angle": (math.pi * 0.5, math.pi * 1.5)},
+        {"name": "LA/West Coast", "lat_range": (33.5, 34.5), "lng_range": (-118.8, -118.0),
+         "water_direction": "west", "bias_angle": (-math.pi * 0.5, math.pi * 0.5)},
+        {"name": "SF Bay", "lat_range": (37.5, 38.0), "lng_range": (-122.6, -122.0),
+         "water_direction": "west", "bias_angle": (-math.pi * 0.4, math.pi * 0.4)},
+        {"name": "NYC East", "lat_range": (40.5, 41.0), "lng_range": (-74.2, -73.7),
+         "water_direction": "east", "bias_angle": (math.pi * 0.6, math.pi * 1.4)},
+        {"name": "Seattle", "lat_range": (47.4, 47.8), "lng_range": (-122.6, -122.2),
+         "water_direction": "west", "bias_angle": (-math.pi * 0.3, math.pi * 0.3)},
+        {"name": "Chicago Lakefront", "lat_range": (41.7, 42.0), "lng_range": (-87.8, -87.5),
+         "water_direction": "east", "bias_angle": (math.pi * 0.6, math.pi * 1.4)},
+    ]
+    
+    for zone in coastal_zones:
+        if (zone["lat_range"][0] <= lat <= zone["lat_range"][1] and 
+            zone["lng_range"][0] <= lng <= zone["lng_range"][1]):
+            return zone["bias_angle"]
+    
+    return (0, 2 * math.pi)
+
+
 @router.post("/places/nearby", response_model=PlacesNearbyResponse)
 def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db)):
     """
@@ -333,30 +363,56 @@ def get_nearby_places(request: PlacesNearbyRequest, db: Session = Depends(get_db
                       "Tasty Corner", "Fresh Bites", "Downtown Diner", "Savory Spot", "Comfort Food Co"],
         "cafe": ["Morning Brew", "Coffee Corner", "Bean & Leaf", "The Daily Grind", "Espresso Lane"],
         "gym": ["FitLife", "PowerHouse Gym", "Core Fitness", "Peak Performance", "Strong Studio"],
+        "fitness": ["Iron Fitness", "CrossFit Zone", "Anytime Fitness", "LA Fitness", "Planet Fitness"],
+        "bakery": ["Sweet Delights", "Artisan Bakery", "The Bread Shop", "Sugar & Flour", "Daily Bake"],
+        "fast_food": ["Quick Bites", "Fast Lane Grill", "Express Eats", "Drive-Thru Deli", "Speedy Burger"],
+        "fast_casual": ["Fresh & Fast", "Bowl Spot", "Quick Kitchen", "Urban Bowls", "Craft Casual"],
         "retail": ["Main Street Shop", "Urban Goods", "Local Market", "Style Boutique", "The Corner Store"],
+        "salon": ["Style Studio", "Chic Cuts", "Beauty Bar", "Glamour Salon", "Hair Studio"],
+        "spa": ["Serenity Spa", "Wellness Retreat", "Relax & Renew", "Zen Day Spa", "Pure Bliss"],
         "business": ["Metro Business Center", "Innovation Hub", "Pro Services", "Local Agency", "Community Co-op"]
     }
     
-    names = business_names.get(request.business_type, business_names["business"])
+    names = business_names.get(request.business_type, business_names.get("business", ["Local Business"]))
+    
+    seed = int(abs(request.lat * 1000) + abs(request.lng * 1000))
+    random.seed(seed)
+    
+    min_angle, max_angle = _get_landward_bias(request.lat, request.lng)
+    angle_range = max_angle - min_angle
+    if angle_range < 0:
+        angle_range += 2 * math.pi
     
     places = []
+    street_names = ['Main', 'Oak', 'Park', 'Center', 'First', 'Second', 'Third', 'Maple', 'Pine', 'Cedar',
+                    'Washington', 'Lincoln', 'Jefferson', 'Adams', 'Madison', 'Commerce', 'Market', 'Broadway']
+    street_types = ['St', 'Ave', 'Blvd', 'Dr', 'Rd', 'Way', 'Ln', 'Pl']
+    
     for i in range(min(request.limit, 15)):
-        angle = random.uniform(0, 2 * math.pi)
-        distance = random.uniform(0.1, request.radius_miles) * 0.01449
+        base_angle = random.uniform(0, 1) * angle_range + min_angle
+        angle = base_angle + random.uniform(-0.3, 0.3)
+        
+        distance = random.uniform(0.2, 0.85) * request.radius_miles * 0.01449
         
         place_lat = request.lat + distance * math.cos(angle)
         place_lng = request.lng + distance * math.sin(angle) / math.cos(math.radians(request.lat))
         
+        street_num = random.randint(100, 9999)
+        street_name = random.choice(street_names)
+        street_type = random.choice(street_types)
+        
         places.append(PlaceResult(
             id=f"{request.business_type}_{i}_{int(request.lat*100)}_{int(request.lng*100)}",
-            name=f"{random.choice(names)} {chr(65 + i)}",
+            name=f"{random.choice(names)}",
             lat=place_lat,
             lng=place_lng,
             rating=round(random.uniform(3.5, 5.0), 1),
             review_count=random.randint(10, 500),
-            address=f"{random.randint(100, 9999)} {random.choice(['Main', 'Oak', 'Park', 'Center', 'First'])} St",
+            address=f"{street_num} {street_name} {street_type}",
             category=request.business_type
         ))
+    
+    random.seed()
     
     return PlacesNearbyResponse(places=places, total=len(places))
 

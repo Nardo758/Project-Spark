@@ -10,12 +10,14 @@ const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
 interface LocationFinderMapProps {
   state: LocationFinderState
   onLayerDataUpdate?: (layerId: string, data: any, error?: string) => void
+  onCenterChange?: (center: { lat: number; lng: number; address?: string }) => void
 }
 
-export function LocationFinderMap({ state }: LocationFinderMapProps) {
+export function LocationFinderMap({ state, onCenterChange }: LocationFinderMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const centerMarkerRef = useRef<mapboxgl.Marker | null>(null)
+  const popupRef = useRef<mapboxgl.Popup | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,6 +43,27 @@ export function LocationFinderMap({ state }: LocationFinderMapProps) {
 
       mapRef.current.on('load', () => {
         setMapLoaded(true)
+      })
+
+      mapRef.current.on('click', async (e) => {
+        if (!onCenterChange) return
+        
+        const { lng, lat } = e.lngLat
+        
+        let address: string | undefined
+        try {
+          const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&types=address,place,locality`
+          )
+          const data = await response.json()
+          if (data.features && data.features.length > 0) {
+            address = data.features[0].place_name
+          }
+        } catch (err) {
+          console.error('Reverse geocoding failed:', err)
+        }
+        
+        onCenterChange({ lat, lng, address })
       })
 
       mapRef.current.on('error', (e) => {
@@ -98,16 +121,37 @@ export function LocationFinderMap({ state }: LocationFinderMapProps) {
     if (!mapRef.current || !mapLoaded || !state.center) return
 
     const map = mapRef.current
-    const sourceId = 'radius-circle'
 
-    if (map.getSource(sourceId)) {
-      map.removeLayer('radius-circle-fill')
-      map.removeLayer('radius-circle-outline')
-      map.removeSource(sourceId)
+    if (!map.isStyleLoaded()) {
+      map.once('style.load', () => {
+        if (mapRef.current) {
+          addRadiusCircle(mapRef.current, state.center!, state.radius)
+        }
+      })
+      return
     }
 
-    const radiusInKm = state.radius * 1.60934
-    const circleGeoJSON = createCircleGeoJSON(state.center.lng, state.center.lat, radiusInKm)
+    addRadiusCircle(map, state.center, state.radius)
+  }, [state.radius, state.center, mapLoaded])
+
+  const addRadiusCircle = (map: mapboxgl.Map, center: { lat: number; lng: number }, radiusMiles: number) => {
+    const sourceId = 'radius-circle'
+
+    try {
+      if (map.getLayer('radius-circle-fill')) {
+        map.removeLayer('radius-circle-fill')
+      }
+      if (map.getLayer('radius-circle-outline')) {
+        map.removeLayer('radius-circle-outline')
+      }
+      if (map.getSource(sourceId)) {
+        map.removeSource(sourceId)
+      }
+    } catch (e) {
+    }
+
+    const radiusInKm = radiusMiles * 1.60934
+    const circleGeoJSON = createCircleGeoJSON(center.lng, center.lat, radiusInKm)
 
     map.addSource(sourceId, {
       type: 'geojson',
@@ -136,11 +180,11 @@ export function LocationFinderMap({ state }: LocationFinderMapProps) {
     })
 
     map.flyTo({
-      center: [state.center.lng, state.center.lat],
-      zoom: getZoomForRadius(state.radius),
+      center: [center.lng, center.lat],
+      zoom: getZoomForRadius(radiusMiles),
       duration: 500
     })
-  }, [state.radius, state.center, mapLoaded])
+  }
 
   const layerDataKey = state.layers
     .map(l => `${l.id}:${l.visible}:${l.data ? 'y' : 'n'}:${l.loading ? 'l' : 's'}`)
@@ -203,6 +247,55 @@ export function LocationFinderMap({ state }: LocationFinderMapProps) {
           'circle-color': def.color,
           'circle-stroke-width': 2,
           'circle-stroke-color': '#ffffff'
+        }
+      })
+
+      map.on('mouseenter', pointLayerId, (e) => {
+        map.getCanvas().style.cursor = 'pointer'
+        
+        if (e.features && e.features.length > 0) {
+          const feature = e.features[0]
+          const props = feature.properties || {}
+          const coords = (feature.geometry as any).coordinates.slice()
+          
+          const name = props.name || 'Unknown Business'
+          const rating = props.rating ? `${props.rating}/5` : ''
+          const category = props.category || ''
+          const address = props.address || ''
+          
+          let html = `<div style="padding: 8px; max-width: 200px;">
+            <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">${name}</div>`
+          if (rating) {
+            html += `<div style="font-size: 12px; color: #6b7280;">Rating: ${rating}</div>`
+          }
+          if (category) {
+            html += `<div style="font-size: 12px; color: #6b7280;">${category}</div>`
+          }
+          if (address) {
+            html += `<div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">${address}</div>`
+          }
+          html += '</div>'
+          
+          if (popupRef.current) {
+            popupRef.current.remove()
+          }
+          
+          popupRef.current = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false,
+            offset: 15
+          })
+            .setLngLat(coords)
+            .setHTML(html)
+            .addTo(map)
+        }
+      })
+
+      map.on('mouseleave', pointLayerId, () => {
+        map.getCanvas().style.cursor = ''
+        if (popupRef.current) {
+          popupRef.current.remove()
+          popupRef.current = null
         }
       })
     }
