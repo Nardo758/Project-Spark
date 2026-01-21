@@ -21,7 +21,11 @@ import {
   Check,
   AlertTriangle,
   RefreshCw,
-  X
+  X,
+  Bot,
+  Key,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 type SubscriptionInfo = {
@@ -40,6 +44,13 @@ type TwoFactorStatus = {
 type TwoFactorSetup = {
   secret: string
   qr_code: string
+}
+
+type AIPreferences = {
+  provider: 'claude' | 'openai'
+  mode: 'replit' | 'byok'
+  model: string
+  has_openai_key: boolean
 }
 
 type NetworkRole = 'expert' | 'partner' | 'investor' | 'lender'
@@ -122,12 +133,23 @@ export default function Settings() {
   const [twoFactorError, setTwoFactorError] = useState('')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
+  const [aiPreferences, setAIPreferences] = useState<AIPreferences | null>(null)
+  const [loadingAI, setLoadingAI] = useState(false)
+  const [savingAI, setSavingAI] = useState(false)
+  const [openaiKey, setOpenaiKey] = useState('')
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [aiError, setAIError] = useState('')
+  const [aiSuccess, setAISuccess] = useState('')
+
   useEffect(() => {
     if (activeTab === 'billing' && token) {
       fetchSubscriptionInfo()
     }
     if (activeTab === 'security' && token) {
       fetch2FAStatus()
+    }
+    if (activeTab === 'ai' && token) {
+      fetchAIPreferences()
     }
   }, [activeTab, token])
 
@@ -327,11 +349,120 @@ export default function Settings() {
     setTimeout(() => setCopiedCode(null), 2000)
   }
 
+  async function fetchAIPreferences() {
+    if (!token) return
+    setLoadingAI(true)
+    setAIError('')
+    try {
+      const res = await fetch('/api/v1/ai-preferences', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setAIPreferences(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch AI preferences:', err)
+    } finally {
+      setLoadingAI(false)
+    }
+  }
+
+  async function saveAIPreferences(updates: Partial<AIPreferences & { openai_api_key?: string }>) {
+    if (!token) return
+    setSavingAI(true)
+    setAIError('')
+    setAISuccess('')
+    try {
+      const res = await fetch('/api/v1/ai-preferences', {
+        method: 'PUT',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setAIPreferences(data)
+        setAISuccess('AI preferences saved successfully')
+        setOpenaiKey('')
+        setTimeout(() => setAISuccess(''), 3000)
+      } else {
+        const error = await res.json()
+        setAIError(error.detail || 'Failed to save preferences')
+      }
+    } catch (err) {
+      console.error('Failed to save AI preferences:', err)
+      setAIError('An error occurred. Please try again.')
+    } finally {
+      setSavingAI(false)
+    }
+  }
+
+  async function validateAndSaveOpenAIKey() {
+    if (!token || !openaiKey.trim()) return
+    setSavingAI(true)
+    setAIError('')
+    setAISuccess('')
+    try {
+      const res = await fetch('/api/v1/ai-preferences/openai-key', {
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ api_key: openaiKey.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setAIError(data.detail || 'Invalid OpenAI API key')
+        setSavingAI(false)
+        return
+      }
+      setAISuccess(data.message || 'OpenAI API key validated and saved successfully')
+      setOpenaiKey('')
+      fetchAIPreferences()
+      setTimeout(() => setAISuccess(''), 3000)
+    } catch (err) {
+      console.error('Failed to validate OpenAI key:', err)
+      setAIError('An error occurred. Please try again.')
+    } finally {
+      setSavingAI(false)
+    }
+  }
+
+  async function deleteOpenAIKey() {
+    if (!token) return
+    setSavingAI(true)
+    setAIError('')
+    try {
+      const res = await fetch('/api/v1/ai-preferences/openai-key', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        setAISuccess('OpenAI API key removed')
+        fetchAIPreferences()
+        setTimeout(() => setAISuccess(''), 3000)
+      } else {
+        const error = await res.json()
+        setAIError(error.detail || 'Failed to remove key')
+      }
+    } catch (err) {
+      console.error('Failed to delete OpenAI key:', err)
+      setAIError('An error occurred. Please try again.')
+    } finally {
+      setSavingAI(false)
+    }
+  }
+
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'security', label: 'Security', icon: Shield },
+    { id: 'ai', label: 'AI Settings', icon: Bot },
     { id: 'network', label: 'Join Our Network', icon: Users },
   ]
 
@@ -765,6 +896,153 @@ export default function Settings() {
                           )}
                         </button>
                       </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'ai' && (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">AI Settings</h2>
+                <p className="text-gray-600 mb-6">Configure your AI provider preferences for opportunity analysis and workspace features.</p>
+                
+                {aiError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
+                    <AlertTriangle className="w-4 h-4" />
+                    {aiError}
+                  </div>
+                )}
+                
+                {aiSuccess && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700 text-sm">
+                    <Check className="w-4 h-4" />
+                    {aiSuccess}
+                  </div>
+                )}
+
+                {loadingAI ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <h3 className="font-medium text-gray-900 mb-3">AI Provider</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => saveAIPreferences({ provider: 'claude', mode: 'replit' })}
+                          disabled={savingAI}
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${
+                            aiPreferences?.provider === 'claude'
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-400 to-amber-500 flex items-center justify-center">
+                              <span className="text-white text-sm font-bold">C</span>
+                            </div>
+                            <span className="font-medium text-gray-900">Claude</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Anthropic's Claude - Best for nuanced analysis</p>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            if (aiPreferences?.has_openai_key) {
+                              saveAIPreferences({ provider: 'openai', mode: 'byok' })
+                            } else {
+                              saveAIPreferences({ provider: 'openai', mode: 'replit' })
+                            }
+                          }}
+                          disabled={savingAI}
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${
+                            aiPreferences?.provider === 'openai'
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
+                              <span className="text-white text-sm font-bold">O</span>
+                            </div>
+                            <span className="font-medium text-gray-900">OpenAI</span>
+                          </div>
+                          <p className="text-xs text-gray-500">GPT-4o - Fast and versatile</p>
+                        </button>
+                      </div>
+                    </div>
+
+                    {aiPreferences?.provider === 'openai' && (
+                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 className="font-medium text-gray-900 mb-3">OpenAI API Key (Optional)</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Use your own OpenAI API key to track your usage and billing separately. 
+                          If not provided, OppGrid's shared credits will be used.
+                        </p>
+                        
+                        {aiPreferences.has_openai_key ? (
+                          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Key className="w-4 h-4 text-green-600" />
+                              <span className="text-sm text-green-700 font-medium">Your OpenAI API key is configured</span>
+                            </div>
+                            <button
+                              onClick={deleteOpenAIKey}
+                              disabled={savingAI}
+                              className="text-sm text-red-600 hover:text-red-700 font-medium"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="relative">
+                              <input
+                                type={showApiKey ? 'text' : 'password'}
+                                value={openaiKey}
+                                onChange={(e) => setOpenaiKey(e.target.value)}
+                                placeholder="sk-..."
+                                className="w-full px-4 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 font-mono text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowApiKey(!showApiKey)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                            <button
+                              onClick={validateAndSaveOpenAIKey}
+                              disabled={!openaiKey.trim() || savingAI}
+                              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                              {savingAI ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Key className="w-4 h-4" />
+                              )}
+                              Validate & Save Key
+                            </button>
+                            <p className="text-xs text-gray-500">
+                              Your API key is encrypted and securely stored. We never see or log your key.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Current configuration:</strong> Using{' '}
+                        {aiPreferences?.provider === 'claude' ? 'Claude' : 'OpenAI'}{' '}
+                        {aiPreferences?.mode === 'byok' && aiPreferences?.has_openai_key
+                          ? '(your API key)'
+                          : '(OppGrid credits)'
+                        }
+                      </p>
                     </div>
                   </div>
                 )}
