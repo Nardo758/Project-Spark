@@ -215,5 +215,14 @@ export function shouldRefetchLayer(
     return true
   }
   
+  const prevLayer = prevState?.layers.find(l => l.id === layer.id)
+  if (prevLayer && layer.type === 'deep_clone') {
+    const prevCategory = prevLayer.config?.businessCategory
+    const newCategory = layer.config?.businessCategory
+    if (prevCategory !== newCategory && newCategory) {
+      return true
+    }
+  }
+  
   return false
 }
