@@ -51,6 +51,9 @@ type AIPreferences = {
   mode: 'replit' | 'byok'
   model: string
   has_openai_key: boolean
+  has_claude_key: boolean
+  openai_key_validated_at: string | null
+  claude_key_validated_at: string | null
 }
 
 type NetworkRole = 'expert' | 'partner' | 'investor' | 'lender'
