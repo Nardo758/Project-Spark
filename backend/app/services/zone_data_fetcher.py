@@ -385,15 +385,23 @@ class ZoneDataFetcher:
 
 def calculate_zone_score(metrics: ZoneMetrics, weights: Dict[str, float] = None) -> Dict[str, Any]:
     """
-    Calculate zone score based on 7 metrics with weighted scoring
+    Calculate zone score using derived metrics for better comparability
     
-    Default weights:
-    - Demographics (pop, growth, income, age): 40%
-    - Competition: 20%
-    - Traffic (foot + drive-by): 40%
-    
-    Returns score breakdown and total
+    Uses derived metrics calculator for normalized scoring.
+    Returns both raw component scores and derived metrics.
     """
+    from app.services.derived_metrics import calculate_derived_metrics
+    
+    derived = calculate_derived_metrics(
+        total_population=metrics.total_population,
+        population_growth=metrics.population_growth,
+        median_income=metrics.median_income,
+        median_age=metrics.median_age,
+        total_competitors=metrics.total_competitors,
+        foot_traffic_monthly=metrics.foot_traffic_monthly,
+        drive_by_traffic_monthly=metrics.drive_by_traffic_monthly
+    )
+    
     if weights is None:
         weights = {
             'population': 0.10,
@@ -491,10 +499,12 @@ def calculate_zone_score(metrics: ZoneMetrics, weights: Dict[str, float] = None)
     else:
         scores['drive_by_traffic'] = max(20, drive / 1000)
     
-    total_score = sum(scores[k] * weights.get(k, 0) for k in scores)
+    total_score = derived.overall_score
     
     return {
         'total_score': round(total_score, 1),
         'component_scores': {k: round(v, 1) for k, v in scores.items()},
-        'weights': weights
+        'weights': weights,
+        'derived_metrics': derived.to_dict(),
+        'category_scores': derived.category_scores
     }

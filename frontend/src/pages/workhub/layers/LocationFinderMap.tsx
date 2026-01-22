@@ -1,10 +1,107 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Loader2, AlertCircle, TrendingUp, X, GripVertical } from 'lucide-react'
-import type { LocationFinderState, LayerInstance } from './types'
+import { Loader2, AlertCircle, TrendingUp, X, GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
+import type { LocationFinderState, LayerInstance, DerivedMetricValue } from './types'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
+
+const CATEGORY_LABELS: Record<string, string> = {
+  market: 'Market',
+  traffic: 'Traffic', 
+  economic: 'Economic',
+  demographics: 'Demographics'
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  market: 'bg-violet-500',
+  traffic: 'bg-blue-500',
+  economic: 'bg-emerald-500', 
+  demographics: 'bg-amber-500'
+}
+
+function DerivedMetricsPanel({ metrics }: { metrics: Record<string, DerivedMetricValue> }) {
+  const [expanded, setExpanded] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<string>('market')
+  
+  const categorizedMetrics = Object.entries(metrics).reduce((acc, [key, metric]) => {
+    const cat = metric?.category || 'market'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push({ key, ...metric })
+    return acc
+  }, {} as Record<string, Array<DerivedMetricValue & { key: string }>>)
+  
+  const categories = Object.keys(categorizedMetrics)
+  
+  return (
+    <div className="mt-2 border-t border-stone-200 pt-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1 text-[10px] text-violet-600 hover:text-violet-700 font-medium"
+      >
+        {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        {expanded ? 'Hide' : 'Show'} Derived Metrics
+      </button>
+      
+      {expanded && (
+        <div className="mt-2 space-y-2">
+          <div className="flex gap-1">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-2 py-0.5 text-[10px] rounded-full transition-colors ${
+                  activeCategory === cat 
+                    ? 'bg-violet-600 text-white' 
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                {CATEGORY_LABELS[cat] || cat}
+              </button>
+            ))}
+          </div>
+          
+          <div className="space-y-1.5">
+            {categorizedMetrics[activeCategory]?.map(metric => (
+              <div key={metric.key} className="space-y-0.5">
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-stone-500 truncate pr-2" title={metric.description}>
+                    {metric.name}
+                  </span>
+                  <span className="font-medium text-stone-700 flex-shrink-0">
+                    {formatMetricValue(metric.key, metric.raw_value)}
+                  </span>
+                </div>
+                <div className="h-1 bg-stone-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all ${
+                      (metric.normalized_value ?? 0) >= 70 ? 'bg-emerald-500' :
+                      (metric.normalized_value ?? 0) >= 50 ? 'bg-amber-500' : 'bg-red-400'
+                    }`}
+                    style={{ width: `${Math.min(metric.normalized_value ?? 0, 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function formatMetricValue(key: string, value: number): string {
+  if (key.includes('revenue') || key.includes('income') || key.includes('purchasing')) {
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`
+    return `$${value.toFixed(0)}`
+  }
+  if (key.includes('ratio')) return value.toFixed(2)
+  if (key.includes('score') || key.includes('index') || key.includes('momentum')) return value.toFixed(1)
+  if (key.includes('traffic') && value >= 1000) return `${(value / 1000).toFixed(0)}K`
+  if (key.includes('per_capita')) return value.toFixed(2)
+  return value.toFixed(1)
+}
 
 interface LocationFinderMapProps {
   state: LocationFinderState
@@ -741,7 +838,26 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
                     </span>
                   </div>
                   {zone.metrics ? (
-                    <div className="space-y-1.5 text-xs">
+                    <div className="space-y-2 text-xs">
+                      {zone.category_scores && (
+                        <div className="flex gap-1.5 mb-2">
+                          {Object.entries(zone.category_scores).map(([cat, score]) => (
+                            <div key={cat} className="flex-1 text-center">
+                              <div className="text-[10px] text-stone-400 capitalize">{cat}</div>
+                              <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden mt-0.5">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${
+                                    (score ?? 0) >= 70 ? 'bg-emerald-500' : 
+                                    (score ?? 0) >= 50 ? 'bg-amber-500' : 'bg-red-400'
+                                  }`}
+                                  style={{ width: `${Math.min(score ?? 0, 100)}%` }}
+                                />
+                              </div>
+                              <div className="text-[10px] font-medium mt-0.5">{Math.round(score ?? 0)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-stone-600">
                         <div className="flex justify-between">
                           <span className="text-stone-400">Population:</span>
@@ -776,6 +892,9 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
                           <span className="font-medium">{((zone.metrics.drive_by_traffic_monthly ?? 0) / 1000).toFixed(0)}K/mo</span>
                         </div>
                       </div>
+                      {zone.derived_metrics?.metrics && (
+                        <DerivedMetricsPanel metrics={zone.derived_metrics.metrics} />
+                      )}
                     </div>
                   ) : (
                     <>

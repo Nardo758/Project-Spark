@@ -67,6 +67,38 @@ export interface ZoneMetrics {
   foot_traffic_monthly: number
 }
 
+export interface DerivedMetricValue {
+  name: string
+  raw_value: number
+  normalized_value: number
+  category: 'market' | 'traffic' | 'economic' | 'demographics'
+  description: string
+  is_higher_better: boolean
+}
+
+export interface DerivedMetrics {
+  metrics: {
+    competition_per_capita: DerivedMetricValue
+    revenue_potential_per_competitor: DerivedMetricValue
+    traffic_per_competitor: DerivedMetricValue
+    foot_to_vehicle_ratio: DerivedMetricValue
+    traffic_density: DerivedMetricValue
+    customer_conversion_potential: DerivedMetricValue
+    purchasing_power_index: DerivedMetricValue
+    growth_momentum: DerivedMetricValue
+    market_opportunity_score: DerivedMetricValue
+    working_age_ratio: DerivedMetricValue
+    income_per_traffic: DerivedMetricValue
+  }
+  category_scores: {
+    market: number
+    traffic: number
+    economic: number
+    demographics: number
+  }
+  overall_score: number
+}
+
 export interface OptimalZone {
   id: string
   center_lat: number
@@ -87,6 +119,13 @@ export interface OptimalZone {
     competition: number
     foot_traffic: number
     drive_by_traffic: number
+  }
+  derived_metrics?: DerivedMetrics
+  category_scores?: {
+    market: number
+    traffic: number
+    economic: number
+    demographics: number
   }
   insights: string[]
   rank: number

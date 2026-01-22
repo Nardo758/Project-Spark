@@ -742,6 +742,8 @@ class EnhancedOptimalZone(BaseModel):
     total_score: float
     metrics: EnhancedZoneMetrics
     component_scores: dict[str, float]
+    derived_metrics: dict | None = None
+    category_scores: dict[str, float] | None = None
     insights: list[str]
     rank: int
 
@@ -854,6 +856,8 @@ def find_optimal_zones_enhanced(
                 foot_traffic_monthly=metrics.foot_traffic_monthly
             ),
             'component_scores': score_result['component_scores'],
+            'derived_metrics': score_result.get('derived_metrics'),
+            'category_scores': score_result.get('category_scores'),
             'insights': insights[:4]
         })
     
@@ -869,6 +873,8 @@ def find_optimal_zones_enhanced(
             total_score=zone['total_score'],
             metrics=zone['metrics'],
             component_scores=zone['component_scores'],
+            derived_metrics=zone.get('derived_metrics'),
+            category_scores=zone.get('category_scores'),
             insights=zone['insights'],
             rank=i + 1
         ))
