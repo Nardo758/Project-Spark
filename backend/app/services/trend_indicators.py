@@ -186,7 +186,7 @@ class TrendIndicatorService:
         radius_miles: float,
         current_value: float
     ) -> Dict[str, Any]:
-        """Get vehicle traffic trend from real DOT AADT historical data"""
+        """Get vehicle traffic trend from real DOT AADT historical data using CAGR"""
         try:
             # Query multi-year AADT data from traffic_roads table
             radius_meters = radius_miles * 1609.34
@@ -212,22 +212,25 @@ class TrendIndicatorService:
             }).fetchall()
             
             if len(results) >= 2:
-                # Calculate trend from actual historical data
+                # Calculate CAGR from actual historical data
                 years_data = [(row[0], row[1]) for row in results]
                 oldest_year, oldest_aadt = years_data[0]
                 newest_year, newest_aadt = years_data[-1]
                 
                 year_span = newest_year - oldest_year
-                if year_span > 0 and oldest_aadt > 0:
-                    # Calculate annual growth rate
-                    total_growth = (newest_aadt - oldest_aadt) / oldest_aadt
-                    annual_rate = total_growth / year_span
+                if year_span > 0 and oldest_aadt > 0 and newest_aadt > 0:
+                    # Calculate CAGR: (end/start)^(1/years) - 1
+                    cagr = (newest_aadt / oldest_aadt) ** (1 / year_span) - 1
                     
-                    # Baseline is 1 year ago
-                    baseline = newest_aadt / (1 + annual_rate)
+                    # current_value is monthly, newest_aadt is daily
+                    # Convert AADT to monthly: AADT * 30
+                    newest_monthly = newest_aadt * 30
+                    
+                    # Baseline is what traffic was 1 year ago (using CAGR)
+                    baseline_monthly = newest_monthly / (1 + cagr)
                     
                     return {
-                        'baseline': baseline * 30,  # Convert to monthly
+                        'baseline': baseline_monthly,
                         'source': 'dot_aadt'
                     }
             
