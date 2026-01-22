@@ -795,7 +795,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                         </div>
                       )}
 
-                      {layer.type === 'traffic' && (
+                      {layer.type === 'foot_traffic' && (
                         <div className="text-stone-600">
                           {layer.data?.summary ? (() => {
                             const traffic = layer.data.summary

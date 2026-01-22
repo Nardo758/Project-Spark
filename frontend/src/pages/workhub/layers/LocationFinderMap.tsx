@@ -680,7 +680,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     }
 
     if (existingSource) {
-      if (layer.type === 'traffic') {
+      if (layer.type === 'foot_traffic' || layer.type === 'drive_by_traffic') {
         if (map.getLayer(pointLayerId)) map.removeLayer(pointLayerId)
         if (map.getLayer(heatmapLayerId)) map.removeLayer(heatmapLayerId)
         if (map.getLayer(labelsLayerId)) map.removeLayer(labelsLayerId)
@@ -772,7 +772,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       data: geoJsonData
     })
 
-    if (layer.type === 'traffic' && geoJsonData.features?.length > 0) {
+    if ((layer.type === 'foot_traffic' || layer.type === 'drive_by_traffic') && geoJsonData.features?.length > 0) {
       const isHotspotData = geoJsonData.features[0]?.properties?.vitalityScore !== undefined
       
       if (isHotspotData) {
@@ -1002,7 +1002,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       return { type: 'FeatureCollection', features: [] }
     }
 
-    if (layer.data.type === 'traffic') {
+    if (layer.data.type === 'foot_traffic' || layer.data.type === 'drive_by_traffic') {
       if (layer.data.hotspots && layer.data.hotspots.length > 0) {
         const features = layer.data.hotspots.map((hotspot: any, index: number) => ({
           type: 'Feature' as const,

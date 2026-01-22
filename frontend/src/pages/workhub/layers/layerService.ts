@@ -29,8 +29,10 @@ export async function fetchLayerData(
         return await fetchDemographicsData(params)
       case 'competition':
         return await fetchCompetitionData(params)
-      case 'traffic':
-        return await fetchTrafficData(params)
+      case 'foot_traffic':
+        return await fetchFootTrafficData(params)
+      case 'drive_by_traffic':
+        return await fetchDriveByTrafficData(params)
       default:
         return { data: null, error: `Unknown layer type: ${layerType}` }
     }
@@ -243,7 +245,7 @@ async function fetchSingleHotspot(
   }
 }
 
-async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
+async function fetchFootTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
   const { center, radius, config } = params
   const forceRefresh = config.forceRefresh || false
   const radiusMiles = radius
@@ -263,10 +265,10 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
       if (firstError?.error === 'Authentication required') {
         return {
           data: {
-            type: 'traffic',
+            type: 'foot_traffic',
             requiresAuth: true,
             summary: null,
-            metadata: { layerType: 'traffic', source: 'unavailable' }
+            metadata: { layerType: 'foot_traffic', source: 'unavailable' }
           },
           error: 'Authentication required for foot traffic data'
         }
@@ -313,7 +315,7 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
     
     return {
       data: {
-        type: 'traffic',
+        type: 'foot_traffic',
         isMultiHotspot,
         hotspots,
         summary: {
@@ -341,7 +343,7 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
         center: { lat: center.lat, lng: center.lng },
         radius,
         metadata: { 
-          layerType: 'traffic', 
+          layerType: 'foot_traffic', 
           source: 'hotspots',
           hotspotsAnalyzed: hotspots.length
         }
@@ -352,6 +354,88 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
     return { 
       data: null, 
       error: error instanceof Error ? error.message : 'Failed to fetch foot traffic data' 
+    }
+  }
+}
+
+async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
+  const { center, radius, config } = params
+  const forceRefresh = config.forceRefresh || false
+  const radiusMiles = radius
+  
+  try {
+    const response = await fetch(`${API_BASE}/maps/dot-traffic`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      credentials: 'include',
+      body: JSON.stringify({
+        latitude: center.lat,
+        longitude: center.lng,
+        radius_miles: radiusMiles,
+        force_refresh: forceRefresh
+      })
+    })
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        return {
+          data: {
+            type: 'drive_by_traffic',
+            requiresAuth: true,
+            summary: null,
+            metadata: { layerType: 'drive_by_traffic', source: 'unavailable' }
+          },
+          error: 'Authentication required for drive-by traffic data'
+        }
+      }
+      return { data: null, error: 'Failed to fetch drive-by traffic data' }
+    }
+    
+    const data = await response.json()
+    
+    const hotspots = data.road_segments?.map((segment: any, index: number) => ({
+      lat: segment.lat || segment.latitude,
+      lng: segment.lng || segment.longitude,
+      aadt: segment.aadt || 0,
+      monthlyTraffic: (segment.aadt || 0) * 30,
+      routeName: segment.route_name || 'Unknown Road',
+      source: segment.source || 'estimated',
+      intensity: Math.min(100, Math.floor((segment.aadt || 0) / 500))
+    })) || [{
+      lat: center.lat,
+      lng: center.lng,
+      aadt: data.daily_average || 0,
+      monthlyTraffic: data.monthly_estimate || 0,
+      routeName: 'Area Average',
+      source: data.source || 'estimated',
+      intensity: Math.min(100, Math.floor((data.daily_average || 0) / 500))
+    }]
+    
+    return {
+      data: {
+        type: 'drive_by_traffic',
+        hotspots,
+        summary: {
+          monthlyTraffic: data.monthly_estimate || 0,
+          dailyAverage: data.daily_average || 0,
+          roadSegments: data.road_segments?.length || 0,
+          source: data.source || 'estimated',
+          state: data.state,
+          message: `Vehicle traffic data for ${radiusMiles} mile radius`
+        },
+        center: { lat: center.lat, lng: center.lng },
+        radius,
+        metadata: { 
+          layerType: 'drive_by_traffic', 
+          source: data.source || 'estimated'
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching drive-by traffic:', error)
+    return { 
+      data: null, 
+      error: error instanceof Error ? error.message : 'Failed to fetch drive-by traffic data' 
     }
   }
 }

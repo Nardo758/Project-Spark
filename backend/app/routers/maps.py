@@ -11,6 +11,7 @@ from app.db.database import get_db
 from app.models.opportunity import Opportunity
 from app.services.serpapi_service import SerpAPIService
 from app.services.location_analyzer import LocationAnalyzer, ScoringWeights, get_layer_weights
+from app.services.dot_traffic_service import DOTTrafficService
 
 logger = logging.getLogger(__name__)
 

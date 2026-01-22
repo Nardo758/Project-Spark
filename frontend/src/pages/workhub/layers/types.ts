@@ -4,7 +4,8 @@ export type LayerType =
   | 'deep_clone'
   | 'demographics'
   | 'competition'
-  | 'traffic'
+  | 'foot_traffic'
+  | 'drive_by_traffic'
   | 'custom'
 
 export interface LayerInputField {

@@ -178,13 +178,33 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
     }
   },
 
-  traffic: {
-    type: 'traffic',
+  foot_traffic: {
+    type: 'foot_traffic',
     label: 'Foot Traffic',
-    description: 'Area vitality score based on foot traffic patterns',
-    icon: Car,
+    description: 'Area vitality score based on foot traffic patterns from Google Popular Times',
+    icon: Users,
     color: '#f59e0b',
-    aiKeywords: ['traffic', 'footfall', 'foot traffic', 'busy', 'vitality', 'popular times', 'peak hours'],
+    aiKeywords: ['foot traffic', 'footfall', 'pedestrian', 'busy', 'vitality', 'popular times', 'peak hours', 'walk-in'],
+    inputs: [
+      {
+        key: 'forceRefresh',
+        label: 'Refresh Data',
+        type: 'toggle',
+        defaultValue: false
+      }
+    ],
+    defaultConfig: {
+      forceRefresh: false
+    }
+  },
+
+  drive_by_traffic: {
+    type: 'drive_by_traffic',
+    label: 'Drive-By Traffic',
+    description: 'Vehicle traffic data from DOT AADT (Annual Average Daily Traffic)',
+    icon: Car,
+    color: '#3b82f6',
+    aiKeywords: ['drive by', 'vehicle', 'car', 'road', 'highway', 'AADT', 'traffic count', 'commuter'],
     inputs: [
       {
         key: 'forceRefresh',
@@ -232,7 +252,7 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
   }
 }
 
-export const defaultLayerTabs: LayerType[] = ['deep_clone', 'demographics', 'competition', 'traffic']
+export const defaultLayerTabs: LayerType[] = ['deep_clone', 'demographics', 'competition', 'foot_traffic', 'drive_by_traffic']
 
 export function getLayerDefinition(type: LayerType): LayerDefinition {
   return layerRegistry[type]

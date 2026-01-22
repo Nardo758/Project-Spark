@@ -271,10 +271,12 @@ function OptimalZonesLegend() {
 export default function MapLegend({ layers, showOptimalZones, showTrends, trafficMode = 'hotspot' }: MapLegendProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   
-  const trafficLayer = layers.find(l => l.type === 'traffic' && l.visible)
-  const hasTraffic = !!trafficLayer
-  const actualTrafficMode: 'hotspot' | 'heatmap' = trafficLayer?.data?.hotspots?.length > 0 || 
-    trafficLayer?.data?.features?.[0]?.properties?.vitalityScore !== undefined 
+  const footTrafficLayer = layers.find(l => l.type === 'foot_traffic' && l.visible)
+  const hasFootTraffic = !!footTrafficLayer
+  const driveByTrafficLayer = layers.find(l => l.type === 'drive_by_traffic' && l.visible)
+  const hasDriveByTraffic = !!driveByTrafficLayer
+  const actualTrafficMode: 'hotspot' | 'heatmap' = footTrafficLayer?.data?.hotspots?.length > 0 || 
+    footTrafficLayer?.data?.features?.[0]?.properties?.vitalityScore !== undefined 
       ? 'hotspot' 
       : 'heatmap'
   
@@ -287,7 +289,7 @@ export default function MapLegend({ layers, showOptimalZones, showTrends, traffi
   
   const hasDeepClone = layers.some(l => l.type === 'deep_clone' && l.visible)
   
-  const hasAnyVisibleLayer = hasTraffic || hasCompetition || hasDemographics || hasDeepClone || showOptimalZones || showTrends
+  const hasAnyVisibleLayer = hasFootTraffic || hasDriveByTraffic || hasCompetition || hasDemographics || hasDeepClone || showOptimalZones || showTrends
   
   if (!hasAnyVisibleLayer) return null
   
@@ -311,7 +313,8 @@ export default function MapLegend({ layers, showOptimalZones, showTrends, traffi
         
         {isExpanded && (
           <div className="px-2 max-h-[400px] overflow-y-auto">
-            {hasTraffic && <TrafficLegend mode={actualTrafficMode} />}
+            {hasFootTraffic && <TrafficLegend mode={actualTrafficMode} />}
+            {hasDriveByTraffic && <TrafficLegend mode="heatmap" />}
             {hasCompetition && <CompetitionLegend />}
             {(hasDemographics || hasDeepClone) && <DemographicsLegend displayMode={demographicsDisplayMode} />}
             {showTrends && <TrendLegend />}
