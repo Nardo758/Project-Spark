@@ -279,33 +279,53 @@ class ZoneDataFetcher:
         radius_miles: float
     ) -> Dict[str, Any]:
         """
-        Fetch traffic data from our foot traffic system
+        Fetch traffic data using fusion of multiple sources:
+        - Google Popular Times (foot traffic, real-time activity)
+        - DOT AADT (vehicle traffic, official data)
+        
+        The fusion algorithm combines both for more accurate estimates.
         """
+        google_data = None
+        dot_data = None
+        
+        # Get Google Popular Times data (foot traffic)
         try:
             from app.services.traffic_analyzer import TrafficAnalyzer
             
             analyzer = TrafficAnalyzer(self.db)
             radius_meters = int(radius_miles * 1609.34)
+            google_data = analyzer.analyze_area_traffic(lat, lng, radius_meters)
+        except Exception as e:
+            logger.debug(f"Google traffic lookup failed: {e}")
+        
+        # Get DOT AADT data (vehicle traffic)
+        try:
+            from app.services.dot_traffic_service import DOTTrafficService
+            dot_service = DOTTrafficService(timeout=5)
+            dot_data = dot_service.get_area_traffic_summary(lat, lng, radius_miles)
+        except Exception as e:
+            logger.debug(f"DOT traffic lookup failed: {e}")
+        
+        # Fuse the data sources
+        try:
+            from app.services.traffic_fusion import fuse_traffic
             
-            analysis = analyzer.analyze_area_traffic(lat, lng, radius_meters)
-            
-            avg_daily = analysis.get('avg_daily_traffic', 0)
-            foot_traffic_monthly = int(avg_daily * 30)
-            
-            drive_by_estimate = self._estimate_drive_by_traffic(lat, lng, radius_miles, analysis)
+            fused = fuse_traffic(lat, lng, radius_miles, dot_data, google_data)
             
             return {
-                'foot_traffic_monthly': foot_traffic_monthly,
-                'drive_by_traffic_monthly': drive_by_estimate,
-                'vitality_score': analysis.get('area_vitality_score', 0),
-                'peak_day': analysis.get('peak_day'),
-                'peak_hour': analysis.get('peak_hour'),
-                'locations_sampled': analysis.get('total_locations_sampled', 0),
-                'source': 'analyzed' if analysis.get('total_locations_sampled', 0) > 0 else 'estimated'
+                'foot_traffic_monthly': fused.monthly_foot_traffic,
+                'drive_by_traffic_monthly': fused.monthly_vehicle_traffic,
+                'vitality_score': google_data.get('area_vitality_score', 0) if google_data else 0,
+                'peak_day': google_data.get('peak_day') if google_data else None,
+                'peak_hour': google_data.get('peak_hour') if google_data else None,
+                'locations_sampled': google_data.get('total_locations_sampled', 0) if google_data else 0,
+                'source': fused.primary_source,
+                'confidence': fused.confidence_score,
+                'fusion_breakdown': fused.breakdown
             }
             
         except Exception as e:
-            logger.warning(f"Failed to fetch traffic data: {e}")
+            logger.warning(f"Traffic fusion failed, using fallback: {e}")
             return self._estimate_traffic(lat, lng, radius_miles)
     
     def _estimate_drive_by_traffic(
