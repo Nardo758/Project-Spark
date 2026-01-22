@@ -10,6 +10,7 @@ import logging
 from app.db.database import get_db
 from app.models.opportunity import Opportunity
 from app.services.serpapi_service import SerpAPIService
+from app.services.location_analyzer import LocationAnalyzer, ScoringWeights, get_layer_weights
 
 logger = logging.getLogger(__name__)
 
@@ -632,4 +633,92 @@ def analyze_deep_clone(request: DeepCloneRequest):
         key_factors=key_factors[:4],
         competitors_found=competitors,
         recommendation=recommendation
+    )
+
+
+class OptimalZoneResult(BaseModel):
+    id: str
+    center_lat: float
+    center_lng: float
+    radius_miles: float
+    total_score: float
+    scores: dict[str, float]
+    insights: list[str]
+    rank: int
+
+
+class FindOptimalZonesRequest(BaseModel):
+    center_lat: float
+    center_lng: float
+    target_radius_miles: float = Field(default=10.0, ge=1.0, le=50.0)
+    analysis_radius_miles: float = Field(default=3.0, ge=1.0, le=10.0)
+    active_layers: list[str] = Field(default_factory=list)
+    business_type: str | None = None
+    demographics_data: dict[str, Any] | None = None
+    competitors: list[dict[str, Any]] | None = None
+    top_n: int = Field(default=3, ge=1, le=10)
+
+
+class FindOptimalZonesResponse(BaseModel):
+    zones: list[OptimalZoneResult]
+    analysis_summary: str
+    center_lat: float
+    center_lng: float
+    target_radius_miles: float
+
+
+@router.post("/find-optimal-zones", response_model=FindOptimalZonesResponse)
+def find_optimal_zones(
+    request: FindOptimalZonesRequest,
+    db: Session = Depends(get_db),
+) -> FindOptimalZonesResponse:
+    """
+    Find the best sub-locations (optimal zones) within a target radius.
+    Combines scoring from active layers (demographics, competition, deep clone).
+    """
+    analyzer = LocationAnalyzer()
+    
+    weights = get_layer_weights(request.active_layers) if request.active_layers else None
+    
+    optimal_zones = analyzer.find_optimal_zones(
+        center_lat=request.center_lat,
+        center_lng=request.center_lng,
+        target_radius_miles=request.target_radius_miles,
+        analysis_radius_miles=request.analysis_radius_miles,
+        demographics_data=request.demographics_data,
+        competitors=request.competitors,
+        weights=weights,
+        top_n=request.top_n,
+        business_type=request.business_type
+    )
+    
+    zone_results = [
+        OptimalZoneResult(
+            id=z.id,
+            center_lat=z.center_lat,
+            center_lng=z.center_lng,
+            radius_miles=z.radius_miles,
+            total_score=z.total_score,
+            scores=z.scores,
+            insights=z.insights,
+            rank=z.rank
+        )
+        for z in optimal_zones
+    ]
+    
+    if zone_results:
+        top_zone = zone_results[0]
+        summary = f"Found {len(zone_results)} optimal {request.analysis_radius_miles}-mile zones. "
+        summary += f"Best location scored {top_zone.total_score}/100"
+        if top_zone.insights:
+            summary += f" - {top_zone.insights[0]}"
+    else:
+        summary = "No optimal zones identified in the target area."
+    
+    return FindOptimalZonesResponse(
+        zones=zone_results,
+        analysis_summary=summary,
+        center_lat=request.center_lat,
+        center_lng=request.center_lng,
+        target_radius_miles=request.target_radius_miles
     )

@@ -1,4 +1,4 @@
-import type { LayerType, LayerInstance, LocationFinderState } from './types'
+import type { LayerType, LayerInstance, LocationFinderState, OptimalZone, FindOptimalZonesResponse } from './types'
 
 const API_BASE = '/api/v1'
 
@@ -225,4 +225,57 @@ export function shouldRefetchLayer(
   }
   
   return false
+}
+
+export interface FindOptimalZonesParams {
+  center: { lat: number; lng: number }
+  targetRadius: number
+  analysisRadius?: number
+  activeLayers: string[]
+  businessType?: string
+  demographicsData?: any
+  competitors?: any[]
+  topN?: number
+}
+
+export async function findOptimalZones(
+  params: FindOptimalZonesParams
+): Promise<{ zones: OptimalZone[]; summary: string; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/maps/find-optimal-zones`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        center_lat: params.center.lat,
+        center_lng: params.center.lng,
+        target_radius_miles: params.targetRadius,
+        analysis_radius_miles: params.analysisRadius || 3.0,
+        active_layers: params.activeLayers,
+        business_type: params.businessType,
+        demographics_data: params.demographicsData,
+        competitors: params.competitors,
+        top_n: params.topN || 3
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return { zones: [], summary: '', error: errorData.detail || 'Failed to find optimal zones' }
+    }
+
+    const data: FindOptimalZonesResponse = await response.json()
+    
+    return {
+      zones: data.zones,
+      summary: data.analysis_summary
+    }
+  } catch (error) {
+    console.error('Error finding optimal zones:', error)
+    return {
+      zones: [],
+      summary: '',
+      error: error instanceof Error ? error.message : 'Failed to analyze locations'
+    }
+  }
 }

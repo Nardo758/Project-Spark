@@ -52,4 +52,29 @@ export interface LocationFinderState {
   radius: number
   layers: LayerInstance[]
   activeLayerTab: LayerType | 'ai'
+  optimalZones?: OptimalZone[]
+  optimalZonesLoading?: boolean
+}
+
+export interface OptimalZone {
+  id: string
+  center_lat: number
+  center_lng: number
+  radius_miles: number
+  total_score: number
+  scores: {
+    demographics: number
+    competition: number
+    market_signals: number
+  }
+  insights: string[]
+  rank: number
+}
+
+export interface FindOptimalZonesResponse {
+  zones: OptimalZone[]
+  analysis_summary: string
+  center_lat: number
+  center_lng: number
+  target_radius_miles: number
 }

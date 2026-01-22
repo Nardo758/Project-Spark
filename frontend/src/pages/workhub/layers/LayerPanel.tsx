@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Sparkles, Plus, X, Eye, EyeOff, MapPin, Loader2, Send, FileText, TrendingUp, Users, Store, CheckCircle } from 'lucide-react'
+import { Sparkles, Plus, X, Eye, EyeOff, MapPin, Loader2, Send, FileText, TrendingUp, Users, Store, CheckCircle, Target } from 'lucide-react'
 import { layerRegistry, defaultLayerTabs, createLayerInstance } from './registry'
-import type { LayerType, LayerInstance, LocationFinderState } from './types'
+import type { LayerType, LayerInstance, LocationFinderState, OptimalZone } from './types'
 import { LayerInputRenderer } from './LayerInputRenderer'
+import { findOptimalZones } from './layerService'
 
 function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -46,6 +47,8 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [analyzingLayers, setAnalyzingLayers] = useState<Record<string, boolean>>({})
   const [showSummaryModal, setShowSummaryModal] = useState(false)
+  const [findingZones, setFindingZones] = useState(false)
+  const [zoneSummary, setZoneSummary] = useState('')
 
   useEffect(() => {
     if (state.center?.address) {
@@ -286,6 +289,100 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
     }
   }
 
+  const handleFindBestZones = async () => {
+    if (!state.center) return
+    
+    setFindingZones(true)
+    setZoneSummary('')
+    onStateChange({ ...state, optimalZonesLoading: true })
+    
+    try {
+      const activeLayers = state.layers
+        .filter(l => l.visible)
+        .map(l => l.type)
+      
+      const demographicsLayer = state.layers.find(l => l.type === 'demographics')
+      const competitionLayer = state.layers.find(l => l.type === 'competition')
+      const deepCloneLayer = state.layers.find(l => l.type === 'deep_clone')
+      
+      const businessType = deepCloneLayer?.config?.businessCategory || 
+                          competitionLayer?.config?.searchQuery || 
+                          undefined
+      
+      let competitors: any[] = []
+      if (competitionLayer?.data) {
+        if (Array.isArray(competitionLayer.data)) {
+          competitors = competitionLayer.data
+            .map((p: any) => ({
+              name: p.name,
+              rating: p.rating || 0,
+              latitude: p.latitude || p.lat,
+              longitude: p.longitude || p.lng,
+              address: p.address
+            }))
+            .filter((c: any) => c.latitude != null && c.longitude != null)
+        } else if (competitionLayer.data.features) {
+          competitors = competitionLayer.data.features
+            .map((f: any) => ({
+              name: f.properties?.name,
+              rating: f.properties?.rating || 0,
+              latitude: f.geometry?.coordinates?.[1],
+              longitude: f.geometry?.coordinates?.[0],
+              address: f.properties?.address
+            }))
+            .filter((c: any) => c.latitude != null && c.longitude != null)
+        }
+      }
+      
+      const result = await findOptimalZones({
+        center: state.center,
+        targetRadius: state.radius,
+        analysisRadius: 3.0,
+        activeLayers,
+        businessType,
+        demographicsData: demographicsLayer?.data,
+        competitors,
+        topN: 3
+      })
+      
+      if (result.error) {
+        console.error('Find zones error:', result.error)
+        setZoneSummary(result.error)
+        onStateChange({
+          ...state,
+          optimalZones: undefined,
+          optimalZonesLoading: false
+        })
+      } else {
+        setZoneSummary(result.summary)
+        onStateChange({
+          ...state,
+          optimalZones: result.zones,
+          optimalZonesLoading: false
+        })
+      }
+    } catch (error) {
+      console.error('Find zones error:', error)
+      setZoneSummary('Failed to analyze locations')
+      onStateChange({
+        ...state,
+        optimalZones: undefined,
+        optimalZonesLoading: false
+      })
+    } finally {
+      setFindingZones(false)
+    }
+  }
+
+  const clearOptimalZones = () => {
+    onStateChange({
+      ...state,
+      optimalZones: undefined,
+      optimalZonesLoading: false
+    })
+    setZoneSummary('')
+  }
+
   const getLayerByType = (type: LayerType): LayerInstance | undefined => {
     return state.layers.find(l => l.type === type)
   }
@@ -375,6 +472,68 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
             </button>
           ))}
         </div>
+        
+        {state.center && state.layers.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-stone-200">
+            <button
+              onClick={handleFindBestZones}
+              disabled={findingZones}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-violet-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {findingZones ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Finding optimal zones...
+                </>
+              ) : (
+                <>
+                  <Target className="w-4 h-4" />
+                  Find Best 3-Mile Zones
+                </>
+              )}
+            </button>
+            
+            {state.optimalZones && state.optimalZones.length > 0 && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-violet-600">
+                    {state.optimalZones.length} optimal zones found
+                  </span>
+                  <button
+                    onClick={clearOptimalZones}
+                    className="text-xs text-stone-400 hover:text-stone-600"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  {state.optimalZones.map((zone, i) => (
+                    <div 
+                      key={zone.id}
+                      className="flex items-center gap-2 p-2 bg-violet-50 rounded border border-violet-100"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">
+                        {zone.rank}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-stone-700">
+                          Score: {zone.total_score}/100
+                        </div>
+                        <div className="text-xs text-stone-500 truncate">
+                          {zone.insights[0] || 'Optimal location'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {zoneSummary && (
+              <p className="mt-2 text-xs text-stone-500">{zoneSummary}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex-shrink-0 flex items-center gap-1.5 p-2 border-b border-stone-200 bg-stone-50 overflow-x-auto">

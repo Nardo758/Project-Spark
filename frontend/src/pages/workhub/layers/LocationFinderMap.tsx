@@ -140,15 +140,17 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     
     map.on('click', handleClick)
     
-    if (clickToSetEnabled) {
-      map.getCanvas().style.cursor = 'crosshair'
-    } else {
-      map.getCanvas().style.cursor = ''
+    const canvas = map.getCanvas()
+    if (canvas) {
+      canvas.style.cursor = clickToSetEnabled ? 'crosshair' : ''
     }
     
     return () => {
       map.off('click', handleClick)
-      map.getCanvas().style.cursor = ''
+      const canvas = map.getCanvas()
+      if (canvas) {
+        canvas.style.cursor = ''
+      }
     }
   }, [clickToSetEnabled, mapLoaded, onCenterChange])
 
@@ -291,6 +293,108 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       renderLayerOnMap(mapRef.current!, layer)
     })
   }, [layerDataKey, mapLoaded])
+
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return
+
+    const map = mapRef.current
+    renderOptimalZones(map, state.optimalZones || [])
+  }, [state.optimalZones, mapLoaded])
+
+  const renderOptimalZones = (map: mapboxgl.Map, zones: any[]) => {
+    if (!map.isStyleLoaded()) return
+
+    for (let i = 1; i <= 5; i++) {
+      const sourceId = `optimal-zone-${i}`
+      const fillId = `${sourceId}-fill`
+      const outlineId = `${sourceId}-outline`
+      const labelId = `${sourceId}-label`
+      const labelSourceId = `${sourceId}-label-source`
+
+      if (map.getLayer(fillId)) map.removeLayer(fillId)
+      if (map.getLayer(outlineId)) map.removeLayer(outlineId)
+      if (map.getLayer(labelId)) map.removeLayer(labelId)
+      if (map.getSource(sourceId)) map.removeSource(sourceId)
+      if (map.getSource(labelSourceId)) map.removeSource(labelSourceId)
+    }
+
+    zones.forEach((zone, index) => {
+      const sourceId = `optimal-zone-${index + 1}`
+      const fillId = `${sourceId}-fill`
+      const outlineId = `${sourceId}-outline`
+      const labelId = `${sourceId}-label`
+
+      const radiusInKm = zone.radius_miles * 1.60934
+      const circleGeoJSON = createCircleGeoJSON(zone.center_lng, zone.center_lat, radiusInKm)
+
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: circleGeoJSON
+      })
+
+      const opacity = 0.3 - (index * 0.08)
+      const colors = ['#8b5cf6', '#a78bfa', '#c4b5fd']
+      const color = colors[index] || colors[2]
+
+      map.addLayer({
+        id: fillId,
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-color': color,
+          'fill-opacity': opacity
+        }
+      })
+
+      map.addLayer({
+        id: outlineId,
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': '#7c3aed',
+          'line-width': 2
+        }
+      })
+
+      const labelSource = `${sourceId}-label-source`
+      if (map.getSource(labelSource)) map.removeSource(labelSource)
+
+      map.addSource(labelSource, {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [zone.center_lng, zone.center_lat]
+            },
+            properties: {
+              rank: zone.rank,
+              score: zone.total_score
+            }
+          }]
+        }
+      })
+
+      map.addLayer({
+        id: labelId,
+        type: 'symbol',
+        source: labelSource,
+        layout: {
+          'text-field': ['concat', '#', ['get', 'rank'], ' (', ['get', 'score'], ')'],
+          'text-size': 14,
+          'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+          'text-anchor': 'center'
+        },
+        paint: {
+          'text-color': '#5b21b6',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 2
+        }
+      })
+    })
+  }
 
   const getLayerColor = (layerType: string): string => {
     switch (layerType) {
