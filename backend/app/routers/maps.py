@@ -744,6 +744,7 @@ class EnhancedOptimalZone(BaseModel):
     component_scores: dict[str, float]
     derived_metrics: dict | None = None
     category_scores: dict[str, float] | None = None
+    trends: dict | None = None
     insights: list[str]
     rank: int
 
@@ -858,6 +859,7 @@ def find_optimal_zones_enhanced(
             'component_scores': score_result['component_scores'],
             'derived_metrics': score_result.get('derived_metrics'),
             'category_scores': score_result.get('category_scores'),
+            'trends': metrics.raw_data.get('trends') if metrics.raw_data else None,
             'insights': insights[:4]
         })
     
@@ -875,6 +877,7 @@ def find_optimal_zones_enhanced(
             component_scores=zone['component_scores'],
             derived_metrics=zone.get('derived_metrics'),
             category_scores=zone.get('category_scores'),
+            trends=zone.get('trends'),
             insights=zone['insights'],
             rank=i + 1
         ))

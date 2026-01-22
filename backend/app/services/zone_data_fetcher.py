@@ -84,6 +84,21 @@ class ZoneDataFetcher:
             metrics.drive_by_traffic_monthly = traffic.get('drive_by_traffic_monthly', 0)
             metrics.raw_data['traffic'] = traffic
         
+        # Calculate trend indicators
+        try:
+            from app.services.trend_indicators import calculate_trends
+            trends = calculate_trends(
+                self.db,
+                center_lat,
+                center_lng,
+                radius_miles,
+                metrics.raw_data
+            )
+            metrics.raw_data['trends'] = trends
+        except Exception as e:
+            logger.warning(f"Failed to calculate trends: {e}")
+            metrics.raw_data['trends'] = None
+        
         return metrics
     
     def _fetch_demographics(

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Loader2, AlertCircle, TrendingUp, X, GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
-import type { LocationFinderState, LayerInstance, DerivedMetricValue } from './types'
+import type { LocationFinderState, LayerInstance, DerivedMetricValue, TrendSummary } from './types'
+import TrendIndicators from './TrendIndicators'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
 
@@ -894,6 +895,9 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
                       </div>
                       {zone.derived_metrics?.metrics && (
                         <DerivedMetricsPanel metrics={zone.derived_metrics.metrics} />
+                      )}
+                      {(zone as any).trends && (
+                        <TrendIndicators trends={(zone as any).trends} />
                       )}
                     </div>
                   ) : (
