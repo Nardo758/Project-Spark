@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Loader2, AlertCircle, TrendingUp, Users, Store, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, AlertCircle, TrendingUp, Users, Store, X, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 import type { LocationFinderState, LayerInstance } from './types'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
@@ -37,6 +37,46 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
   const [mapLoaded, setMapLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [resultCardExpanded, setResultCardExpanded] = useState(true)
+  const [panelPosition, setPanelPosition] = useState({ x: 16, y: 16 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartRef = useRef<{ x: number; y: number; panelX: number; panelY: number } | null>(null)
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      panelX: panelPosition.x,
+      panelY: panelPosition.y
+    }
+  }, [panelPosition])
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStartRef.current) return
+      const dx = e.clientX - dragStartRef.current.x
+      const dy = e.clientY - dragStartRef.current.y
+      setPanelPosition({
+        x: Math.max(0, dragStartRef.current.panelX - dx),
+        y: Math.max(0, dragStartRef.current.panelY - dy)
+      })
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+      dragStartRef.current = null
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging])
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
@@ -725,18 +765,25 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
 
       {/* Optimal Zones Floating Panel */}
       {(state.optimalZones && state.optimalZones.length > 0) || state.zoneSummary ? (
-        <div className="absolute bottom-4 right-4 w-80 max-h-[40vh] bg-white rounded-lg shadow-lg border border-stone-200 overflow-hidden z-20 pointer-events-auto">
-          <div className="flex items-center justify-between px-3 py-2 bg-violet-50 border-b border-violet-100">
+        <div 
+          className="absolute w-80 max-h-[40vh] bg-white rounded-lg shadow-lg border border-stone-200 overflow-hidden z-20 pointer-events-auto"
+          style={{ bottom: panelPosition.y, right: panelPosition.x }}
+        >
+          <div 
+            className={`flex items-center justify-between px-3 py-2 bg-violet-50 border-b border-violet-100 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            onMouseDown={handleDragStart}
+          >
             <div className="flex items-center gap-2">
+              <GripVertical className="w-4 h-4 text-violet-400" />
               <div className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
                 <TrendingUp className="w-3 h-3 text-white" />
               </div>
-              <span className="text-sm font-medium text-violet-800">
+              <span className="text-sm font-medium text-violet-800 select-none">
                 {state.optimalZones?.length || 0} Optimal Zones
               </span>
             </div>
             <button
-              onClick={onClearOptimalZones}
+              onClick={(e) => { e.stopPropagation(); onClearOptimalZones?.() }}
               className="p-1 hover:bg-violet-100 rounded transition-colors"
               title="Close"
             >
