@@ -172,21 +172,82 @@ async function fetchCompetitionData(params: LayerFetchParams): Promise<{ data: a
 }
 
 async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
-  const { center, radius } = params
+  const { center, radius, config } = params
   
-  return {
-    data: {
-      type: 'traffic',
-      summary: {
-        estimatedFootTraffic: 'Medium-High',
-        peakHours: ['12:00 PM - 1:00 PM', '5:00 PM - 7:00 PM'],
-        weekdayAverage: Math.floor(Math.random() * 5000) + 2000,
-        weekendAverage: Math.floor(Math.random() * 8000) + 3000,
-        nearbyPOIs: ['Shopping Center', 'Transit Stop', 'Office Park']
-      },
-      center: { lat: center.lat, lng: center.lng },
-      radius,
-      metadata: { layerType: 'traffic', source: 'estimated' }
+  const radiusMeters = Math.round(radius * 1609.34)
+  const forceRefresh = config.forceRefresh || false
+  
+  try {
+    const response = await fetch(`${API_BASE}/foot-traffic/collect-and-analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        latitude: center.lat,
+        longitude: center.lng,
+        radius_meters: radiusMeters,
+        force_refresh: forceRefresh
+      })
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return {
+          data: {
+            type: 'traffic',
+            requiresAuth: true,
+            summary: null,
+            metadata: { layerType: 'traffic', source: 'unavailable' }
+          },
+          error: 'Authentication required for foot traffic data'
+        }
+      }
+      const errorData = await response.json().catch(() => ({}))
+      return { data: null, error: errorData.detail || 'Failed to fetch foot traffic data' }
+    }
+
+    const data = await response.json()
+    
+    const peakHour = data.peak_hour
+    let peakTimeFormatted = null
+    if (peakHour !== null && peakHour !== undefined) {
+      const hour12 = peakHour % 12 || 12
+      const ampm = peakHour < 12 ? 'AM' : 'PM'
+      peakTimeFormatted = `${hour12}:00 ${ampm}`
+    }
+    
+    return {
+      data: {
+        type: 'traffic',
+        summary: {
+          vitalityScore: data.area_vitality_score || 0,
+          businessDensityScore: data.business_density_score || 0,
+          trafficConsistency: data.traffic_consistency || 0,
+          peakDay: data.peak_day,
+          peakHour: peakTimeFormatted,
+          peakTrafficScore: data.peak_traffic_score || 0,
+          totalLocationsSampled: data.total_locations_sampled || 0,
+          dominantPlaceTypes: data.dominant_place_types || {},
+          avgPopularTimes: data.avg_popular_times || {},
+          currentAvgPopularity: data.current_avg_popularity,
+          message: data.message,
+          fromCache: data.from_cache,
+          freshCollection: data.fresh_collection
+        },
+        center: { lat: center.lat, lng: center.lng },
+        radius,
+        metadata: { 
+          layerType: 'traffic', 
+          source: data.from_cache ? 'cached' : 'fresh',
+          generatedAt: data.generated_at
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching foot traffic:', error)
+    return { 
+      data: null, 
+      error: error instanceof Error ? error.message : 'Failed to fetch foot traffic data' 
     }
   }
 }

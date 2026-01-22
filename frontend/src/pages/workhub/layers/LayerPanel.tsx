@@ -797,7 +797,67 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
 
                       {layer.type === 'traffic' && (
                         <div className="text-stone-600">
-                          <p className="text-xs text-stone-400 italic">Traffic layer active</p>
+                          {layer.data?.summary ? (() => {
+                            const traffic = layer.data.summary
+                            const score = traffic.vitalityScore || 0
+                            const scoreColor = score >= 70 ? 'text-emerald-600' : score >= 40 ? 'text-amber-600' : 'text-red-500'
+                            
+                            return (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="text-center">
+                                    <div className={`text-2xl font-bold ${scoreColor}`}>{Math.round(score)}</div>
+                                    <div className="text-[10px] text-stone-400">Vitality Score</div>
+                                  </div>
+                                  <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className={`h-full transition-all ${score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-red-400'}`}
+                                      style={{ width: `${Math.min(score, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                  <div>
+                                    <span className="text-stone-400">Peak:</span>{' '}
+                                    <span className="font-medium">{traffic.peakDay || 'N/A'}</span>
+                                    {traffic.peakHour && <span className="text-stone-400"> at {traffic.peakHour}</span>}
+                                  </div>
+                                  <div>
+                                    <span className="text-stone-400">Sampled:</span>{' '}
+                                    <span className="font-medium">{traffic.totalLocationsSampled || 0} places</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-stone-400">Density:</span>{' '}
+                                    <span className="font-medium">{Math.round(traffic.businessDensityScore || 0)}%</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-stone-400">Consistency:</span>{' '}
+                                    <span className="font-medium">{Math.round(traffic.trafficConsistency || 0)}%</span>
+                                  </div>
+                                </div>
+                                
+                                {Object.keys(traffic.dominantPlaceTypes || {}).length > 0 && (
+                                  <div className="text-xs">
+                                    <span className="text-stone-400">Dominant types:</span>{' '}
+                                    <span className="font-medium">
+                                      {Object.keys(traffic.dominantPlaceTypes).slice(0, 3).join(', ')}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {traffic.fromCache && (
+                                  <p className="text-[10px] text-stone-400 italic">Using cached data</p>
+                                )}
+                              </div>
+                            )
+                          })() : layer.data?.requiresAuth ? (
+                            <p className="text-xs text-amber-600 italic">Sign in to access foot traffic data</p>
+                          ) : layer.data?.message ? (
+                            <p className="text-xs text-stone-400 italic">{layer.data.message}</p>
+                          ) : (
+                            <p className="text-xs text-stone-400 italic">Loading foot traffic data...</p>
+                          )}
                         </div>
                       )}
                     </div>

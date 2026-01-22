@@ -180,41 +180,21 @@ export const layerRegistry: Record<LayerType, LayerDefinition> = {
 
   traffic: {
     type: 'traffic',
-    label: 'Traffic',
-    description: 'Foot traffic and transportation patterns',
+    label: 'Foot Traffic',
+    description: 'Area vitality score based on foot traffic patterns',
     icon: Car,
     color: '#f59e0b',
-    aiKeywords: ['traffic', 'footfall', 'transportation', 'busy', 'transit'],
+    aiKeywords: ['traffic', 'footfall', 'foot traffic', 'busy', 'vitality', 'popular times', 'peak hours'],
     inputs: [
       {
-        key: 'showFootTraffic',
-        label: 'Foot Traffic',
-        type: 'toggle',
-        defaultValue: true
-      },
-      {
-        key: 'showTransit',
-        label: 'Public Transit',
+        key: 'forceRefresh',
+        label: 'Refresh Data',
         type: 'toggle',
         defaultValue: false
-      },
-      {
-        key: 'timeOfDay',
-        label: 'Time of Day',
-        type: 'select',
-        options: [
-          { value: 'all', label: 'All Day' },
-          { value: 'morning', label: 'Morning (6am-12pm)' },
-          { value: 'afternoon', label: 'Afternoon (12pm-6pm)' },
-          { value: 'evening', label: 'Evening (6pm-12am)' }
-        ],
-        defaultValue: 'all'
       }
     ],
     defaultConfig: {
-      showFootTraffic: true,
-      showTransit: false,
-      timeOfDay: 'all'
+      forceRefresh: false
     }
   },
 
