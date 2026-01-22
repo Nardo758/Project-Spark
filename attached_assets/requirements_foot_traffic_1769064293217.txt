@@ -1,0 +1,25 @@
+# OppGrid Foot Traffic System Requirements
+
+# Core dependencies
+psycopg2-binary==2.9.9
+redis==5.0.1
+
+# Google Maps & Popular Times
+googlemaps==4.10.0
+populartimes==1.6
+
+# Web framework (if not already installed)
+flask==3.0.0
+flask-cors==4.0.0
+
+# Task queue (for background jobs)
+celery==5.3.4
+
+# Utilities
+requests==2.31.0
+python-dotenv==1.0.0
+
+# Already likely in OppGrid:
+# PostgreSQL with PostGIS extension
+# DeepSeek API client
+# Claude API client

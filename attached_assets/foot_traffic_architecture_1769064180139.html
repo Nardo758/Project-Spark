@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OppGrid Foot Traffic System - Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f3f0;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        .diagram-section {
+            margin: 40px 0;
+        }
+        .diagram-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e87f5c;
+        }
+        .mermaid {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .legend h3 {
+            margin-top: 0;
+            color: #1a1a1a;
+            font-size: 16px;
+        }
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #374151;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 2px solid;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ OppGrid Foot Traffic System</h1>
+        <p class="subtitle">Architecture & Data Flow Visualization</p>
+
+        <!-- System Overview -->
+        <div class="diagram-section">
+            <div class="diagram-title">System Overview</div>
+            <div class="mermaid">
+graph TB
+    subgraph "1️⃣ Data Collection Layer"
+        Google["Google Maps API<br/>Popular Times Data"]
+        Collector["FootTrafficCollector<br/>Python Module"]
+    end
+    
+    subgraph "2️⃣ Storage Layer"
+        DB[(PostgreSQL + PostGIS<br/>foot_traffic<br/>area_aggregations<br/>opportunity_traffic)]
+    end
+    
+    subgraph "3️⃣ Analysis Layer"
+        Analyzer["TrafficAnalyzer<br/>Aggregation & Insights"]
+        Metrics["Vitality Scores<br/>Peak Times<br/>Business Density"]
+    end
+    
+    subgraph "4️⃣ Application Layer"
+        API["Flask API<br/>Endpoints"]
+        Celery["Celery Tasks<br/>Background Jobs"]
+    end
+    
+    subgraph "5️⃣ Frontend Layer"
+        UI["OppGrid UI<br/>Traffic Badges<br/>Insights Display<br/>Heatmaps"]
+    end
+    
+    Google -->|Places API| Collector
+    Collector -->|Save Traffic Data| DB
+    DB -->|Query Patterns| Analyzer
+    Analyzer -->|Calculate Metrics| Metrics
+    Metrics -->|Results| API
+    API -->|JSON Response| UI
+    Celery -->|Schedule Collection| Collector
+    
+    style Google fill:#4285f4,color:#fff
+    style Collector fill:#10b981,color:#fff
+    style DB fill:#ef4444,color:#fff
+    style Analyzer fill:#8b5cf6,color:#fff
+    style Metrics fill:#f59e0b,color:#fff
+    style API fill:#06b6d4,color:#fff
+    style Celery fill:#ec4899,color:#fff
+    style UI fill:#e87f5c,color:#fff
+            </div>
+        </div>
+
+        <!-- Data Flow -->
+        <div class="diagram-section">
+            <div class="diagram-title">Data Collection Flow</div>
+            <div class="mermaid">
+sequenceDiagram
+    participant User
+    participant OppGrid
+    participant Collector
+    participant GoogleAPI
+    participant Database
+    participant Analyzer
+    
+    User->>OppGrid: View Opportunity
+    OppGrid->>Analyzer: Check cached traffic data
+    
+    alt Cache exists (< 7 days old)
+        Analyzer->>Database: Query cached data
+        Database-->>OppGrid: Return cached analysis
+        OppGrid-->>User: Display traffic insights
+    else No cache or expired
+        OppGrid->>Collector: Collect area traffic
+        Collector->>GoogleAPI: Search nearby places
+        GoogleAPI-->>Collector: Place IDs
+        
+        loop For each place
+            Collector->>GoogleAPI: Get popular times
+            GoogleAPI-->>Collector: Traffic patterns
+        end
+        
+        Collector->>Database: Save traffic data
+        Collector->>Analyzer: Analyze area
+        Analyzer->>Database: Save analysis
+        Analyzer-->>OppGrid: Return insights
+        OppGrid-->>User: Display traffic insights
+    end
+            </div>
+        </div>
+
+        <!-- Database Schema -->
+        <div class="diagram-section">
+            <div class="diagram-title">Database Schema</div>
+            <div class="mermaid">
+erDiagram
+    FOOT_TRAFFIC {
+        int id PK
+        string place_id UK
+        string place_name
+        string place_address
+        string place_type
+        decimal latitude
+        decimal longitude
+        geography location
+        jsonb popular_times
+        int current_popularity
+        int time_spent_min
+        int time_spent_max
+        decimal data_quality_score
+        timestamp last_updated
+    }
+    
+    AREA_TRAFFIC_AGGREGATIONS {
+        int id PK
+        string area_name
+        decimal center_latitude
+        decimal center_longitude
+        geography center_location
+        int radius_meters
+        jsonb avg_popular_times
+        int total_locations_sampled
+        jsonb dominant_place_types
+        string peak_day
+        int peak_hour
+        int peak_traffic_score
+        decimal area_vitality_score
+        decimal business_density_score
+        decimal foot_traffic_consistency
+        timestamp last_refreshed
+    }
+    
+    OPPORTUNITY_FOOT_TRAFFIC {
+        int id PK
+        int opportunity_id FK
+        decimal area_traffic_score
+        int nearby_traffic_places
+        boolean peak_demand_alignment
+        int analysis_radius_meters
+        text traffic_insights
+        timestamp updated_at
+    }
+    
+    OPPORTUNITIES {
+        int id PK
+        string title
+        decimal latitude
+        decimal longitude
+        string status
+    }
+    
+    OPPORTUNITIES ||--o| OPPORTUNITY_FOOT_TRAFFIC : "has traffic data"
+    FOOT_TRAFFIC ||--o{ AREA_TRAFFIC_AGGREGATIONS : "aggregates into"
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div class="diagram-section">
+            <div class="diagram-title">API Endpoints Structure</div>
+            <div class="mermaid">
+graph LR
+    Root["/api/foot_traffic"]
+    
+    Root --> Collect["/collect/area<br/>POST<br/>Admin only"]
+    Root --> Analyze["/analyze/area<br/>POST<br/>Pro/Enterprise"]
+    Root --> OppTraffic["/opportunity/:id<br/>GET<br/>Pro/Enterprise"]
+    Root --> Heatmap["/heatmap<br/>POST<br/>Pro/Enterprise"]
+    
+    Collect --> CollectOut["Returns:<br/>locations_collected<br/>locations_saved"]
+    Analyze --> AnalyzeOut["Returns:<br/>vitality_score<br/>peak_times<br/>business_density"]
+    OppTraffic --> OppOut["Returns:<br/>traffic_score<br/>insights<br/>nearby_places"]
+    Heatmap --> HeatmapOut["Returns:<br/>GeoJSON points<br/>for visualization"]
+    
+    style Root fill:#06b6d4,color:#fff
+    style Collect fill:#10b981,color:#fff
+    style Analyze fill:#8b5cf6,color:#fff
+    style OppTraffic fill:#f59e0b,color:#fff
+    style Heatmap fill:#ec4899,color:#fff
+            </div>
+        </div>
+
+        <!-- Metrics Calculation -->
+        <div class="diagram-section">
+            <div class="diagram-title">Vitality Score Calculation (0-100)</div>
+            <div class="mermaid">
+graph TD
+    Start[Area Analysis Input]
+    
+    Start --> Density["Business Density<br/>0-30 points"]
+    Start --> Traffic["Avg Traffic Level<br/>0-35 points"]
+    Start --> Diversity["Business Diversity<br/>0-20 points"]
+    Start --> Current["Current Activity<br/>0-15 points"]
+    
+    Density --> DensityCalc["locations / area<br/>normalized to 50/sq km"]
+    Traffic --> TrafficCalc["mean(all hourly values)<br/>normalized to 100"]
+    Diversity --> DiversityCalc["unique place types<br/>normalized to 10"]
+    Current --> CurrentCalc["mean(current popularity)<br/>normalized to 100"]
+    
+    DensityCalc --> Sum["Sum All Components"]
+    TrafficCalc --> Sum
+    DiversityCalc --> Sum
+    CurrentCalc --> Sum
+    
+    Sum --> Result["Vitality Score<br/>0-100"]
+    
+    style Start fill:#06b6d4,color:#fff
+    style Result fill:#10b981,color:#fff
+    style Density fill:#8b5cf6,color:#fff
+    style Traffic fill:#8b5cf6,color:#fff
+    style Diversity fill:#8b5cf6,color:#fff
+    style Current fill:#8b5cf6,color:#fff
+            </div>
+        </div>
+
+        <!-- Cost Optimization -->
+        <div class="diagram-section">
+            <div class="diagram-title">Cost Optimization Strategy</div>
+            <div class="mermaid">
+graph TD
+    Request["New Traffic<br/>Request"]
+    
+    Request --> CheckCache{"Check<br/>Cache"}
+    
+    CheckCache -->|"< 7 days old"| ReturnCache["Return<br/>Cached Data<br/>💰 $0"]
+    CheckCache -->|"> 7 days old<br/>or missing"| CheckTier{"User<br/>Tier?"}
+    
+    CheckTier -->|"Free"| ShowUpgrade["Show Upgrade<br/>Prompt<br/>💰 $0"]
+    CheckTier -->|"Pro/Enterprise"| CheckRadius{"Area<br/>Size?"}
+    
+    CheckRadius -->|"Small<br/>300m"| SmallCollect["Collect ~10<br/>locations<br/>💰 $0.34"]
+    CheckRadius -->|"Medium<br/>500m"| MediumCollect["Collect ~25<br/>locations<br/>💰 $0.85"]
+    CheckRadius -->|"Large<br/>800m"| LargeCollect["Collect ~40<br/>locations<br/>💰 $1.36"]
+    
+    SmallCollect --> Save["Save to<br/>Database"]
+    MediumCollect --> Save
+    LargeCollect --> Save
+    
+    Save --> SetCache["Cache for<br/>7 Days"]
+    SetCache --> Return["Return<br/>Results"]
+    ReturnCache --> Return
+    
+    style Request fill:#06b6d4,color:#fff
+    style CheckCache fill:#8b5cf6,color:#fff
+    style CheckTier fill:#8b5cf6,color:#fff
+    style CheckRadius fill:#8b5cf6,color:#fff
+    style ReturnCache fill:#10b981,color:#fff
+    style Save fill:#ef4444,color:#fff
+    style Return fill:#10b981,color:#fff
+            </div>
+        </div>
+
+        <!-- Integration Points -->
+        <div class="diagram-section">
+            <div class="diagram-title">OppGrid Integration Points</div>
+            <div class="mermaid">
+graph LR
+    subgraph "Opportunity Discovery"
+        Reddit["Reddit Scraper"]
+        Validation["Validation Studio"]
+    end
+    
+    subgraph "Geographic Intelligence"
+        Maps["Geographic Maps"]
+        Traffic["Foot Traffic<br/>System"]
+    end
+    
+    subgraph "AI Analysis"
+        DeepSeek["DeepSeek<br/>Platform Brain"]
+        Claude["Claude<br/>Creative Engine"]
+    end
+    
+    subgraph "User Experience"
+        Feed["Discovery Feed"]
+        Details["Opportunity Details"]
+        Reports["Consultant Studio"]
+    end
+    
+    Reddit --> Validation
+    Validation --> Traffic
+    Traffic --> Maps
+    
+    Traffic --> DeepSeek
+    DeepSeek --> Claude
+    
+    Traffic --> Feed
+    Traffic --> Details
+    Traffic --> Reports
+    
+    style Reddit fill:#ff4500,color:#fff
+    style Traffic fill:#e87f5c,color:#fff
+    style Maps fill:#4285f4,color:#fff
+    style DeepSeek fill:#8b5cf6,color:#fff
+    style Claude fill:#06b6d4,color:#fff
+    style Feed fill:#10b981,color:#fff
+    style Details fill:#10b981,color:#fff
+    style Reports fill:#10b981,color:#fff
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <h3>📊 System Components</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#4285f4; border-color:#4285f4;"></div>
+                    <span><strong>External Services</strong> - Google Maps API</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#10b981; border-color:#10b981;"></div>
+                    <span><strong>Data Collection</strong> - Python collectors</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#ef4444; border-color:#ef4444;"></div>
+                    <span><strong>Storage</strong> - PostgreSQL + PostGIS</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#8b5cf6; border-color:#8b5cf6;"></div>
+                    <span><strong>Analysis</strong> - Python analyzers</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#06b6d4; border-color:#06b6d4;"></div>
+                    <span><strong>API Layer</strong> - Flask endpoints</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background:#e87f5c; border-color:#e87f5c;"></div>
+                    <span><strong>Frontend</strong> - OppGrid UI components</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>
