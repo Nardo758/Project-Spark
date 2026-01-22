@@ -437,6 +437,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     const sourceId = `layer-${layer.id}`
     const pointLayerId = `${sourceId}-points`
     const fillLayerId = `${sourceId}-fill`
+    const heatmapLayerId = `${sourceId}-heatmap`
     const layerColor = getLayerColor(layer.type)
 
     const existingSource = map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined
@@ -447,6 +448,9 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       }
       if (map.getLayer(fillLayerId)) {
         map.setLayoutProperty(fillLayerId, 'visibility', 'none')
+      }
+      if (map.getLayer(heatmapLayerId)) {
+        map.setLayoutProperty(heatmapLayerId, 'visibility', 'none')
       }
       return
     }
@@ -467,6 +471,9 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       if (map.getLayer(fillLayerId)) {
         map.setLayoutProperty(fillLayerId, 'visibility', 'visible')
       }
+      if (map.getLayer(heatmapLayerId)) {
+        map.setLayoutProperty(heatmapLayerId, 'visibility', 'visible')
+      }
       return
     }
 
@@ -475,7 +482,62 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       data: geoJsonData
     })
 
-    if (geoJsonData.features?.[0]?.geometry?.type === 'Point') {
+    if (layer.type === 'traffic' && geoJsonData.features?.length > 0) {
+      map.addLayer({
+        id: heatmapLayerId,
+        type: 'heatmap',
+        source: sourceId,
+        paint: {
+          'heatmap-weight': [
+            'interpolate',
+            ['linear'],
+            ['coalesce', ['get', 'traffic_intensity'], 50],
+            0, 0,
+            100, 1
+          ],
+          'heatmap-intensity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 1,
+            15, 3
+          ],
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0, 'rgba(0, 0, 255, 0)',
+            0.1, 'rgba(65, 105, 225, 0.4)',
+            0.3, 'rgba(0, 255, 255, 0.5)',
+            0.5, 'rgba(0, 255, 0, 0.6)',
+            0.7, 'rgba(255, 255, 0, 0.7)',
+            1, 'rgba(255, 0, 0, 0.8)'
+          ],
+          'heatmap-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 2,
+            15, 30
+          ],
+          'heatmap-opacity': 0.7
+        }
+      })
+
+      map.addLayer({
+        id: pointLayerId,
+        type: 'circle',
+        source: sourceId,
+        minzoom: 14,
+        paint: {
+          'circle-radius': 8,
+          'circle-color': '#f59e0b',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.9
+        }
+      })
+    } else if (geoJsonData.features?.[0]?.geometry?.type === 'Point') {
       map.addLayer({
         id: pointLayerId,
         type: 'circle',
@@ -599,21 +661,11 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       return { type: 'FeatureCollection', features: [] }
     }
 
-    if (layer.data.type === 'traffic' && layer.data.center) {
-      return {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [layer.data.center.lng, layer.data.center.lat]
-          },
-          properties: {
-            ...layer.data.summary,
-            layerType: 'traffic'
-          }
-        }]
+    if (layer.data.type === 'traffic') {
+      if (layer.data.heatmap && layer.data.heatmap.features?.length > 0) {
+        return layer.data.heatmap as GeoJSON.FeatureCollection
       }
+      return { type: 'FeatureCollection', features: [] }
     }
 
     return null

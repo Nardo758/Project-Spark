@@ -216,6 +216,27 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
       peakTimeFormatted = `${hour12}:00 ${ampm}`
     }
     
+    let heatmapData = null
+    if (data.total_locations_sampled > 0) {
+      try {
+        const heatmapResponse = await fetch(`${API_BASE}/foot-traffic/heatmap`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            latitude: center.lat,
+            longitude: center.lng,
+            radius_meters: radiusMeters
+          })
+        })
+        if (heatmapResponse.ok) {
+          heatmapData = await heatmapResponse.json()
+        }
+      } catch (e) {
+        console.warn('Failed to fetch heatmap data:', e)
+      }
+    }
+    
     return {
       data: {
         type: 'traffic',
@@ -234,6 +255,7 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
           fromCache: data.from_cache,
           freshCollection: data.fresh_collection
         },
+        heatmap: heatmapData,
         center: { lat: center.lat, lng: center.lng },
         radius,
         metadata: { 
