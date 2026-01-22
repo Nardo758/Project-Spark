@@ -155,6 +155,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
   const demographicsLayer = state.layers.find(l => l.type === 'demographics')
   const showDemographicsOverlay = demographicsLayer?.visible && demographicsLayer?.data
   const hasDemographicsLayer = !!demographicsLayer
+  const demographicsDisplayMode = demographicsLayer?.config?.displayMode || 'heatmap'
 
   useEffect(() => {
     if (!mapRef.current || !mapLoaded || !state.center) return
@@ -164,14 +165,14 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     if (!map.isStyleLoaded()) {
       map.once('style.load', () => {
         if (mapRef.current) {
-          updateRadiusCircle(mapRef.current, state.center!, state.radius, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay)
+          updateRadiusCircle(mapRef.current, state.center!, state.radius, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay, demographicsDisplayMode)
         }
       })
       return
     }
 
-    updateRadiusCircle(map, state.center, state.radius, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay)
-  }, [state.radius, state.center, mapLoaded, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay])
+    updateRadiusCircle(map, state.center, state.radius, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay, demographicsDisplayMode)
+  }, [state.radius, state.center, mapLoaded, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay, demographicsDisplayMode])
 
   const updateRadiusCircle = (
     map: mapboxgl.Map, 
@@ -179,12 +180,43 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     radiusMiles: number, 
     hasDemographicsLayer: boolean,
     demographicsVisible?: boolean,
-    hasData?: boolean
+    hasData?: boolean,
+    displayMode?: string
   ) => {
     const sourceId = 'radius-circle'
     const shouldShow = hasDemographicsLayer ? demographicsVisible : true
-    const fillColor = hasData ? '#3b82f6' : '#7c3aed'
-    const fillOpacity = hasData ? 0.2 : 0.1
+    
+    let fillColor = '#7c3aed'
+    let fillOpacity = 0.1
+    let lineColor = '#7c3aed'
+    let lineStyle: number[] = [2, 2]
+    
+    if (hasData) {
+      switch (displayMode) {
+        case 'heatmap':
+          fillColor = '#3b82f6'
+          fillOpacity = 0.25
+          lineColor = '#1d4ed8'
+          lineStyle = []
+          break
+        case 'markers':
+          fillColor = '#10b981'
+          fillOpacity = 0.1
+          lineColor = '#059669'
+          lineStyle = [4, 4]
+          break
+        case 'choropleth':
+          fillColor = '#8b5cf6'
+          fillOpacity = 0.3
+          lineColor = '#6d28d9'
+          lineStyle = []
+          break
+        default:
+          fillColor = '#3b82f6'
+          fillOpacity = 0.2
+          lineColor = '#3b82f6'
+      }
+    }
 
     try {
       if (map.getLayer('radius-circle-fill')) {
@@ -226,15 +258,19 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       }
     })
 
+    const linePaint: any = {
+      'line-color': lineColor,
+      'line-width': 2
+    }
+    if (lineStyle.length > 0) {
+      linePaint['line-dasharray'] = lineStyle
+    }
+
     map.addLayer({
       id: 'radius-circle-outline',
       type: 'line',
       source: sourceId,
-      paint: {
-        'line-color': fillColor,
-        'line-width': 2,
-        'line-dasharray': [2, 2]
-      }
+      paint: linePaint
     })
 
     map.flyTo({
@@ -393,7 +429,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           properties: {
             name: place.name || 'Unknown Business',
             rating: place.rating || 0,
-            category: layer.config?.category || '',
+            category: layer.config?.searchQuery || '',
             address: place.address || '',
             reviews: place.reviews_count || place.reviews || 0,
             layerType: 'competition'

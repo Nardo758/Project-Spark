@@ -144,8 +144,8 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
         if (layer.type === 'demographics' && (centerChanged || radiusChanged || !layer.data)) {
           fetchDemographicsData(layer.id)
         }
-        if (layer.type === 'competition' && layer.config?.category && (centerChanged || radiusChanged || !layer.data)) {
-          fetchCompetitionData(layer.id, layer.config.category)
+        if (layer.type === 'competition' && layer.config?.searchQuery && (centerChanged || radiusChanged || !layer.data)) {
+          fetchCompetitionData(layer.id, layer.config.searchQuery)
         }
       })
     }
@@ -201,8 +201,8 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
     )
     onStateChange({ ...state, layers: updatedLayers })
 
-    if (layer?.type === 'competition' && config.category && config.category !== layer.config?.category && state.center) {
-      setTimeout(() => fetchCompetitionData(layerId, config.category), 100)
+    if (layer?.type === 'competition' && config.searchQuery && config.searchQuery !== layer.config?.searchQuery && state.center) {
+      setTimeout(() => fetchCompetitionData(layerId, config.searchQuery), 100)
     }
   }
 
@@ -749,7 +749,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
 
                       {layer.type === 'competition' && (
                         <div className="text-stone-600">
-                          <p><span className="font-medium">Category:</span> {layer.config?.category || 'Not set'}</p>
+                          <p><span className="font-medium">Business Type:</span> {layer.config?.searchQuery || 'Not set'}</p>
                           {layer.data && layer.data.length > 0 ? (
                             <div className="mt-2">
                               <p className="text-xs text-emerald-600 mb-2">{layer.data.length} competitors found</p>
@@ -768,7 +768,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                                 )}
                               </ul>
                             </div>
-                          ) : layer.config?.category ? (
+                          ) : layer.config?.searchQuery ? (
                             <p className="text-xs text-stone-400 italic mt-1">Loading competitors...</p>
                           ) : (
                             <p className="text-xs text-stone-400 italic mt-1">Select a category to find competitors</p>
