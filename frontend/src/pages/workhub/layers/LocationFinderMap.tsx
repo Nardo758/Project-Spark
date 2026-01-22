@@ -1015,7 +1015,10 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
             peakHour: hotspot.peakHour,
             intensity: hotspot.intensity || hotspot.vitalityScore,
             label: `Vitality: ${hotspot.vitalityScore}`,
-            avgDailyTraffic: hotspot.avgDailyTraffic
+            avgDailyTraffic: hotspot.avgDailyTraffic,
+            driveByTrafficMonthly: hotspot.driveByTrafficMonthly || 0,
+            driveByTrafficDaily: hotspot.driveByTrafficDaily || 0,
+            driveBySource: hotspot.driveBySource || 'unavailable'
           },
           geometry: {
             type: 'Point' as const,

@@ -49,6 +49,21 @@ STATE_DOT_ENDPOINTS = {
         'aadt_field': 'AADT',
         'route_field': 'ROUTE',
     },
+    'FL': {
+        'url': 'https://services1.arcgis.com/O1JpcwDW8sjYuddV/arcgis/rest/services/AADT_On_The_SHS/FeatureServer/0',
+        'aadt_field': 'APTS_AADT',
+        'route_field': 'ROAD_NAME',
+    },
+    'GA': {
+        'url': 'https://services1.arcgis.com/d3bNBZwPpNmxmElo/arcgis/rest/services/GDOT_Traffic_Counts/FeatureServer/0',
+        'aadt_field': 'AADT',
+        'route_field': 'ROUTE_ID',
+    },
+    'NY': {
+        'url': 'https://services6.arcgis.com/DZHaqZm9cxOD4CWM/arcgis/rest/services/NYSDOT_Traffic_Counts/FeatureServer/0',
+        'aadt_field': 'AADT',
+        'route_field': 'ROUTE',
+    },
 }
 
 # State bounding boxes for coordinate-to-state lookup (approximate)
@@ -59,6 +74,9 @@ STATE_BOUNDS = {
     'NC': {'min_lat': 33.8, 'max_lat': 36.6, 'min_lng': -84.3, 'max_lng': -75.5},
     'TX': {'min_lat': 25.8, 'max_lat': 36.5, 'min_lng': -106.6, 'max_lng': -93.5},
     'CA': {'min_lat': 32.5, 'max_lat': 42.0, 'min_lng': -124.4, 'max_lng': -114.1},
+    'FL': {'min_lat': 24.5, 'max_lat': 31.0, 'min_lng': -87.6, 'max_lng': -80.0},
+    'GA': {'min_lat': 30.4, 'max_lat': 35.0, 'min_lng': -85.6, 'max_lng': -80.8},
+    'NY': {'min_lat': 40.5, 'max_lat': 45.0, 'min_lng': -79.8, 'max_lng': -71.9},
 }
 
 

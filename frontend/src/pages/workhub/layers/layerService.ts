@@ -284,6 +284,9 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
         peakTimeFormatted = `${hour12}:00 ${ampm}`
       }
       
+      // Include drive-by traffic data from DOT
+      const driveByTraffic = data.drive_by_traffic || {}
+      
       return {
         lat: result.point.lat,
         lng: result.point.lng,
@@ -295,7 +298,10 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
         totalLocationsSampled: data.total_locations_sampled || 0,
         avgDailyTraffic: data.avg_daily_traffic || 0,
         dominantPlaceTypes: data.dominant_place_types || {},
-        intensity: Math.min(100, (data.area_vitality_score || 0))
+        intensity: Math.min(100, (data.area_vitality_score || 0)),
+        driveByTrafficMonthly: driveByTraffic.monthly_estimate || 0,
+        driveByTrafficDaily: driveByTraffic.daily_average || 0,
+        driveBySource: driveByTraffic.source || 'unavailable'
       }
     })
     
@@ -303,6 +309,7 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
     const avgDensity = hotspots.reduce((sum, h) => sum + h.businessDensityScore, 0) / hotspots.length
     const totalSampled = hotspots.reduce((sum, h) => sum + h.totalLocationsSampled, 0)
     const bestHotspot = hotspots.reduce((best, h) => h.vitalityScore > best.vitalityScore ? h : best, hotspots[0])
+    const totalDriveByMonthly = hotspots.reduce((sum, h) => sum + (h.driveByTrafficMonthly || 0), 0)
     
     return {
       data: {
@@ -318,10 +325,13 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
           peakTrafficScore: bestHotspot.vitalityScore,
           totalLocationsSampled: totalSampled,
           hotspotCount: hotspots.length,
+          driveByTrafficMonthly: totalDriveByMonthly,
+          driveBySource: bestHotspot.driveBySource || 'unavailable',
           bestHotspot: {
             lat: bestHotspot.lat,
             lng: bestHotspot.lng,
-            vitalityScore: bestHotspot.vitalityScore
+            vitalityScore: bestHotspot.vitalityScore,
+            driveByTrafficMonthly: bestHotspot.driveByTrafficMonthly || 0
           },
           message: isMultiHotspot 
             ? `Analyzed ${hotspots.length} hotspots across ${radiusMiles} mile radius`

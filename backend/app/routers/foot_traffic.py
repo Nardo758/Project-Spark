@@ -261,6 +261,30 @@ async def collect_and_analyze_traffic(
             radius_meters=request.radius_meters
         )
         
+        # Add drive-by traffic data from DOT
+        try:
+            from app.services.dot_traffic_service import DOTTrafficService
+            dot_service = DOTTrafficService(timeout=5)
+            dot_result = dot_service.get_area_traffic_summary(
+                request.latitude, 
+                request.longitude, 
+                radius_miles
+            )
+            analysis['drive_by_traffic'] = {
+                'monthly_estimate': dot_result.get('monthly_estimate', 0),
+                'daily_average': dot_result.get('daily_average', 0),
+                'road_segments': dot_result.get('road_segments', 0),
+                'source': dot_result.get('source', 'estimated'),
+                'state': dot_result.get('state')
+            }
+        except Exception as dot_err:
+            logger.debug(f"DOT traffic lookup failed: {dot_err}")
+            analysis['drive_by_traffic'] = {
+                'monthly_estimate': 0,
+                'daily_average': 0,
+                'source': 'unavailable'
+            }
+        
         analysis['from_cache'] = False
         analysis['fresh_collection'] = True
         analysis['locations_collected'] = len(traffic_data)

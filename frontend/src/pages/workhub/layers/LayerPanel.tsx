@@ -835,6 +835,17 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                                     <span className="text-stone-400">Consistency:</span>{' '}
                                     <span className="font-medium">{Math.round(traffic.trafficConsistency || 0)}%</span>
                                   </div>
+                                  {traffic.driveByTrafficMonthly > 0 && (
+                                    <div className="col-span-2 pt-1 border-t border-stone-100">
+                                      <span className="text-stone-400">Drive-By Traffic:</span>{' '}
+                                      <span className="font-medium text-blue-600">
+                                        {(traffic.driveByTrafficMonthly / 1000).toFixed(0)}K/mo
+                                      </span>
+                                      <span className="text-stone-400 text-[10px] ml-1">
+                                        ({traffic.driveBySource === 'dot_api' ? 'DOT' : 'Est.'})
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
                                 
                                 {Object.keys(traffic.dominantPlaceTypes || {}).length > 0 && (
