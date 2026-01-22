@@ -3,10 +3,16 @@
 Florida DOT AADT Traffic Data Import Script
 
 Downloads Annual Average Daily Traffic (AADT) data from Florida DOT's
-ArcGIS RCI_Layers FeatureServer and imports it into the local PostgreSQL database.
+ArcGIS services and imports it into the local PostgreSQL database.
 
-Florida DOT RCI Layers AADT API:
-https://gis.fdot.gov/arcgis/rest/services/RCI_Layers/FeatureServer/0/query
+Supports two data sources:
+- Current year: RCI_Layers FeatureServer (2024 data)
+- Historical: Annual_Average_Daily_Traffic_Historical_TDA (2020 data)
+
+Multi-year data enables:
+- Year-over-year trend analysis
+- Weighted average baseline calculations
+- More stable traffic estimates
 """
 
 import os
@@ -24,7 +30,20 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db, engine
 from app.models.traffic_road import TrafficRoad
 
-FLORIDA_DOT_API = "https://gis.fdot.gov/arcgis/rest/services/RCI_Layers/FeatureServer/0/query"
+DATA_SOURCES = {
+    'current': {
+        'url': 'https://gis.fdot.gov/arcgis/rest/services/RCI_Layers/FeatureServer/0/query',
+        'description': 'Current year AADT (2024)',
+        'year_field': 'YEAR_'
+    },
+    'historical': {
+        'url': 'https://services1.arcgis.com/O1JpcwDW8sjYuddV/arcgis/rest/services/Annual_Average_Daily_Traffic_Historical_TDA/FeatureServer/0/query',
+        'description': 'Historical AADT (2020)',
+        'year_field': 'YEAR_'
+    }
+}
+
+FLORIDA_DOT_API = DATA_SOURCES['current']['url']
 
 BATCH_SIZE = 1000
 MAX_RECORDS_PER_REQUEST = 1000
@@ -135,18 +154,39 @@ def insert_batch(db: Session, records: List[Dict[str, Any]]) -> int:
     return inserted
 
 
-def clear_florida_data(db: Session):
-    """Clear existing Florida data."""
-    db.execute(text("DELETE FROM traffic_roads WHERE state = 'FL'"))
+def clear_florida_data(db: Session, year: Optional[int] = None):
+    """Clear existing Florida data, optionally for a specific year."""
+    if year:
+        db.execute(text("DELETE FROM traffic_roads WHERE state = 'FL' AND year = :year"), {"year": year})
+        print(f"Cleared existing Florida data for year {year}")
+    else:
+        db.execute(text("DELETE FROM traffic_roads WHERE state = 'FL'"))
+        print("Cleared all existing Florida data")
     db.commit()
-    print("Cleared existing Florida data")
 
 
-def import_florida_data(clear_existing: bool = True):
-    """Main import function."""
+def import_florida_data(source: str = 'current', clear_existing: bool = True, clear_year_only: bool = False):
+    """
+    Main import function.
+    
+    Args:
+        source: 'current' for 2024 data, 'historical' for 2020 data
+        clear_existing: Whether to clear data before import
+        clear_year_only: If True, only clear data for the year being imported
+    """
+    global FLORIDA_DOT_API
+    
+    if source not in DATA_SOURCES:
+        print(f"Unknown source: {source}. Available: {list(DATA_SOURCES.keys())}")
+        return 0
+    
+    source_config = DATA_SOURCES[source]
+    FLORIDA_DOT_API = source_config['url']
+    
     print("=" * 60)
     print("Florida DOT AADT Traffic Data Import")
     print("=" * 60)
+    print(f"Source: {source_config['description']}")
     print(f"API: {FLORIDA_DOT_API}")
     print(f"Started: {datetime.now().isoformat()}")
     print()
@@ -156,9 +196,22 @@ def import_florida_data(clear_existing: bool = True):
     
     db = next(get_db())
     
+    imported_year = None
+    
     try:
         if clear_existing:
-            clear_florida_data(db)
+            if clear_year_only:
+                sample = fetch_records(offset=0, limit=1)
+                if sample.get('features'):
+                    imported_year = sample['features'][0].get('properties', {}).get('YEAR_')
+                    if imported_year:
+                        clear_florida_data(db, year=imported_year)
+                    else:
+                        clear_florida_data(db)
+                else:
+                    clear_florida_data(db)
+            else:
+                clear_florida_data(db)
         
         offset = 0
         total_imported = 0
@@ -216,7 +269,27 @@ def import_florida_data(clear_existing: bool = True):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Import Florida DOT traffic data")
+    parser.add_argument("--source", choices=['current', 'historical', 'all'], default='current',
+                        help="Data source: 'current' (2024), 'historical' (2020), or 'all' for both")
     parser.add_argument("--no-clear", action="store_true", help="Don't clear existing data")
+    parser.add_argument("--year-only", action="store_true", 
+                        help="Only clear data for the year being imported (preserves other years)")
     args = parser.parse_args()
     
-    import_florida_data(clear_existing=not args.no_clear)
+    if args.source == 'all':
+        print("Importing all available data sources...")
+        print("\n" + "=" * 60)
+        print("STEP 1: Historical Data (2020)")
+        print("=" * 60)
+        import_florida_data(source='historical', clear_existing=not args.no_clear, clear_year_only=True)
+        
+        print("\n" + "=" * 60)
+        print("STEP 2: Current Data (2024)")
+        print("=" * 60)
+        import_florida_data(source='current', clear_existing=not args.no_clear, clear_year_only=True)
+    else:
+        import_florida_data(
+            source=args.source, 
+            clear_existing=not args.no_clear,
+            clear_year_only=args.year_only
+        )

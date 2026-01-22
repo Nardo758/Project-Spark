@@ -167,7 +167,11 @@ class DOTTrafficService:
                 
                 geojson_geom = json.loads(row.geojson)
                 intensity = self._calculate_intensity(aadt)
-                trend = self._estimate_segment_trend(aadt, lat, lng, intensity)
+                roadway_id = row.roadway_id
+                trend = self._estimate_segment_trend(
+                    aadt, lat, lng, intensity,
+                    roadway_id=roadway_id, state=state
+                )
                 
                 road_segments.append({
                     'type': 'Feature',
@@ -186,6 +190,8 @@ class DOTTrafficService:
                         'trend_direction': trend['direction'],
                         'trend_percent': trend['percent'],
                         'trend_icon': trend['icon'],
+                        'trend_source': trend.get('source', 'estimated'),
+                        'trend_years': trend.get('years_analyzed'),
                         'distance_miles': round(row.distance_m / 1609.34, 2) if row.distance_m else None
                     }
                 })
@@ -526,21 +532,117 @@ class DOTTrafficService:
         else:
             return '#ef4444'  # Red - heavy traffic
     
+    def _calculate_historical_trend(
+        self,
+        roadway_id: str,
+        state: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Calculate actual year-over-year traffic trend from historical database data.
+        
+        Compares multi-year AADT data to determine real growth/decline patterns.
+        Returns None if insufficient historical data is available.
+        """
+        from app.db.database import SessionLocal
+        
+        if not roadway_id:
+            return None
+        
+        try:
+            sql = text("""
+                SELECT year, MAX(aadt) as aadt
+                FROM traffic_roads
+                WHERE roadway_id = :roadway_id
+                  AND state = :state
+                  AND aadt IS NOT NULL
+                GROUP BY year
+                ORDER BY year ASC
+            """)
+            
+            db = SessionLocal()
+            try:
+                result = db.execute(sql, {
+                    "roadway_id": roadway_id,
+                    "state": state
+                })
+                rows = result.fetchall()
+            finally:
+                db.close()
+            
+            if len(rows) < 2:
+                return None
+            
+            # Calculate compound annual growth rate (CAGR)
+            first_year = rows[0].year
+            last_year = rows[-1].year
+            first_aadt = rows[0].aadt
+            last_aadt = rows[-1].aadt
+            
+            if first_aadt <= 0 or last_aadt <= 0:
+                return None
+            
+            years_diff = last_year - first_year
+            if years_diff <= 0:
+                return None
+            
+            # CAGR formula: (ending/beginning)^(1/years) - 1
+            cagr = ((last_aadt / first_aadt) ** (1 / years_diff) - 1) * 100
+            
+            # Simple YoY change for more immediate trend
+            if len(rows) >= 2:
+                prev_year_aadt = rows[-2].aadt if rows[-2].aadt > 0 else first_aadt
+                yoy_change = ((last_aadt - prev_year_aadt) / prev_year_aadt) * 100
+            else:
+                yoy_change = cagr
+            
+            # Determine trend direction (use CAGR for stability)
+            if cagr > 2:
+                direction = 'up'
+                icon = '↑'
+            elif cagr < -2:
+                direction = 'down'
+                icon = '↓'
+            else:
+                direction = 'stable'
+                icon = '→'
+            
+            return {
+                'direction': direction,
+                'percent': round(cagr, 1),
+                'yoy_percent': round(yoy_change, 1),
+                'icon': icon,
+                'years_analyzed': years_diff,
+                'first_year': first_year,
+                'last_year': last_year,
+                'source': 'historical'
+            }
+            
+        except Exception as e:
+            logger.debug(f"Error calculating historical trend for {roadway_id}: {e}")
+            return None
+    
     def _estimate_segment_trend(
         self,
         aadt: int,
         lat: float,
         lng: float,
-        intensity: int
+        intensity: int,
+        roadway_id: Optional[str] = None,
+        state: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Estimate traffic trend for a road segment.
+        Calculate or estimate traffic trend for a road segment.
         
-        Compares current traffic patterns (from Google vitality data when available)
-        against DOT historical baseline to determine trend direction.
-        
-        Uses deterministic variation based on location for consistent results.
+        First attempts to use real historical data from multi-year database records.
+        Falls back to deterministic estimation if historical data unavailable.
         """
+        # Try to get actual historical trend if roadway_id and state available
+        if roadway_id and state and state in STATES_WITH_LOCAL_DATA:
+            historical = self._calculate_historical_trend(roadway_id, state)
+            if historical:
+                return historical
+        
+        # Fallback: Deterministic estimation based on location
         import hashlib
         
         # Create deterministic variation based on segment location
@@ -570,7 +672,8 @@ class DOTTrafficService:
         return {
             'direction': direction,
             'percent': round(variation_pct, 1),
-            'icon': icon
+            'icon': icon,
+            'source': 'estimated'
         }
     
     def _generate_estimated_road_segments(
