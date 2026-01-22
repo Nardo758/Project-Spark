@@ -54,6 +54,7 @@ export interface LocationFinderState {
   activeLayerTab: LayerType | 'ai'
   optimalZones?: OptimalZone[]
   optimalZonesLoading?: boolean
+  zoneSummary?: string
 }
 
 export interface OptimalZone {

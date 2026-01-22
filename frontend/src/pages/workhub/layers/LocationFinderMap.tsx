@@ -26,9 +26,10 @@ interface LocationFinderMapProps {
   clickToSetEnabled?: boolean
   analysisResult?: AnalysisResult | null
   onClearAnalysis?: () => void
+  onClearOptimalZones?: () => void
 }
 
-export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = false, analysisResult, onClearAnalysis }: LocationFinderMapProps) {
+export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = false, analysisResult, onClearAnalysis, onClearOptimalZones }: LocationFinderMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const centerMarkerRef = useRef<mapboxgl.Marker | null>(null)
@@ -721,6 +722,70 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           )}
         </div>
       )}
+
+      {/* Optimal Zones Floating Panel */}
+      {(state.optimalZones && state.optimalZones.length > 0) || state.zoneSummary ? (
+        <div className="absolute bottom-4 right-4 w-80 max-h-[40vh] bg-white rounded-lg shadow-lg border border-stone-200 overflow-hidden z-20 pointer-events-auto">
+          <div className="flex items-center justify-between px-3 py-2 bg-violet-50 border-b border-violet-100">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
+                <TrendingUp className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-sm font-medium text-violet-800">
+                {state.optimalZones?.length || 0} Optimal Zones
+              </span>
+            </div>
+            <button
+              onClick={onClearOptimalZones}
+              className="p-1 hover:bg-violet-100 rounded transition-colors"
+              title="Close"
+            >
+              <X className="w-4 h-4 text-violet-600" />
+            </button>
+          </div>
+          
+          <div className="max-h-[calc(40vh-48px)] overflow-y-auto p-3 space-y-2">
+            {state.optimalZones?.map((zone) => (
+              <div 
+                key={zone.id}
+                className="flex items-start gap-3 p-2.5 bg-stone-50 rounded-lg border border-stone-100 hover:bg-stone-100 transition-colors"
+              >
+                <div className="w-7 h-7 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+                  {zone.rank}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-stone-800">
+                      Score: {zone.total_score}/100
+                    </span>
+                  </div>
+                  <div className="text-xs text-stone-500 space-y-0.5">
+                    {zone.insights.slice(0, 2).map((insight, i) => (
+                      <div key={i} className="flex items-start gap-1">
+                        <span className="text-violet-400 mt-0.5">•</span>
+                        <span>{insight}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-1.5 text-xs text-stone-400">
+                    <span>Demo: {zone.scores.demographics}</span>
+                    <span>•</span>
+                    <span>Comp: {zone.scores.competition}</span>
+                    <span>•</span>
+                    <span>Mkt: {zone.scores.market_signals}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {state.zoneSummary && (
+              <div className="pt-2 border-t border-stone-100">
+                <p className="text-xs text-stone-500">{state.zoneSummary}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Sparkles, Plus, X, Eye, EyeOff, MapPin, Loader2, Send, FileText, TrendingUp, Users, Store, CheckCircle, Target } from 'lucide-react'
 import { layerRegistry, defaultLayerTabs, createLayerInstance } from './registry'
-import type { LayerType, LayerInstance, LocationFinderState, OptimalZone } from './types'
+import type { LayerType, LayerInstance, LocationFinderState } from './types'
 import { LayerInputRenderer } from './LayerInputRenderer'
 import { findOptimalZones } from './layerService'
 
@@ -48,7 +48,6 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
   const [analyzingLayers, setAnalyzingLayers] = useState<Record<string, boolean>>({})
   const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [findingZones, setFindingZones] = useState(false)
-  const [zoneSummary, setZoneSummary] = useState('')
 
   useEffect(() => {
     if (state.center?.address) {
@@ -293,8 +292,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
     if (!state.center) return
     
     setFindingZones(true)
-    setZoneSummary('')
-    onStateChange({ ...state, optimalZonesLoading: true })
+    onStateChange({ ...state, optimalZonesLoading: true, zoneSummary: '' })
     
     try {
       const activeLayers = state.layers
@@ -347,40 +345,31 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
       
       if (result.error) {
         console.error('Find zones error:', result.error)
-        setZoneSummary(result.error)
         onStateChange({
           ...state,
           optimalZones: undefined,
-          optimalZonesLoading: false
+          optimalZonesLoading: false,
+          zoneSummary: result.error
         })
       } else {
-        setZoneSummary(result.summary)
         onStateChange({
           ...state,
           optimalZones: result.zones,
-          optimalZonesLoading: false
+          optimalZonesLoading: false,
+          zoneSummary: result.summary
         })
       }
     } catch (error) {
       console.error('Find zones error:', error)
-      setZoneSummary('Failed to analyze locations')
       onStateChange({
         ...state,
         optimalZones: undefined,
-        optimalZonesLoading: false
+        optimalZonesLoading: false,
+        zoneSummary: 'Failed to analyze locations'
       })
     } finally {
       setFindingZones(false)
     }
-  }
-
-  const clearOptimalZones = () => {
-    onStateChange({
-      ...state,
-      optimalZones: undefined,
-      optimalZonesLoading: false
-    })
-    setZoneSummary('')
   }
 
   const getLayerByType = (type: LayerType): LayerInstance | undefined => {
@@ -492,46 +481,6 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                 </>
               )}
             </button>
-            
-            {state.optimalZones && state.optimalZones.length > 0 && (
-              <div className="mt-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-violet-600">
-                    {state.optimalZones.length} optimal zones found
-                  </span>
-                  <button
-                    onClick={clearOptimalZones}
-                    className="text-xs text-stone-400 hover:text-stone-600"
-                  >
-                    Clear
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  {state.optimalZones.map((zone, i) => (
-                    <div 
-                      key={zone.id}
-                      className="flex items-center gap-2 p-2 bg-violet-50 rounded border border-violet-100"
-                    >
-                      <div className="w-5 h-5 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">
-                        {zone.rank}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-stone-700">
-                          Score: {zone.total_score}/100
-                        </div>
-                        <div className="text-xs text-stone-500 truncate">
-                          {zone.insights[0] || 'Optimal location'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {zoneSummary && (
-              <p className="mt-2 text-xs text-stone-500">{zoneSummary}</p>
-            )}
           </div>
         )}
       </div>

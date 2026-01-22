@@ -1253,6 +1253,14 @@ export default function WorkHub() {
                       )
                     }))
                   }}
+                  onClearOptimalZones={() => {
+                    setLocationFinderState(prev => ({
+                      ...prev,
+                      optimalZones: undefined,
+                      optimalZonesLoading: false,
+                      zoneSummary: ''
+                    }))
+                  }}
                 />
               </div>
             </div>
