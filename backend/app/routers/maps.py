@@ -1038,6 +1038,10 @@ def find_optimal_zones_enhanced(
             )
         except Exception as e:
             logger.warning(f"Failed to fetch metrics for zone at {point.lat}, {point.lng}: {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
             continue
         
         score_result = calculate_zone_score(metrics)

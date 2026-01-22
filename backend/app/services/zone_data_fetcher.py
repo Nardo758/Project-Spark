@@ -97,6 +97,10 @@ class ZoneDataFetcher:
             metrics.raw_data['trends'] = trends
         except Exception as e:
             logger.warning(f"Failed to calculate trends: {e}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
             metrics.raw_data['trends'] = None
         
         return metrics
@@ -355,6 +359,10 @@ class ZoneDataFetcher:
             google_data = analyzer.analyze_area_traffic(lat, lng, radius_meters)
         except Exception as e:
             logger.debug(f"Google traffic lookup failed: {e}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
         
         # Get DOT AADT data (vehicle traffic)
         try:
@@ -363,6 +371,10 @@ class ZoneDataFetcher:
             dot_data = dot_service.get_area_traffic_summary(lat, lng, radius_miles)
         except Exception as e:
             logger.debug(f"DOT traffic lookup failed: {e}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
         
         # Fuse the data sources
         try:
