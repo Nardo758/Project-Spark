@@ -189,7 +189,7 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
         force_refresh: forceRefresh
       })
     })
-
+    
     if (!response.ok) {
       if (response.status === 401) {
         return {
