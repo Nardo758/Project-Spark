@@ -1,6 +1,15 @@
 import type { LayerType, LayerInstance, LocationFinderState, OptimalZone, FindOptimalZonesResponse } from './types'
+import { useAuthStore } from '../../../stores/authStore'
 
 const API_BASE = '/api/v1'
+
+function getAuthHeaders(): Record<string, string> {
+  const token = useAuthStore.getState().token
+  if (token) {
+    return { Authorization: `Bearer ${token}` }
+  }
+  return {}
+}
 
 export interface LayerFetchParams {
   center: { lat: number; lng: number }
@@ -180,7 +189,7 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
   try {
     const response = await fetch(`${API_BASE}/foot-traffic/collect-and-analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       credentials: 'include',
       body: JSON.stringify({
         latitude: center.lat,
@@ -221,7 +230,7 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
       try {
         const heatmapResponse = await fetch(`${API_BASE}/foot-traffic/heatmap`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
           credentials: 'include',
           body: JSON.stringify({
             latitude: center.lat,
