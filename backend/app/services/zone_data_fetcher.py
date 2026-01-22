@@ -150,11 +150,18 @@ class ZoneDataFetcher:
         growth_rate = round(growth_base + growth_micro, 1)
         growth_rate = max(-3.0, min(6.0, growth_rate))  # Clamp to realistic range
         
+        # Employment rate varies by location (typically 55-70%)
+        employment_base = 60 + ((seed >> 20) % 15) - 2
+        employment_micro = ((seed2 >> 20) % 6) - 3
+        employment_rate = round(employment_base + employment_micro, 1)
+        employment_rate = max(50.0, min(75.0, employment_rate))
+        
         return {
             'population': population,
             'median_income': median_income,
             'median_age': median_age,
             'growth_rate': growth_rate,
+            'employment_rate': employment_rate,
             'households': int(population / 2.5),
             'area_sq_miles': round(area_sq_miles, 2),
             'source': 'estimated'
@@ -253,8 +260,11 @@ class ZoneDataFetcher:
                             'distance_miles': round(distance, 2)
                         })
             
+            area_sq_miles = math.pi * (radius_miles ** 2)
+            density = len(filtered) / max(0.1, area_sq_miles)
             return {
                 'count': len(filtered),
+                'density_per_sq_mile': round(density, 2),
                 'competitors': filtered[:10],
                 'avg_rating': round(sum(c.get('rating', 0) for c in filtered) / max(1, len(filtered)), 1),
                 'source': 'serpapi'
@@ -308,8 +318,13 @@ class ZoneDataFetcher:
         # Deterministic rating
         rating = 3.5 + ((seed >> 8) % 10) / 10.0  # 3.5 to 4.4
         
+        # Calculate density per sq mile
+        area_sq_miles = math.pi * (radius_miles ** 2)
+        competitor_density = count / max(0.1, area_sq_miles)
+        
         return {
             'count': count,
+            'density_per_sq_mile': round(competitor_density, 2),
             'competitors': [],
             'avg_rating': round(rating, 1),
             'source': 'estimated'
