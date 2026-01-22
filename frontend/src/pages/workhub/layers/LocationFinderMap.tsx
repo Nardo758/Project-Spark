@@ -919,23 +919,59 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           }
         })
         
-        // Add AADT labels on hover at higher zoom
+        // Add trend indicators along roads with AADT
+        const trendLayerId = `${layer.id}-road-trends`
+        if (map.getLayer(trendLayerId)) map.removeLayer(trendLayerId)
+        
         map.addLayer({
           id: roadLabelLayerId,
+          type: 'symbol',
+          source: roadSourceId,
+          minzoom: 12,
+          layout: {
+            'symbol-placement': 'line-center',
+            'text-field': [
+              'concat',
+              ['get', 'trend_icon'],
+              ' ',
+              ['to-string', ['abs', ['get', 'trend_percent']]],
+              '%'
+            ],
+            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+            'text-allow-overlap': false,
+            'text-offset': [0, -1.2]
+          },
+          paint: {
+            'text-color': [
+              'case',
+              ['==', ['get', 'trend_direction'], 'up'], '#16a34a',
+              ['==', ['get', 'trend_direction'], 'down'], '#dc2626',
+              '#d97706'
+            ],
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 2
+          }
+        })
+        
+        // Add AADT volume label below trend
+        map.addLayer({
+          id: trendLayerId,
           type: 'symbol',
           source: roadSourceId,
           minzoom: 13,
           layout: {
             'symbol-placement': 'line-center',
-            'text-field': ['concat', ['to-string', ['/', ['get', 'aadt'], 1000]], 'K'],
+            'text-field': ['concat', ['to-string', ['/', ['get', 'aadt'], 1000]], 'K/day'],
             'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 11,
-            'text-allow-overlap': false
+            'text-size': 10,
+            'text-allow-overlap': false,
+            'text-offset': [0, 0.8]
           },
           paint: {
-            'text-color': '#374151',
+            'text-color': '#6b7280',
             'text-halo-color': '#ffffff',
-            'text-halo-width': 2
+            'text-halo-width': 1.5
           }
         })
       }
