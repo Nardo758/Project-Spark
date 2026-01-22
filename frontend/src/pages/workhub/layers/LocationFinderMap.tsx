@@ -124,6 +124,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef<{ x: number; y: number; panelX: number; panelY: number } | null>(null)
   const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set())
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false)
   
   const toggleZoneExpand = useCallback((zoneId: string) => {
     setExpandedZones(prev => {
@@ -985,15 +986,29 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
                 {state.optimalZones?.length || 0} Optimal Zones
               </span>
             </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); onClearOptimalZones?.() }}
-              className="p-1 hover:bg-violet-100 rounded transition-colors"
-              title="Close"
-            >
-              <X className="w-4 h-4 text-violet-600" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsPanelCollapsed(!isPanelCollapsed) }}
+                className="p-1 hover:bg-violet-100 rounded transition-colors"
+                title={isPanelCollapsed ? "Expand" : "Collapse"}
+              >
+                {isPanelCollapsed ? (
+                  <ChevronUp className="w-4 h-4 text-violet-600" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-violet-600" />
+                )}
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onClearOptimalZones?.() }}
+                className="p-1 hover:bg-violet-100 rounded transition-colors"
+                title="Close"
+              >
+                <X className="w-4 h-4 text-violet-600" />
+              </button>
+            </div>
           </div>
           
+          {!isPanelCollapsed && (
           <div className="max-h-[calc(40vh-48px)] overflow-y-auto p-3 space-y-2">
             {state.optimalZones?.map((zone) => {
               const isExpanded = expandedZones.has(zone.id)
@@ -1135,6 +1150,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
               </div>
             )}
           </div>
+          )}
         </div>
       ) : null}
     </div>
