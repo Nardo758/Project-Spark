@@ -23,13 +23,14 @@ OppGrid utilizes a modern hybrid architecture with a React 18 frontend (Vite, Ta
 *   **Location Validation:** Centralized `location_utils.py` module for state bounding box validation and automatic fallback for map accuracy.
 *   **Admin Panel:** Comprehensive tools for managing users, subscriptions, opportunities, leads, and platform statistics.
 *   **Dual-Realm Workspace Architecture:** Supports both Physical (location-based) and Digital (online) business opportunities, incorporating Mapbox for physical realms and Excalidraw for digital wireframing. This includes an AI Provider Abstraction Layer for flexible LLM integration (Claude, OpenAI) and data services for map commands, census data, SerpAPI, and Excalidraw storage.
+*   **Foot Traffic Analysis System:** Custom foot traffic analysis using SerpAPI Google Maps Popular Times data. Calculates area vitality scores (0-100) based on business density (30pts), foot traffic levels (35pts), business diversity (20pts), and current activity (15pts). Features 7-day caching, PostGIS geographic queries, and opportunity-level traffic insights. Database tables: `foot_traffic`, `area_traffic_aggregations`, `opportunity_foot_traffic`.
 
 ## External Dependencies
 *   **PostgreSQL:** Managed database provided by Replit.
 *   **Stripe:** Payment gateway for subscriptions, pay-per-unlock, and expert service transactions (including Stripe Connect).
 *   **Resend:** Email service for transactional emails.
 *   **Apify:** Web scraping platform.
-*   **SerpAPI:** Google Search and Google Maps Reviews API.
+*   **SerpAPI:** Google Search, Google Maps Reviews, and Google Maps Popular Times API for foot traffic analysis.
 *   **OpenAI/Anthropic (LLMs):** Integrated for various AI capabilities.
 *   **LinkedIn OAuth:** For professional network authentication.
 *   **Census Bureau ACS 5-Year API:** Provides demographic data.
