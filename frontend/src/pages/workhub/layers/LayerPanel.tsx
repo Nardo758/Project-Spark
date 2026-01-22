@@ -55,6 +55,102 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
     }
   }, [state.center])
 
+  const fetchDemographicsData = useCallback(async (layerId: string) => {
+    if (!state.center) return
+
+    setAnalyzingLayers(prev => ({ ...prev, [layerId]: true }))
+    try {
+      const response = await fetch('/api/v1/maps/demographics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lat: state.center.lat,
+          lng: state.center.lng,
+          radius_miles: state.radius,
+          metrics: ['population', 'income']
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to fetch demographics')
+
+      const data = await response.json()
+      const updatedLayers = state.layers.map(layer =>
+        layer.id === layerId ? { ...layer, data, loading: false, error: null } : layer
+      )
+      onStateChange({ ...state, layers: updatedLayers })
+    } catch (error) {
+      console.error('Demographics fetch error:', error)
+      const updatedLayers = state.layers.map(layer =>
+        layer.id === layerId ? { ...layer, loading: false, error: 'Failed to load demographics' } : layer
+      )
+      onStateChange({ ...state, layers: updatedLayers })
+    } finally {
+      setAnalyzingLayers(prev => ({ ...prev, [layerId]: false }))
+    }
+  }, [state, onStateChange])
+
+  const fetchCompetitionData = useCallback(async (layerId: string, category: string) => {
+    if (!state.center || !category) return
+
+    setAnalyzingLayers(prev => ({ ...prev, [layerId]: true }))
+    try {
+      const response = await fetch('/api/v1/maps/places/nearby', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lat: state.center.lat,
+          lng: state.center.lng,
+          radius_miles: state.radius,
+          business_type: category,
+          limit: 20
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to fetch competition data')
+
+      const data = await response.json()
+      const updatedLayers = state.layers.map(layer =>
+        layer.id === layerId ? { ...layer, data: data.places || [], loading: false, error: null } : layer
+      )
+      onStateChange({ ...state, layers: updatedLayers })
+    } catch (error) {
+      console.error('Competition fetch error:', error)
+      const updatedLayers = state.layers.map(layer =>
+        layer.id === layerId ? { ...layer, loading: false, error: 'Failed to load competition' } : layer
+      )
+      onStateChange({ ...state, layers: updatedLayers })
+    } finally {
+      setAnalyzingLayers(prev => ({ ...prev, [layerId]: false }))
+    }
+  }, [state, onStateChange])
+
+  const prevCenterRef = useRef(state.center)
+  const prevRadiusRef = useRef(state.radius)
+  const prevLayerCountRef = useRef(state.layers.length)
+
+  useEffect(() => {
+    if (!state.center) return
+
+    const centerChanged = prevCenterRef.current?.lat !== state.center.lat || prevCenterRef.current?.lng !== state.center.lng
+    const radiusChanged = prevRadiusRef.current !== state.radius
+    const layersAdded = state.layers.length > prevLayerCountRef.current
+
+    prevCenterRef.current = state.center
+    prevRadiusRef.current = state.radius
+    prevLayerCountRef.current = state.layers.length
+
+    if (centerChanged || radiusChanged || layersAdded) {
+      state.layers.forEach(layer => {
+        if (layer.type === 'demographics' && (centerChanged || radiusChanged || !layer.data)) {
+          fetchDemographicsData(layer.id)
+        }
+        if (layer.type === 'competition' && layer.config?.category && (centerChanged || radiusChanged || !layer.data)) {
+          fetchCompetitionData(layer.id, layer.config.category)
+        }
+      })
+    }
+  }, [state.center, state.radius, state.layers.length, fetchDemographicsData, fetchCompetitionData])
+
   const doAddressSearch = useCallback(async (query: string) => {
     if (query.length < 3) {
       setAddressSuggestions([])
@@ -99,10 +195,15 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
   }
 
   const handleLayerConfigChange = (layerId: string, config: Record<string, any>) => {
-    const updatedLayers = state.layers.map(layer =>
-      layer.id === layerId ? { ...layer, config: { ...layer.config, ...config } } : layer
+    const layer = state.layers.find(l => l.id === layerId)
+    const updatedLayers = state.layers.map(l =>
+      l.id === layerId ? { ...l, config: { ...l.config, ...config } } : l
     )
     onStateChange({ ...state, layers: updatedLayers })
+
+    if (layer?.type === 'competition' && config.category && config.category !== layer.config?.category && state.center) {
+      setTimeout(() => fetchCompetitionData(layerId, config.category), 100)
+    }
   }
 
   const handleToggleLayerVisibility = (layerId: string) => {
@@ -478,8 +579,12 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                 const deepCloneLayer = state.layers.find(l => l.type === 'deep_clone')
                 const deepCloneResult = deepCloneLayer?.config?.analysisResult
                 const competitionLayer = state.layers.find(l => l.type === 'competition')
+                const demographicsLayer = state.layers.find(l => l.type === 'demographics')
+                const demographicsData = demographicsLayer?.data
                 const competitorCount = competitionLayer?.data?.length || deepCloneResult?.competitor_count || deepCloneResult?.three_mile_analysis?.competitor_count || 0
-                const hasAnalysisData = deepCloneResult || competitionLayer?.data
+                const population = deepCloneResult?.three_mile_analysis?.population || demographicsData?.population
+                const medianIncome = deepCloneResult?.three_mile_analysis?.median_income || demographicsData?.median_income
+                const hasAnalysisData = deepCloneResult || competitionLayer?.data || demographicsData
 
                 if (hasAnalysisData) {
                   return (
@@ -500,19 +605,19 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                             </div>
                           </div>
                         )}
-                        {deepCloneResult?.three_mile_analysis?.population && (
+                        {population && (
                           <div className="bg-white rounded-lg p-3 shadow-sm">
-                            <div className="text-xs text-stone-500 mb-1">3-Mile Population</div>
+                            <div className="text-xs text-stone-500 mb-1">Area Population</div>
                             <div className="text-2xl font-bold text-stone-800">
-                              {deepCloneResult.three_mile_analysis.population.toLocaleString()}
+                              {population.toLocaleString()}
                             </div>
                           </div>
                         )}
-                        {deepCloneResult?.three_mile_analysis?.median_income && (
+                        {medianIncome && (
                           <div className="bg-white rounded-lg p-3 shadow-sm">
                             <div className="text-xs text-stone-500 mb-1">Median Income</div>
                             <div className="text-2xl font-bold text-stone-800">
-                              ${deepCloneResult.three_mile_analysis.median_income.toLocaleString()}
+                              ${medianIncome.toLocaleString()}
                             </div>
                           </div>
                         )}
@@ -617,11 +722,27 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
 
                       {layer.type === 'demographics' && (
                         <div className="text-stone-600">
-                          <p><span className="font-medium">Data Type:</span> {layer.config?.dataType || 'population'}</p>
                           {layer.data ? (
-                            <p className="text-xs text-emerald-600 mt-1">Data loaded</p>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="flex items-center gap-1.5">
+                                <Users className="w-3.5 h-3.5 text-stone-400" />
+                                <span>Pop: {layer.data.population?.toLocaleString() || 'N/A'}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp className="w-3.5 h-3.5 text-stone-400" />
+                                <span>Income: ${layer.data.median_income?.toLocaleString() || 'N/A'}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Users className="w-3.5 h-3.5 text-stone-400" />
+                                <span>Households: {layer.data.households?.toLocaleString() || 'N/A'}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp className="w-3.5 h-3.5 text-stone-400" />
+                                <span>Median Age: {layer.data.median_age || 'N/A'}</span>
+                              </div>
+                            </div>
                           ) : (
-                            <p className="text-xs text-stone-400 italic mt-1">No data loaded</p>
+                            <p className="text-xs text-stone-400 italic">Loading demographics...</p>
                           )}
                         </div>
                       )}
@@ -630,9 +751,27 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                         <div className="text-stone-600">
                           <p><span className="font-medium">Category:</span> {layer.config?.category || 'Not set'}</p>
                           {layer.data && layer.data.length > 0 ? (
-                            <p className="text-xs text-emerald-600 mt-1">{layer.data.length} competitors found</p>
+                            <div className="mt-2">
+                              <p className="text-xs text-emerald-600 mb-2">{layer.data.length} competitors found</p>
+                              <ul className="text-xs space-y-1 max-h-32 overflow-y-auto">
+                                {layer.data.slice(0, 5).map((place: any, i: number) => (
+                                  <li key={i} className="flex items-start gap-1.5">
+                                    <Store className="w-3.5 h-3.5 text-stone-400 mt-0.5 flex-shrink-0" />
+                                    <span className="truncate">{place.name}</span>
+                                    {place.rating > 0 && (
+                                      <span className="text-amber-500 ml-auto flex-shrink-0">{place.rating}★</span>
+                                    )}
+                                  </li>
+                                ))}
+                                {layer.data.length > 5 && (
+                                  <li className="text-stone-400 italic">+{layer.data.length - 5} more...</li>
+                                )}
+                              </ul>
+                            </div>
+                          ) : layer.config?.category ? (
+                            <p className="text-xs text-stone-400 italic mt-1">Loading competitors...</p>
                           ) : (
-                            <p className="text-xs text-stone-400 italic mt-1">No competitors loaded</p>
+                            <p className="text-xs text-stone-400 italic mt-1">Select a category to find competitors</p>
                           )}
                         </div>
                       )}
