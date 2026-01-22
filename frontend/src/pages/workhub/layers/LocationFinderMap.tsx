@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { Loader2, AlertCircle, TrendingUp, X, GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
 import type { LocationFinderState, LayerInstance, DerivedMetricValue, TrendSummary } from './types'
 import TrendIndicators from './TrendIndicators'
+import MapLegend from './MapLegend'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
 
@@ -945,29 +946,12 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
         </div>
       )}
 
-      {/* Traffic Hotspot Legend */}
-      {state.layers.some(l => l.type === 'traffic' && l.visible && l.data?.hotspots?.length > 0) && (
-        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md z-10">
-          <div className="text-xs font-medium text-stone-700 mb-2">Traffic Hotspots</div>
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-stone-600">Low</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span className="text-stone-600">Medium</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-stone-600">High</span>
-            </div>
-          </div>
-          <div className="text-[10px] text-stone-400 mt-1.5">
-            Larger circles = higher activity
-          </div>
-        </div>
-      )}
+      {/* Comprehensive Map Legend */}
+      <MapLegend 
+        layers={state.layers}
+        showOptimalZones={!!(state.optimalZones && state.optimalZones.length > 0)}
+        showTrends={!!trendData}
+      />
 
       {/* Optimal Zones Floating Panel */}
       {(state.optimalZones && state.optimalZones.length > 0) || state.zoneSummary ? (
