@@ -871,6 +871,80 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                           )}
                         </div>
                       )}
+
+                      {layer.type === 'drive_by_traffic' && (
+                        <div className="text-stone-600">
+                          {layer.data?.summary ? (() => {
+                            const summary = layer.data.summary
+                            const trend = layer.data.trend
+                            const confidence = summary.confidenceScore || 0
+                            const trendColor = trend?.direction === 'up' ? 'text-emerald-600' : 
+                                              trend?.direction === 'down' ? 'text-red-500' : 'text-amber-600'
+                            const trendIcon = trend?.direction === 'up' ? '↑' : 
+                                             trend?.direction === 'down' ? '↓' : '→'
+                            
+                            return (
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="text-center">
+                                    <div className="text-2xl font-bold text-blue-600">
+                                      {(summary.monthlyTraffic / 1000).toFixed(0)}K
+                                    </div>
+                                    <div className="text-[10px] text-stone-400">Vehicles/Month</div>
+                                  </div>
+                                  {trend && (
+                                    <div className={`text-center px-2 py-1 rounded ${trend.direction === 'up' ? 'bg-emerald-50' : trend.direction === 'down' ? 'bg-red-50' : 'bg-amber-50'}`}>
+                                      <div className={`text-lg font-bold ${trendColor}`}>
+                                        {trendIcon} {Math.abs(trend.changePercent).toFixed(1)}%
+                                      </div>
+                                      <div className="text-[10px] text-stone-400">vs Historical</div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {trend && (
+                                  <div className={`text-xs p-2 rounded ${trend.direction === 'up' ? 'bg-emerald-50 border border-emerald-200' : trend.direction === 'down' ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
+                                    <span className={`font-medium ${trendColor}`}>{trend.insight}</span>
+                                  </div>
+                                )}
+                                
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                  <div>
+                                    <span className="text-stone-400">Daily Avg:</span>{' '}
+                                    <span className="font-medium">{(summary.dailyAverage / 1000).toFixed(1)}K</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-stone-400">Confidence:</span>{' '}
+                                    <span className="font-medium">{Math.round(confidence)}%</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-stone-400">Source:</span>{' '}
+                                    <span className="font-medium capitalize">{summary.source}</span>
+                                  </div>
+                                  {summary.state && (
+                                    <div>
+                                      <span className="text-stone-400">State:</span>{' '}
+                                      <span className="font-medium">{summary.state}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {layer.data.fusionBreakdown && (
+                                  <div className="text-[10px] text-stone-400 border-t border-stone-100 pt-1">
+                                    DOT + Google Fusion: 60% baseline + 40% current activity
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })() : layer.data?.requiresAuth ? (
+                            <p className="text-xs text-amber-600 italic">Sign in to access drive-by traffic data</p>
+                          ) : layer.data?.message ? (
+                            <p className="text-xs text-stone-400 italic">{layer.data.message}</p>
+                          ) : (
+                            <p className="text-xs text-stone-400 italic">Loading drive-by traffic data...</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )

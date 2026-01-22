@@ -418,11 +418,21 @@ async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data
         summary: {
           monthlyTraffic: data.monthly_estimate || 0,
           dailyAverage: data.daily_average || 0,
+          monthlyFootTraffic: data.monthly_foot_traffic || 0,
           roadSegments: data.road_segments?.length || 0,
           source: data.source || 'estimated',
+          confidenceScore: data.confidence_score || 0,
           state: data.state,
           message: `Vehicle traffic data for ${radiusMiles} mile radius`
         },
+        trend: data.trend ? {
+          direction: data.trend.direction,
+          changePercent: data.trend.change_percent,
+          currentEstimate: data.trend.current_estimate,
+          historicalBaseline: data.trend.historical_baseline,
+          insight: data.trend.insight
+        } : null,
+        fusionBreakdown: data.fusion_breakdown,
         center: { lat: center.lat, lng: center.lng },
         radius,
         metadata: { 

@@ -12,7 +12,7 @@ from app.models.opportunity import Opportunity
 from app.services.serpapi_service import SerpAPIService
 from app.services.location_analyzer import LocationAnalyzer, ScoringWeights, get_layer_weights
 from app.services.dot_traffic_service import DOTTrafficService
-from app.services.traffic_fusion import TrafficFusionService, fuse_traffic
+from app.services.traffic_fusion import TrafficFusionService, fuse_traffic, TrafficTrend
 
 logger = logging.getLogger(__name__)
 
@@ -515,6 +515,14 @@ class DOTTrafficRequest(BaseModel):
     include_google_fusion: bool = True
 
 
+class TrafficTrendResponse(BaseModel):
+    direction: str  # 'up', 'down', 'stable'
+    change_percent: float
+    current_estimate: int
+    historical_baseline: int
+    insight: str
+
+
 class DOTTrafficResponse(BaseModel):
     monthly_estimate: int
     daily_average: int
@@ -524,6 +532,7 @@ class DOTTrafficResponse(BaseModel):
     state: str | None = None
     road_segments: list[dict] = []
     fusion_breakdown: dict | None = None
+    trend: TrafficTrendResponse | None = None
     message: str
 
 
@@ -570,6 +579,16 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
             google_data=google_data
         )
         
+        trend_response = None
+        if fused.trend:
+            trend_response = TrafficTrendResponse(
+                direction=fused.trend.direction,
+                change_percent=fused.trend.change_percent,
+                current_estimate=fused.trend.current_estimate,
+                historical_baseline=fused.trend.historical_baseline,
+                insight=fused.trend.insight
+            )
+        
         return DOTTrafficResponse(
             monthly_estimate=fused.monthly_vehicle_traffic,
             daily_average=fused.monthly_vehicle_traffic // 30,
@@ -579,6 +598,7 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
             state=dot_result.get('state') if dot_result else None,
             road_segments=dot_result.get('road_segments', []) if dot_result else [],
             fusion_breakdown=fused.breakdown,
+            trend=trend_response,
             message=f"Traffic data fused from {fused.primary_source} sources"
         )
         
