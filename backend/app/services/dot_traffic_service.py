@@ -2,6 +2,7 @@
 DOT Traffic Data Service
 
 Fetches Annual Average Daily Traffic (AADT) data from state DOT ArcGIS services.
+Queries local PostgreSQL database with PostGIS for cached DOT data when available.
 Falls back to estimates when API data is unavailable.
 
 State DOT ArcGIS endpoints vary - this service maintains a registry of known endpoints
@@ -13,8 +14,11 @@ import logging
 from typing import Dict, Any, Optional, Tuple, List
 from dataclasses import dataclass
 import math
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
+
+STATES_WITH_LOCAL_DATA = {'FL'}
 
 # State DOT ArcGIS REST API endpoints that provide AADT data
 # Format: state_code -> (base_url, layer_id, aadt_field_name)
@@ -99,6 +103,172 @@ class DOTTrafficService:
         self.timeout = timeout
         self._cache: Dict[str, TrafficDataResult] = {}
     
+    def _query_local_database(
+        self,
+        lat: float,
+        lng: float,
+        radius_miles: float,
+        state: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Query local PostgreSQL database for road segments with PostGIS spatial query.
+        
+        Returns GeoJSON FeatureCollection or None if no data found.
+        """
+        from app.db.database import SessionLocal
+        
+        try:
+            radius_meters = radius_miles * 1609.34
+            
+            sql = text("""
+                SELECT 
+                    id, state, county, road_name, roadway_id, 
+                    description_from, description_to, aadt, year,
+                    k_factor, d_factor, t_factor,
+                    ST_AsGeoJSON(geometry) as geojson,
+                    ST_Distance(
+                        geometry::geography,
+                        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+                    ) as distance_m
+                FROM traffic_roads
+                WHERE state = :state
+                  AND ST_DWithin(
+                        geometry::geography,
+                        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+                        :radius_meters
+                  )
+                ORDER BY aadt DESC
+                LIMIT 2000
+            """)
+            
+            db = SessionLocal()
+            try:
+                result = db.execute(sql, {
+                    "lat": lat,
+                    "lng": lng,
+                    "state": state,
+                    "radius_meters": radius_meters
+                })
+                rows = result.fetchall()
+            finally:
+                db.close()
+            
+            if not rows:
+                return None
+            
+            import json
+            road_segments = []
+            max_aadt = 0
+            
+            for row in rows:
+                aadt = row.aadt or 0
+                if aadt > max_aadt:
+                    max_aadt = aadt
+                
+                geojson_geom = json.loads(row.geojson)
+                intensity = self._calculate_intensity(aadt)
+                trend = self._estimate_segment_trend(aadt, lat, lng, intensity)
+                
+                road_segments.append({
+                    'type': 'Feature',
+                    'geometry': geojson_geom,
+                    'properties': {
+                        'id': row.id,
+                        'aadt': int(aadt),
+                        'route_name': row.road_name or row.roadway_id or 'Unknown',
+                        'county': row.county,
+                        'description_from': row.description_from,
+                        'description_to': row.description_to,
+                        'year': row.year,
+                        'intensity': intensity,
+                        'color': self._get_traffic_color(intensity),
+                        'source': 'local_db',
+                        'trend_direction': trend['direction'],
+                        'trend_percent': trend['percent'],
+                        'trend_icon': trend['icon'],
+                        'distance_miles': round(row.distance_m / 1609.34, 2) if row.distance_m else None
+                    }
+                })
+            
+            return {
+                'type': 'FeatureCollection',
+                'features': road_segments,
+                'metadata': {
+                    'state': state,
+                    'total_segments': len(road_segments),
+                    'max_aadt': max_aadt,
+                    'source': 'local_db',
+                    'center': {'lat': lat, 'lng': lng},
+                    'radius_miles': radius_miles
+                }
+            }
+            
+        except Exception as e:
+            logger.warning(f"Local database query failed: {e}")
+            return None
+    
+    def _query_local_nearest_traffic(
+        self,
+        lat: float,
+        lng: float,
+        radius_miles: float,
+        state: str
+    ) -> Optional[TrafficDataResult]:
+        """
+        Query local database for nearest road segment traffic data.
+        Returns TrafficDataResult with AADT from nearest road within radius.
+        """
+        from app.db.database import SessionLocal
+        
+        try:
+            radius_meters = radius_miles * 1609.34
+            
+            sql = text("""
+                SELECT 
+                    road_name, roadway_id, aadt, year,
+                    ST_Distance(
+                        geometry::geography,
+                        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+                    ) as distance_m
+                FROM traffic_roads
+                WHERE state = :state
+                  AND ST_DWithin(
+                        geometry::geography,
+                        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+                        :radius_meters
+                  )
+                ORDER BY distance_m ASC
+                LIMIT 1
+            """)
+            
+            db = SessionLocal()
+            try:
+                result = db.execute(sql, {
+                    "lat": lat,
+                    "lng": lng,
+                    "state": state,
+                    "radius_meters": radius_meters
+                })
+                row = result.fetchone()
+            finally:
+                db.close()
+            
+            if not row:
+                return None
+            
+            return TrafficDataResult(
+                aadt=int(row.aadt),
+                route_name=row.road_name or row.roadway_id,
+                source='local_db',
+                distance_miles=round(row.distance_m / 1609.34, 3) if row.distance_m else None,
+                state=state,
+                raw_data={'year': row.year}
+            )
+            
+        except Exception as e:
+            logger.warning(f"Local nearest traffic query failed: {e}")
+            return None
+    
     def get_traffic_for_location(
         self,
         lat: float,
@@ -108,8 +278,8 @@ class DOTTrafficService:
         """
         Get AADT traffic data for a location.
         
-        Queries the appropriate state DOT API based on coordinates.
-        Falls back to estimates if no API data available.
+        First checks local PostGIS database, then queries state DOT API.
+        Falls back to estimates if no data available.
         
         Args:
             lat: Latitude
@@ -124,6 +294,13 @@ class DOTTrafficService:
             return self._cache[cache_key]
         
         state = self._get_state_from_coords(lat, lng)
+        
+        # First try local database for states with cached data
+        if state in STATES_WITH_LOCAL_DATA:
+            result = self._query_local_nearest_traffic(lat, lng, radius_miles, state)
+            if result:
+                self._cache[cache_key] = result
+                return result
         
         if state and state in STATE_DOT_ENDPOINTS:
             result = self._query_state_dot(state, lat, lng, radius_miles)
@@ -199,6 +376,9 @@ class DOTTrafficService:
         Returns GeoJSON-compatible road segments with AADT values for
         rendering traffic density heatmap on roads.
         
+        First checks local PostGIS database for cached DOT data, then falls back
+        to live API queries.
+        
         Args:
             lat: Center latitude
             lng: Center longitude
@@ -208,6 +388,13 @@ class DOTTrafficService:
             Dictionary with road_segments (GeoJSON features) and metadata
         """
         state = self._get_state_from_coords(lat, lng)
+        
+        # First try local database for states with cached data
+        if state in STATES_WITH_LOCAL_DATA:
+            local_result = self._query_local_database(lat, lng, radius_miles, state)
+            if local_result and local_result.get('features'):
+                logger.info(f"Returning {len(local_result['features'])} road segments from local DB for {state}")
+                return local_result
         
         if not state or state not in STATE_DOT_ENDPOINTS:
             # Return estimated segments for unsupported states
