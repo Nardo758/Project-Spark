@@ -180,11 +180,41 @@ async function fetchCompetitionData(params: LayerFetchParams): Promise<{ data: a
   }
 }
 
-async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
-  const { center, radius, config } = params
+function generateHotspotGrid(center: { lat: number; lng: number }, radiusMiles: number): { lat: number; lng: number }[] {
+  if (radiusMiles <= 3.1) {
+    return [center]
+  }
   
-  const radiusMeters = Math.min(5000, Math.round(radius * 1609.34))
-  const forceRefresh = config.forceRefresh || false
+  const points: { lat: number; lng: number }[] = []
+  const gridSize = 3
+  const effectiveRadius = radiusMiles * 0.7
+  
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const xOffset = (col - 1) * (effectiveRadius * 2 / (gridSize - 1))
+      const yOffset = (row - 1) * (effectiveRadius * 2 / (gridSize - 1))
+      
+      const latOffset = yOffset / 69
+      const lngOffset = xOffset / (69 * Math.cos(center.lat * Math.PI / 180))
+      
+      const distance = Math.sqrt(xOffset * xOffset + yOffset * yOffset)
+      if (distance <= radiusMiles) {
+        points.push({
+          lat: center.lat + latOffset,
+          lng: center.lng + lngOffset
+        })
+      }
+    }
+  }
+  
+  return points
+}
+
+async function fetchSingleHotspot(
+  point: { lat: number; lng: number },
+  forceRefresh: boolean
+): Promise<{ point: { lat: number; lng: number }; data: any; error?: string }> {
+  const HOTSPOT_RADIUS_METERS = 2500
   
   try {
     const response = await fetch(`${API_BASE}/foot-traffic/collect-and-analyze`, {
@@ -192,15 +222,45 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       credentials: 'include',
       body: JSON.stringify({
-        latitude: center.lat,
-        longitude: center.lng,
-        radius_meters: radiusMeters,
+        latitude: point.lat,
+        longitude: point.lng,
+        radius_meters: HOTSPOT_RADIUS_METERS,
         force_refresh: forceRefresh
       })
     })
     
     if (!response.ok) {
       if (response.status === 401) {
+        return { point, data: null, error: 'Authentication required' }
+      }
+      return { point, data: null, error: 'Failed to fetch' }
+    }
+    
+    const data = await response.json()
+    return { point, data }
+  } catch (error) {
+    return { point, data: null, error: 'Network error' }
+  }
+}
+
+async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
+  const { center, radius, config } = params
+  const forceRefresh = config.forceRefresh || false
+  const radiusMiles = radius
+  
+  try {
+    const hotspotPoints = generateHotspotGrid(center, radiusMiles)
+    const isMultiHotspot = hotspotPoints.length > 1
+    
+    const hotspotResults = await Promise.all(
+      hotspotPoints.map(point => fetchSingleHotspot(point, forceRefresh))
+    )
+    
+    const validResults = hotspotResults.filter(r => r.data && !r.error)
+    
+    if (validResults.length === 0) {
+      const firstError = hotspotResults.find(r => r.error)
+      if (firstError?.error === 'Authentication required') {
         return {
           data: {
             type: 'traffic',
@@ -211,71 +271,69 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
           error: 'Authentication required for foot traffic data'
         }
       }
-      const errorData = await response.json().catch(() => ({}))
-      const errorMessage = typeof errorData.detail === 'string' 
-        ? errorData.detail 
-        : Array.isArray(errorData.detail) 
-          ? errorData.detail.map((e: any) => e.msg || e).join(', ')
-          : 'Failed to fetch foot traffic data'
-      return { data: null, error: errorMessage }
-    }
-
-    const data = await response.json()
-    
-    const peakHour = data.peak_hour
-    let peakTimeFormatted = null
-    if (peakHour !== null && peakHour !== undefined) {
-      const hour12 = peakHour % 12 || 12
-      const ampm = peakHour < 12 ? 'AM' : 'PM'
-      peakTimeFormatted = `${hour12}:00 ${ampm}`
+      return { data: null, error: 'Failed to fetch foot traffic data from any location' }
     }
     
-    let heatmapData = null
-    if (data.total_locations_sampled > 0) {
-      try {
-        const heatmapResponse = await fetch(`${API_BASE}/foot-traffic/heatmap`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          credentials: 'include',
-          body: JSON.stringify({
-            latitude: center.lat,
-            longitude: center.lng,
-            radius_meters: radiusMeters
-          })
-        })
-        if (heatmapResponse.ok) {
-          heatmapData = await heatmapResponse.json()
-        }
-      } catch (e) {
-        console.warn('Failed to fetch heatmap data:', e)
+    const hotspots = validResults.map(result => {
+      const data = result.data
+      const peakHour = data.peak_hour
+      let peakTimeFormatted = null
+      if (peakHour !== null && peakHour !== undefined) {
+        const hour12 = peakHour % 12 || 12
+        const ampm = peakHour < 12 ? 'AM' : 'PM'
+        peakTimeFormatted = `${hour12}:00 ${ampm}`
       }
-    }
+      
+      return {
+        lat: result.point.lat,
+        lng: result.point.lng,
+        vitalityScore: data.area_vitality_score || 0,
+        businessDensityScore: data.business_density_score || 0,
+        trafficConsistency: data.traffic_consistency || 0,
+        peakDay: data.peak_day,
+        peakHour: peakTimeFormatted,
+        totalLocationsSampled: data.total_locations_sampled || 0,
+        avgDailyTraffic: data.avg_daily_traffic || 0,
+        dominantPlaceTypes: data.dominant_place_types || {},
+        intensity: Math.min(100, (data.area_vitality_score || 0))
+      }
+    })
+    
+    const avgVitality = hotspots.reduce((sum, h) => sum + h.vitalityScore, 0) / hotspots.length
+    const avgDensity = hotspots.reduce((sum, h) => sum + h.businessDensityScore, 0) / hotspots.length
+    const totalSampled = hotspots.reduce((sum, h) => sum + h.totalLocationsSampled, 0)
+    const bestHotspot = hotspots.reduce((best, h) => h.vitalityScore > best.vitalityScore ? h : best, hotspots[0])
     
     return {
       data: {
         type: 'traffic',
+        isMultiHotspot,
+        hotspots,
         summary: {
-          vitalityScore: data.area_vitality_score || 0,
-          businessDensityScore: data.business_density_score || 0,
-          trafficConsistency: data.traffic_consistency || 0,
-          peakDay: data.peak_day,
-          peakHour: peakTimeFormatted,
-          peakTrafficScore: data.peak_traffic_score || 0,
-          totalLocationsSampled: data.total_locations_sampled || 0,
-          dominantPlaceTypes: data.dominant_place_types || {},
-          avgPopularTimes: data.avg_popular_times || {},
-          currentAvgPopularity: data.current_avg_popularity,
-          message: data.message,
-          fromCache: data.from_cache,
-          freshCollection: data.fresh_collection
+          vitalityScore: Math.round(avgVitality),
+          businessDensityScore: Math.round(avgDensity),
+          trafficConsistency: bestHotspot.trafficConsistency || 0,
+          peakDay: bestHotspot.peakDay,
+          peakHour: bestHotspot.peakHour,
+          peakTrafficScore: bestHotspot.vitalityScore,
+          totalLocationsSampled: totalSampled,
+          hotspotCount: hotspots.length,
+          bestHotspot: {
+            lat: bestHotspot.lat,
+            lng: bestHotspot.lng,
+            vitalityScore: bestHotspot.vitalityScore
+          },
+          message: isMultiHotspot 
+            ? `Analyzed ${hotspots.length} hotspots across ${radiusMiles} mile radius`
+            : `Analyzed area within ${radiusMiles} mile radius`
         },
-        heatmap: heatmapData,
+        heatmap: null,
         center: { lat: center.lat, lng: center.lng },
         radius,
         metadata: { 
           layerType: 'traffic', 
-          source: data.from_cache ? 'cached' : 'fresh',
-          generatedAt: data.generated_at
+          source: 'hotspots',
+          hotspotsAnalyzed: hotspots.length
         }
       }
     }

@@ -536,6 +536,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     const pointLayerId = `${sourceId}-points`
     const fillLayerId = `${sourceId}-fill`
     const heatmapLayerId = `${sourceId}-heatmap`
+    const labelsLayerId = `${sourceId}-labels`
     const layerColor = getLayerColor(layer.type)
 
     const existingSource = map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined
@@ -550,6 +551,9 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       if (map.getLayer(heatmapLayerId)) {
         map.setLayoutProperty(heatmapLayerId, 'visibility', 'none')
       }
+      if (map.getLayer(labelsLayerId)) {
+        map.setLayoutProperty(labelsLayerId, 'visibility', 'none')
+      }
       return
     }
 
@@ -562,15 +566,89 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     }
 
     if (existingSource) {
+      if (layer.type === 'traffic') {
+        if (map.getLayer(pointLayerId)) map.removeLayer(pointLayerId)
+        if (map.getLayer(heatmapLayerId)) map.removeLayer(heatmapLayerId)
+        if (map.getLayer(labelsLayerId)) map.removeLayer(labelsLayerId)
+        
+        existingSource.setData(geoJsonData)
+        
+        const isHotspotData = geoJsonData.features[0]?.properties?.vitalityScore !== undefined
+        
+        if (isHotspotData) {
+          map.addLayer({
+            id: pointLayerId,
+            type: 'circle',
+            source: sourceId,
+            paint: {
+              'circle-radius': [
+                'interpolate', ['linear'], ['coalesce', ['get', 'vitalityScore'], 50],
+                0, 15, 50, 25, 100, 40
+              ],
+              'circle-color': [
+                'interpolate', ['linear'], ['coalesce', ['get', 'vitalityScore'], 50],
+                0, '#22c55e', 30, '#84cc16', 50, '#eab308', 70, '#f97316', 100, '#ef4444'
+              ],
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#ffffff',
+              'circle-opacity': 0.8,
+              'circle-blur': 0.3
+            }
+          })
+          map.addLayer({
+            id: labelsLayerId,
+            type: 'symbol',
+            source: sourceId,
+            layout: {
+              'text-field': ['concat', ['to-string', ['get', 'vitalityScore']], '%'],
+              'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 12,
+              'text-allow-overlap': true
+            },
+            paint: {
+              'text-color': '#ffffff',
+              'text-halo-color': 'rgba(0,0,0,0.5)',
+              'text-halo-width': 1
+            }
+          })
+        } else {
+          map.addLayer({
+            id: heatmapLayerId,
+            type: 'heatmap',
+            source: sourceId,
+            paint: {
+              'heatmap-weight': ['interpolate', ['linear'], ['coalesce', ['get', 'traffic_intensity'], 50], 0, 0, 100, 1],
+              'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 15, 3],
+              'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
+                0, 'rgba(0, 0, 255, 0)', 0.1, 'rgba(65, 105, 225, 0.4)', 0.3, 'rgba(0, 255, 255, 0.5)',
+                0.5, 'rgba(0, 255, 0, 0.6)', 0.7, 'rgba(255, 255, 0, 0.7)', 1, 'rgba(255, 0, 0, 0.8)'],
+              'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 15, 30],
+              'heatmap-opacity': 0.7
+            }
+          })
+          map.addLayer({
+            id: pointLayerId,
+            type: 'circle',
+            source: sourceId,
+            minzoom: 14,
+            paint: {
+              'circle-radius': 8,
+              'circle-color': '#f59e0b',
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff',
+              'circle-opacity': 0.9
+            }
+          })
+        }
+        return
+      }
+      
       existingSource.setData(geoJsonData)
       if (map.getLayer(pointLayerId)) {
         map.setLayoutProperty(pointLayerId, 'visibility', 'visible')
       }
       if (map.getLayer(fillLayerId)) {
         map.setLayoutProperty(fillLayerId, 'visibility', 'visible')
-      }
-      if (map.getLayer(heatmapLayerId)) {
-        map.setLayoutProperty(heatmapLayerId, 'visibility', 'visible')
       }
       return
     }
@@ -581,60 +659,111 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     })
 
     if (layer.type === 'traffic' && geoJsonData.features?.length > 0) {
-      map.addLayer({
-        id: heatmapLayerId,
-        type: 'heatmap',
-        source: sourceId,
-        paint: {
-          'heatmap-weight': [
-            'interpolate',
-            ['linear'],
-            ['coalesce', ['get', 'traffic_intensity'], 50],
-            0, 0,
-            100, 1
-          ],
-          'heatmap-intensity': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            0, 1,
-            15, 3
-          ],
-          'heatmap-color': [
-            'interpolate',
-            ['linear'],
-            ['heatmap-density'],
-            0, 'rgba(0, 0, 255, 0)',
-            0.1, 'rgba(65, 105, 225, 0.4)',
-            0.3, 'rgba(0, 255, 255, 0.5)',
-            0.5, 'rgba(0, 255, 0, 0.6)',
-            0.7, 'rgba(255, 255, 0, 0.7)',
-            1, 'rgba(255, 0, 0, 0.8)'
-          ],
-          'heatmap-radius': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            0, 2,
-            15, 30
-          ],
-          'heatmap-opacity': 0.7
-        }
-      })
+      const isHotspotData = geoJsonData.features[0]?.properties?.vitalityScore !== undefined
+      
+      if (isHotspotData) {
+        map.addLayer({
+          id: pointLayerId,
+          type: 'circle',
+          source: sourceId,
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['coalesce', ['get', 'vitalityScore'], 50],
+              0, 15,
+              50, 25,
+              100, 40
+            ],
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['coalesce', ['get', 'vitalityScore'], 50],
+              0, '#22c55e',
+              30, '#84cc16',
+              50, '#eab308',
+              70, '#f97316',
+              100, '#ef4444'
+            ],
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#ffffff',
+            'circle-opacity': 0.8,
+            'circle-blur': 0.3
+          }
+        })
 
-      map.addLayer({
-        id: pointLayerId,
-        type: 'circle',
-        source: sourceId,
-        minzoom: 14,
-        paint: {
-          'circle-radius': 8,
-          'circle-color': '#f59e0b',
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff',
-          'circle-opacity': 0.9
-        }
-      })
+        map.addLayer({
+          id: `${sourceId}-labels`,
+          type: 'symbol',
+          source: sourceId,
+          layout: {
+            'text-field': ['concat', ['to-string', ['get', 'vitalityScore']], '%'],
+            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+            'text-allow-overlap': true
+          },
+          paint: {
+            'text-color': '#ffffff',
+            'text-halo-color': 'rgba(0,0,0,0.5)',
+            'text-halo-width': 1
+          }
+        })
+      } else {
+        map.addLayer({
+          id: heatmapLayerId,
+          type: 'heatmap',
+          source: sourceId,
+          paint: {
+            'heatmap-weight': [
+              'interpolate',
+              ['linear'],
+              ['coalesce', ['get', 'traffic_intensity'], 50],
+              0, 0,
+              100, 1
+            ],
+            'heatmap-intensity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              0, 1,
+              15, 3
+            ],
+            'heatmap-color': [
+              'interpolate',
+              ['linear'],
+              ['heatmap-density'],
+              0, 'rgba(0, 0, 255, 0)',
+              0.1, 'rgba(65, 105, 225, 0.4)',
+              0.3, 'rgba(0, 255, 255, 0.5)',
+              0.5, 'rgba(0, 255, 0, 0.6)',
+              0.7, 'rgba(255, 255, 0, 0.7)',
+              1, 'rgba(255, 0, 0, 0.8)'
+            ],
+            'heatmap-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              0, 2,
+              15, 30
+            ],
+            'heatmap-opacity': 0.7
+          }
+        })
+
+        map.addLayer({
+          id: pointLayerId,
+          type: 'circle',
+          source: sourceId,
+          minzoom: 14,
+          paint: {
+            'circle-radius': 8,
+            'circle-color': '#f59e0b',
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+            'circle-opacity': 0.9
+          }
+        })
+      }
     } else if (geoJsonData.features?.[0]?.geometry?.type === 'Point') {
       map.addLayer({
         id: pointLayerId,
@@ -760,6 +889,27 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     }
 
     if (layer.data.type === 'traffic') {
+      if (layer.data.hotspots && layer.data.hotspots.length > 0) {
+        const features = layer.data.hotspots.map((hotspot: any, index: number) => ({
+          type: 'Feature' as const,
+          properties: {
+            id: `hotspot-${index}`,
+            vitalityScore: hotspot.vitalityScore,
+            businessDensityScore: hotspot.businessDensityScore,
+            totalLocationsSampled: hotspot.totalLocationsSampled,
+            peakDay: hotspot.peakDay,
+            peakHour: hotspot.peakHour,
+            intensity: hotspot.intensity || hotspot.vitalityScore,
+            label: `Vitality: ${hotspot.vitalityScore}`,
+            avgDailyTraffic: hotspot.avgDailyTraffic
+          },
+          geometry: {
+            type: 'Point' as const,
+            coordinates: [hotspot.lng, hotspot.lat]
+          }
+        }))
+        return { type: 'FeatureCollection' as const, features }
+      }
       if (layer.data.heatmap && layer.data.heatmap.features?.length > 0) {
         return layer.data.heatmap as GeoJSON.FeatureCollection
       }
@@ -792,6 +942,30 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
         <div className="absolute top-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md flex items-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
           <span className="text-sm text-stone-600">Loading layer data...</span>
+        </div>
+      )}
+
+      {/* Traffic Hotspot Legend */}
+      {state.layers.some(l => l.type === 'traffic' && l.visible && l.data?.hotspots?.length > 0) && (
+        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md z-10">
+          <div className="text-xs font-medium text-stone-700 mb-2">Traffic Hotspots</div>
+          <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span className="text-stone-600">Low</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <span className="text-stone-600">Medium</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span className="text-stone-600">High</span>
+            </div>
+          </div>
+          <div className="text-[10px] text-stone-400 mt-1.5">
+            Larger circles = higher activity
+          </div>
         </div>
       )}
 
