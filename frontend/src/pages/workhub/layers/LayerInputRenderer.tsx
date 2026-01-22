@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Search, MapPin, Loader2, ChevronDown, Zap, TrendingUp, Users, Store, CheckCircle, AlertCircle } from 'lucide-react'
+import { Search, MapPin, Loader2, ChevronDown, Zap, AlertCircle } from 'lucide-react'
 import type { LayerDefinition, LayerInputField } from './types'
 
 function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
@@ -45,20 +45,8 @@ export function LayerInputRenderer({ definition, config, onChange, loading, onAn
   const [activeAddressField, setActiveAddressField] = useState<string | null>(null)
   const [comboboxOpen, setComboboxOpen] = useState<string | null>(null)
   const [comboboxSearch, setComboboxSearch] = useState('')
-  const analysisResultRef = useRef<HTMLDivElement>(null)
-  const prevAnalysisResultRef = useRef<any>(null)
-
   const isDeepClone = definition.type === 'deep_clone'
   const canAnalyze = isDeepClone && config.sourceBusiness?.trim() && targetLocation
-
-  useEffect(() => {
-    if (config.analysisResult && config.analysisResult !== prevAnalysisResultRef.current) {
-      setTimeout(() => {
-        analysisResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-    }
-    prevAnalysisResultRef.current = config.analysisResult
-  }, [config.analysisResult])
 
   const doAddressSearch = useCallback(async (query: string) => {
     if (query.length < 3) {
@@ -332,69 +320,6 @@ export function LayerInputRenderer({ definition, config, onChange, loading, onAn
             </button>
           )}
 
-          {config.analysisResult && (
-            <div ref={analysisResultRef} className="mt-4 space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-emerald-600" />
-                  <span className="font-semibold text-stone-800">Match Score</span>
-                </div>
-                <span className="text-2xl font-bold text-emerald-600">
-                  {config.analysisResult.match_score}%
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-2 bg-stone-50 rounded-lg">
-                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
-                    <Users className="w-3 h-3" />
-                    Population
-                  </div>
-                  <p className="text-sm font-medium text-stone-800">
-                    {config.analysisResult.three_mile_analysis?.population?.toLocaleString() || 'N/A'}
-                  </p>
-                </div>
-                <div className="p-2 bg-stone-50 rounded-lg">
-                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
-                    <TrendingUp className="w-3 h-3" />
-                    Median Income
-                  </div>
-                  <p className="text-sm font-medium text-stone-800">
-                    ${config.analysisResult.three_mile_analysis?.median_income?.toLocaleString() || 'N/A'}
-                  </p>
-                </div>
-                <div className="p-2 bg-stone-50 rounded-lg">
-                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
-                    <Store className="w-3 h-3" />
-                    Competition
-                  </div>
-                  <p className="text-sm font-medium text-stone-800">
-                    {config.analysisResult.three_mile_analysis?.competition_level || 'N/A'}
-                  </p>
-                </div>
-                <div className="p-2 bg-stone-50 rounded-lg">
-                  <div className="flex items-center gap-1 text-xs text-stone-500 mb-1">
-                    <TrendingUp className="w-3 h-3" />
-                    Growth Rate
-                  </div>
-                  <p className="text-sm font-medium text-stone-800">
-                    {config.analysisResult.three_mile_analysis?.growth_rate}%
-                  </p>
-                </div>
-              </div>
-
-              {config.analysisResult.key_factors && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-xs font-medium text-blue-800 mb-1">Key Success Factors</p>
-                  <ul className="text-xs text-blue-700 space-y-1">
-                    {config.analysisResult.key_factors.slice(0, 3).map((factor: string, i: number) => (
-                      <li key={i}>• {factor}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 
