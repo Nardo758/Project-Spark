@@ -123,6 +123,19 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
   const [panelPosition, setPanelPosition] = useState({ x: 16, y: 16 })
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef<{ x: number; y: number; panelX: number; panelY: number } | null>(null)
+  const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set())
+  
+  const toggleZoneExpand = useCallback((zoneId: string) => {
+    setExpandedZones(prev => {
+      const next = new Set(prev)
+      if (next.has(zoneId)) {
+        next.delete(zoneId)
+      } else {
+        next.add(zoneId)
+      }
+      return next
+    })
+  }, [])
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -982,106 +995,139 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           </div>
           
           <div className="max-h-[calc(40vh-48px)] overflow-y-auto p-3 space-y-2">
-            {state.optimalZones?.map((zone) => (
-              <div 
-                key={zone.id}
-                className="flex items-start gap-3 p-2.5 bg-stone-50 rounded-lg border border-stone-100 hover:bg-stone-100 transition-colors"
-              >
-                <div className="w-7 h-7 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
-                  {zone.rank}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-stone-800">
-                      Score: {zone.total_score}/100
-                    </span>
-                  </div>
-                  {zone.metrics ? (
-                    <div className="space-y-2 text-xs">
-                      {zone.category_scores && (
-                        <div className="flex gap-1.5 mb-2">
-                          {Object.entries(zone.category_scores).map(([cat, score]) => (
-                            <div key={cat} className="flex-1 text-center">
-                              <div className="text-[10px] text-stone-400 capitalize">{cat}</div>
-                              <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden mt-0.5">
+            {state.optimalZones?.map((zone) => {
+              const isExpanded = expandedZones.has(zone.id)
+              return (
+                <div 
+                  key={zone.id}
+                  className="bg-stone-50 rounded-lg border border-stone-100 overflow-hidden transition-all"
+                >
+                  <button 
+                    onClick={() => toggleZoneExpand(zone.id)}
+                    className="w-full flex items-center gap-3 p-2.5 hover:bg-stone-100 transition-colors text-left"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-violet-600 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+                      {zone.rank}
+                    </div>
+                    <div className="flex-1 min-w-0 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-stone-800">
+                        Score: {zone.total_score}/100
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {zone.category_scores && !isExpanded && (
+                          <div className="flex gap-1">
+                            {Object.entries(zone.category_scores).slice(0, 3).map(([cat, score]) => (
+                              <div key={cat} className="w-6 h-1.5 bg-stone-200 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full transition-all ${
+                                  className={`h-full rounded-full ${
                                     (score ?? 0) >= 70 ? 'bg-emerald-500' : 
                                     (score ?? 0) >= 50 ? 'bg-amber-500' : 'bg-red-400'
                                   }`}
                                   style={{ width: `${Math.min(score ?? 0, 100)}%` }}
                                 />
                               </div>
-                              <div className="text-[10px] font-medium mt-0.5">{Math.round(score ?? 0)}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-stone-600">
-                        <div className="flex justify-between">
-                          <span className="text-stone-400">Population:</span>
-                          <span className="font-medium">{(zone.metrics.total_population ?? 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-stone-400">Growth:</span>
-                          <span className={`font-medium ${(zone.metrics.population_growth ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {(zone.metrics.population_growth ?? 0) >= 0 ? '+' : ''}{(zone.metrics.population_growth ?? 0).toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-stone-400">Income:</span>
-                          <span className="font-medium">${(zone.metrics.median_income ?? 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-stone-400">Med. Age:</span>
-                          <span className="font-medium">{(zone.metrics.median_age ?? 0).toFixed(1)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-stone-400">Competitors:</span>
-                          <span className={`font-medium ${(zone.metrics.total_competitors ?? 0) <= 3 ? 'text-emerald-600' : (zone.metrics.total_competitors ?? 0) >= 10 ? 'text-red-500' : 'text-stone-700'}`}>
-                            {zone.metrics.total_competitors ?? 0}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-stone-400">Foot Traffic:</span>
-                          <span className="font-medium">{((zone.metrics.foot_traffic_monthly ?? 0) / 1000).toFixed(0)}K/mo</span>
-                        </div>
-                        <div className="col-span-2 flex justify-between">
-                          <span className="text-stone-400">Drive-By Traffic:</span>
-                          <span className="font-medium">{((zone.metrics.drive_by_traffic_monthly ?? 0) / 1000).toFixed(0)}K/mo</span>
-                        </div>
+                            ))}
+                          </div>
+                        )}
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-stone-400" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-stone-400" />
+                        )}
                       </div>
-                      {zone.derived_metrics?.metrics && (
-                        <DerivedMetricsPanel metrics={zone.derived_metrics.metrics} />
-                      )}
-                      {(zone as any).trends && (
-                        <TrendIndicators trends={(zone as any).trends} />
+                    </div>
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="px-2.5 pb-2.5 pt-0">
+                      {zone.metrics ? (
+                        <div className="space-y-2 text-xs">
+                          {zone.category_scores && (
+                            <div className="flex gap-1.5 mb-2">
+                              {Object.entries(zone.category_scores).map(([cat, score]) => (
+                                <div key={cat} className="flex-1 text-center">
+                                  <div className="text-[10px] text-stone-400 capitalize">{cat}</div>
+                                  <div className="h-1.5 bg-stone-200 rounded-full overflow-hidden mt-0.5">
+                                    <div 
+                                      className={`h-full rounded-full transition-all ${
+                                        (score ?? 0) >= 70 ? 'bg-emerald-500' : 
+                                        (score ?? 0) >= 50 ? 'bg-amber-500' : 'bg-red-400'
+                                      }`}
+                                      style={{ width: `${Math.min(score ?? 0, 100)}%` }}
+                                    />
+                                  </div>
+                                  <div className="text-[10px] font-medium mt-0.5">{Math.round(score ?? 0)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-stone-600">
+                            <div className="flex justify-between">
+                              <span className="text-stone-400">Population:</span>
+                              <span className="font-medium">{(zone.metrics.total_population ?? 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-stone-400">Growth:</span>
+                              <span className={`font-medium ${(zone.metrics.population_growth ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                {(zone.metrics.population_growth ?? 0) >= 0 ? '+' : ''}{(zone.metrics.population_growth ?? 0).toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-stone-400">Income:</span>
+                              <span className="font-medium">${(zone.metrics.median_income ?? 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-stone-400">Med. Age:</span>
+                              <span className="font-medium">{(zone.metrics.median_age ?? 0).toFixed(1)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-stone-400">Competitors:</span>
+                              <span className={`font-medium ${(zone.metrics.total_competitors ?? 0) <= 3 ? 'text-emerald-600' : (zone.metrics.total_competitors ?? 0) >= 10 ? 'text-red-500' : 'text-stone-700'}`}>
+                                {zone.metrics.total_competitors ?? 0}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-stone-400">Foot Traffic:</span>
+                              <span className="font-medium">{((zone.metrics.foot_traffic_monthly ?? 0) / 1000).toFixed(0)}K/mo</span>
+                            </div>
+                            <div className="col-span-2 flex justify-between">
+                              <span className="text-stone-400">Drive-By Traffic:</span>
+                              <span className="font-medium">{((zone.metrics.drive_by_traffic_monthly ?? 0) / 1000).toFixed(0)}K/mo</span>
+                            </div>
+                          </div>
+                          {zone.derived_metrics?.metrics && (
+                            <DerivedMetricsPanel metrics={zone.derived_metrics.metrics} />
+                          )}
+                          {(zone as any).trends && (
+                            <TrendIndicators trends={(zone as any).trends} />
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-xs text-stone-500 space-y-0.5">
+                            {zone.insights.slice(0, 2).map((insight, i) => (
+                              <div key={i} className="flex items-start gap-1">
+                                <span className="text-violet-400 mt-0.5">•</span>
+                                <span>{insight}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {zone.scores && (
+                            <div className="flex gap-2 mt-1.5 text-xs text-stone-400">
+                              <span>Demo: {zone.scores.demographics}</span>
+                              <span>•</span>
+                              <span>Comp: {zone.scores.competition}</span>
+                              <span>•</span>
+                              <span>Mkt: {zone.scores.market_signals}</span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
-                  ) : (
-                    <>
-                      <div className="text-xs text-stone-500 space-y-0.5">
-                        {zone.insights.slice(0, 2).map((insight, i) => (
-                          <div key={i} className="flex items-start gap-1">
-                            <span className="text-violet-400 mt-0.5">•</span>
-                            <span>{insight}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {zone.scores && (
-                        <div className="flex gap-2 mt-1.5 text-xs text-stone-400">
-                          <span>Demo: {zone.scores.demographics}</span>
-                          <span>•</span>
-                          <span>Comp: {zone.scores.competition}</span>
-                          <span>•</span>
-                          <span>Mkt: {zone.scores.market_signals}</span>
-                        </div>
-                      )}
-                    </>
                   )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
             
             {state.zoneSummary && (
               <div className="pt-2 border-t border-stone-100">
