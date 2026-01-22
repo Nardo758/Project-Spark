@@ -860,6 +860,30 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
             }
           })
           
+          // Add live traffic signal indicators (growth/decline markers)
+          const signalLayerId = `${layer.id}-live-signals`
+          if (!map.getLayer(signalLayerId)) {
+            map.addLayer({
+              id: signalLayerId,
+              type: 'circle',
+              source: roadSourceId,
+              minzoom: 13,
+              filter: ['has', 'traffic_signal'],
+              paint: {
+                'circle-radius': 8,
+                'circle-color': [
+                  'case',
+                  ['==', ['get', 'traffic_signal'], 'growth'], '#22c55e',
+                  ['==', ['get', 'traffic_signal'], 'decline'], '#ef4444',
+                  '#3b82f6'
+                ],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff',
+                'circle-opacity': 0.9
+              }
+            })
+          }
+          
         }
         
         return

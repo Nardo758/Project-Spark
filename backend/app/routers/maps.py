@@ -618,6 +618,7 @@ class RoadSegmentsRequest(BaseModel):
     latitude: float
     longitude: float
     radius_miles: float = 3.0
+    include_live_traffic: bool = False  # Include Mapbox live traffic comparison
 
 
 @router.post("/road-traffic-segments")
@@ -627,6 +628,9 @@ async def get_road_traffic_segments(request: RoadSegmentsRequest):
     
     Returns GeoJSON FeatureCollection with road lines colored by traffic intensity.
     Colors follow Google Maps convention: green (free) -> yellow (moderate) -> red (heavy)
+    
+    If include_live_traffic=True, also fetches real-time Mapbox traffic data
+    and calculates leading indicators (growth/decline signals).
     """
     try:
         dot_service = DOTTrafficService()
@@ -635,6 +639,18 @@ async def get_road_traffic_segments(request: RoadSegmentsRequest):
             request.longitude,
             request.radius_miles
         )
+        
+        # Optionally enrich with live traffic comparison
+        if request.include_live_traffic and segments.get('features'):
+            from app.services.mapbox_traffic_service import MapboxTrafficService
+            mapbox_service = MapboxTrafficService()
+            enriched_features = mapbox_service.get_live_traffic_for_segments(
+                segments['features'],
+                sample_rate=0.3  # Sample 30% of segments for API efficiency
+            )
+            segments['features'] = enriched_features
+            segments['metadata']['includes_live_traffic'] = True
+        
         return segments
         
     except Exception as e:
@@ -646,6 +662,75 @@ async def get_road_traffic_segments(request: RoadSegmentsRequest):
                 'error': str(e),
                 'source': 'error'
             }
+        }
+
+
+class LiveTrafficRequest(BaseModel):
+    latitude: float
+    longitude: float
+    aadt: int = 0  # DOT baseline for comparison
+
+
+@router.post("/live-traffic")
+async def get_live_traffic(request: LiveTrafficRequest):
+    """
+    Get real-time traffic congestion from Mapbox and compare against DOT baseline.
+    
+    Returns:
+    - live_congestion: Current Mapbox traffic level (low/moderate/heavy/severe)
+    - expected_congestion: Expected level based on DOT AADT
+    - signal: Leading indicator (growth/stable/decline)
+    - signal_strength: How strong the signal is (strong/moderate/weak)
+    """
+    try:
+        from app.services.mapbox_traffic_service import MapboxTrafficService
+        
+        mapbox_service = MapboxTrafficService()
+        
+        if request.aadt > 0:
+            comparison = mapbox_service.compare_live_vs_baseline(
+                request.latitude,
+                request.longitude,
+                request.aadt
+            )
+            
+            if comparison:
+                return {
+                    'live_congestion': comparison.live_congestion.name.lower(),
+                    'expected_congestion': comparison.expected_congestion.name.lower(),
+                    'delta': comparison.delta,
+                    'signal': comparison.signal,
+                    'signal_strength': comparison.signal_strength,
+                    'description': comparison.description,
+                    'live_color': mapbox_service.get_congestion_color(comparison.live_congestion.name),
+                    'signal_color': mapbox_service.get_signal_color(comparison.signal)
+                }
+        
+        # Just get live traffic without comparison
+        live_result = mapbox_service._get_live_traffic_at_point(
+            request.latitude,
+            request.longitude
+        )
+        
+        if live_result:
+            return {
+                'live_congestion': live_result.congestion_label,
+                'road_class': live_result.road_class,
+                'live_color': mapbox_service.get_congestion_color(live_result.congestion_label),
+                'signal': None,
+                'signal_strength': None
+            }
+        
+        return {
+            'error': 'No live traffic data available for this location',
+            'live_congestion': None
+        }
+        
+    except Exception as e:
+        logger.error(f"Live traffic fetch error: {e}")
+        return {
+            'error': str(e),
+            'live_congestion': None
         }
 
 

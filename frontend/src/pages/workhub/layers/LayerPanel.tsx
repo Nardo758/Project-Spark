@@ -934,6 +934,18 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
                                     DOT + Google Fusion: 60% baseline + 40% current activity
                                   </div>
                                 )}
+                                
+                                {layer.data.roadGeoJSON?.metadata?.includes_live_traffic && (
+                                  <div className="mt-2 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 rounded border border-blue-200">
+                                    <div className="text-[10px] font-medium text-blue-700 mb-1 flex items-center gap-1">
+                                      <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                                      Live Traffic Indicator
+                                    </div>
+                                    <div className="text-[10px] text-stone-500">
+                                      Real-time Mapbox traffic compared to DOT baseline to identify emerging growth/decline patterns
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )
                           })() : layer.data?.requiresAuth ? (

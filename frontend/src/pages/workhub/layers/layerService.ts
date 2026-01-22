@@ -412,6 +412,7 @@ async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data
     }]
     
     // Also fetch road segments for line visualization
+    // Include live traffic comparison for leading indicators
     let roadGeoJSON = null
     try {
       const segmentsResponse = await fetch(`${API_BASE}/maps/road-traffic-segments`, {
@@ -421,7 +422,8 @@ async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data
         body: JSON.stringify({
           latitude: center.lat,
           longitude: center.lng,
-          radius_miles: radiusMiles
+          radius_miles: radiusMiles,
+          include_live_traffic: true  // Enable Mapbox live traffic comparison
         })
       })
       if (segmentsResponse.ok) {
