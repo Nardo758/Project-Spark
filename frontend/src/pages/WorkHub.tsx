@@ -377,7 +377,7 @@ const stageQuickActions: Record<WorkspaceStatus, { label: string; icon: typeof C
 }
 
 const workspaceTools: { id: WorkspaceToolView; label: string; icon: typeof Copy; description: string; color: string }[] = [
-  { id: 'locationFinder', label: 'Location Finder', icon: MapPin, description: 'Find and analyze physical locations', color: 'emerald' },
+  { id: 'locationFinder', label: 'Location DeepDive', icon: MapPin, description: 'Find and analyze physical locations', color: 'emerald' },
   { id: 'digital', label: 'Digital Canvas', icon: Globe, description: 'Design digital business flows', color: 'purple' },
   { id: 'savedLayers', label: 'Saved Layers', icon: Layers, description: 'View saved map analyses', color: 'amber' },
 ]
@@ -1207,12 +1207,12 @@ export default function WorkHub() {
             </div>
           )}
 
-          {/* Location Finder - Map with Layer Panel */}
+          {/* Location DeepDive - Map with Layer Panel */}
           {activeToolView === 'locationFinder' && (
             <div className="flex-1 flex bg-stone-100">
               <div className="w-80 bg-white border-r border-stone-200 flex-shrink-0 flex flex-col h-full">
                 <div className="flex items-center justify-between p-4 pb-0 flex-shrink-0">
-                  <h3 className="font-semibold text-stone-900">Location Finder</h3>
+                  <h3 className="font-semibold text-stone-900">Location DeepDive</h3>
                   <button
                     onClick={() => setActiveToolView('chat')}
                     className="text-xs text-stone-500 hover:text-stone-700"

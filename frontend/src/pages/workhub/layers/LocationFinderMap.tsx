@@ -950,7 +950,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       <MapLegend 
         layers={state.layers}
         showOptimalZones={!!(state.optimalZones && state.optimalZones.length > 0)}
-        showTrends={!!trendData}
+        showTrends={!!(state.optimalZones && state.optimalZones.some((z: any) => z.trends))}
       />
 
       {/* Optimal Zones Floating Panel */}

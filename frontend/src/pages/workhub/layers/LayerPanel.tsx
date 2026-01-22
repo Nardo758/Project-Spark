@@ -533,7 +533,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
       <div className="flex-shrink-0 p-3 border-t border-stone-200 bg-gradient-to-r from-violet-50 to-purple-50">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-4 h-4 text-violet-600" />
-          <span className="text-sm font-medium text-stone-700">Location Finder Assistant</span>
+          <span className="text-sm font-medium text-stone-700">Location DeepDive Assistant</span>
         </div>
         
         {aiMessage && (
