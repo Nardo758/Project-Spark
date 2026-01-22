@@ -38,6 +38,9 @@ type Opportunity = {
   ai_business_model_suggestions?: string[] | null
   ai_key_risks?: string[] | null
   ai_next_steps?: string[] | null
+  latitude?: number | null
+  longitude?: number | null
+  state_name?: string | null
 }
 
 type Workspace = {
@@ -468,6 +471,25 @@ export default function WorkHub() {
       return await res.json()
     },
   })
+
+  // Auto-set Location DeepDive center from opportunity location when workspace opens
+  const hasSetCenterRef = useRef(false)
+  useEffect(() => {
+    const opp = opportunityQuery.data
+    if (!opp?.latitude || !opp?.longitude) return
+    if (hasSetCenterRef.current) return
+    if (locationFinderState.center) return
+    
+    hasSetCenterRef.current = true
+    const center = { lat: opp.latitude, lng: opp.longitude }
+    
+    // Set center and default radius - layers will load when user activates them
+    setLocationFinderState(prev => ({
+      ...prev,
+      center,
+      radius: prev.radius || 3
+    }))
+  }, [opportunityQuery.data, locationFinderState.center])
 
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: WorkspaceStatus) => {
