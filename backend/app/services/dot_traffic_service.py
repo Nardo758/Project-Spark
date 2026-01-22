@@ -340,7 +340,7 @@ class DOTTrafficService:
             results.append(result)
         
         aadt_values = [r.aadt for r in results if r.aadt > 0]
-        api_results = [r for r in results if r.source == 'dot_api']
+        api_results = [r for r in results if r.source in ('dot_api', 'local_db')]
         
         if not aadt_values:
             return {

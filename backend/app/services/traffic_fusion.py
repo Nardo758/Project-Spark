@@ -85,7 +85,7 @@ class TrafficFusionService:
         Returns:
             FusedTrafficResult with blended estimates
         """
-        has_dot = dot_data and dot_data.get('source') == 'dot_api' and dot_data.get('monthly_estimate', 0) > 0
+        has_dot = dot_data and dot_data.get('source') in ('dot_api', 'local_db') and dot_data.get('monthly_estimate', 0) > 0
         has_google = google_data and google_data.get('avg_daily_traffic', 0) > 0
         
         breakdown = {

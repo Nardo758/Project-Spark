@@ -390,7 +390,7 @@ class ZoneDataFetcher:
             dot_service = DOTTrafficService(timeout=5)
             dot_result = dot_service.get_area_traffic_summary(lat, lng, radius_miles)
             
-            if dot_result.get('source') == 'dot_api' and dot_result.get('monthly_estimate', 0) > 0:
+            if dot_result.get('source') in ('dot_api', 'local_db') and dot_result.get('monthly_estimate', 0) > 0:
                 logger.info(f"Got DOT traffic data for {lat}, {lng}: {dot_result['monthly_estimate']}/mo")
                 return dot_result['monthly_estimate']
         except Exception as e:
