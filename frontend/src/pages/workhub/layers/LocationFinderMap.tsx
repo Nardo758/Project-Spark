@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Loader2, AlertCircle, TrendingUp, X, GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, AlertCircle, TrendingUp, X, GripVertical, ChevronDown, ChevronUp, Map, Satellite, Moon } from 'lucide-react'
 import type { LocationFinderState, LayerInstance, DerivedMetricValue, TrendSummary } from './types'
 import TrendIndicators from './TrendIndicators'
 import MapLegend from './MapLegend'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
+
+const MAP_STYLES = {
+  light: 'mapbox://styles/mapbox/light-v11',
+  satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
+  dark: 'mapbox://styles/mapbox/dark-v11'
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   market: 'Market',
@@ -127,6 +133,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false)
   const [panelSize, setPanelSize] = useState({ width: 320, height: 400 })
   const [isResizing, setIsResizing] = useState(false)
+  const [mapStyle, setMapStyle] = useState<'light' | 'satellite' | 'dark'>('light')
   const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null)
   
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -229,7 +236,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     try {
       mapRef.current = new mapboxgl.Map({
         container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/light-v11',
+        style: MAP_STYLES[mapStyle],
         center: state.center ? [state.center.lng, state.center.lat] : [-98.5795, 39.8283],
         zoom: state.center ? 12 : 4
       })
@@ -290,6 +297,57 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       })
     }
   }, [state.center, mapLoaded])
+
+  // Handle map style changes
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded) return
+    
+    const map = mapRef.current
+    
+    // Store current camera position
+    const center = map.getCenter()
+    const zoom = map.getZoom()
+    const bearing = map.getBearing()
+    const pitch = map.getPitch()
+    
+    // Capture current state for re-rendering after style change
+    const currentLayers = state.layers
+    const currentOptimalZones = state.optimalZones
+    const currentCenter = state.center
+    const currentRadius = state.radius
+    
+    // Change style and re-add layers after load
+    map.setStyle(MAP_STYLES[mapStyle])
+    
+    map.once('style.load', () => {
+      // Restore camera position fully
+      map.setCenter(center)
+      map.setZoom(zoom)
+      map.setBearing(bearing)
+      map.setPitch(pitch)
+      
+      // Re-render radius circle if we have a center
+      if (currentCenter) {
+        const demoLayer = currentLayers.find(l => l.type === 'demographics')
+        const hasDemoLayer = !!demoLayer
+        const showDemoOverlay = demoLayer?.visible && demoLayer?.data
+        const demoDisplayMode = demoLayer?.config?.displayMode || 'heatmap'
+        updateRadiusCircle(map, currentCenter, currentRadius, hasDemoLayer, demoLayer?.visible, showDemoOverlay, demoDisplayMode)
+      }
+      
+      // Re-render all layers after style change
+      currentLayers.forEach(layer => {
+        if (layer.visible) {
+          renderLayerOnMap(map, layer)
+        }
+      })
+      
+      // Re-render optimal zones if present
+      if (currentOptimalZones && currentOptimalZones.length > 0) {
+        renderOptimalZones(map, currentOptimalZones)
+      }
+    })
+  }, [mapStyle])
 
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return
@@ -1007,6 +1065,31 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
         showOptimalZones={!!(state.optimalZones && state.optimalZones.length > 0)}
         showTrends={!!(state.optimalZones && state.optimalZones.some((z: any) => z.trends))}
       />
+
+      {/* Map Style Toggle */}
+      <div className="absolute top-[120px] right-2.5 z-10 flex flex-col gap-1 bg-white rounded-lg shadow-md border border-stone-200 p-1">
+        <button
+          onClick={() => setMapStyle('light')}
+          className={`p-1.5 rounded transition-colors ${mapStyle === 'light' ? 'bg-violet-100 text-violet-700' : 'text-stone-500 hover:bg-stone-100'}`}
+          title="Light map"
+        >
+          <Map className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setMapStyle('satellite')}
+          className={`p-1.5 rounded transition-colors ${mapStyle === 'satellite' ? 'bg-violet-100 text-violet-700' : 'text-stone-500 hover:bg-stone-100'}`}
+          title="Satellite view"
+        >
+          <Satellite className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => setMapStyle('dark')}
+          className={`p-1.5 rounded transition-colors ${mapStyle === 'dark' ? 'bg-violet-100 text-violet-700' : 'text-stone-500 hover:bg-stone-100'}`}
+          title="Dark map"
+        >
+          <Moon className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* Optimal Zones Floating Panel */}
       {(state.optimalZones && state.optimalZones.length > 0) || state.zoneSummary ? (
