@@ -160,6 +160,10 @@ class DOTTrafficService:
             road_segments = []
             max_aadt = 0
             
+            # Batch fetch historical trends for all roadway_ids in a single query
+            roadway_ids = list(set(row.roadway_id for row in rows if row.roadway_id))
+            batch_trends = self._batch_calculate_historical_trends(roadway_ids, state) if roadway_ids else {}
+            
             for row in rows:
                 aadt = row.aadt or 0
                 if aadt > max_aadt:
@@ -168,10 +172,11 @@ class DOTTrafficService:
                 geojson_geom = json.loads(row.geojson)
                 intensity = self._calculate_intensity(aadt)
                 roadway_id = row.roadway_id
-                trend = self._estimate_segment_trend(
-                    aadt, lat, lng, intensity,
-                    roadway_id=roadway_id, state=state
-                )
+                
+                # Use batch-fetched trend or fall back to estimation
+                trend = batch_trends.get(roadway_id) if roadway_id else None
+                if not trend:
+                    trend = self._quick_estimate_trend(aadt, lat, lng, intensity)
                 
                 road_segments.append({
                     'type': 'Feature',
@@ -531,6 +536,132 @@ class DOTTrafficService:
             return '#f97316'  # Orange - slow
         else:
             return '#ef4444'  # Red - heavy traffic
+    
+    def _batch_calculate_historical_trends(
+        self,
+        roadway_ids: List[str],
+        state: str
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Batch calculate historical trends for multiple roadway IDs in a single query.
+        Returns a dictionary mapping roadway_id to trend data.
+        """
+        from app.db.database import SessionLocal
+        
+        if not roadway_ids:
+            return {}
+        
+        try:
+            sql = text("""
+                SELECT roadway_id, year, MAX(aadt) as aadt
+                FROM traffic_roads
+                WHERE roadway_id = ANY(:roadway_ids)
+                  AND state = :state
+                  AND aadt IS NOT NULL
+                GROUP BY roadway_id, year
+                ORDER BY roadway_id, year ASC
+            """)
+            
+            db = SessionLocal()
+            try:
+                result = db.execute(sql, {
+                    "roadway_ids": roadway_ids,
+                    "state": state
+                })
+                rows = result.fetchall()
+            finally:
+                db.close()
+            
+            # Group by roadway_id
+            roadway_data: Dict[str, List[tuple]] = {}
+            for row in rows:
+                if row.roadway_id not in roadway_data:
+                    roadway_data[row.roadway_id] = []
+                roadway_data[row.roadway_id].append((row.year, row.aadt))
+            
+            # Calculate trends for each roadway
+            trends = {}
+            for roadway_id, year_aadt_list in roadway_data.items():
+                if len(year_aadt_list) < 2:
+                    continue
+                
+                first_year, first_aadt = year_aadt_list[0]
+                last_year, last_aadt = year_aadt_list[-1]
+                
+                if first_aadt <= 0 or last_aadt <= 0:
+                    continue
+                
+                years_diff = last_year - first_year
+                if years_diff <= 0:
+                    continue
+                
+                # CAGR formula
+                cagr = ((last_aadt / first_aadt) ** (1 / years_diff) - 1) * 100
+                
+                if cagr > 3:
+                    direction = 'up'
+                    icon = '↑'
+                elif cagr < -3:
+                    direction = 'down'
+                    icon = '↓'
+                else:
+                    direction = 'stable'
+                    icon = '→'
+                
+                trends[roadway_id] = {
+                    'direction': direction,
+                    'percent': round(cagr, 1),
+                    'icon': icon,
+                    'source': 'historical',
+                    'years_analyzed': f"{first_year}-{last_year}"
+                }
+            
+            return trends
+            
+        except Exception as e:
+            logger.warning(f"Batch historical trend calculation failed: {e}")
+            return {}
+    
+    def _quick_estimate_trend(
+        self,
+        aadt: int,
+        lat: float,
+        lng: float,
+        intensity: int
+    ) -> Dict[str, Any]:
+        """
+        Quick deterministic trend estimation without database queries.
+        Used as fallback when historical data is unavailable.
+        """
+        import hashlib
+        
+        seed_str = f"{lat:.4f},{lng:.4f},{aadt}"
+        seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
+        
+        variation_pct = ((seed % 60) - 25)
+        
+        if intensity > 60:
+            variation_pct += 5
+        elif intensity < 30:
+            variation_pct -= 5
+        
+        if variation_pct > 5:
+            direction = 'up'
+            icon = '↑'
+        elif variation_pct < -5:
+            direction = 'down'
+            icon = '↓'
+        else:
+            direction = 'stable'
+            icon = '→'
+        
+        return {
+            'direction': direction,
+            'percent': round(variation_pct, 1),
+            'icon': icon,
+            'source': 'estimated',
+            'years_analyzed': None
+        }
     
     def _calculate_historical_trend(
         self,

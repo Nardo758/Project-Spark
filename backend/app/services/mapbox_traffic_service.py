@@ -227,7 +227,8 @@ class MapboxTrafficService:
         Get live traffic data for a list of road segments.
         
         To avoid excessive API calls, samples a subset of segments
-        and extrapolates to nearby segments.
+        and extrapolates to nearby segments. Uses parallel requests
+        for faster processing.
         
         Args:
             segments: List of road segments with lat/lng coordinates
@@ -237,6 +238,7 @@ class MapboxTrafficService:
             Segments enriched with live traffic and leading indicator data
         """
         import random
+        from concurrent.futures import ThreadPoolExecutor, as_completed
         
         if not segments:
             return segments
@@ -245,48 +247,62 @@ class MapboxTrafficService:
         sample_size = max(1, int(len(segments) * sample_rate))
         sample_indices = set(random.sample(range(len(segments)), min(sample_size, len(segments))))
         
-        enriched_segments = []
-        sampled_results = {}  # Cache results by approximate location
-        
-        for i, segment in enumerate(segments):
-            enriched = segment.copy()
-            props = enriched.get('properties', {})
-            
-            # Get representative point from segment
+        # Prepare sampled segments for parallel processing
+        segments_to_query = []
+        for i in sample_indices:
+            segment = segments[i]
+            props = segment.get('properties', {})
             geometry = segment.get('geometry', {})
             coords = geometry.get('coordinates', [])
             if not coords:
-                enriched_segments.append(enriched)
                 continue
-            
-            # Get midpoint of line segment
             if isinstance(coords[0], list):
                 mid_idx = len(coords) // 2
                 lng, lat = coords[mid_idx][0], coords[mid_idx][1]
             else:
                 lng, lat = coords[0], coords[1]
-            
             aadt = props.get('aadt', 0)
+            if aadt > 0:
+                segments_to_query.append((i, lat, lng, aadt))
+        
+        # Parallel API calls for sampled segments
+        sampled_results = {}
+        def query_segment(args):
+            idx, lat, lng, aadt = args
+            grid_key = f"{round(lat, 2)},{round(lng, 2)}"
+            comparison = self.compare_live_vs_baseline(lat, lng, aadt)
+            return idx, grid_key, comparison
+        
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {executor.submit(query_segment, args): args for args in segments_to_query}
+            for future in as_completed(futures):
+                try:
+                    idx, grid_key, comparison = future.result()
+                    if comparison:
+                        sampled_results[idx] = comparison
+                        sampled_results[grid_key] = comparison
+                except Exception as e:
+                    logger.warning(f"Mapbox query failed: {e}")
+        
+        # Enrich all segments with results
+        enriched_segments = []
+        for i, segment in enumerate(segments):
+            enriched = segment.copy()
+            props = enriched.get('properties', {})
             
-            # Only query for sampled segments
-            if i in sample_indices and aadt > 0:
-                comparison = self.compare_live_vs_baseline(lat, lng, aadt)
-                if comparison:
-                    props['live_congestion'] = comparison.live_congestion.name.lower()
-                    props['expected_congestion'] = comparison.expected_congestion.name.lower()
-                    props['traffic_signal'] = comparison.signal
-                    props['signal_strength'] = comparison.signal_strength
-                    props['signal_delta'] = comparison.delta
-                    props['signal_description'] = comparison.description
-                    
-                    # Cache for nearby segments
-                    grid_key = f"{round(lat, 2)},{round(lng, 2)}"
-                    sampled_results[grid_key] = comparison
-            else:
-                # Try to use cached result from nearby sampled segment
+            geometry = segment.get('geometry', {})
+            coords = geometry.get('coordinates', [])
+            if coords:
+                if isinstance(coords[0], list):
+                    mid_idx = len(coords) // 2
+                    lng, lat = coords[mid_idx][0], coords[mid_idx][1]
+                else:
+                    lng, lat = coords[0], coords[1]
+                
                 grid_key = f"{round(lat, 2)},{round(lng, 2)}"
-                if grid_key in sampled_results:
-                    comparison = sampled_results[grid_key]
+                comparison = sampled_results.get(i) or sampled_results.get(grid_key)
+                
+                if comparison:
                     props['live_congestion'] = comparison.live_congestion.name.lower()
                     props['expected_congestion'] = comparison.expected_congestion.name.lower()
                     props['traffic_signal'] = comparison.signal

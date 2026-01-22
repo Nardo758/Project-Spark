@@ -423,7 +423,7 @@ async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data
           latitude: center.lat,
           longitude: center.lng,
           radius_miles: radiusMiles,
-          include_live_traffic: true  // Enable Mapbox live traffic comparison
+          include_live_traffic: false  // Disabled by default for faster loading
         })
       })
       if (segmentsResponse.ok) {

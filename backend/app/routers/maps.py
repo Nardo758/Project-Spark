@@ -646,7 +646,7 @@ async def get_road_traffic_segments(request: RoadSegmentsRequest):
             mapbox_service = MapboxTrafficService()
             enriched_features = mapbox_service.get_live_traffic_for_segments(
                 segments['features'],
-                sample_rate=0.3  # Sample 30% of segments for API efficiency
+                sample_rate=0.15  # Sample 15% of segments for faster response
             )
             segments['features'] = enriched_features
             segments['metadata']['includes_live_traffic'] = True
