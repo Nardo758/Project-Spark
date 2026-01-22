@@ -38,44 +38,35 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
   const [error, setError] = useState<string | null>(null)
   const [resultCardExpanded, setResultCardExpanded] = useState(true)
   const [panelPosition, setPanelPosition] = useState({ x: 16, y: 16 })
-  const [viabilityPosition, setViabilityPosition] = useState({ x: 16, y: 16 })
-  const [isDragging, setIsDragging] = useState<'zones' | 'viability' | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef<{ x: number; y: number; panelX: number; panelY: number } | null>(null)
 
-  const handleDragStart = useCallback((e: React.MouseEvent, panel: 'zones' | 'viability') => {
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
-    setIsDragging(panel)
-    const pos = panel === 'zones' ? panelPosition : viabilityPosition
+    setIsDragging(true)
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
-      panelX: pos.x,
-      panelY: pos.y
+      panelX: panelPosition.x,
+      panelY: panelPosition.y
     }
-  }, [panelPosition, viabilityPosition])
+  }, [panelPosition])
 
   useEffect(() => {
     if (!isDragging) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!dragStartRef.current || !isDragging) return
+      if (!dragStartRef.current) return
       const dx = e.clientX - dragStartRef.current.x
       const dy = e.clientY - dragStartRef.current.y
-      if (isDragging === 'zones') {
-        setPanelPosition({
-          x: Math.max(0, dragStartRef.current.panelX - dx),
-          y: Math.max(0, dragStartRef.current.panelY - dy)
-        })
-      } else {
-        setViabilityPosition({
-          x: Math.max(0, dragStartRef.current.panelX - dx),
-          y: Math.max(0, dragStartRef.current.panelY + dy)
-        })
-      }
+      setPanelPosition({
+        x: Math.max(0, dragStartRef.current.panelX - dx),
+        y: Math.max(0, dragStartRef.current.panelY - dy)
+      })
     }
 
     const handleMouseUp = () => {
-      setIsDragging(null)
+      setIsDragging(false)
       dragStartRef.current = null
     }
 
@@ -677,38 +668,26 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       )}
 
       {analysisResult && (
-        <div 
-          className="absolute bg-white rounded-xl shadow-xl border border-stone-200 overflow-hidden max-w-xs animate-in slide-in-from-top-2 duration-300 z-10"
-          style={{ top: viabilityPosition.y, right: viabilityPosition.x }}
-        >
+        <div className="absolute top-4 right-4 bg-white rounded-xl shadow-xl border border-stone-200 overflow-hidden max-w-xs animate-in slide-in-from-top-2 duration-300 z-10">
           <div 
-            className={`bg-gradient-to-r ${getScoreBg(analysisResult.match_score)} p-3 flex items-center justify-between ${isDragging === 'viability' ? 'cursor-grabbing' : 'cursor-grab'}`}
-            onMouseDown={(e) => handleDragStart(e, 'viability')}
+            className={`bg-gradient-to-r ${getScoreBg(analysisResult.match_score)} p-3 flex items-center justify-between cursor-pointer`}
+            onClick={() => setResultCardExpanded(!resultCardExpanded)}
           >
             <div className="flex items-center gap-2">
-              <GripVertical className="w-4 h-4 text-white/60" />
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">{analysisResult.match_score}%</span>
               </div>
               <div>
-                <div className="text-white font-semibold text-sm select-none">Clone Viability</div>
-                <div className="text-white/80 text-xs select-none">Match Score</div>
+                <div className="text-white font-semibold text-sm">Clone Viability</div>
+                <div className="text-white/80 text-xs">Match Score</div>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setResultCardExpanded(!resultCardExpanded)
-                }}
-                className="p-1 hover:bg-white/20 rounded transition-colors"
-              >
-                {resultCardExpanded ? (
-                  <ChevronUp className="w-5 h-5 text-white/80" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-white/80" />
-                )}
-              </button>
+              {resultCardExpanded ? (
+                <ChevronUp className="w-5 h-5 text-white/80" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-white/80" />
+              )}
               {onClearAnalysis && (
                 <button
                   onClick={(e) => {
@@ -791,8 +770,8 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           style={{ bottom: panelPosition.y, right: panelPosition.x }}
         >
           <div 
-            className={`flex items-center justify-between px-3 py-2 bg-violet-50 border-b border-violet-100 ${isDragging === 'zones' ? 'cursor-grabbing' : 'cursor-grab'}`}
-            onMouseDown={(e) => handleDragStart(e, 'zones')}
+            className={`flex items-center justify-between px-3 py-2 bg-violet-50 border-b border-violet-100 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            onMouseDown={handleDragStart}
           >
             <div className="flex items-center gap-2">
               <GripVertical className="w-4 h-4 text-violet-400" />
