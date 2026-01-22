@@ -183,7 +183,7 @@ async function fetchCompetitionData(params: LayerFetchParams): Promise<{ data: a
 async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
   const { center, radius, config } = params
   
-  const radiusMeters = Math.round(radius * 1609.34)
+  const radiusMeters = Math.min(5000, Math.round(radius * 1609.34))
   const forceRefresh = config.forceRefresh || false
   
   try {
@@ -212,7 +212,12 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
         }
       }
       const errorData = await response.json().catch(() => ({}))
-      return { data: null, error: errorData.detail || 'Failed to fetch foot traffic data' }
+      const errorMessage = typeof errorData.detail === 'string' 
+        ? errorData.detail 
+        : Array.isArray(errorData.detail) 
+          ? errorData.detail.map((e: any) => e.msg || e).join(', ')
+          : 'Failed to fetch foot traffic data'
+      return { data: null, error: errorMessage }
     }
 
     const data = await response.json()

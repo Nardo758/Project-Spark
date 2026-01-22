@@ -479,7 +479,7 @@ export function LayerPanel({ state, onStateChange, onAiPrompt, aiLoading, aiMess
 
             {activeLayer?.error && (
               <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600">
-                {activeLayer.error}
+                {typeof activeLayer.error === 'string' ? activeLayer.error : JSON.stringify(activeLayer.error)}
               </div>
             )}
           </div>
