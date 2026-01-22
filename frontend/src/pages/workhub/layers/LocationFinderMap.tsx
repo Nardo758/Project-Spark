@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
+import MapboxDraw from '@mapbox/mapbox-gl-draw'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Loader2, AlertCircle, TrendingUp, X, GripVertical, ChevronDown, ChevronUp, Map, Satellite, Moon } from 'lucide-react'
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
+import { Loader2, AlertCircle, TrendingUp, X, GripVertical, ChevronDown, ChevronUp, Map, Satellite, Moon, Pentagon } from 'lucide-react'
 import type { LocationFinderState, LayerInstance, DerivedMetricValue, TrendSummary } from './types'
 import TrendIndicators from './TrendIndicators'
 import MapLegend from './MapLegend'
+import { analyzePolygon, PolygonAnalysisResult } from './layerService'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
 
@@ -111,23 +114,35 @@ function formatMetricValue(key: string, value: number): string {
   return value.toFixed(1)
 }
 
+export interface PolygonData {
+  type: 'Polygon'
+  coordinates: [number, number][]
+}
+
 interface LocationFinderMapProps {
   state: LocationFinderState
   onLayerDataUpdate?: (layerId: string, data: any, error?: string) => void
   onCenterChange?: (center: { lat: number; lng: number; address?: string }) => void
   clickToSetEnabled?: boolean
   onClearOptimalZones?: () => void
+  onPolygonChange?: (polygon: PolygonData | null) => void
 }
 
-export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = false, onClearOptimalZones }: LocationFinderMapProps) {
+export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = false, onClearOptimalZones, onPolygonChange }: LocationFinderMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
+  const drawRef = useRef<MapboxDraw | null>(null)
   const centerMarkerRef = useRef<mapboxgl.Marker | null>(null)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [panelPosition, setPanelPosition] = useState({ x: 16, y: 16 })
   const [isDragging, setIsDragging] = useState(false)
+  const [isDrawingMode, setIsDrawingMode] = useState(false)
+  const [drawnPolygon, setDrawnPolygon] = useState<PolygonData | null>(null)
+  const [polygonAnalysis, setPolygonAnalysis] = useState<PolygonAnalysisResult | null>(null)
+  const [isAnalyzingPolygon, setIsAnalyzingPolygon] = useState(false)
+  const [polygonError, setPolygonError] = useState<string | null>(null)
   const dragStartRef = useRef<{ x: number; y: number; panelX: number; panelY: number } | null>(null)
   const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set())
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false)
@@ -243,6 +258,57 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
 
       mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
+      const draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+          polygon: false,
+          trash: false
+        },
+        defaultMode: 'simple_select',
+        styles: [
+          {
+            'id': 'gl-draw-polygon-fill',
+            'type': 'fill',
+            'filter': ['all', ['==', '$type', 'Polygon']],
+            'paint': {
+              'fill-color': '#7c3aed',
+              'fill-opacity': 0.15
+            }
+          },
+          {
+            'id': 'gl-draw-polygon-stroke',
+            'type': 'line',
+            'filter': ['all', ['==', '$type', 'Polygon']],
+            'paint': {
+              'line-color': '#7c3aed',
+              'line-width': 2,
+              'line-dasharray': [2, 2]
+            }
+          },
+          {
+            'id': 'gl-draw-polygon-stroke-active',
+            'type': 'line',
+            'filter': ['all', ['==', '$type', 'Polygon'], ['==', 'active', 'true']],
+            'paint': {
+              'line-color': '#5b21b6',
+              'line-width': 3
+            }
+          },
+          {
+            'id': 'gl-draw-point',
+            'type': 'circle',
+            'filter': ['all', ['==', '$type', 'Point']],
+            'paint': {
+              'circle-radius': 5,
+              'circle-color': '#7c3aed'
+            }
+          }
+        ]
+      })
+      
+      mapRef.current.addControl(draw as any, 'top-left')
+      drawRef.current = draw
+
       mapRef.current.on('load', () => {
         setMapLoaded(true)
       })
@@ -257,6 +323,10 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     }
 
     return () => {
+      if (drawRef.current && mapRef.current) {
+        mapRef.current.removeControl(drawRef.current as any)
+        drawRef.current = null
+      }
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -297,6 +367,122 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       })
     }
   }, [state.center, mapLoaded])
+
+  useEffect(() => {
+    if (!mapRef.current || !mapLoaded || !drawRef.current) return
+    
+    const map = mapRef.current
+    const draw = drawRef.current
+    
+    const handleDrawCreate = async (e: any) => {
+      const features = e.features
+      if (features && features.length > 0) {
+        const polygon = features[0]
+        if (polygon.geometry.type === 'Polygon') {
+          const coords = polygon.geometry.coordinates[0] as [number, number][]
+          const polygonData: PolygonData = {
+            type: 'Polygon',
+            coordinates: coords
+          }
+          setDrawnPolygon(polygonData)
+          onPolygonChange?.(polygonData)
+          setIsDrawingMode(false)
+          
+          setIsAnalyzingPolygon(true)
+          setPolygonError(null)
+          try {
+            const result = await analyzePolygon({ polygon: coords })
+            if (result.data) {
+              setPolygonAnalysis(result.data)
+            } else if (result.error) {
+              setPolygonError(result.error)
+              setPolygonAnalysis(null)
+            }
+          } catch (err) {
+            console.error('Polygon analysis failed:', err)
+            setPolygonError('Analysis failed')
+          } finally {
+            setIsAnalyzingPolygon(false)
+          }
+        }
+      }
+    }
+    
+    const handleDrawUpdate = async (e: any) => {
+      const features = e.features
+      if (features && features.length > 0) {
+        const polygon = features[0]
+        if (polygon.geometry.type === 'Polygon') {
+          const coords = polygon.geometry.coordinates[0] as [number, number][]
+          const polygonData: PolygonData = {
+            type: 'Polygon',
+            coordinates: coords
+          }
+          setDrawnPolygon(polygonData)
+          onPolygonChange?.(polygonData)
+          
+          setIsAnalyzingPolygon(true)
+          setPolygonError(null)
+          try {
+            const result = await analyzePolygon({ polygon: coords })
+            if (result.data) {
+              setPolygonAnalysis(result.data)
+            } else if (result.error) {
+              setPolygonError(result.error)
+              setPolygonAnalysis(null)
+            }
+          } catch (err) {
+            console.error('Polygon analysis failed:', err)
+            setPolygonError('Analysis failed')
+          } finally {
+            setIsAnalyzingPolygon(false)
+          }
+        }
+      }
+    }
+    
+    const handleDrawDelete = () => {
+      setDrawnPolygon(null)
+      setPolygonAnalysis(null)
+      onPolygonChange?.(null)
+    }
+    
+    map.on('draw.create', handleDrawCreate)
+    map.on('draw.update', handleDrawUpdate)
+    map.on('draw.delete', handleDrawDelete)
+    
+    return () => {
+      map.off('draw.create', handleDrawCreate)
+      map.off('draw.update', handleDrawUpdate)
+      map.off('draw.delete', handleDrawDelete)
+    }
+  }, [mapLoaded, onPolygonChange])
+  
+  const toggleDrawingMode = useCallback(() => {
+    if (!drawRef.current) return
+    
+    if (isDrawingMode) {
+      drawRef.current.changeMode('simple_select')
+      setIsDrawingMode(false)
+    } else {
+      drawRef.current.deleteAll()
+      drawRef.current.changeMode('draw_polygon')
+      setIsDrawingMode(true)
+      setDrawnPolygon(null)
+      onPolygonChange?.(null)
+    }
+  }, [isDrawingMode, onPolygonChange])
+  
+  const clearPolygon = useCallback(() => {
+    if (!drawRef.current) return
+    drawRef.current.deleteAll()
+    drawRef.current.changeMode('simple_select')
+    setDrawnPolygon(null)
+    setPolygonAnalysis(null)
+    setPolygonError(null)
+    setIsDrawingMode(false)
+    onPolygonChange?.(null)
+  }, [onPolygonChange])
 
   // Handle map style changes
   useEffect(() => {
@@ -1325,6 +1511,114 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           <Moon className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Polygon Drawing Controls */}
+      <div className="absolute top-[220px] right-2.5 z-10 flex flex-col gap-1 bg-white rounded-lg shadow-md border border-stone-200 p-1">
+        <button
+          onClick={toggleDrawingMode}
+          className={`p-1.5 rounded transition-colors ${isDrawingMode ? 'bg-violet-600 text-white' : drawnPolygon ? 'bg-violet-100 text-violet-700' : 'text-stone-500 hover:bg-stone-100'}`}
+          title={isDrawingMode ? 'Cancel drawing' : drawnPolygon ? 'Redraw polygon' : 'Draw analysis area'}
+        >
+          <Pentagon className="w-4 h-4" />
+        </button>
+        {drawnPolygon && (
+          <button
+            onClick={clearPolygon}
+            className="p-1.5 rounded transition-colors text-red-500 hover:bg-red-50"
+            title="Clear polygon"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      
+      {/* Drawing Mode Instructions */}
+      {isDrawingMode && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-violet-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium">
+          Click to place points, double-click to finish polygon
+        </div>
+      )}
+      
+      {/* Polygon Analysis Results Panel */}
+      {(drawnPolygon || isAnalyzingPolygon) && (
+        <div className="absolute top-4 left-4 z-20 bg-white rounded-lg shadow-lg border border-stone-200 p-3 w-72">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-stone-800 flex items-center gap-2">
+              <Pentagon className="w-4 h-4 text-violet-600" />
+              Polygon Analysis
+            </h3>
+            <button
+              onClick={clearPolygon}
+              className="p-1 hover:bg-stone-100 rounded text-stone-400 hover:text-stone-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {isAnalyzingPolygon ? (
+            <div className="flex items-center gap-2 text-stone-500 text-sm py-4 justify-center">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Analyzing area...
+            </div>
+          ) : polygonError ? (
+            <div className="flex items-center gap-2 text-red-500 text-sm py-4 justify-center">
+              <AlertCircle className="w-4 h-4" />
+              {polygonError}
+            </div>
+          ) : polygonAnalysis ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-stone-50 rounded p-2">
+                  <div className="text-stone-500">Area</div>
+                  <div className="font-semibold text-stone-800">{polygonAnalysis.area_sq_miles.toFixed(2)} sq mi</div>
+                </div>
+                <div className="bg-violet-50 rounded p-2">
+                  <div className="text-violet-600">Score</div>
+                  <div className="font-semibold text-violet-800">{polygonAnalysis.overall_score}/100</div>
+                </div>
+              </div>
+              
+              {polygonAnalysis.traffic_data && polygonAnalysis.traffic_data.road_count > 0 && (
+                <div className="border-t border-stone-100 pt-2">
+                  <div className="text-xs font-medium text-stone-600 mb-1">Traffic Data</div>
+                  <div className="grid grid-cols-2 gap-1 text-xs">
+                    <div>
+                      <span className="text-stone-500">Roads: </span>
+                      <span className="font-medium">{polygonAnalysis.traffic_data.road_count}</span>
+                    </div>
+                    <div>
+                      <span className="text-stone-500">Avg AADT: </span>
+                      <span className="font-medium">{polygonAnalysis.traffic_data.avg_daily_traffic.toLocaleString()}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-stone-500">Monthly Traffic: </span>
+                      <span className="font-medium">{polygonAnalysis.traffic_data.monthly_traffic.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {polygonAnalysis.insights && polygonAnalysis.insights.length > 0 && (
+                <div className="border-t border-stone-100 pt-2">
+                  <div className="text-xs font-medium text-stone-600 mb-1">Insights</div>
+                  <div className="space-y-1">
+                    {polygonAnalysis.insights.map((insight, i) => (
+                      <div key={i} className="text-xs text-stone-600 flex items-start gap-1">
+                        <span className="text-violet-500 mt-0.5">•</span>
+                        <span>{insight}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs text-stone-500 py-2">
+              Drawing polygon on map...
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Optimal Zones Floating Panel */}
       {(state.optimalZones && state.optimalZones.length > 0) || state.zoneSummary ? (

@@ -1131,3 +1131,175 @@ def find_optimal_zones_enhanced(
         center_lng=request.center_lng,
         target_radius_miles=request.target_radius_miles
     )
+
+
+class PolygonAnalysisRequest(BaseModel):
+    polygon: list[list[float]] = Field(..., description="List of [lng, lat] coordinates forming the polygon")
+    business_type: str | None = None
+    include_traffic: bool = True
+    include_demographics: bool = True
+    include_competitors: bool = True
+
+
+class PolygonAnalysisResponse(BaseModel):
+    polygon_center: dict[str, float]
+    area_sq_miles: float
+    traffic_data: dict[str, Any] | None = None
+    demographics: dict[str, Any] | None = None
+    competitors: list[dict[str, Any]] | None = None
+    overall_score: float
+    insights: list[str]
+
+
+@router.post("/analyze-polygon", response_model=PolygonAnalysisResponse)
+def analyze_polygon(
+    request: PolygonAnalysisRequest,
+    db: Session = Depends(get_db),
+) -> PolygonAnalysisResponse:
+    """
+    Analyze a custom polygon area drawn by the user.
+    Returns traffic data within the polygon with real DOT AADT data.
+    Demographics and competitors are estimated based on area size.
+    """
+    from shapely.geometry import Polygon as ShapelyPolygon
+    from shapely.ops import transform
+    from shapely.validation import make_valid
+    import pyproj
+    from sqlalchemy import text
+    
+    coords = [(p[0], p[1]) for p in request.polygon]
+    
+    if len(coords) < 3:
+        return PolygonAnalysisResponse(
+            polygon_center={"lat": 0, "lng": 0},
+            area_sq_miles=0,
+            overall_score=0,
+            insights=["Invalid polygon: at least 3 points required"]
+        )
+    
+    if coords[0] != coords[-1]:
+        coords.append(coords[0])
+    
+    polygon = ShapelyPolygon(coords)
+    
+    if not polygon.is_valid:
+        polygon = make_valid(polygon)
+        if polygon.geom_type != 'Polygon':
+            return PolygonAnalysisResponse(
+                polygon_center={"lat": 0, "lng": 0},
+                area_sq_miles=0,
+                overall_score=0,
+                insights=["Invalid polygon: self-intersecting or malformed geometry"]
+            )
+    
+    centroid = polygon.centroid
+    center_lat = centroid.y
+    center_lng = centroid.x
+    
+    project = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True).transform
+    polygon_m = transform(project, polygon)
+    area_sq_m = polygon_m.area
+    area_sq_miles = area_sq_m / 2589988.11
+    
+    insights = []
+    overall_score = 50.0
+    traffic_data = None
+    demographics_data = None
+    competitors_list = None
+    
+    if request.include_traffic:
+        try:
+            polygon_wkt = polygon.wkt
+            query = text("""
+                SELECT 
+                    COUNT(*) as road_count,
+                    AVG(aadt) as avg_aadt,
+                    SUM(aadt) as total_aadt,
+                    MAX(aadt) as max_aadt,
+                    MIN(aadt) as min_aadt
+                FROM traffic_roads
+                WHERE ST_Intersects(
+                    geometry,
+                    ST_SetSRID(ST_GeomFromText(:polygon_wkt), 4326)
+                )
+                AND aadt > 0
+            """)
+            
+            result = db.execute(query, {'polygon_wkt': polygon_wkt}).fetchone()
+            
+            if result and result[0] > 0:
+                avg_aadt = float(result[1]) if result[1] else 0
+                monthly_traffic = avg_aadt * 30
+                
+                traffic_data = {
+                    "road_count": int(result[0]),
+                    "avg_daily_traffic": round(avg_aadt),
+                    "monthly_traffic": round(monthly_traffic),
+                    "max_daily_traffic": int(result[3]) if result[3] else 0,
+                    "min_daily_traffic": int(result[4]) if result[4] else 0,
+                    "total_daily_traffic": int(result[2]) if result[2] else 0
+                }
+                
+                if avg_aadt > 50000:
+                    insights.append("High traffic area - excellent visibility")
+                    overall_score += 15
+                elif avg_aadt > 20000:
+                    insights.append("Moderate traffic - good foot traffic potential")
+                    overall_score += 10
+                elif avg_aadt > 5000:
+                    insights.append("Lower traffic area - consider marketing")
+                    overall_score += 5
+                else:
+                    insights.append("Low traffic zone - may need strong draw")
+            else:
+                traffic_data = {"road_count": 0, "message": "No traffic data available for this area"}
+                
+        except Exception as e:
+            logger.error(f"Traffic analysis error: {e}")
+            try:
+                db.rollback()
+            except:
+                pass
+    
+    if request.include_demographics:
+        try:
+            demographics_data = {
+                "estimated_population": round(area_sq_miles * 5000),
+                "population_density_per_sq_mile": 5000,
+                "median_income": 65000,
+                "median_age": 35,
+                "is_estimated": True,
+                "note": "Estimates based on area size - real census data coming soon"
+            }
+            
+            if area_sq_miles < 0.5:
+                insights.append("Compact area ideal for walkable retail")
+            elif area_sq_miles < 2:
+                insights.append("Medium-sized area with good coverage")
+            else:
+                insights.append("Large analysis area - consider multiple locations")
+                
+        except Exception as e:
+            logger.error(f"Demographics error: {e}")
+    
+    if request.include_competitors:
+        try:
+            competitors_list = []
+            insights.append("Draw polygon to analyze specific area competition")
+        except Exception as e:
+            logger.error(f"Competitor analysis error: {e}")
+    
+    overall_score = max(0, min(100, overall_score))
+    
+    if not insights:
+        insights.append("Polygon area analyzed successfully")
+    
+    return PolygonAnalysisResponse(
+        polygon_center={"lat": center_lat, "lng": center_lng},
+        area_sq_miles=round(area_sq_miles, 3),
+        traffic_data=traffic_data,
+        demographics=demographics_data,
+        competitors=competitors_list,
+        overall_score=round(overall_score, 1),
+        insights=insights
+    )

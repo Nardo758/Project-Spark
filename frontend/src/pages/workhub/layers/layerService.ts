@@ -568,3 +568,67 @@ export async function findOptimalZones(
     }
   }
 }
+
+export interface PolygonAnalysisParams {
+  polygon: [number, number][]
+  businessType?: string
+  includeTraffic?: boolean
+  includeDemographics?: boolean
+  includeCompetitors?: boolean
+}
+
+export interface PolygonAnalysisResult {
+  polygon_center: { lat: number; lng: number }
+  area_sq_miles: number
+  traffic_data: {
+    road_count: number
+    avg_daily_traffic: number
+    monthly_traffic: number
+    max_daily_traffic: number
+    min_daily_traffic: number
+    total_daily_traffic: number
+  } | null
+  demographics: {
+    estimated_population: number
+    population_density_per_sq_mile: number
+    median_income: number
+    median_age: number
+  } | null
+  competitors: any[] | null
+  overall_score: number
+  insights: string[]
+}
+
+export async function analyzePolygon(
+  params: PolygonAnalysisParams
+): Promise<{ data: PolygonAnalysisResult | null; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/maps/analyze-polygon`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        polygon: params.polygon,
+        business_type: params.businessType,
+        include_traffic: params.includeTraffic ?? true,
+        include_demographics: params.includeDemographics ?? true,
+        include_competitors: params.includeCompetitors ?? true
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return { data: null, error: errorData.detail || 'Failed to analyze polygon area' }
+    }
+
+    const data: PolygonAnalysisResult = await response.json()
+    
+    return { data }
+  } catch (error) {
+    console.error('Error analyzing polygon:', error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Failed to analyze polygon area'
+    }
+  }
+}
