@@ -12,6 +12,7 @@ from app.models.opportunity import Opportunity
 from app.services.serpapi_service import SerpAPIService
 from app.services.location_analyzer import LocationAnalyzer, ScoringWeights, get_layer_weights
 from app.services.dot_traffic_service import DOTTrafficService
+from app.services.traffic_fusion import TrafficFusionService, fuse_traffic
 
 logger = logging.getLogger(__name__)
 
@@ -504,6 +505,93 @@ def get_demographics(request: DemographicsRequest):
         employment_rate=round(random.uniform(92, 98), 1),
         area_sq_miles=round(area, 2)
     )
+
+
+class DOTTrafficRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius_miles: float = 3.0
+    force_refresh: bool = False
+    include_google_fusion: bool = True
+
+
+class DOTTrafficResponse(BaseModel):
+    monthly_estimate: int
+    daily_average: int
+    monthly_foot_traffic: int | None = None
+    confidence_score: float
+    source: str
+    state: str | None = None
+    road_segments: list[dict] = []
+    fusion_breakdown: dict | None = None
+    message: str
+
+
+@router.post("/dot-traffic", response_model=DOTTrafficResponse)
+async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_db)):
+    """
+    Get traffic data using DOT AADT + Google Popular Times fusion.
+    
+    The fusion algorithm combines:
+    - DOT AADT (60% weight): Official vehicle counts, updated yearly
+    - Google Popular Times (40% weight): Real-time activity adjustment
+    """
+    try:
+        dot_service = DOTTrafficService()
+        dot_result = await dot_service.get_area_traffic_summary(
+            request.latitude,
+            request.longitude,
+            request.radius_miles
+        )
+        
+        google_data = None
+        if request.include_google_fusion:
+            try:
+                serpapi = SerpAPIService()
+                foot_traffic_result = await serpapi.get_area_foot_traffic(
+                    request.latitude,
+                    request.longitude,
+                    request.radius_miles
+                )
+                if foot_traffic_result:
+                    google_data = {
+                        'avg_daily_traffic': foot_traffic_result.get('avg_daily_foot_traffic', 0),
+                        'area_vitality_score': foot_traffic_result.get('vitality_score', 50)
+                    }
+            except Exception as e:
+                logger.warning(f"Google data fetch failed, using DOT only: {e}")
+        
+        fusion_service = TrafficFusionService()
+        fused = fusion_service.fuse_traffic_data(
+            request.latitude,
+            request.longitude,
+            request.radius_miles,
+            dot_data=dot_result,
+            google_data=google_data
+        )
+        
+        return DOTTrafficResponse(
+            monthly_estimate=fused.monthly_vehicle_traffic,
+            daily_average=fused.monthly_vehicle_traffic // 30,
+            monthly_foot_traffic=fused.monthly_foot_traffic,
+            confidence_score=fused.confidence_score,
+            source=fused.primary_source,
+            state=dot_result.get('state') if dot_result else None,
+            road_segments=dot_result.get('road_segments', []) if dot_result else [],
+            fusion_breakdown=fused.breakdown,
+            message=f"Traffic data fused from {fused.primary_source} sources"
+        )
+        
+    except Exception as e:
+        logger.error(f"DOT traffic fetch error: {e}")
+        return DOTTrafficResponse(
+            monthly_estimate=0,
+            daily_average=0,
+            monthly_foot_traffic=0,
+            confidence_score=0,
+            source="error",
+            message=f"Failed to fetch traffic data: {str(e)}"
+        )
 
 
 class DeepCloneRequest(BaseModel):
