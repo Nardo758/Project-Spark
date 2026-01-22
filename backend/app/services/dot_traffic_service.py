@@ -218,8 +218,8 @@ class DOTTrafficService:
         try:
             radius_meters = radius_miles * 1609.34
             
-            # Use a larger search radius for better road coverage (at least 10 miles)
-            effective_radius = max(radius_meters, 16093)  # Minimum 10 miles
+            # Use a larger search radius for better road coverage (at least 20 miles / ~32km)
+            effective_radius = max(radius_meters, 32186)  # Minimum 20 miles
             
             params = {
                 'where': '1=1',
@@ -232,7 +232,7 @@ class DOTTrafficService:
                 'returnGeometry': 'true',
                 'outSR': '4326',
                 'f': 'json',
-                'resultRecordCount': 200,  # Fetch more road segments for better coverage
+                'resultRecordCount': 500,  # Fetch more road segments for comprehensive coverage
             }
             
             # Some state endpoints require explicit input spatial reference
