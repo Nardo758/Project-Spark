@@ -547,7 +547,7 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
     """
     try:
         dot_service = DOTTrafficService()
-        dot_result = await dot_service.get_area_traffic_summary(
+        dot_result = dot_service.get_area_traffic_summary(
             request.latitude,
             request.longitude,
             request.radius_miles

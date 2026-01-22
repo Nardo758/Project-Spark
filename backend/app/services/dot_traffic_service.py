@@ -50,9 +50,10 @@ STATE_DOT_ENDPOINTS = {
         'route_field': 'ROUTE',
     },
     'FL': {
-        'url': 'https://services1.arcgis.com/O1JpcwDW8sjYuddV/arcgis/rest/services/AADT_On_The_SHS/FeatureServer/0',
-        'aadt_field': 'APTS_AADT',
-        'route_field': 'ROAD_NAME',
+        'url': 'https://gis.fdot.gov/arcgis/rest/services/FTO/fto_PROD/MapServer/7',
+        'aadt_field': 'AADT',
+        'route_field': 'ROADWAY',
+        'requires_inSR': True,
     },
     'GA': {
         'url': 'https://services1.arcgis.com/d3bNBZwPpNmxmElo/arcgis/rest/services/GDOT_Traffic_Counts/FeatureServer/0',
@@ -230,6 +231,10 @@ class DOTTrafficService:
                 'f': 'json',
                 'resultRecordCount': 50,
             }
+            
+            # Some state endpoints require explicit input spatial reference
+            if endpoint.get('requires_inSR'):
+                params['inSR'] = '4326'
             
             response = requests.get(
                 f"{endpoint['url']}/query",
