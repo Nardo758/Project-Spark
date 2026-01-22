@@ -125,6 +125,47 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
   const dragStartRef = useRef<{ x: number; y: number; panelX: number; panelY: number } | null>(null)
   const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set())
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false)
+  const [panelSize, setPanelSize] = useState({ width: 320, height: 400 })
+  const [isResizing, setIsResizing] = useState(false)
+  const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null)
+  
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsResizing(true)
+    resizeStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      width: panelSize.width,
+      height: panelSize.height
+    }
+  }, [panelSize])
+
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeStartRef.current) return
+      const dx = resizeStartRef.current.x - e.clientX
+      const dy = resizeStartRef.current.y - e.clientY
+      setPanelSize({
+        width: Math.max(280, Math.min(window.innerWidth * 0.9, resizeStartRef.current.width + dx)),
+        height: Math.max(200, Math.min(window.innerHeight * 0.85, resizeStartRef.current.height + dy))
+      })
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      resizeStartRef.current = null
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing])
   
   const toggleZoneExpand = useCallback((zoneId: string) => {
     setExpandedZones(prev => {
@@ -970,9 +1011,25 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       {/* Optimal Zones Floating Panel */}
       {(state.optimalZones && state.optimalZones.length > 0) || state.zoneSummary ? (
         <div 
-          className="absolute w-80 max-h-[40vh] bg-white rounded-lg shadow-lg border border-stone-200 overflow-hidden z-20 pointer-events-auto"
-          style={{ bottom: panelPosition.y, right: panelPosition.x }}
+          className="absolute bg-white rounded-lg shadow-lg border border-stone-200 overflow-hidden z-20 pointer-events-auto flex flex-col"
+          style={{ 
+            bottom: panelPosition.y, 
+            right: panelPosition.x,
+            width: isPanelCollapsed ? 'auto' : panelSize.width,
+            height: isPanelCollapsed ? 'auto' : panelSize.height
+          }}
         >
+          {/* Resize handle - top-left corner */}
+          {!isPanelCollapsed && (
+            <div
+              onMouseDown={handleResizeStart}
+              className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize z-30 group"
+              title="Drag to resize"
+            >
+              <div className="absolute top-1 left-1 w-2 h-2 border-l-2 border-t-2 border-violet-400 group-hover:border-violet-600 transition-colors" />
+            </div>
+          )}
+          
           <div 
             className={`flex items-center justify-between px-3 py-2 bg-violet-50 border-b border-violet-100 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             onMouseDown={handleDragStart}
@@ -1009,7 +1066,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           </div>
           
           {!isPanelCollapsed && (
-          <div className="max-h-[calc(40vh-48px)] overflow-y-auto p-3 space-y-2">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {state.optimalZones?.map((zone) => {
               const isExpanded = expandedZones.has(zone.id)
               return (
