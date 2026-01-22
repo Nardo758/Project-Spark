@@ -124,7 +124,7 @@ async function fetchDemographicsData(params: LayerFetchParams): Promise<{ data: 
 
 async function fetchCompetitionData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
   const { center, radius, config } = params
-  const category = config.category || 'business'
+  const category = config.category || config.searchQuery || 'business'
   
   const response = await fetch(`${API_BASE}/maps/places/nearby`, {
     method: 'POST',
@@ -216,11 +216,21 @@ export function shouldRefetchLayer(
   }
   
   const prevLayer = prevState?.layers.find(l => l.id === layer.id)
-  if (prevLayer && layer.type === 'deep_clone') {
-    const prevCategory = prevLayer.config?.businessCategory
-    const newCategory = layer.config?.businessCategory
-    if (prevCategory !== newCategory && newCategory) {
-      return true
+  if (prevLayer) {
+    if (layer.type === 'deep_clone') {
+      const prevCategory = prevLayer.config?.businessCategory
+      const newCategory = layer.config?.businessCategory
+      if (prevCategory !== newCategory && newCategory) {
+        return true
+      }
+    }
+    
+    if (layer.type === 'competition') {
+      const prevCategory = prevLayer.config?.category || prevLayer.config?.searchQuery
+      const newCategory = layer.config?.category || layer.config?.searchQuery
+      if (prevCategory !== newCategory && newCategory) {
+        return true
+      }
     }
   }
   

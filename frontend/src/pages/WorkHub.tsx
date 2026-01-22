@@ -553,7 +553,7 @@ export default function WorkHub() {
     .join(',')
 
   const layerConfigKey = locationFinderState.layers
-    .map(l => `${l.id}:${l.config?.businessCategory || ''}:${l.config?.category || ''}`)
+    .map(l => `${l.id}:${l.config?.businessCategory || ''}:${l.config?.category || ''}:${l.config?.searchQuery || ''}`)
     .join(',')
 
   useEffect(() => {
