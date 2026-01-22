@@ -672,11 +672,18 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     }
 
     const geoJsonData = normalizeLayerData(layer)
+    
+    // For drive_by_traffic, we may have road segments even without hotspot points
+    const hasRoadSegments = layer.type === 'drive_by_traffic' && layer.data?.roadGeoJSON?.features?.length > 0
+    
     if (!geoJsonData || geoJsonData.features.length === 0) {
       if (existingSource) {
         existingSource.setData({ type: 'FeatureCollection', features: [] })
       }
-      return
+      // Don't return early if we have road segments to render
+      if (!hasRoadSegments) {
+        return
+      }
     }
 
     if (existingSource) {
@@ -685,9 +692,11 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
         if (map.getLayer(heatmapLayerId)) map.removeLayer(heatmapLayerId)
         if (map.getLayer(labelsLayerId)) map.removeLayer(labelsLayerId)
         
-        existingSource.setData(geoJsonData)
+        // Use empty FeatureCollection as fallback when only roads are present
+        const safeGeoJsonData = geoJsonData || { type: 'FeatureCollection' as const, features: [] }
+        existingSource.setData(safeGeoJsonData)
         
-        const isHotspotData = geoJsonData.features[0]?.properties?.vitalityScore !== undefined
+        const isHotspotData = safeGeoJsonData.features[0]?.properties?.vitalityScore !== undefined
         
         if (isHotspotData) {
           map.addLayer({
@@ -754,6 +763,104 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
             }
           })
         }
+        
+        // Render road traffic lines for drive_by_traffic (inside existing source block)
+        if (layer.type === 'drive_by_traffic' && layer.data?.roadGeoJSON?.features?.length > 0) {
+          const roadSourceId = `${layer.id}-roads`
+          const roadLayerId = `${layer.id}-road-lines`
+          const roadLabelLayerId = `${layer.id}-road-labels`
+          const trendLayerId = `${layer.id}-road-trends`
+          
+          // Remove existing road layers
+          if (map.getLayer(trendLayerId)) map.removeLayer(trendLayerId)
+          if (map.getLayer(roadLabelLayerId)) map.removeLayer(roadLabelLayerId)
+          if (map.getLayer(roadLayerId)) map.removeLayer(roadLayerId)
+          if (map.getSource(roadSourceId)) map.removeSource(roadSourceId)
+          
+          // Add road segments source
+          map.addSource(roadSourceId, {
+            type: 'geojson',
+            data: layer.data.roadGeoJSON
+          })
+          
+          // Add road lines colored by traffic intensity (Google Maps style)
+          map.addLayer({
+            id: roadLayerId,
+            type: 'line',
+            source: roadSourceId,
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            },
+            paint: {
+              'line-color': ['get', 'color'],
+              'line-width': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                10, 3,
+                14, 6,
+                18, 10
+              ],
+              'line-opacity': 0.9
+            }
+          })
+          
+          // Add trend indicators along roads
+          map.addLayer({
+            id: roadLabelLayerId,
+            type: 'symbol',
+            source: roadSourceId,
+            minzoom: 11,
+            layout: {
+              'symbol-placement': 'line-center',
+              'text-field': [
+                'concat',
+                ['get', 'trend_icon'],
+                ' ',
+                ['to-string', ['abs', ['get', 'trend_percent']]],
+                '%'
+              ],
+              'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 13,
+              'text-allow-overlap': false,
+              'text-offset': [0, -1.2]
+            },
+            paint: {
+              'text-color': [
+                'case',
+                ['==', ['get', 'trend_direction'], 'up'], '#16a34a',
+                ['==', ['get', 'trend_direction'], 'down'], '#dc2626',
+                '#d97706'
+              ],
+              'text-halo-color': '#ffffff',
+              'text-halo-width': 2
+            }
+          })
+          
+          // Add AADT volume label below trend
+          map.addLayer({
+            id: trendLayerId,
+            type: 'symbol',
+            source: roadSourceId,
+            minzoom: 12,
+            layout: {
+              'symbol-placement': 'line-center',
+              'text-field': ['concat', ['to-string', ['/', ['get', 'aadt'], 1000]], 'K/day'],
+              'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 11,
+              'text-allow-overlap': false,
+              'text-offset': [0, 0.8]
+            },
+            paint: {
+              'text-color': '#374151',
+              'text-halo-color': '#ffffff',
+              'text-halo-width': 1.5
+            }
+          })
+          
+        }
+        
         return
       }
       
@@ -767,13 +874,112 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       return
     }
 
+    // Use empty FeatureCollection as fallback when only roads are present
+    const safeGeoJsonData = geoJsonData || { type: 'FeatureCollection' as const, features: [] }
     map.addSource(sourceId, {
       type: 'geojson',
-      data: geoJsonData
+      data: safeGeoJsonData
     })
 
-    if ((layer.type === 'foot_traffic' || layer.type === 'drive_by_traffic') && geoJsonData.features?.length > 0) {
-      const isHotspotData = geoJsonData.features[0]?.properties?.vitalityScore !== undefined
+    // Always render road traffic lines for drive_by_traffic if roadGeoJSON is available
+    if (layer.type === 'drive_by_traffic' && layer.data?.roadGeoJSON?.features?.length > 0) {
+      const roadSourceId = `${layer.id}-roads`
+      const roadLayerId = `${layer.id}-road-lines`
+      const roadLabelLayerId = `${layer.id}-road-labels`
+      const trendLayerId = `${layer.id}-road-trends`
+      
+      // Remove existing road layers
+      if (map.getLayer(trendLayerId)) map.removeLayer(trendLayerId)
+      if (map.getLayer(roadLabelLayerId)) map.removeLayer(roadLabelLayerId)
+      if (map.getLayer(roadLayerId)) map.removeLayer(roadLayerId)
+      if (map.getSource(roadSourceId)) map.removeSource(roadSourceId)
+      
+      // Add road segments source
+      map.addSource(roadSourceId, {
+        type: 'geojson',
+        data: layer.data.roadGeoJSON
+      })
+      
+      // Add road lines colored by traffic intensity (Google Maps style)
+      map.addLayer({
+        id: roadLayerId,
+        type: 'line',
+        source: roadSourceId,
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round'
+        },
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10, 3,
+            14, 6,
+            18, 10
+          ],
+          'line-opacity': 0.9
+        }
+      })
+      
+      // Add trend indicators along roads
+      map.addLayer({
+        id: roadLabelLayerId,
+        type: 'symbol',
+        source: roadSourceId,
+        minzoom: 11,
+        layout: {
+          'symbol-placement': 'line-center',
+          'text-field': [
+            'concat',
+            ['get', 'trend_icon'],
+            ' ',
+            ['to-string', ['abs', ['get', 'trend_percent']]],
+            '%'
+          ],
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 13,
+          'text-allow-overlap': false,
+          'text-offset': [0, -1.2]
+        },
+        paint: {
+          'text-color': [
+            'case',
+            ['==', ['get', 'trend_direction'], 'up'], '#16a34a',
+            ['==', ['get', 'trend_direction'], 'down'], '#dc2626',
+            '#d97706'
+          ],
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 2
+        }
+      })
+      
+      // Add AADT volume label below trend
+      map.addLayer({
+        id: trendLayerId,
+        type: 'symbol',
+        source: roadSourceId,
+        minzoom: 12,
+        layout: {
+          'symbol-placement': 'line-center',
+          'text-field': ['concat', ['to-string', ['/', ['get', 'aadt'], 1000]], 'K/day'],
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 11,
+          'text-allow-overlap': false,
+          'text-offset': [0, 0.8]
+        },
+        paint: {
+          'text-color': '#374151',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5
+        }
+      })
+      
+    }
+
+    if ((layer.type === 'foot_traffic' || layer.type === 'drive_by_traffic') && safeGeoJsonData.features?.length > 0) {
+      const isHotspotData = safeGeoJsonData.features[0]?.properties?.vitalityScore !== undefined
       
       if (isHotspotData) {
         map.addLayer({
@@ -878,104 +1084,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           }
         })
       }
-      
-      // Also render road traffic lines if available for drive_by_traffic
-      if (layer.type === 'drive_by_traffic' && layer.data?.roadGeoJSON?.features?.length > 0) {
-        const roadSourceId = `${layer.id}-roads`
-        const roadLayerId = `${layer.id}-road-lines`
-        const roadLabelLayerId = `${layer.id}-road-labels`
-        
-        // Remove existing road layers
-        if (map.getLayer(roadLabelLayerId)) map.removeLayer(roadLabelLayerId)
-        if (map.getLayer(roadLayerId)) map.removeLayer(roadLayerId)
-        if (map.getSource(roadSourceId)) map.removeSource(roadSourceId)
-        
-        // Add road segments source
-        map.addSource(roadSourceId, {
-          type: 'geojson',
-          data: layer.data.roadGeoJSON
-        })
-        
-        // Add road lines colored by traffic intensity (Google Maps style)
-        map.addLayer({
-          id: roadLayerId,
-          type: 'line',
-          source: roadSourceId,
-          layout: {
-            'line-cap': 'round',
-            'line-join': 'round'
-          },
-          paint: {
-            'line-color': ['get', 'color'],
-            'line-width': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              10, 2,
-              14, 5,
-              18, 8
-            ],
-            'line-opacity': 0.85
-          }
-        })
-        
-        // Add trend indicators along roads with AADT
-        const trendLayerId = `${layer.id}-road-trends`
-        if (map.getLayer(trendLayerId)) map.removeLayer(trendLayerId)
-        
-        map.addLayer({
-          id: roadLabelLayerId,
-          type: 'symbol',
-          source: roadSourceId,
-          minzoom: 12,
-          layout: {
-            'symbol-placement': 'line-center',
-            'text-field': [
-              'concat',
-              ['get', 'trend_icon'],
-              ' ',
-              ['to-string', ['abs', ['get', 'trend_percent']]],
-              '%'
-            ],
-            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12,
-            'text-allow-overlap': false,
-            'text-offset': [0, -1.2]
-          },
-          paint: {
-            'text-color': [
-              'case',
-              ['==', ['get', 'trend_direction'], 'up'], '#16a34a',
-              ['==', ['get', 'trend_direction'], 'down'], '#dc2626',
-              '#d97706'
-            ],
-            'text-halo-color': '#ffffff',
-            'text-halo-width': 2
-          }
-        })
-        
-        // Add AADT volume label below trend
-        map.addLayer({
-          id: trendLayerId,
-          type: 'symbol',
-          source: roadSourceId,
-          minzoom: 13,
-          layout: {
-            'symbol-placement': 'line-center',
-            'text-field': ['concat', ['to-string', ['/', ['get', 'aadt'], 1000]], 'K/day'],
-            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 10,
-            'text-allow-overlap': false,
-            'text-offset': [0, 0.8]
-          },
-          paint: {
-            'text-color': '#6b7280',
-            'text-halo-color': '#ffffff',
-            'text-halo-width': 1.5
-          }
-        })
-      }
-    } else if (geoJsonData.features?.[0]?.geometry?.type === 'Point') {
+    } else if (safeGeoJsonData.features?.[0]?.geometry?.type === 'Point') {
       map.addLayer({
         id: pointLayerId,
         type: 'circle',
