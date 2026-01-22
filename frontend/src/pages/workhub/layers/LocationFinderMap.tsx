@@ -3,7 +3,6 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Loader2, AlertCircle, TrendingUp, Users, Store, X, ChevronDown, ChevronUp } from 'lucide-react'
 import type { LocationFinderState, LayerInstance } from './types'
-import { layerRegistry } from './registry'
 
 const MAPBOX_TOKEN = (import.meta as any).env?.VITE_MAPBOX_ACCESS_TOKEN || ''
 
@@ -153,6 +152,10 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     }
   }, [clickToSetEnabled, mapLoaded, onCenterChange])
 
+  const demographicsLayer = state.layers.find(l => l.type === 'demographics')
+  const showDemographicsOverlay = demographicsLayer?.visible && demographicsLayer?.data
+  const hasDemographicsLayer = !!demographicsLayer
+
   useEffect(() => {
     if (!mapRef.current || !mapLoaded || !state.center) return
 
@@ -161,17 +164,27 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     if (!map.isStyleLoaded()) {
       map.once('style.load', () => {
         if (mapRef.current) {
-          addRadiusCircle(mapRef.current, state.center!, state.radius)
+          updateRadiusCircle(mapRef.current, state.center!, state.radius, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay)
         }
       })
       return
     }
 
-    addRadiusCircle(map, state.center, state.radius)
-  }, [state.radius, state.center, mapLoaded])
+    updateRadiusCircle(map, state.center, state.radius, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay)
+  }, [state.radius, state.center, mapLoaded, hasDemographicsLayer, demographicsLayer?.visible, showDemographicsOverlay])
 
-  const addRadiusCircle = (map: mapboxgl.Map, center: { lat: number; lng: number }, radiusMiles: number) => {
+  const updateRadiusCircle = (
+    map: mapboxgl.Map, 
+    center: { lat: number; lng: number }, 
+    radiusMiles: number, 
+    hasDemographicsLayer: boolean,
+    demographicsVisible?: boolean,
+    hasData?: boolean
+  ) => {
     const sourceId = 'radius-circle'
+    const shouldShow = hasDemographicsLayer ? demographicsVisible : true
+    const fillColor = hasData ? '#3b82f6' : '#7c3aed'
+    const fillOpacity = hasData ? 0.2 : 0.1
 
     try {
       if (map.getLayer('radius-circle-fill')) {
@@ -184,6 +197,15 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
         map.removeSource(sourceId)
       }
     } catch (e) {
+    }
+
+    if (!shouldShow) {
+      map.flyTo({
+        center: [center.lng, center.lat],
+        zoom: getZoomForRadius(radiusMiles),
+        duration: 500
+      })
+      return
     }
 
     const radiusInKm = radiusMiles * 1.60934
@@ -199,8 +221,8 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       type: 'fill',
       source: sourceId,
       paint: {
-        'fill-color': '#7c3aed',
-        'fill-opacity': 0.1
+        'fill-color': fillColor,
+        'fill-opacity': fillOpacity
       }
     })
 
@@ -209,7 +231,7 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       type: 'line',
       source: sourceId,
       paint: {
-        'line-color': '#7c3aed',
+        'line-color': fillColor,
         'line-width': 2,
         'line-dasharray': [2, 2]
       }
@@ -234,13 +256,23 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
     })
   }, [layerDataKey, mapLoaded])
 
+  const getLayerColor = (layerType: string): string => {
+    switch (layerType) {
+      case 'competition': return '#ef4444'
+      case 'deep_clone': return '#f97316'
+      case 'demographics': return '#3b82f6'
+      case 'traffic': return '#22c55e'
+      default: return '#7c3aed'
+    }
+  }
+
   const renderLayerOnMap = (map: mapboxgl.Map, layer: LayerInstance) => {
     if (!map.isStyleLoaded()) return
     
     const sourceId = `layer-${layer.id}`
-    const def = layerRegistry[layer.type]
     const pointLayerId = `${sourceId}-points`
     const fillLayerId = `${sourceId}-fill`
+    const layerColor = getLayerColor(layer.type)
 
     const existingSource = map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined
 
@@ -254,10 +286,13 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       return
     }
 
-    if (!layer.data) return
-
     const geoJsonData = normalizeLayerData(layer)
-    if (!geoJsonData || geoJsonData.features.length === 0) return
+    if (!geoJsonData || geoJsonData.features.length === 0) {
+      if (existingSource) {
+        existingSource.setData({ type: 'FeatureCollection', features: [] })
+      }
+      return
+    }
 
     if (existingSource) {
       existingSource.setData(geoJsonData)
@@ -281,9 +316,9 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
         type: 'circle',
         source: sourceId,
         paint: {
-          'circle-radius': 8,
-          'circle-color': def.color,
-          'circle-stroke-width': 2,
+          'circle-radius': 10,
+          'circle-color': layerColor,
+          'circle-stroke-width': 3,
           'circle-stroke-color': '#ffffff'
         }
       })
@@ -346,21 +381,57 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
       return layer.data as GeoJSON.FeatureCollection
     }
 
-    if (layer.data.type === 'demographics' && state.center) {
-      return {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
+    if (layer.type === 'competition' && Array.isArray(layer.data)) {
+      const features: GeoJSON.Feature[] = layer.data
+        .filter((place: any) => place.latitude && place.longitude)
+        .map((place: any) => ({
+          type: 'Feature' as const,
           geometry: {
-            type: 'Point',
-            coordinates: [state.center.lng, state.center.lat]
+            type: 'Point' as const,
+            coordinates: [place.longitude, place.latitude]
           },
           properties: {
-            ...layer.data.summary,
-            layerType: 'demographics'
+            name: place.name || 'Unknown Business',
+            rating: place.rating || 0,
+            category: layer.config?.category || '',
+            address: place.address || '',
+            reviews: place.reviews_count || place.reviews || 0,
+            layerType: 'competition'
           }
-        }]
+        }))
+      
+      return { type: 'FeatureCollection', features }
+    }
+
+    if (layer.type === 'demographics' && layer.data && state.center) {
+      return {
+        type: 'FeatureCollection',
+        features: []
       }
+    }
+
+    if (layer.type === 'deep_clone') {
+      const analysisResult = layer.config?.analysisResult
+      if (analysisResult?.competitors && Array.isArray(analysisResult.competitors)) {
+        const features: GeoJSON.Feature[] = analysisResult.competitors
+          .filter((c: any) => c.latitude && c.longitude)
+          .map((c: any) => ({
+            type: 'Feature' as const,
+            geometry: {
+              type: 'Point' as const,
+              coordinates: [c.longitude, c.latitude]
+            },
+            properties: {
+              name: c.name || 'Competitor',
+              rating: c.rating || 0,
+              category: layer.config?.businessType || '',
+              address: c.address || '',
+              layerType: 'deep_clone'
+            }
+          }))
+        return { type: 'FeatureCollection', features }
+      }
+      return { type: 'FeatureCollection', features: [] }
     }
 
     if (layer.data.type === 'traffic' && layer.data.center) {
