@@ -798,11 +798,12 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
                 'interpolate',
                 ['linear'],
                 ['zoom'],
-                10, 3,
-                14, 6,
-                18, 10
+                10, 5,
+                12, 7,
+                14, 9,
+                18, 12
               ],
-              'line-opacity': 0.9
+              'line-opacity': 0.85
             }
           })
           
@@ -915,11 +916,12 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
             'interpolate',
             ['linear'],
             ['zoom'],
-            10, 3,
-            14, 6,
-            18, 10
+            10, 5,
+            12, 7,
+            14, 9,
+            18, 12
           ],
-          'line-opacity': 0.9
+          'line-opacity': 0.85
         }
       })
       
