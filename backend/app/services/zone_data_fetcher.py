@@ -316,11 +316,24 @@ class ZoneDataFetcher:
         foot_traffic_data: Dict
     ) -> int:
         """
-        Estimate monthly drive-by traffic based on area characteristics
+        Get drive-by traffic from DOT data when available, otherwise estimate.
         
-        Uses foot traffic as a base indicator of area activity,
-        then estimates vehicle traffic based on typical ratios
+        First tries to fetch real AADT data from state DOT ArcGIS services.
+        Falls back to estimation based on foot traffic and area characteristics.
         """
+        # Try DOT API first
+        try:
+            from app.services.dot_traffic_service import DOTTrafficService
+            dot_service = DOTTrafficService(timeout=5)
+            dot_result = dot_service.get_area_traffic_summary(lat, lng, radius_miles)
+            
+            if dot_result.get('source') == 'dot_api' and dot_result.get('monthly_estimate', 0) > 0:
+                logger.info(f"Got DOT traffic data for {lat}, {lng}: {dot_result['monthly_estimate']}/mo")
+                return dot_result['monthly_estimate']
+        except Exception as e:
+            logger.debug(f"DOT traffic lookup failed, using estimate: {e}")
+        
+        # Fall back to estimation
         foot_traffic = foot_traffic_data.get('avg_daily_traffic', 0)
         vitality = foot_traffic_data.get('area_vitality_score', 50)
         
