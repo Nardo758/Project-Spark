@@ -411,15 +411,36 @@ async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data
       intensity: Math.min(100, Math.floor((data.daily_average || 0) / 500))
     }]
     
+    // Also fetch road segments for line visualization
+    let roadGeoJSON = null
+    try {
+      const segmentsResponse = await fetch(`${API_BASE}/maps/road-traffic-segments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        credentials: 'include',
+        body: JSON.stringify({
+          latitude: center.lat,
+          longitude: center.lng,
+          radius_miles: radiusMiles
+        })
+      })
+      if (segmentsResponse.ok) {
+        roadGeoJSON = await segmentsResponse.json()
+      }
+    } catch (segmentError) {
+      console.warn('Failed to fetch road segments:', segmentError)
+    }
+    
     return {
       data: {
         type: 'drive_by_traffic',
         hotspots,
+        roadGeoJSON,  // GeoJSON FeatureCollection for road line visualization
         summary: {
           monthlyTraffic: data.monthly_estimate || 0,
           dailyAverage: data.daily_average || 0,
           monthlyFootTraffic: data.monthly_foot_traffic || 0,
-          roadSegments: data.road_segments?.length || 0,
+          roadSegments: roadGeoJSON?.features?.length || data.road_segments?.length || 0,
           source: data.source || 'estimated',
           confidenceScore: data.confidence_score || 0,
           state: data.state,

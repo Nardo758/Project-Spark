@@ -614,6 +614,41 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
         )
 
 
+class RoadSegmentsRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius_miles: float = 3.0
+
+
+@router.post("/road-traffic-segments")
+async def get_road_traffic_segments(request: RoadSegmentsRequest):
+    """
+    Get road segments with traffic density for map visualization.
+    
+    Returns GeoJSON FeatureCollection with road lines colored by traffic intensity.
+    Colors follow Google Maps convention: green (free) -> yellow (moderate) -> red (heavy)
+    """
+    try:
+        dot_service = DOTTrafficService()
+        segments = await dot_service.get_road_segments_with_geometry(
+            request.latitude,
+            request.longitude,
+            request.radius_miles
+        )
+        return segments
+        
+    except Exception as e:
+        logger.error(f"Road segments fetch error: {e}")
+        return {
+            'type': 'FeatureCollection',
+            'features': [],
+            'metadata': {
+                'error': str(e),
+                'source': 'error'
+            }
+        }
+
+
 class DeepCloneRequest(BaseModel):
     source_business: str
     source_location: str | None = None

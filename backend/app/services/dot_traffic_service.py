@@ -186,6 +186,205 @@ class DOTTrafficService:
             'samples': len(results),
         }
     
+    async def get_road_segments_with_geometry(
+        self,
+        lat: float,
+        lng: float,
+        radius_miles: float = 3.0
+    ) -> Dict[str, Any]:
+        """
+        Get road segments with their line geometry for map visualization.
+        
+        Returns GeoJSON-compatible road segments with AADT values for
+        rendering traffic density heatmap on roads.
+        
+        Args:
+            lat: Center latitude
+            lng: Center longitude
+            radius_miles: Search radius
+            
+        Returns:
+            Dictionary with road_segments (GeoJSON features) and metadata
+        """
+        state = self._get_state_from_coords(lat, lng)
+        
+        if not state or state not in STATE_DOT_ENDPOINTS:
+            # Return estimated segments for unsupported states
+            return self._generate_estimated_road_segments(lat, lng, radius_miles)
+        
+        endpoint = STATE_DOT_ENDPOINTS[state]
+        
+        try:
+            radius_meters = radius_miles * 1609.34
+            
+            params = {
+                'where': '1=1',
+                'geometry': f'{lng},{lat}',
+                'geometryType': 'esriGeometryPoint',
+                'spatialRel': 'esriSpatialRelIntersects',
+                'distance': radius_meters,
+                'units': 'esriSRUnit_Meter',
+                'outFields': '*',
+                'returnGeometry': 'true',
+                'outSR': '4326',
+                'f': 'json',
+                'resultRecordCount': 50,
+            }
+            
+            response = requests.get(
+                f"{endpoint['url']}/query",
+                params=params,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            if 'features' not in data or not data['features']:
+                return self._generate_estimated_road_segments(lat, lng, radius_miles)
+            
+            aadt_field = endpoint['aadt_field']
+            route_field = endpoint.get('route_field', 'ROUTE')
+            
+            road_segments = []
+            max_aadt = 0
+            
+            for feature in data['features']:
+                attrs = feature.get('attributes', {})
+                geometry = feature.get('geometry', {})
+                aadt = attrs.get(aadt_field, 0) or 0
+                
+                if aadt > max_aadt:
+                    max_aadt = aadt
+                
+                # Convert ArcGIS geometry to GeoJSON
+                if 'paths' in geometry:
+                    # Polyline geometry
+                    coordinates = geometry['paths'][0] if geometry['paths'] else []
+                    geojson_geom = {
+                        'type': 'LineString',
+                        'coordinates': coordinates
+                    }
+                elif 'x' in geometry and 'y' in geometry:
+                    # Point geometry - skip for line visualization
+                    continue
+                else:
+                    continue
+                
+                # Calculate traffic intensity (0-100) for coloring
+                intensity = self._calculate_intensity(aadt)
+                
+                road_segments.append({
+                    'type': 'Feature',
+                    'geometry': geojson_geom,
+                    'properties': {
+                        'aadt': int(aadt),
+                        'route_name': str(attrs.get(route_field, 'Unknown')),
+                        'intensity': intensity,
+                        'color': self._get_traffic_color(intensity),
+                        'source': 'dot_api'
+                    }
+                })
+            
+            return {
+                'type': 'FeatureCollection',
+                'features': road_segments,
+                'metadata': {
+                    'state': state,
+                    'total_segments': len(road_segments),
+                    'max_aadt': max_aadt,
+                    'source': 'dot_api',
+                    'center': {'lat': lat, 'lng': lng},
+                    'radius_miles': radius_miles
+                }
+            }
+            
+        except Exception as e:
+            logger.warning(f"Failed to get road geometry from {state} DOT: {e}")
+            return self._generate_estimated_road_segments(lat, lng, radius_miles)
+    
+    def _calculate_intensity(self, aadt: int) -> int:
+        """Calculate traffic intensity (0-100) from AADT value"""
+        # Scale: 0-5000 = low (green), 5000-20000 = medium (yellow), 20000+ = high (red)
+        if aadt < 5000:
+            return int((aadt / 5000) * 33)  # 0-33
+        elif aadt < 20000:
+            return int(33 + ((aadt - 5000) / 15000) * 33)  # 33-66
+        else:
+            return int(min(100, 66 + ((aadt - 20000) / 30000) * 34))  # 66-100
+    
+    def _get_traffic_color(self, intensity: int) -> str:
+        """Get traffic color based on intensity (Google Maps style)"""
+        if intensity < 33:
+            return '#22c55e'  # Green - free flowing
+        elif intensity < 50:
+            return '#84cc16'  # Light green
+        elif intensity < 66:
+            return '#eab308'  # Yellow - moderate
+        elif intensity < 80:
+            return '#f97316'  # Orange - slow
+        else:
+            return '#ef4444'  # Red - heavy traffic
+    
+    def _generate_estimated_road_segments(
+        self,
+        lat: float,
+        lng: float,
+        radius_miles: float
+    ) -> Dict[str, Any]:
+        """Generate estimated road segments when DOT data unavailable"""
+        import hashlib
+        import math
+        
+        # Create deterministic but varied road network
+        seed_str = f"{lat:.4f},{lng:.4f}"
+        seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
+        
+        segments = []
+        
+        # Generate major roads (N-S, E-W) with variation
+        for i in range(6):
+            angle = (seed + i * 37) % 180  # Varied angles
+            road_aadt = 5000 + (seed % 15000) + (i * 2000)
+            
+            # Create road line
+            length_deg = radius_miles * 0.015  # Approximate degrees
+            rad = math.radians(angle)
+            
+            start_lat = lat - length_deg * math.cos(rad)
+            start_lng = lng - length_deg * math.sin(rad)
+            end_lat = lat + length_deg * math.cos(rad)
+            end_lng = lng + length_deg * math.sin(rad)
+            
+            intensity = self._calculate_intensity(road_aadt)
+            
+            segments.append({
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'LineString',
+                    'coordinates': [[start_lng, start_lat], [end_lng, end_lat]]
+                },
+                'properties': {
+                    'aadt': road_aadt,
+                    'route_name': f'Route {100 + i}',
+                    'intensity': intensity,
+                    'color': self._get_traffic_color(intensity),
+                    'source': 'estimated'
+                }
+            })
+        
+        return {
+            'type': 'FeatureCollection',
+            'features': segments,
+            'metadata': {
+                'state': None,
+                'total_segments': len(segments),
+                'max_aadt': max(s['properties']['aadt'] for s in segments) if segments else 0,
+                'source': 'estimated',
+                'center': {'lat': lat, 'lng': lng},
+                'radius_miles': radius_miles
+            }
+        }
+    
     def _get_state_from_coords(self, lat: float, lng: float) -> Optional[str]:
         """Determine which state a coordinate falls in"""
         for state, bounds in STATE_BOUNDS.items():
@@ -210,7 +409,7 @@ class DOTTrafficService:
             # Convert radius to meters for spatial query
             radius_meters = radius_miles * 1609.34
             
-            # Build ArcGIS query
+            # Build ArcGIS query - include geometry for road line visualization
             params = {
                 'where': '1=1',
                 'geometry': f'{lng},{lat}',
@@ -219,9 +418,10 @@ class DOTTrafficService:
                 'distance': radius_meters,
                 'units': 'esriSRUnit_Meter',
                 'outFields': '*',
-                'returnGeometry': 'false',
+                'returnGeometry': 'true',
+                'outSR': '4326',  # Return in WGS84 lat/lng
                 'f': 'json',
-                'resultRecordCount': 10,
+                'resultRecordCount': 25,  # Get more road segments for visualization
             }
             
             response = requests.get(

@@ -878,6 +878,67 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
           }
         })
       }
+      
+      // Also render road traffic lines if available for drive_by_traffic
+      if (layer.type === 'drive_by_traffic' && layer.data?.roadGeoJSON?.features?.length > 0) {
+        const roadSourceId = `${layer.id}-roads`
+        const roadLayerId = `${layer.id}-road-lines`
+        const roadLabelLayerId = `${layer.id}-road-labels`
+        
+        // Remove existing road layers
+        if (map.getLayer(roadLabelLayerId)) map.removeLayer(roadLabelLayerId)
+        if (map.getLayer(roadLayerId)) map.removeLayer(roadLayerId)
+        if (map.getSource(roadSourceId)) map.removeSource(roadSourceId)
+        
+        // Add road segments source
+        map.addSource(roadSourceId, {
+          type: 'geojson',
+          data: layer.data.roadGeoJSON
+        })
+        
+        // Add road lines colored by traffic intensity (Google Maps style)
+        map.addLayer({
+          id: roadLayerId,
+          type: 'line',
+          source: roadSourceId,
+          layout: {
+            'line-cap': 'round',
+            'line-join': 'round'
+          },
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              10, 2,
+              14, 5,
+              18, 8
+            ],
+            'line-opacity': 0.85
+          }
+        })
+        
+        // Add AADT labels on hover at higher zoom
+        map.addLayer({
+          id: roadLabelLayerId,
+          type: 'symbol',
+          source: roadSourceId,
+          minzoom: 13,
+          layout: {
+            'symbol-placement': 'line-center',
+            'text-field': ['concat', ['to-string', ['/', ['get', 'aadt'], 1000]], 'K'],
+            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 11,
+            'text-allow-overlap': false
+          },
+          paint: {
+            'text-color': '#374151',
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 2
+          }
+        })
+      }
     } else if (geoJsonData.features?.[0]?.geometry?.type === 'Point') {
       map.addLayer({
         id: pointLayerId,
