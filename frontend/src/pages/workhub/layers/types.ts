@@ -57,16 +57,36 @@ export interface LocationFinderState {
   zoneSummary?: string
 }
 
+export interface ZoneMetrics {
+  total_population: number
+  population_growth: number
+  median_income: number
+  median_age: number
+  total_competitors: number
+  drive_by_traffic_monthly: number
+  foot_traffic_monthly: number
+}
+
 export interface OptimalZone {
   id: string
   center_lat: number
   center_lng: number
   radius_miles: number
   total_score: number
-  scores: {
+  scores?: {
     demographics: number
     competition: number
     market_signals: number
+  }
+  metrics?: ZoneMetrics
+  component_scores?: {
+    population: number
+    growth: number
+    income: number
+    age: number
+    competition: number
+    foot_traffic: number
+    drive_by_traffic: number
   }
   insights: string[]
   rank: number

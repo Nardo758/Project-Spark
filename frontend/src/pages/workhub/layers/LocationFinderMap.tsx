@@ -740,21 +740,64 @@ export function LocationFinderMap({ state, onCenterChange, clickToSetEnabled = f
                       Score: {zone.total_score}/100
                     </span>
                   </div>
-                  <div className="text-xs text-stone-500 space-y-0.5">
-                    {zone.insights.slice(0, 2).map((insight, i) => (
-                      <div key={i} className="flex items-start gap-1">
-                        <span className="text-violet-400 mt-0.5">•</span>
-                        <span>{insight}</span>
+                  {zone.metrics ? (
+                    <div className="space-y-1.5 text-xs">
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-stone-600">
+                        <div className="flex justify-between">
+                          <span className="text-stone-400">Population:</span>
+                          <span className="font-medium">{(zone.metrics.total_population ?? 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-stone-400">Growth:</span>
+                          <span className={`font-medium ${(zone.metrics.population_growth ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {(zone.metrics.population_growth ?? 0) >= 0 ? '+' : ''}{(zone.metrics.population_growth ?? 0).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-stone-400">Income:</span>
+                          <span className="font-medium">${(zone.metrics.median_income ?? 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-stone-400">Med. Age:</span>
+                          <span className="font-medium">{(zone.metrics.median_age ?? 0).toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-stone-400">Competitors:</span>
+                          <span className={`font-medium ${(zone.metrics.total_competitors ?? 0) <= 3 ? 'text-emerald-600' : (zone.metrics.total_competitors ?? 0) >= 10 ? 'text-red-500' : 'text-stone-700'}`}>
+                            {zone.metrics.total_competitors ?? 0}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-stone-400">Foot Traffic:</span>
+                          <span className="font-medium">{((zone.metrics.foot_traffic_monthly ?? 0) / 1000).toFixed(0)}K/mo</span>
+                        </div>
+                        <div className="col-span-2 flex justify-between">
+                          <span className="text-stone-400">Drive-By Traffic:</span>
+                          <span className="font-medium">{((zone.metrics.drive_by_traffic_monthly ?? 0) / 1000).toFixed(0)}K/mo</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 mt-1.5 text-xs text-stone-400">
-                    <span>Demo: {zone.scores.demographics}</span>
-                    <span>•</span>
-                    <span>Comp: {zone.scores.competition}</span>
-                    <span>•</span>
-                    <span>Mkt: {zone.scores.market_signals}</span>
-                  </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-xs text-stone-500 space-y-0.5">
+                        {zone.insights.slice(0, 2).map((insight, i) => (
+                          <div key={i} className="flex items-start gap-1">
+                            <span className="text-violet-400 mt-0.5">•</span>
+                            <span>{insight}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {zone.scores && (
+                        <div className="flex gap-2 mt-1.5 text-xs text-stone-400">
+                          <span>Demo: {zone.scores.demographics}</span>
+                          <span>•</span>
+                          <span>Comp: {zone.scores.competition}</span>
+                          <span>•</span>
+                          <span>Mkt: {zone.scores.market_signals}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             ))}

@@ -722,3 +722,170 @@ def find_optimal_zones(
         center_lng=request.center_lng,
         target_radius_miles=request.target_radius_miles
     )
+
+
+class EnhancedZoneMetrics(BaseModel):
+    total_population: int = 0
+    population_growth: float = 0.0
+    median_income: int = 0
+    median_age: float = 0.0
+    total_competitors: int = 0
+    drive_by_traffic_monthly: int = 0
+    foot_traffic_monthly: int = 0
+
+
+class EnhancedOptimalZone(BaseModel):
+    id: str
+    center_lat: float
+    center_lng: float
+    radius_miles: float
+    total_score: float
+    metrics: EnhancedZoneMetrics
+    component_scores: dict[str, float]
+    insights: list[str]
+    rank: int
+
+
+class FindEnhancedOptimalZonesRequest(BaseModel):
+    center_lat: float
+    center_lng: float
+    target_radius_miles: float = Field(default=10.0, ge=1.0, le=50.0)
+    analysis_radius_miles: float = Field(default=3.0, ge=1.0, le=10.0)
+    business_type: str | None = None
+    top_n: int = Field(default=3, ge=1, le=10)
+
+
+class FindEnhancedOptimalZonesResponse(BaseModel):
+    zones: list[EnhancedOptimalZone]
+    analysis_summary: str
+    center_lat: float
+    center_lng: float
+    target_radius_miles: float
+
+
+@router.post("/find-optimal-zones-enhanced", response_model=FindEnhancedOptimalZonesResponse)
+def find_optimal_zones_enhanced(
+    request: FindEnhancedOptimalZonesRequest,
+    db: Session = Depends(get_db),
+) -> FindEnhancedOptimalZonesResponse:
+    """
+    Enhanced optimal zones finder with real data for all 7 metrics:
+    - Total Population
+    - Population Growth
+    - Median Income
+    - Median Age
+    - Total Competitors
+    - Drive By Traffic (monthly)
+    - Foot Traffic (monthly)
+    """
+    from app.services.zone_data_fetcher import ZoneDataFetcher, calculate_zone_score
+    from app.services.location_analyzer import LocationAnalyzer
+    
+    fetcher = ZoneDataFetcher(db)
+    analyzer = LocationAnalyzer()
+    
+    grid_points = analyzer.generate_grid_points(
+        request.center_lat,
+        request.center_lng,
+        request.target_radius_miles,
+        num_rings=2
+    )
+    
+    logger.info(f"Analyzing {len(grid_points)} candidate zones with enhanced metrics")
+    
+    scored_zones = []
+    for point in grid_points:
+        try:
+            metrics = fetcher.fetch_zone_metrics(
+                center_lat=point.lat,
+                center_lng=point.lng,
+                radius_miles=request.analysis_radius_miles,
+                business_type=request.business_type,
+                fetch_competitors=bool(request.business_type),
+                fetch_traffic=True
+            )
+        except Exception as e:
+            logger.warning(f"Failed to fetch metrics for zone at {point.lat}, {point.lng}: {e}")
+            continue
+        
+        score_result = calculate_zone_score(metrics)
+        
+        insights = []
+        
+        if metrics.total_population >= 50000:
+            insights.append(f"High population ({metrics.total_population:,} residents)")
+        elif metrics.total_population >= 25000:
+            insights.append(f"Good population base ({metrics.total_population:,} residents)")
+        
+        if metrics.population_growth >= 2.0:
+            insights.append(f"Strong growth ({metrics.population_growth:.1f}% annually)")
+        
+        if metrics.median_income >= 75000:
+            insights.append(f"High income area (${metrics.median_income:,} median)")
+        
+        if metrics.total_competitors == 0:
+            insights.append("No direct competitors - unproven market")
+        elif metrics.total_competitors <= 3:
+            insights.append(f"Low competition ({metrics.total_competitors} competitors)")
+        elif metrics.total_competitors >= 10:
+            insights.append(f"High competition ({metrics.total_competitors} competitors)")
+        
+        if metrics.foot_traffic_monthly >= 25000:
+            insights.append(f"High foot traffic ({metrics.foot_traffic_monthly:,}/month)")
+        
+        if metrics.drive_by_traffic_monthly >= 100000:
+            insights.append(f"High vehicle traffic ({metrics.drive_by_traffic_monthly:,}/month)")
+        
+        zone_id = f"zone_{point.lat:.4f}_{point.lng:.4f}"
+        
+        scored_zones.append({
+            'id': zone_id,
+            'center_lat': point.lat,
+            'center_lng': point.lng,
+            'radius_miles': request.analysis_radius_miles,
+            'total_score': score_result['total_score'],
+            'metrics': EnhancedZoneMetrics(
+                total_population=metrics.total_population,
+                population_growth=metrics.population_growth,
+                median_income=metrics.median_income,
+                median_age=metrics.median_age,
+                total_competitors=metrics.total_competitors,
+                drive_by_traffic_monthly=metrics.drive_by_traffic_monthly,
+                foot_traffic_monthly=metrics.foot_traffic_monthly
+            ),
+            'component_scores': score_result['component_scores'],
+            'insights': insights[:4]
+        })
+    
+    scored_zones.sort(key=lambda z: z['total_score'], reverse=True)
+    
+    top_zones = []
+    for i, zone in enumerate(scored_zones[:request.top_n]):
+        top_zones.append(EnhancedOptimalZone(
+            id=zone['id'],
+            center_lat=zone['center_lat'],
+            center_lng=zone['center_lng'],
+            radius_miles=zone['radius_miles'],
+            total_score=zone['total_score'],
+            metrics=zone['metrics'],
+            component_scores=zone['component_scores'],
+            insights=zone['insights'],
+            rank=i + 1
+        ))
+    
+    if top_zones:
+        top = top_zones[0]
+        summary = f"Found {len(top_zones)} optimal {request.analysis_radius_miles}-mile zones. "
+        summary += f"Best zone scored {top.total_score}/100"
+        if top.insights:
+            summary += f" - {top.insights[0]}"
+    else:
+        summary = "No optimal zones identified in the target area."
+    
+    return FindEnhancedOptimalZonesResponse(
+        zones=top_zones,
+        analysis_summary=summary,
+        center_lat=request.center_lat,
+        center_lng=request.center_lng,
+        target_radius_miles=request.target_radius_miles
+    )

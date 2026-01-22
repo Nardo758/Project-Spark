@@ -344,7 +344,7 @@ export async function findOptimalZones(
   params: FindOptimalZonesParams
 ): Promise<{ zones: OptimalZone[]; summary: string; error?: string }> {
   try {
-    const response = await fetch(`${API_BASE}/maps/find-optimal-zones`, {
+    const response = await fetch(`${API_BASE}/maps/find-optimal-zones-enhanced`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -353,10 +353,7 @@ export async function findOptimalZones(
         center_lng: params.center.lng,
         target_radius_miles: params.targetRadius,
         analysis_radius_miles: params.analysisRadius || 3.0,
-        active_layers: params.activeLayers,
         business_type: params.businessType,
-        demographics_data: params.demographicsData,
-        competitors: params.competitors,
         top_n: params.topN || 3
       })
     })
