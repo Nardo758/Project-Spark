@@ -218,18 +218,21 @@ class DOTTrafficService:
         try:
             radius_meters = radius_miles * 1609.34
             
+            # Use a larger search radius for better road coverage (at least 10 miles)
+            effective_radius = max(radius_meters, 16093)  # Minimum 10 miles
+            
             params = {
                 'where': '1=1',
                 'geometry': f'{lng},{lat}',
                 'geometryType': 'esriGeometryPoint',
                 'spatialRel': 'esriSpatialRelIntersects',
-                'distance': radius_meters,
+                'distance': effective_radius,
                 'units': 'esriSRUnit_Meter',
                 'outFields': '*',
                 'returnGeometry': 'true',
                 'outSR': '4326',
                 'f': 'json',
-                'resultRecordCount': 50,
+                'resultRecordCount': 200,  # Fetch more road segments for better coverage
             }
             
             # Some state endpoints require explicit input spatial reference
