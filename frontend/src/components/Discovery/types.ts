@@ -36,7 +36,7 @@ export interface FilterState {
   feasibility: string | null;
   location: string | null;
   sortBy: 'recent' | 'trending' | 'validated' | 'market' | 'feasibility' | 'recommended';
-  freshness: 'all' | 'hot' | 'fresh' | 'validated' | 'archive';
+  maxDaysOld: number | null;
   myAccessOnly: boolean;
 }
 

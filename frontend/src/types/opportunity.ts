@@ -68,7 +68,6 @@ export interface OpportunityFilters {
   min_validations?: number | null
   max_age_days?: number | null
   sort_by?: 'recent' | 'trending' | 'validated' | 'market' | 'feasibility'
-  freshness?: 'all' | 'hot' | 'fresh' | 'validated' | 'archive'
   my_access_only?: boolean
 }
 

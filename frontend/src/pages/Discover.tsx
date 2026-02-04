@@ -125,7 +125,7 @@ export default function Discover() {
               feasibility: null,
               location: filters.geographic_scope || null,
               sortBy: filters.sort_by || 'feasibility',
-              freshness: filters.freshness || 'all',
+              maxDaysOld: filters.max_age_days ?? null,
               myAccessOnly: filters.my_access_only || false,
             }}
             onFiltersChange={(newFilters) => setFilters({
@@ -133,7 +133,7 @@ export default function Discover() {
               category: newFilters.category || undefined,
               geographic_scope: newFilters.location || undefined,
               sort_by: newFilters.sortBy,
-              freshness: newFilters.freshness,
+              max_age_days: newFilters.maxDaysOld ?? undefined,
               my_access_only: newFilters.myAccessOnly,
             })}
             resultsCount={total}

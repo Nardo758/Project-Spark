@@ -50,12 +50,22 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   const categories = [
     { value: 'all', label: 'All Categories' },
-    { value: 'home-services', label: 'Home Services' },
+    { value: 'technology', label: 'Technology' },
     { value: 'health-wellness', label: 'Health & Wellness' },
-    { value: 'b2b-saas', label: 'B2B SaaS' },
-    { value: 'pet-tech', label: 'Pet Tech' },
-    { value: 'b2b-services', label: 'B2B Services' },
     { value: 'healthcare', label: 'Healthcare' },
+    { value: 'money-finance', label: 'Money & Finance' },
+    { value: 'home-services', label: 'Home Services' },
+    { value: 'b2b-saas', label: 'B2B SaaS' },
+    { value: 'b2b-services', label: 'B2B Services' },
+    { value: 'ecommerce', label: 'E-Commerce' },
+    { value: 'education', label: 'Education' },
+    { value: 'entertainment', label: 'Entertainment' },
+    { value: 'food-beverage', label: 'Food & Beverage' },
+    { value: 'real-estate', label: 'Real Estate' },
+    { value: 'travel-hospitality', label: 'Travel & Hospitality' },
+    { value: 'pet-tech', label: 'Pet Tech' },
+    { value: 'sustainability', label: 'Sustainability' },
+    { value: 'other', label: 'Other' },
   ];
 
   const feasibilityOptions = [
@@ -82,12 +92,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     { value: 'market', label: 'Market Size' },
   ];
 
-  const freshnessOptions = [
-    { value: 'all', label: 'All', icon: null, color: 'stone' },
-    { value: 'hot', label: 'HOT', icon: '🔥', color: 'red' },
-    { value: 'fresh', label: 'FRESH', icon: '⚡', color: 'orange' },
-    { value: 'validated', label: 'VALIDATED', icon: '✓', color: 'green' },
-    { value: 'archive', label: 'ARCHIVE', icon: '📚', color: 'gray' },
+  const daysOldOptions = [
+    { value: 'all', label: 'Any Age' },
+    { value: '7', label: 'Last 7 days' },
+    { value: '14', label: 'Last 14 days' },
+    { value: '30', label: 'Last 30 days' },
+    { value: '60', label: 'Last 60 days' },
+    { value: '90', label: 'Last 90 days' },
   ];
 
   const hasActiveFilters = () => {
@@ -96,7 +107,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       filters.category !== 'all' ||
       filters.feasibility !== 'all' ||
       filters.location !== 'all' ||
-      filters.freshness !== 'all' ||
+      filters.maxDaysOld !== null ||
       filters.myAccessOnly
     );
   };
@@ -108,7 +119,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       category: 'all',
       feasibility: 'all',
       location: 'all',
-      freshness: 'all',
+      maxDaysOld: null,
       myAccessOnly: false,
     });
   };
@@ -150,11 +161,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       });
     }
 
-    if (filters.freshness !== 'all') {
-      const freshnessLabel = freshnessOptions.find((f) => f.value === filters.freshness)?.label || filters.freshness;
+    if (filters.maxDaysOld !== null) {
+      const daysLabel = daysOldOptions.find((d) => d.value === String(filters.maxDaysOld))?.label || `Last ${filters.maxDaysOld} days`;
       pills.push({
-        label: freshnessLabel,
-        onRemove: () => onFiltersChange({ freshness: 'all' }),
+        label: daysLabel,
+        onRemove: () => onFiltersChange({ maxDaysOld: null }),
       });
     }
 
@@ -279,33 +290,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
       </div>
 
-      {/* Freshness Filters Row */}
+      {/* Days Old Filter Row */}
       <div className="bg-white border-b border-stone-200">
         <div className="max-w-7xl mx-auto px-8 py-3">
           <div className="flex items-center gap-4 flex-wrap">
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
-              Filter by access:
+              Filter by age:
             </span>
-            {freshnessOptions.map((option) => {
-              const isActive = filters.freshness === option.value;
-              const colorClasses = {
-                stone: 'border-stone-300 text-stone-600 bg-white',
-                red: 'border-red-200 bg-red-50 text-red-600',
-                orange: 'border-orange-200 bg-orange-50 text-orange-600',
-                green: 'border-green-200 bg-green-50 text-green-600',
-                gray: 'border-gray-300 bg-gray-100 text-gray-600',
-              };
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => onFiltersChange({ freshness: option.value as FilterState['freshness'] })}
-                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border cursor-pointer transition-all hover:opacity-80 hover:-translate-y-0.5 ${colorClasses[option.color as keyof typeof colorClasses] || colorClasses.stone} ${isActive ? 'ring-2 ring-current' : ''}`}
-                >
-                  {option.icon && <span>{option.icon}</span>}
-                  <span>{option.label}</span>
-                </button>
-              );
-            })}
+            <select
+              value={filters.maxDaysOld !== null ? String(filters.maxDaysOld) : 'all'}
+              onChange={(e) => onFiltersChange({ maxDaysOld: e.target.value === 'all' ? null : parseInt(e.target.value, 10) })}
+              className="px-3 py-1.5 border border-stone-200 rounded-lg text-sm bg-white focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-100 appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNzg3MTZjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0ibTYgOSA2IDYgNi02Ii8+PC9zdmc+')] bg-no-repeat bg-[right_8px_center] pr-8"
+            >
+              {daysOldOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
 
             {/* My Access Toggle */}
             <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer ml-auto">

@@ -91,9 +91,6 @@ function buildQueryString(
     params.set('max_age_days', filters.max_age_days.toString())
   }
   if (filters.sort_by) params.set('sort_by', filters.sort_by)
-  if (filters.freshness && filters.freshness !== 'all') {
-    params.set('freshness', filters.freshness)
-  }
   if (filters.my_access_only) {
     params.set('my_access_only', 'true')
   }

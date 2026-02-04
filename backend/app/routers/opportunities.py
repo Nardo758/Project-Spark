@@ -234,7 +234,7 @@ async def get_opportunities(
     country: Optional[str] = None,
     completion_status: Optional[str] = None,
     realm_type: Optional[str] = Query(None, regex="^(physical|digital)$"),
-    freshness: Optional[str] = Query(None, regex="^(hot|fresh|validated|archive)$"),
+    max_age_days: Optional[int] = Query(None, ge=1),
     my_access_only: bool = Query(False),
     current_user: User = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
@@ -283,26 +283,11 @@ async def get_opportunities(
             )
         )
 
-    # Filter by freshness (age-based categories)
-    if freshness:
+    # Filter by max age in days
+    if max_age_days:
         from datetime import datetime, timedelta
-        now = datetime.utcnow()
-        if freshness == "hot":
-            # HOT: 0-7 days old
-            cutoff = now - timedelta(days=7)
-            query = query.filter(Opportunity.created_at >= cutoff)
-        elif freshness == "fresh":
-            # FRESH: 8-30 days old
-            start = now - timedelta(days=30)
-            end = now - timedelta(days=7)
-            query = query.filter(Opportunity.created_at >= start, Opportunity.created_at < end)
-        elif freshness == "validated":
-            # VALIDATED: High validation count (10+)
-            query = query.filter(Opportunity.validation_count >= 10)
-        elif freshness == "archive":
-            # ARCHIVE: Older than 30 days
-            cutoff = now - timedelta(days=30)
-            query = query.filter(Opportunity.created_at < cutoff)
+        cutoff = datetime.utcnow() - timedelta(days=max_age_days)
+        query = query.filter(Opportunity.created_at >= cutoff)
 
     # Filter by my_access_only - show only opportunities user can access based on tier
     if my_access_only and current_user:
