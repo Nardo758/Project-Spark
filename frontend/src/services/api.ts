@@ -104,7 +104,7 @@ export async function fetchOpportunities(
   pageSize: number = 20
 ): Promise<OpportunitiesResponse> {
   const queryString = buildQueryString(filters, page, pageSize)
-  const url = `${API_BASE}/opportunities?${queryString}`
+  const url = `${API_BASE}/opportunities/?${queryString}`
 
   const response = await fetch(url, {
     method: 'GET',
@@ -171,7 +171,7 @@ export async function unvalidateOpportunity(
 export async function saveSearch(
   searchData: SavedSearchCreate
 ): Promise<SavedSearch> {
-  const url = `${API_BASE}/saved-searches`
+  const url = `${API_BASE}/saved-searches/`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -186,7 +186,7 @@ export async function saveSearch(
  * Get user's saved searches
  */
 export async function fetchSavedSearches(): Promise<SavedSearch[]> {
-  const url = `${API_BASE}/saved-searches`
+  const url = `${API_BASE}/saved-searches/`
 
   const response = await fetch(url, {
     method: 'GET',
