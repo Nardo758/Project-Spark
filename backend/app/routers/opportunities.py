@@ -304,6 +304,14 @@ async def get_opportunities(
             cutoff = now - timedelta(days=30)
             query = query.filter(Opportunity.created_at < cutoff)
 
+    # Filter by my_access_only - show only opportunities user can access based on tier
+    if my_access_only and current_user:
+        if user_tier == SubscriptionTier.FREE:
+            # Free users can only access opportunities with feasibility < 60
+            query = query.filter(Opportunity.feasibility_score < 60)
+        # Pro and above can access all (no additional filter needed)
+        # If user is not authenticated, ignore this filter
+
     # Sorting
     if sort_by == "recent":
         query = query.order_by(desc(Opportunity.created_at))
