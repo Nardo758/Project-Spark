@@ -4,6 +4,7 @@
  */
 
 import { useEffect } from 'react'
+import '../styles/discovery-theme.css'
 import {
   RecommendedSection,
   FilterBar,
@@ -45,22 +46,22 @@ export default function Discover() {
   }, [initializeFromUrl])
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-white">
       {/* Navigation (placeholder - replace with your nav component) */}
-      <nav className="bg-white border-b border-stone-200 sticky top-0 z-50">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center text-white font-bold">
+              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold">
                 O
               </div>
-              <span className="text-xl font-bold text-stone-900">OppGrid</span>
+              <span className="text-xl font-bold text-gray-900">OppGrid</span>
             </div>
             <div className="flex items-center gap-6">
-              <a href="/discover" className="text-sm font-semibold text-stone-900">Discover</a>
-              <a href="/saved" className="text-sm font-medium text-stone-600 hover:text-stone-900">Saved</a>
-              <a href="/hub" className="text-sm font-medium text-stone-600 hover:text-stone-900">Hub</a>
-              <a href="/experts" className="text-sm font-medium text-stone-600 hover:text-stone-900">Experts</a>
+              <a href="/discover" className="text-sm font-semibold text-emerald-600">Discover</a>
+              <a href="/saved" className="text-sm font-medium text-gray-600 hover:text-gray-900">Saved</a>
+              <a href="/hub" className="text-sm font-medium text-gray-600 hover:text-gray-900">Hub</a>
+              <a href="/experts" className="text-sm font-medium text-gray-600 hover:text-gray-900">Experts</a>
             </div>
           </div>
         </div>
@@ -69,12 +70,16 @@ export default function Discover() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Hero Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-stone-900 mb-2">
+        {/* Hero Section with emerald gradient background */}
+        <div className="mb-8 p-8 rounded-2xl bg-gradient-to-br from-emerald-50/50 via-white to-emerald-50/30 border border-emerald-100/50">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-4">
+            <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+            {opportunities.length}+ Live Opportunities
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Discover Validated Opportunities
           </h1>
-          <p className="text-lg text-stone-600">
+          <p className="text-lg text-gray-600">
             Browse real-world problems validated by the community
           </p>
         </div>
@@ -136,7 +141,7 @@ export default function Discover() {
             </p>
             <button
               onClick={() => setFilters({})}
-              className="px-6 py-2 bg-stone-900 text-white rounded-lg hover:bg-stone-800 transition-colors"
+              className="px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
             >
               Clear All Filters
             </button>
