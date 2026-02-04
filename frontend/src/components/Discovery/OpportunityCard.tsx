@@ -82,115 +82,100 @@ export default function OpportunityCard({
 
   return (
     <div
-      className={`
-        bg-white rounded-lg border border-gray-200 p-6
-        hover:border-emerald-200 hover:shadow-md
-        transition-all duration-200 cursor-pointer
-        ${className}
-      `}
+      className={`bg-white p-5 rounded-xl border-2 border-stone-200 hover:border-stone-900 transition-all cursor-pointer group ${className}`}
       onClick={() => window.location.href = `/opportunity/${opportunity.id}`}
     >
       {/* Header - Category + Score */}
-      <div className="flex items-start justify-between mb-4">
-        {/* Category + Status Badge */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-stone-500 uppercase">
             {opportunity.category}
           </span>
           {opportunity.access_state === 'unlocked' && (
-            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
+            <span className="flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-medium">
               Unlocked
             </span>
           )}
           {opportunity.access_state === 'locked' && (
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded">
-              Locked
+            <span className="flex items-center gap-1 bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full text-xs font-medium">
+              Upgrade for Premium
             </span>
           )}
         </div>
 
         {/* Feasibility Score */}
-        <div className={`
-          w-14 h-14 rounded-full flex items-center justify-center
-          text-2xl font-bold
-          ${getFeasibilityColor(opportunity.feasibility_score || 0)}
-        `}>
-          {opportunity.feasibility_score || 0}
+        <div className="bg-emerald-100 text-emerald-700 px-3 py-2 rounded-full flex-shrink-0">
+          <div className="text-2xl font-bold leading-none">{opportunity.feasibility_score || 0}</div>
         </div>
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-emerald-600 transition-colors">
+      <h3 className="font-semibold text-stone-900 text-lg mb-1 group-hover:text-violet-600 transition-colors">
         {opportunity.title}
       </h3>
 
       {/* Description */}
-      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-        {opportunity.description}
+      <p className="text-sm text-stone-500 mb-4 line-clamp-2">
+        {opportunity.description || opportunity.ai_summary || 'Analysis pending...'}
       </p>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-3 gap-4 mb-4 pb-4 border-b border-gray-100">
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Signals</div>
-          <div className="text-lg font-semibold text-gray-900">
-            {opportunity.validation_count}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="bg-stone-50 rounded-lg p-3">
+          <div className="text-xs text-stone-500 mb-1">Signals</div>
+          <div className="text-lg font-bold text-stone-900">
+            {opportunity.validation_count || 0}
           </div>
         </div>
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Market</div>
-          <div className="text-lg font-semibold text-gray-900">
-            {formatMarketSize(opportunity.market_size || '')}
+        <div className="bg-stone-50 rounded-lg p-3">
+          <div className="text-xs text-stone-500 mb-1">Market</div>
+          <div className="text-lg font-bold text-stone-900">
+            {formatMarketSize(opportunity.market_size || 'N/A')}
           </div>
         </div>
-        <div>
-          <div className="text-xs text-gray-500 mb-1">Growth</div>
-          <div className={`text-lg font-semibold ${
-            (opportunity.growth_rate || 0) > 0 ? 'text-emerald-600' : 'text-gray-900'
-          }`}>
+        <div className="bg-stone-50 rounded-lg p-3">
+          <div className="text-xs text-stone-500 mb-1">Growth</div>
+          <div className="text-lg font-bold text-emerald-600">
             {formatGrowth(opportunity.growth_rate || 0)}
           </div>
         </div>
       </div>
 
       {/* Actions Row */}
-      <div className="flex items-center justify-between">
+      <div className="pt-4 border-t border-stone-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Report Button */}
           <button
             onClick={handleAnalyze}
-            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-emerald-600 transition-colors"
+            className="flex items-center gap-1 text-sm text-stone-600 hover:text-violet-600"
             aria-label="View report"
           >
             <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Report</span>
+            <span>Report</span>
           </button>
 
           {/* Save Button */}
           <button
             onClick={handleSave}
-            className={`flex items-center gap-1.5 text-sm transition-colors ${
+            className={`flex items-center gap-1 text-sm ${
               isSaved
-                ? 'text-emerald-600'
-                : 'text-gray-600 hover:text-emerald-600'
+                ? 'text-violet-600'
+                : 'text-stone-600 hover:text-violet-600'
             }`}
             aria-label={isSaved ? 'Unsave' : 'Save'}
           >
             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-            <span className="hidden sm:inline">Save</span>
+            <span>Save</span>
           </button>
         </div>
 
         {/* View Full Analysis Link */}
-        <button
-          onClick={handleAnalyze}
-          className="text-sm text-gray-600 hover:text-emerald-600 transition-colors flex items-center gap-1"
-        >
-          View full analysis
+        <div className="flex items-center gap-1 text-sm text-stone-600 group-hover:text-violet-600 transition-colors">
+          <span>View full analysis</span>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-        </button>
+        </div>
       </div>
     </div>
   )

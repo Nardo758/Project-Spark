@@ -97,7 +97,7 @@ export const OpportunityGrid: React.FC<OpportunityGridProps> = ({
     // Loading state
     if (isLoading) {
       return (
-        <div className={`grid gap-6 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2'}`}>
+        <div className={`grid gap-4 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <OpportunityCardSkeleton key={i} />
           ))}
@@ -138,8 +138,8 @@ export const OpportunityGrid: React.FC<OpportunityGridProps> = ({
     // Opportunities grid
     return (
       <div
-        className={`grid gap-6 ${
-          viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2'
+        className={`grid gap-4 ${
+          viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
         }`}
       >
         {opportunities.map((opportunity, index) => (
