@@ -5,11 +5,12 @@
 export interface Opportunity {
   id: number;
   title: string;
-  description: string;
-  category: string;
-  validation_count: number;
-  growth_rate: number;
-  severity: number;
+  description?: string;
+  category?: string;
+  validation_count?: number;
+  growth_rate?: number;
+  severity?: number;
+  feasibility_score?: number;
   market_size?: string;
   geographic_scope?: string;
   city?: string;

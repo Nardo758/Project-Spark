@@ -9,31 +9,41 @@ interface OpportunityCardProps {
   opportunity: {
     id: number
     title: string
-    description: string
-    category: string
-    feasibility_score: number
-    validation_count: number
-    market_size: string
-    growth_rate: number
+    description?: string
+    category?: string
+    feasibility_score?: number
+    validation_count?: number
+    market_size?: string
+    growth_rate?: number
     access_state?: 'unlocked' | 'locked' | 'preview'
     user_validated?: boolean
     user_saved?: boolean
+    ai_generated_title?: string
+    ai_summary?: string
   }
+  userTier?: string
   onValidate?: (id: number) => void
   onSave?: (id: number) => void
   onAnalyze?: (id: number) => void
+  onShare?: (id: number) => void
+  isValidated?: boolean
+  isSaved?: boolean
   className?: string
 }
 
 export default function OpportunityCard({
   opportunity,
+  userTier,
   onValidate,
   onSave,
   onAnalyze,
+  onShare,
+  isValidated: externalIsValidated,
+  isSaved: externalIsSaved,
   className = ''
 }: OpportunityCardProps) {
-  const [isValidated, setIsValidated] = useState(opportunity.user_validated || false)
-  const [isSaved, setIsSaved] = useState(opportunity.user_saved || false)
+  const [isValidated, setIsValidated] = useState(externalIsValidated || opportunity.user_validated || false)
+  const [isSaved, setIsSaved] = useState(externalIsSaved || opportunity.user_saved || false)
 
   const handleValidate = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -103,9 +113,9 @@ export default function OpportunityCard({
         <div className={`
           w-14 h-14 rounded-full flex items-center justify-center
           text-2xl font-bold
-          ${getFeasibilityColor(opportunity.feasibility_score)}
+          ${getFeasibilityColor(opportunity.feasibility_score || 0)}
         `}>
-          {opportunity.feasibility_score}
+          {opportunity.feasibility_score || 0}
         </div>
       </div>
 
@@ -130,15 +140,15 @@ export default function OpportunityCard({
         <div>
           <div className="text-xs text-gray-500 mb-1">Market</div>
           <div className="text-lg font-semibold text-gray-900">
-            {formatMarketSize(opportunity.market_size)}
+            {formatMarketSize(opportunity.market_size || '')}
           </div>
         </div>
         <div>
           <div className="text-xs text-gray-500 mb-1">Growth</div>
           <div className={`text-lg font-semibold ${
-            opportunity.growth_rate > 0 ? 'text-emerald-600' : 'text-gray-900'
+            (opportunity.growth_rate || 0) > 0 ? 'text-emerald-600' : 'text-gray-900'
           }`}>
-            {formatGrowth(opportunity.growth_rate)}
+            {formatGrowth(opportunity.growth_rate || 0)}
           </div>
         </div>
       </div>

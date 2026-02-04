@@ -6,13 +6,9 @@
 import { useEffect } from 'react'
 import '../styles/discovery-theme.css'
 import {
-  RecommendedSection,
   FilterBar,
   OpportunityGrid,
   Pagination,
-  ComparisonPanel,
-  ComparisonModal,
-  SavedSearchModal,
 } from '../components/DiscoveryFeed'
 import { useDiscoveryStore } from '../stores/discoveryStore'
 
@@ -22,22 +18,20 @@ export default function Discover() {
     opportunities,
     recommendedOpportunities,
     filters,
-    pagination,
+    page,
+    pageSize,
+    total,
     selectedOpportunityIds,
     loading,
     error,
-    showComparisonModal,
-    showSavedSearchModal,
     
     // Actions
     initializeFromUrl,
     setFilters,
     setPage,
     quickValidate,
-    saveOpportunity,
-    toggleSelection,
-    setShowComparisonModal,
-    setShowSavedSearchModal,
+    toggleSave,
+    clearSelection,
   } = useDiscoveryStore()
 
   // Initialize from URL on mount
@@ -120,12 +114,26 @@ export default function Discover() {
         )}
 
         {/* Filters */}
-        <FilterBar
-          filters={filters}
-          onFiltersChange={setFilters}
-          onSaveSearch={() => setShowSavedSearchModal(true)}
-          className="mb-8"
-        />
+        <div className="mb-8">
+          <FilterBar
+            filters={{
+              search: filters.search || '',
+              category: filters.category || null,
+              feasibility: null,
+              location: filters.location || null,
+              sortBy: filters.sort_by || 'recent',
+              freshness: 'all',
+              myAccessOnly: false,
+            }}
+            onFiltersChange={(newFilters) => setFilters({
+              search: newFilters.search,
+              category: newFilters.category || undefined,
+              location: newFilters.location || undefined,
+              sort_by: newFilters.sortBy,
+            })}
+            resultsCount={total}
+          />
+        </div>
 
         {/* Error Display */}
         {error && (
@@ -137,21 +145,22 @@ export default function Discover() {
         {/* Opportunity Grid */}
         <OpportunityGrid
           opportunities={opportunities}
-          loading={loading}
+          isLoading={loading}
           viewMode="grid"
           onValidate={quickValidate}
-          onSave={saveOpportunity}
-          onSelect={toggleSelection}
-          selectedIds={selectedOpportunityIds}
-          className="mb-8"
+          onSave={toggleSave}
         />
 
         {/* Pagination */}
         {opportunities.length > 0 && (
           <Pagination
-            pagination={pagination}
+            pagination={{
+              currentPage: page,
+              totalItems: total,
+              pageSize: pageSize,
+              totalPages: Math.ceil(total / pageSize) || 1,
+            }}
             onPageChange={setPage}
-            className="mb-16"
           />
         )}
 
@@ -177,35 +186,17 @@ export default function Discover() {
 
       {/* Floating Comparison Panel */}
       {selectedOpportunityIds.length > 0 && (
-        <ComparisonPanel
-          selectedIds={selectedOpportunityIds}
-          opportunities={opportunities}
-          onCompare={() => setShowComparisonModal(true)}
-          onRemove={(id) => toggleSelection(id)}
-          onClear={() => selectedOpportunityIds.forEach(id => toggleSelection(id))}
-        />
-      )}
-
-      {/* Comparison Modal */}
-      {showComparisonModal && (
-        <ComparisonModal
-          opportunityIds={selectedOpportunityIds}
-          opportunities={opportunities}
-          onClose={() => setShowComparisonModal(false)}
-        />
-      )}
-
-      {/* Saved Search Modal */}
-      {showSavedSearchModal && (
-        <SavedSearchModal
-          filters={filters}
-          onClose={() => setShowSavedSearchModal(false)}
-          onSave={(searchData) => {
-            // This will be handled by the store
-            console.log('Saving search:', searchData)
-            setShowSavedSearchModal(false)
-          }}
-        />
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 flex items-center gap-4">
+          <span className="text-sm text-gray-600">
+            {selectedOpportunityIds.length} selected
+          </span>
+          <button
+            onClick={clearSelection}
+            className="text-sm text-red-600 hover:text-red-700"
+          >
+            Clear
+          </button>
+        </div>
       )}
     </div>
   )
