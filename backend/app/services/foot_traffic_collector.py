@@ -276,7 +276,7 @@ class FootTrafficCollector:
                 VALUES (
                     :place_id, :place_name, :place_address, :place_type,
                     :latitude, :longitude, ST_MakePoint(:longitude, :latitude)::geography,
-                    :popular_times::jsonb, :current_popularity,
+                    CAST(:popular_times AS jsonb), :current_popularity,
                     :time_spent_min, :time_spent_max,
                     :data_quality_score, NOW()
                 )

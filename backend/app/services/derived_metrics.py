@@ -61,18 +61,19 @@ class DerivedMetricsCalculator:
     """
     
     # Normalization ranges for each metric (min, max, is_higher_better)
+    # Values are clamped to range before normalizing to 0-100
     NORMALIZATION_RANGES = {
-        'competition_per_capita': (0, 10, False),  # Lower is better
-        'revenue_potential_per_competitor': (0, 500000, True),
-        'traffic_per_competitor': (0, 50000, True),
-        'foot_to_vehicle_ratio': (0, 1, True),  # Higher means more walkable
-        'traffic_density': (0, 5, True),  # Traffic per capita
-        'customer_conversion_potential': (0, 3, True),
-        'purchasing_power_index': (0, 100, True),
-        'growth_momentum': (0, 50, True),
-        'market_opportunity_score': (0, 100, True),
-        'working_age_ratio': (0, 100, True),
-        'income_per_traffic': (0, 100, True),
+        'competition_per_capita': (0, 20, False),  # Competitors per 10K pop, lower is better
+        'revenue_potential_per_competitor': (0, 2000000, True),  # $ available per competitor
+        'traffic_per_competitor': (0, 100000, True),  # Monthly traffic per competitor
+        'foot_to_vehicle_ratio': (0, 1, True),  # 0-1 ratio, higher = more walkable
+        'traffic_density': (0, 10, True),  # Traffic per capita (scaled)
+        'customer_conversion_potential': (0, 100, True),  # Foot traffic % of total
+        'purchasing_power_index': (0, 500, True),  # Income x Pop / 1M (can be large)
+        'growth_momentum': (0, 100, True),  # Composite growth score
+        'market_opportunity_score': (0, 100, True),  # Already 0-100
+        'working_age_ratio': (0, 100, True),  # Already 0-100
+        'income_per_traffic': (0, 200, True),  # Income per 1K traffic
     }
     
     # Category weights for overall score
@@ -161,21 +162,21 @@ class DerivedMetricsCalculator:
             is_higher_better=True
         )
         
-        # Traffic Density (total traffic per 1000 population)
+        # Traffic Density (traffic per capita ratio)
         traffic_density = (
-            (total_traffic / total_population) * 1000
+            total_traffic / total_population
             if total_population > 0 else 0
         )
         result.metrics['traffic_density'] = DerivedMetric(
             name='Traffic Density',
             raw_value=traffic_density,
-            normalized_value=self._normalize('traffic_density', traffic_density / 1000),
+            normalized_value=self._normalize('traffic_density', traffic_density),
             category='traffic',
-            description='Monthly traffic per 1,000 residents',
+            description='Monthly traffic per resident',
             is_higher_better=True
         )
         
-        # Customer Conversion Potential (foot traffic relative to total - higher = more engaged pedestrians)
+        # Customer Conversion Potential (foot traffic % of total - higher = more engaged pedestrians)
         customer_conversion = (
             (foot_traffic_monthly / total_traffic) * 100
             if total_traffic > 0 else 50
@@ -183,7 +184,7 @@ class DerivedMetricsCalculator:
         result.metrics['customer_conversion_potential'] = DerivedMetric(
             name='Customer Conversion Potential',
             raw_value=customer_conversion,
-            normalized_value=self._normalize('customer_conversion_potential', customer_conversion / 33),
+            normalized_value=self._normalize('customer_conversion_potential', customer_conversion),
             category='traffic',
             description='Foot traffic % of total (higher = more engaged visitors)',
             is_higher_better=True
@@ -283,7 +284,7 @@ class DerivedMetricsCalculator:
         
         # Calculate normalized score
         if max_val == min_val:
-            normalized = 50
+            normalized = 50.0
         else:
             normalized = (clamped - min_val) / (max_val - min_val) * 100
         
@@ -291,7 +292,8 @@ class DerivedMetricsCalculator:
         if not is_higher_better:
             normalized = 100 - normalized
         
-        return normalized
+        # Final clamp to ensure 0-100
+        return max(0.0, min(100.0, normalized))
     
     def _calculate_category_scores(
         self, 

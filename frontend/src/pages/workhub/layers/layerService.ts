@@ -29,8 +29,10 @@ export async function fetchLayerData(
         return await fetchDemographicsData(params)
       case 'competition':
         return await fetchCompetitionData(params)
-      case 'traffic':
-        return await fetchTrafficData(params)
+      case 'foot_traffic':
+        return await fetchFootTrafficData(params)
+      case 'drive_by_traffic':
+        return await fetchDriveByTrafficData(params)
       default:
         return { data: null, error: `Unknown layer type: ${layerType}` }
     }
@@ -180,11 +182,41 @@ async function fetchCompetitionData(params: LayerFetchParams): Promise<{ data: a
   }
 }
 
-async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
-  const { center, radius, config } = params
+function generateHotspotGrid(center: { lat: number; lng: number }, radiusMiles: number): { lat: number; lng: number }[] {
+  if (radiusMiles <= 3.1) {
+    return [center]
+  }
   
-  const radiusMeters = Math.round(radius * 1609.34)
-  const forceRefresh = config.forceRefresh || false
+  const points: { lat: number; lng: number }[] = []
+  const gridSize = 3
+  const effectiveRadius = radiusMiles * 0.7
+  
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const xOffset = (col - 1) * (effectiveRadius * 2 / (gridSize - 1))
+      const yOffset = (row - 1) * (effectiveRadius * 2 / (gridSize - 1))
+      
+      const latOffset = yOffset / 69
+      const lngOffset = xOffset / (69 * Math.cos(center.lat * Math.PI / 180))
+      
+      const distance = Math.sqrt(xOffset * xOffset + yOffset * yOffset)
+      if (distance <= radiusMiles) {
+        points.push({
+          lat: center.lat + latOffset,
+          lng: center.lng + lngOffset
+        })
+      }
+    }
+  }
+  
+  return points
+}
+
+async function fetchSingleHotspot(
+  point: { lat: number; lng: number },
+  forceRefresh: boolean
+): Promise<{ point: { lat: number; lng: number }; data: any; error?: string }> {
+  const HOTSPOT_RADIUS_METERS = 2500
   
   try {
     const response = await fetch(`${API_BASE}/foot-traffic/collect-and-analyze`, {
@@ -192,85 +224,128 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       credentials: 'include',
       body: JSON.stringify({
-        latitude: center.lat,
-        longitude: center.lng,
-        radius_meters: radiusMeters,
+        latitude: point.lat,
+        longitude: point.lng,
+        radius_meters: HOTSPOT_RADIUS_METERS,
         force_refresh: forceRefresh
       })
     })
     
     if (!response.ok) {
       if (response.status === 401) {
+        return { point, data: null, error: 'Authentication required' }
+      }
+      return { point, data: null, error: 'Failed to fetch' }
+    }
+    
+    const data = await response.json()
+    return { point, data }
+  } catch (error) {
+    return { point, data: null, error: 'Network error' }
+  }
+}
+
+async function fetchFootTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
+  const { center, radius, config } = params
+  const forceRefresh = config.forceRefresh || false
+  const radiusMiles = radius
+  
+  try {
+    const hotspotPoints = generateHotspotGrid(center, radiusMiles)
+    const isMultiHotspot = hotspotPoints.length > 1
+    
+    const hotspotResults = await Promise.all(
+      hotspotPoints.map(point => fetchSingleHotspot(point, forceRefresh))
+    )
+    
+    const validResults = hotspotResults.filter(r => r.data && !r.error)
+    
+    if (validResults.length === 0) {
+      const firstError = hotspotResults.find(r => r.error)
+      if (firstError?.error === 'Authentication required') {
         return {
           data: {
-            type: 'traffic',
+            type: 'foot_traffic',
             requiresAuth: true,
             summary: null,
-            metadata: { layerType: 'traffic', source: 'unavailable' }
+            metadata: { layerType: 'foot_traffic', source: 'unavailable' }
           },
           error: 'Authentication required for foot traffic data'
         }
       }
-      const errorData = await response.json().catch(() => ({}))
-      return { data: null, error: errorData.detail || 'Failed to fetch foot traffic data' }
-    }
-
-    const data = await response.json()
-    
-    const peakHour = data.peak_hour
-    let peakTimeFormatted = null
-    if (peakHour !== null && peakHour !== undefined) {
-      const hour12 = peakHour % 12 || 12
-      const ampm = peakHour < 12 ? 'AM' : 'PM'
-      peakTimeFormatted = `${hour12}:00 ${ampm}`
+      return { data: null, error: 'Failed to fetch foot traffic data from any location' }
     }
     
-    let heatmapData = null
-    if (data.total_locations_sampled > 0) {
-      try {
-        const heatmapResponse = await fetch(`${API_BASE}/foot-traffic/heatmap`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          credentials: 'include',
-          body: JSON.stringify({
-            latitude: center.lat,
-            longitude: center.lng,
-            radius_meters: radiusMeters
-          })
-        })
-        if (heatmapResponse.ok) {
-          heatmapData = await heatmapResponse.json()
-        }
-      } catch (e) {
-        console.warn('Failed to fetch heatmap data:', e)
+    const hotspots = validResults.map(result => {
+      const data = result.data
+      const peakHour = data.peak_hour
+      let peakTimeFormatted = null
+      if (peakHour !== null && peakHour !== undefined) {
+        const hour12 = peakHour % 12 || 12
+        const ampm = peakHour < 12 ? 'AM' : 'PM'
+        peakTimeFormatted = `${hour12}:00 ${ampm}`
       }
-    }
+      
+      // Include drive-by traffic data from DOT
+      const driveByTraffic = data.drive_by_traffic || {}
+      
+      return {
+        lat: result.point.lat,
+        lng: result.point.lng,
+        vitalityScore: data.area_vitality_score || 0,
+        businessDensityScore: data.business_density_score || 0,
+        trafficConsistency: data.traffic_consistency || 0,
+        peakDay: data.peak_day,
+        peakHour: peakTimeFormatted,
+        totalLocationsSampled: data.total_locations_sampled || 0,
+        avgDailyTraffic: data.avg_daily_traffic || 0,
+        dominantPlaceTypes: data.dominant_place_types || {},
+        intensity: Math.min(100, (data.area_vitality_score || 0)),
+        driveByTrafficMonthly: driveByTraffic.monthly_estimate || 0,
+        driveByTrafficDaily: driveByTraffic.daily_average || 0,
+        driveBySource: driveByTraffic.source || 'unavailable'
+      }
+    })
+    
+    const avgVitality = hotspots.reduce((sum, h) => sum + h.vitalityScore, 0) / hotspots.length
+    const avgDensity = hotspots.reduce((sum, h) => sum + h.businessDensityScore, 0) / hotspots.length
+    const totalSampled = hotspots.reduce((sum, h) => sum + h.totalLocationsSampled, 0)
+    const bestHotspot = hotspots.reduce((best, h) => h.vitalityScore > best.vitalityScore ? h : best, hotspots[0])
+    const totalDriveByMonthly = hotspots.reduce((sum, h) => sum + (h.driveByTrafficMonthly || 0), 0)
     
     return {
       data: {
-        type: 'traffic',
+        type: 'foot_traffic',
+        isMultiHotspot,
+        hotspots,
         summary: {
-          vitalityScore: data.area_vitality_score || 0,
-          businessDensityScore: data.business_density_score || 0,
-          trafficConsistency: data.traffic_consistency || 0,
-          peakDay: data.peak_day,
-          peakHour: peakTimeFormatted,
-          peakTrafficScore: data.peak_traffic_score || 0,
-          totalLocationsSampled: data.total_locations_sampled || 0,
-          dominantPlaceTypes: data.dominant_place_types || {},
-          avgPopularTimes: data.avg_popular_times || {},
-          currentAvgPopularity: data.current_avg_popularity,
-          message: data.message,
-          fromCache: data.from_cache,
-          freshCollection: data.fresh_collection
+          vitalityScore: Math.round(avgVitality),
+          businessDensityScore: Math.round(avgDensity),
+          trafficConsistency: bestHotspot.trafficConsistency || 0,
+          peakDay: bestHotspot.peakDay,
+          peakHour: bestHotspot.peakHour,
+          peakTrafficScore: bestHotspot.vitalityScore,
+          totalLocationsSampled: totalSampled,
+          hotspotCount: hotspots.length,
+          driveByTrafficMonthly: totalDriveByMonthly,
+          driveBySource: bestHotspot.driveBySource || 'unavailable',
+          bestHotspot: {
+            lat: bestHotspot.lat,
+            lng: bestHotspot.lng,
+            vitalityScore: bestHotspot.vitalityScore,
+            driveByTrafficMonthly: bestHotspot.driveByTrafficMonthly || 0
+          },
+          message: isMultiHotspot 
+            ? `Analyzed ${hotspots.length} hotspots across ${radiusMiles} mile radius`
+            : `Analyzed area within ${radiusMiles} mile radius`
         },
-        heatmap: heatmapData,
+        heatmap: null,
         center: { lat: center.lat, lng: center.lng },
         radius,
         metadata: { 
-          layerType: 'traffic', 
-          source: data.from_cache ? 'cached' : 'fresh',
-          generatedAt: data.generated_at
+          layerType: 'foot_traffic', 
+          source: 'hotspots',
+          hotspotsAnalyzed: hotspots.length
         }
       }
     }
@@ -279,6 +354,121 @@ async function fetchTrafficData(params: LayerFetchParams): Promise<{ data: any; 
     return { 
       data: null, 
       error: error instanceof Error ? error.message : 'Failed to fetch foot traffic data' 
+    }
+  }
+}
+
+async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data: any; error?: string }> {
+  const { center, radius, config } = params
+  const forceRefresh = config.forceRefresh || false
+  const radiusMiles = radius
+  
+  try {
+    const response = await fetch(`${API_BASE}/maps/dot-traffic`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      credentials: 'include',
+      body: JSON.stringify({
+        latitude: center.lat,
+        longitude: center.lng,
+        radius_miles: radiusMiles,
+        force_refresh: forceRefresh
+      })
+    })
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        return {
+          data: {
+            type: 'drive_by_traffic',
+            requiresAuth: true,
+            summary: null,
+            metadata: { layerType: 'drive_by_traffic', source: 'unavailable' }
+          },
+          error: 'Authentication required for drive-by traffic data'
+        }
+      }
+      return { data: null, error: 'Failed to fetch drive-by traffic data' }
+    }
+    
+    const data = await response.json()
+    
+    const hotspots = data.road_segments?.map((segment: any, index: number) => ({
+      lat: segment.lat || segment.latitude,
+      lng: segment.lng || segment.longitude,
+      aadt: segment.aadt || 0,
+      monthlyTraffic: (segment.aadt || 0) * 30,
+      routeName: segment.route_name || 'Unknown Road',
+      source: segment.source || 'estimated',
+      intensity: Math.min(100, Math.floor((segment.aadt || 0) / 500))
+    })) || [{
+      lat: center.lat,
+      lng: center.lng,
+      aadt: data.daily_average || 0,
+      monthlyTraffic: data.monthly_estimate || 0,
+      routeName: 'Area Average',
+      source: data.source || 'estimated',
+      intensity: Math.min(100, Math.floor((data.daily_average || 0) / 500))
+    }]
+    
+    // Also fetch road segments for line visualization
+    // Include live traffic comparison for leading indicators
+    let roadGeoJSON = null
+    try {
+      const segmentsResponse = await fetch(`${API_BASE}/maps/road-traffic-segments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        credentials: 'include',
+        body: JSON.stringify({
+          latitude: center.lat,
+          longitude: center.lng,
+          radius_miles: radiusMiles,
+          include_live_traffic: false  // Disabled by default for faster loading
+        })
+      })
+      if (segmentsResponse.ok) {
+        roadGeoJSON = await segmentsResponse.json()
+      }
+    } catch (segmentError) {
+      console.warn('Failed to fetch road segments:', segmentError)
+    }
+    
+    return {
+      data: {
+        type: 'drive_by_traffic',
+        hotspots,
+        roadGeoJSON,  // GeoJSON FeatureCollection for road line visualization
+        summary: {
+          monthlyTraffic: data.monthly_estimate || 0,
+          dailyAverage: data.daily_average || 0,
+          monthlyFootTraffic: data.monthly_foot_traffic || 0,
+          roadSegments: roadGeoJSON?.features?.length || data.road_segments?.length || 0,
+          source: data.source || 'estimated',
+          confidenceScore: data.confidence_score || 0,
+          state: data.state,
+          message: `Vehicle traffic data for ${radiusMiles} mile radius`
+        },
+        trend: data.trend ? {
+          direction: data.trend.direction,
+          changePercent: data.trend.change_percent,
+          currentEstimate: data.trend.current_estimate,
+          historicalBaseline: data.trend.historical_baseline,
+          insight: data.trend.insight
+        } : null,
+        fusionBreakdown: data.fusion_breakdown,
+        center: { lat: center.lat, lng: center.lng },
+        radius,
+        metadata: { 
+          layerType: 'drive_by_traffic', 
+          source: data.source || 'estimated'
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching drive-by traffic:', error)
+    return { 
+      data: null, 
+      error: error instanceof Error ? error.message : 'Failed to fetch drive-by traffic data' 
     }
   }
 }
@@ -375,6 +565,70 @@ export async function findOptimalZones(
       zones: [],
       summary: '',
       error: error instanceof Error ? error.message : 'Failed to analyze locations'
+    }
+  }
+}
+
+export interface PolygonAnalysisParams {
+  polygon: [number, number][]
+  businessType?: string
+  includeTraffic?: boolean
+  includeDemographics?: boolean
+  includeCompetitors?: boolean
+}
+
+export interface PolygonAnalysisResult {
+  polygon_center: { lat: number; lng: number }
+  area_sq_miles: number
+  traffic_data: {
+    road_count: number
+    avg_daily_traffic: number
+    monthly_traffic: number
+    max_daily_traffic: number
+    min_daily_traffic: number
+    total_daily_traffic: number
+  } | null
+  demographics: {
+    estimated_population: number
+    population_density_per_sq_mile: number
+    median_income: number
+    median_age: number
+  } | null
+  competitors: any[] | null
+  overall_score: number
+  insights: string[]
+}
+
+export async function analyzePolygon(
+  params: PolygonAnalysisParams
+): Promise<{ data: PolygonAnalysisResult | null; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/maps/analyze-polygon`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        polygon: params.polygon,
+        business_type: params.businessType,
+        include_traffic: params.includeTraffic ?? true,
+        include_demographics: params.includeDemographics ?? true,
+        include_competitors: params.includeCompetitors ?? true
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return { data: null, error: errorData.detail || 'Failed to analyze polygon area' }
+    }
+
+    const data: PolygonAnalysisResult = await response.json()
+    
+    return { data }
+  } catch (error) {
+    console.error('Error analyzing polygon:', error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Failed to analyze polygon area'
     }
   }
 }

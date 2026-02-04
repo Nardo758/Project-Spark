@@ -4,7 +4,8 @@ export type LayerType =
   | 'deep_clone'
   | 'demographics'
   | 'competition'
-  | 'traffic'
+  | 'foot_traffic'
+  | 'drive_by_traffic'
   | 'custom'
 
 export interface LayerInputField {
@@ -127,6 +128,7 @@ export interface OptimalZone {
     economic: number
     demographics: number
   }
+  trends?: TrendSummary
   insights: string[]
   rank: number
 }
@@ -137,4 +139,24 @@ export interface FindOptimalZonesResponse {
   center_lat: number
   center_lng: number
   target_radius_miles: number
+}
+
+export interface TrendIndicator {
+  metric_name: string
+  direction: 'up' | 'down' | 'stable'
+  change_percent: number
+  current_value: number
+  previous_value: number
+  confidence: number
+  period: string
+  data_source: string
+}
+
+export interface TrendSummary {
+  traffic_trends: Record<string, TrendIndicator>
+  competition_trends: Record<string, TrendIndicator>
+  demographic_trends: Record<string, TrendIndicator>
+  vitality_trends: Record<string, TrendIndicator>
+  overall_momentum: 'growing' | 'stable' | 'declining'
+  momentum_score: number
 }

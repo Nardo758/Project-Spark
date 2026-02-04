@@ -84,6 +84,25 @@ class ZoneDataFetcher:
             metrics.drive_by_traffic_monthly = traffic.get('drive_by_traffic_monthly', 0)
             metrics.raw_data['traffic'] = traffic
         
+        # Calculate trend indicators
+        try:
+            from app.services.trend_indicators import calculate_trends
+            trends = calculate_trends(
+                self.db,
+                center_lat,
+                center_lng,
+                radius_miles,
+                metrics.raw_data
+            )
+            metrics.raw_data['trends'] = trends
+        except Exception as e:
+            logger.warning(f"Failed to calculate trends: {e}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
+            metrics.raw_data['trends'] = None
+        
         return metrics
     
     def _fetch_demographics(
@@ -96,33 +115,57 @@ class ZoneDataFetcher:
         Fetch demographics for an area using deterministic estimates based on location
         
         Uses lat/lng as seed for consistent results across requests
-        For production, this would integrate with Census API geocoding
+        Each unique coordinate pair generates unique demographic values
         """
         import hashlib
         
-        seed_str = f"{lat:.4f},{lng:.4f}"
+        # Use higher precision (6 decimals) for more variation between nearby zones
+        seed_str = f"{lat:.6f},{lng:.6f}"
         seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
+        # Secondary seed for additional variation
+        seed2 = int(hashlib.md5(seed_str.encode()).hexdigest()[8:16], 16)
         
         area_sq_miles = math.pi * (radius_miles ** 2)
         
+        # Get base density from nearest urban center
         base_density = self._estimate_population_density(lat, lng)
-        population = int(area_sq_miles * base_density)
         
+        # Apply location-specific variation (±25%) based on seed
+        # This ensures each zone gets unique population even in same metro area
+        density_variation = 0.75 + ((seed % 500) / 1000.0)  # 0.75 to 1.25
+        adjusted_density = base_density * density_variation
+        population = int(area_sq_miles * adjusted_density)
+        
+        # Income varies based on both region and micro-location
         region_factor = self._get_region_income_factor(lat, lng)
-        income_variation = ((seed % 35000) + 50000)
-        median_income = int(income_variation * region_factor)
+        income_base = 45000 + (seed % 40000)  # Base: 45K-85K
+        income_micro_adjust = 0.85 + ((seed2 % 300) / 1000.0)  # ±15% micro variation
+        median_income = int(income_base * region_factor * income_micro_adjust)
         
-        age_base = 30 + ((seed >> 8) % 12)
-        median_age = round(age_base + (region_factor - 1) * 3, 1)
+        # Median age varies by location characteristics
+        age_base = 28 + ((seed >> 8) % 18)  # 28-46 range
+        age_micro_adjust = ((seed2 >> 8) % 60) / 10.0 - 3.0  # ±3 years
+        median_age = round(age_base + age_micro_adjust + (region_factor - 1) * 2, 1)
+        median_age = max(25.0, min(55.0, median_age))  # Clamp to realistic range
         
-        growth_base = ((seed >> 16) % 40) / 10.0 - 0.5
-        growth_rate = round(growth_base, 1)
+        # Growth rate varies significantly by micro-location
+        growth_base = ((seed >> 16) % 60) / 10.0 - 1.5  # -1.5% to +4.5%
+        growth_micro = ((seed2 >> 16) % 20) / 10.0 - 1.0  # ±1% micro variation  
+        growth_rate = round(growth_base + growth_micro, 1)
+        growth_rate = max(-3.0, min(6.0, growth_rate))  # Clamp to realistic range
+        
+        # Employment rate varies by location (typically 55-70%)
+        employment_base = 60 + ((seed >> 20) % 15) - 2
+        employment_micro = ((seed2 >> 20) % 6) - 3
+        employment_rate = round(employment_base + employment_micro, 1)
+        employment_rate = max(50.0, min(75.0, employment_rate))
         
         return {
             'population': population,
             'median_income': median_income,
             'median_age': median_age,
             'growth_rate': growth_rate,
+            'employment_rate': employment_rate,
             'households': int(population / 2.5),
             'area_sq_miles': round(area_sq_miles, 2),
             'source': 'estimated'
@@ -221,8 +264,11 @@ class ZoneDataFetcher:
                             'distance_miles': round(distance, 2)
                         })
             
+            area_sq_miles = math.pi * (radius_miles ** 2)
+            density = len(filtered) / max(0.1, area_sq_miles)
             return {
                 'count': len(filtered),
+                'density_per_sq_mile': round(density, 2),
                 'competitors': filtered[:10],
                 'avg_rating': round(sum(c.get('rating', 0) for c in filtered) / max(1, len(filtered)), 1),
                 'source': 'serpapi'
@@ -239,8 +285,12 @@ class ZoneDataFetcher:
         radius_miles: float,
         business_type: str
     ) -> Dict[str, Any]:
-        """Estimate competitor count when API unavailable"""
-        import random
+        """Estimate competitor count when API unavailable - deterministic based on location"""
+        import hashlib
+        
+        # Use location + business type for deterministic variation
+        seed_str = f"{lat:.6f},{lng:.6f},{business_type}"
+        seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
         
         density = self._estimate_population_density(lat, lng)
         
@@ -261,14 +311,26 @@ class ZoneDataFetcher:
         normalized = business_type.lower().replace(" ", "_").replace("-", "_")
         min_count, max_count = base_counts.get(normalized, (3, 15))
         
+        # Deterministic count based on seed
+        range_size = max_count - min_count
+        base_count = min_count + (seed % (range_size + 1))
+        
         density_factor = density / 5000
-        count = int(random.randint(min_count, max_count) * density_factor)
+        count = int(base_count * density_factor)
         count = max(0, min(count, max_count * 2))
+        
+        # Deterministic rating
+        rating = 3.5 + ((seed >> 8) % 10) / 10.0  # 3.5 to 4.4
+        
+        # Calculate density per sq mile
+        area_sq_miles = math.pi * (radius_miles ** 2)
+        competitor_density = count / max(0.1, area_sq_miles)
         
         return {
             'count': count,
+            'density_per_sq_mile': round(competitor_density, 2),
             'competitors': [],
-            'avg_rating': round(random.uniform(3.5, 4.5), 1),
+            'avg_rating': round(rating, 1),
             'source': 'estimated'
         }
     
@@ -279,33 +341,61 @@ class ZoneDataFetcher:
         radius_miles: float
     ) -> Dict[str, Any]:
         """
-        Fetch traffic data from our foot traffic system
+        Fetch traffic data using fusion of multiple sources:
+        - Google Popular Times (foot traffic, real-time activity)
+        - DOT AADT (vehicle traffic, official data)
+        
+        The fusion algorithm combines both for more accurate estimates.
         """
+        google_data = None
+        dot_data = None
+        
+        # Get Google Popular Times data (foot traffic)
         try:
             from app.services.traffic_analyzer import TrafficAnalyzer
             
             analyzer = TrafficAnalyzer(self.db)
             radius_meters = int(radius_miles * 1609.34)
+            google_data = analyzer.analyze_area_traffic(lat, lng, radius_meters)
+        except Exception as e:
+            logger.debug(f"Google traffic lookup failed: {e}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
+        
+        # Get DOT AADT data (vehicle traffic)
+        try:
+            from app.services.dot_traffic_service import DOTTrafficService
+            dot_service = DOTTrafficService(timeout=5)
+            dot_data = dot_service.get_area_traffic_summary(lat, lng, radius_miles)
+        except Exception as e:
+            logger.debug(f"DOT traffic lookup failed: {e}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
+        
+        # Fuse the data sources
+        try:
+            from app.services.traffic_fusion import fuse_traffic
             
-            analysis = analyzer.analyze_area_traffic(lat, lng, radius_meters)
-            
-            avg_daily = analysis.get('avg_daily_traffic', 0)
-            foot_traffic_monthly = int(avg_daily * 30)
-            
-            drive_by_estimate = self._estimate_drive_by_traffic(lat, lng, radius_miles, analysis)
+            fused = fuse_traffic(lat, lng, radius_miles, dot_data, google_data)
             
             return {
-                'foot_traffic_monthly': foot_traffic_monthly,
-                'drive_by_traffic_monthly': drive_by_estimate,
-                'vitality_score': analysis.get('area_vitality_score', 0),
-                'peak_day': analysis.get('peak_day'),
-                'peak_hour': analysis.get('peak_hour'),
-                'locations_sampled': analysis.get('total_locations_sampled', 0),
-                'source': 'analyzed' if analysis.get('total_locations_sampled', 0) > 0 else 'estimated'
+                'foot_traffic_monthly': fused.monthly_foot_traffic,
+                'drive_by_traffic_monthly': fused.monthly_vehicle_traffic,
+                'vitality_score': google_data.get('area_vitality_score', 0) if google_data else 0,
+                'peak_day': google_data.get('peak_day') if google_data else None,
+                'peak_hour': google_data.get('peak_hour') if google_data else None,
+                'locations_sampled': google_data.get('total_locations_sampled', 0) if google_data else 0,
+                'source': fused.primary_source,
+                'confidence': fused.confidence_score,
+                'fusion_breakdown': fused.breakdown
             }
             
         except Exception as e:
-            logger.warning(f"Failed to fetch traffic data: {e}")
+            logger.warning(f"Traffic fusion failed, using fallback: {e}")
             return self._estimate_traffic(lat, lng, radius_miles)
     
     def _estimate_drive_by_traffic(
@@ -316,11 +406,24 @@ class ZoneDataFetcher:
         foot_traffic_data: Dict
     ) -> int:
         """
-        Estimate monthly drive-by traffic based on area characteristics
+        Get drive-by traffic from DOT data when available, otherwise estimate.
         
-        Uses foot traffic as a base indicator of area activity,
-        then estimates vehicle traffic based on typical ratios
+        First tries to fetch real AADT data from state DOT ArcGIS services.
+        Falls back to estimation based on foot traffic and area characteristics.
         """
+        # Try DOT API first
+        try:
+            from app.services.dot_traffic_service import DOTTrafficService
+            dot_service = DOTTrafficService(timeout=5)
+            dot_result = dot_service.get_area_traffic_summary(lat, lng, radius_miles)
+            
+            if dot_result.get('source') in ('dot_api', 'local_db') and dot_result.get('monthly_estimate', 0) > 0:
+                logger.info(f"Got DOT traffic data for {lat}, {lng}: {dot_result['monthly_estimate']}/mo")
+                return dot_result['monthly_estimate']
+        except Exception as e:
+            logger.debug(f"DOT traffic lookup failed, using estimate: {e}")
+        
+        # Fall back to estimation
         foot_traffic = foot_traffic_data.get('avg_daily_traffic', 0)
         vitality = foot_traffic_data.get('area_vitality_score', 50)
         
@@ -348,13 +451,22 @@ class ZoneDataFetcher:
         lng: float,
         radius_miles: float
     ) -> Dict[str, Any]:
-        """Estimate traffic when no data available"""
-        import random
+        """Estimate traffic when no data available - deterministic based on location"""
+        import hashlib
+        
+        # Deterministic seed based on location
+        seed_str = f"{lat:.6f},{lng:.6f}"
+        seed = int(hashlib.md5(seed_str.encode()).hexdigest()[:8], 16)
+        seed2 = int(hashlib.md5(seed_str.encode()).hexdigest()[8:16], 16)
         
         density = self._estimate_population_density(lat, lng)
         
-        foot_traffic_daily = int(density * 0.05 * random.uniform(0.8, 1.2))
-        drive_by_daily = int(foot_traffic_daily * random.uniform(4, 8))
+        # Deterministic variation factors
+        foot_variation = 0.8 + ((seed % 400) / 1000.0)  # 0.8 to 1.2
+        drive_variation = 4.0 + ((seed2 % 400) / 100.0)  # 4.0 to 8.0
+        
+        foot_traffic_daily = int(density * 0.05 * foot_variation)
+        drive_by_daily = int(foot_traffic_daily * drive_variation)
         
         return {
             'foot_traffic_monthly': foot_traffic_daily * 30,

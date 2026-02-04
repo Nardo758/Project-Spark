@@ -138,6 +138,10 @@ class TrafficAnalyzer:
             
         except Exception as e:
             logger.error(f"Error analyzing area traffic: {str(e)}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
             return self._empty_analysis(latitude, longitude, radius_meters)
     
     def link_opportunity_traffic(self, opportunity_id: int,
@@ -205,6 +209,10 @@ class TrafficAnalyzer:
             
         except Exception as e:
             logger.error(f"Error linking traffic to opportunity {opportunity_id}: {str(e)}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
             return None
     
     def get_opportunity_traffic(self, opportunity_id: int) -> Optional[Dict]:
@@ -240,6 +248,10 @@ class TrafficAnalyzer:
             
         except Exception as e:
             logger.error(f"Error fetching opportunity traffic: {str(e)}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
             return None
     
     def get_heatmap_data(self, latitude: float, longitude: float,
@@ -306,6 +318,10 @@ class TrafficAnalyzer:
             
         except Exception as e:
             logger.error(f"Error getting heatmap data: {str(e)}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
             return {'type': 'FeatureCollection', 'features': []}
     
     def _average_traffic_patterns(self, patterns: List[Dict]) -> Dict:
@@ -495,6 +511,10 @@ class TrafficAnalyzer:
             
         except Exception as e:
             logger.error(f"Error saving area aggregation: {str(e)}")
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
     
     def _empty_analysis(self, latitude: float, longitude: float, radius_meters: int) -> Dict:
         """Return empty analysis structure"""

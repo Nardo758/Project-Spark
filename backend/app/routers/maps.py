@@ -11,6 +11,8 @@ from app.db.database import get_db
 from app.models.opportunity import Opportunity
 from app.services.serpapi_service import SerpAPIService
 from app.services.location_analyzer import LocationAnalyzer, ScoringWeights, get_layer_weights
+from app.services.dot_traffic_service import DOTTrafficService
+from app.services.traffic_fusion import TrafficFusionService, fuse_traffic, TrafficTrend
 
 logger = logging.getLogger(__name__)
 
@@ -505,6 +507,233 @@ def get_demographics(request: DemographicsRequest):
     )
 
 
+class DOTTrafficRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius_miles: float = 3.0
+    force_refresh: bool = False
+    include_google_fusion: bool = True
+
+
+class TrafficTrendResponse(BaseModel):
+    direction: str  # 'up', 'down', 'stable'
+    change_percent: float
+    current_estimate: int
+    historical_baseline: int
+    insight: str
+
+
+class DOTTrafficResponse(BaseModel):
+    monthly_estimate: int
+    daily_average: int
+    monthly_foot_traffic: int | None = None
+    confidence_score: float
+    source: str
+    state: str | None = None
+    road_segments: list[dict] = []
+    fusion_breakdown: dict | None = None
+    trend: TrafficTrendResponse | None = None
+    message: str
+
+
+@router.post("/dot-traffic", response_model=DOTTrafficResponse)
+async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_db)):
+    """
+    Get traffic data using DOT AADT + Google Popular Times fusion.
+    
+    The fusion algorithm combines:
+    - DOT AADT (60% weight): Official vehicle counts, updated yearly
+    - Google Popular Times (40% weight): Real-time activity adjustment
+    """
+    try:
+        dot_service = DOTTrafficService()
+        dot_result = dot_service.get_area_traffic_summary(
+            request.latitude,
+            request.longitude,
+            request.radius_miles
+        )
+        
+        google_data = None
+        if request.include_google_fusion:
+            try:
+                serpapi = SerpAPIService()
+                foot_traffic_result = await serpapi.get_area_foot_traffic(
+                    request.latitude,
+                    request.longitude,
+                    request.radius_miles
+                )
+                if foot_traffic_result:
+                    google_data = {
+                        'avg_daily_traffic': foot_traffic_result.get('avg_daily_foot_traffic', 0),
+                        'area_vitality_score': foot_traffic_result.get('vitality_score', 50)
+                    }
+            except Exception as e:
+                logger.warning(f"Google data fetch failed, using DOT only: {e}")
+        
+        fusion_service = TrafficFusionService()
+        fused = fusion_service.fuse_traffic_data(
+            request.latitude,
+            request.longitude,
+            request.radius_miles,
+            dot_data=dot_result,
+            google_data=google_data
+        )
+        
+        trend_response = None
+        if fused.trend:
+            trend_response = TrafficTrendResponse(
+                direction=fused.trend.direction,
+                change_percent=fused.trend.change_percent,
+                current_estimate=fused.trend.current_estimate,
+                historical_baseline=fused.trend.historical_baseline,
+                insight=fused.trend.insight
+            )
+        
+        return DOTTrafficResponse(
+            monthly_estimate=fused.monthly_vehicle_traffic,
+            daily_average=fused.monthly_vehicle_traffic // 30,
+            monthly_foot_traffic=fused.monthly_foot_traffic,
+            confidence_score=fused.confidence_score,
+            source=fused.primary_source,
+            state=dot_result.get('state') if dot_result else None,
+            road_segments=dot_result.get('road_segments', []) if dot_result else [],
+            fusion_breakdown=fused.breakdown,
+            trend=trend_response,
+            message=f"Traffic data fused from {fused.primary_source} sources"
+        )
+        
+    except Exception as e:
+        logger.error(f"DOT traffic fetch error: {e}")
+        return DOTTrafficResponse(
+            monthly_estimate=0,
+            daily_average=0,
+            monthly_foot_traffic=0,
+            confidence_score=0,
+            source="error",
+            message=f"Failed to fetch traffic data: {str(e)}"
+        )
+
+
+class RoadSegmentsRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius_miles: float = 3.0
+    include_live_traffic: bool = False  # Include Mapbox live traffic comparison
+
+
+@router.post("/road-traffic-segments")
+async def get_road_traffic_segments(request: RoadSegmentsRequest):
+    """
+    Get road segments with traffic density for map visualization.
+    
+    Returns GeoJSON FeatureCollection with road lines colored by traffic intensity.
+    Colors follow Google Maps convention: green (free) -> yellow (moderate) -> red (heavy)
+    
+    If include_live_traffic=True, also fetches real-time Mapbox traffic data
+    and calculates leading indicators (growth/decline signals).
+    """
+    try:
+        dot_service = DOTTrafficService()
+        segments = await dot_service.get_road_segments_with_geometry(
+            request.latitude,
+            request.longitude,
+            request.radius_miles
+        )
+        
+        # Optionally enrich with live traffic comparison
+        if request.include_live_traffic and segments.get('features'):
+            from app.services.mapbox_traffic_service import MapboxTrafficService
+            mapbox_service = MapboxTrafficService()
+            enriched_features = mapbox_service.get_live_traffic_for_segments(
+                segments['features'],
+                sample_rate=0.15  # Sample 15% of segments for faster response
+            )
+            segments['features'] = enriched_features
+            segments['metadata']['includes_live_traffic'] = True
+        
+        return segments
+        
+    except Exception as e:
+        logger.error(f"Road segments fetch error: {e}")
+        return {
+            'type': 'FeatureCollection',
+            'features': [],
+            'metadata': {
+                'error': str(e),
+                'source': 'error'
+            }
+        }
+
+
+class LiveTrafficRequest(BaseModel):
+    latitude: float
+    longitude: float
+    aadt: int = 0  # DOT baseline for comparison
+
+
+@router.post("/live-traffic")
+async def get_live_traffic(request: LiveTrafficRequest):
+    """
+    Get real-time traffic congestion from Mapbox and compare against DOT baseline.
+    
+    Returns:
+    - live_congestion: Current Mapbox traffic level (low/moderate/heavy/severe)
+    - expected_congestion: Expected level based on DOT AADT
+    - signal: Leading indicator (growth/stable/decline)
+    - signal_strength: How strong the signal is (strong/moderate/weak)
+    """
+    try:
+        from app.services.mapbox_traffic_service import MapboxTrafficService
+        
+        mapbox_service = MapboxTrafficService()
+        
+        if request.aadt > 0:
+            comparison = mapbox_service.compare_live_vs_baseline(
+                request.latitude,
+                request.longitude,
+                request.aadt
+            )
+            
+            if comparison:
+                return {
+                    'live_congestion': comparison.live_congestion.name.lower(),
+                    'expected_congestion': comparison.expected_congestion.name.lower(),
+                    'delta': comparison.delta,
+                    'signal': comparison.signal,
+                    'signal_strength': comparison.signal_strength,
+                    'description': comparison.description,
+                    'live_color': mapbox_service.get_congestion_color(comparison.live_congestion.name),
+                    'signal_color': mapbox_service.get_signal_color(comparison.signal)
+                }
+        
+        # Just get live traffic without comparison
+        live_result = mapbox_service._get_live_traffic_at_point(
+            request.latitude,
+            request.longitude
+        )
+        
+        if live_result:
+            return {
+                'live_congestion': live_result.congestion_label,
+                'road_class': live_result.road_class,
+                'live_color': mapbox_service.get_congestion_color(live_result.congestion_label),
+                'signal': None,
+                'signal_strength': None
+            }
+        
+        return {
+            'error': 'No live traffic data available for this location',
+            'live_congestion': None
+        }
+        
+    except Exception as e:
+        logger.error(f"Live traffic fetch error: {e}")
+        return {
+            'error': str(e),
+            'live_congestion': None
+        }
+
+
 class DeepCloneRequest(BaseModel):
     source_business: str
     source_location: str | None = None
@@ -744,6 +973,7 @@ class EnhancedOptimalZone(BaseModel):
     component_scores: dict[str, float]
     derived_metrics: dict | None = None
     category_scores: dict[str, float] | None = None
+    trends: dict | None = None
     insights: list[str]
     rank: int
 
@@ -808,6 +1038,10 @@ def find_optimal_zones_enhanced(
             )
         except Exception as e:
             logger.warning(f"Failed to fetch metrics for zone at {point.lat}, {point.lng}: {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
             continue
         
         score_result = calculate_zone_score(metrics)
@@ -858,6 +1092,7 @@ def find_optimal_zones_enhanced(
             'component_scores': score_result['component_scores'],
             'derived_metrics': score_result.get('derived_metrics'),
             'category_scores': score_result.get('category_scores'),
+            'trends': metrics.raw_data.get('trends') if metrics.raw_data else None,
             'insights': insights[:4]
         })
     
@@ -875,6 +1110,7 @@ def find_optimal_zones_enhanced(
             component_scores=zone['component_scores'],
             derived_metrics=zone.get('derived_metrics'),
             category_scores=zone.get('category_scores'),
+            trends=zone.get('trends'),
             insights=zone['insights'],
             rank=i + 1
         ))
@@ -894,4 +1130,176 @@ def find_optimal_zones_enhanced(
         center_lat=request.center_lat,
         center_lng=request.center_lng,
         target_radius_miles=request.target_radius_miles
+    )
+
+
+class PolygonAnalysisRequest(BaseModel):
+    polygon: list[list[float]] = Field(..., description="List of [lng, lat] coordinates forming the polygon")
+    business_type: str | None = None
+    include_traffic: bool = True
+    include_demographics: bool = True
+    include_competitors: bool = True
+
+
+class PolygonAnalysisResponse(BaseModel):
+    polygon_center: dict[str, float]
+    area_sq_miles: float
+    traffic_data: dict[str, Any] | None = None
+    demographics: dict[str, Any] | None = None
+    competitors: list[dict[str, Any]] | None = None
+    overall_score: float
+    insights: list[str]
+
+
+@router.post("/analyze-polygon", response_model=PolygonAnalysisResponse)
+def analyze_polygon(
+    request: PolygonAnalysisRequest,
+    db: Session = Depends(get_db),
+) -> PolygonAnalysisResponse:
+    """
+    Analyze a custom polygon area drawn by the user.
+    Returns traffic data within the polygon with real DOT AADT data.
+    Demographics and competitors are estimated based on area size.
+    """
+    from shapely.geometry import Polygon as ShapelyPolygon
+    from shapely.ops import transform
+    from shapely.validation import make_valid
+    import pyproj
+    from sqlalchemy import text
+    
+    coords = [(p[0], p[1]) for p in request.polygon]
+    
+    if len(coords) < 3:
+        return PolygonAnalysisResponse(
+            polygon_center={"lat": 0, "lng": 0},
+            area_sq_miles=0,
+            overall_score=0,
+            insights=["Invalid polygon: at least 3 points required"]
+        )
+    
+    if coords[0] != coords[-1]:
+        coords.append(coords[0])
+    
+    polygon = ShapelyPolygon(coords)
+    
+    if not polygon.is_valid:
+        polygon = make_valid(polygon)
+        if polygon.geom_type != 'Polygon':
+            return PolygonAnalysisResponse(
+                polygon_center={"lat": 0, "lng": 0},
+                area_sq_miles=0,
+                overall_score=0,
+                insights=["Invalid polygon: self-intersecting or malformed geometry"]
+            )
+    
+    centroid = polygon.centroid
+    center_lat = centroid.y
+    center_lng = centroid.x
+    
+    project = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True).transform
+    polygon_m = transform(project, polygon)
+    area_sq_m = polygon_m.area
+    area_sq_miles = area_sq_m / 2589988.11
+    
+    insights = []
+    overall_score = 50.0
+    traffic_data = None
+    demographics_data = None
+    competitors_list = None
+    
+    if request.include_traffic:
+        try:
+            polygon_wkt = polygon.wkt
+            query = text("""
+                SELECT 
+                    COUNT(*) as road_count,
+                    AVG(aadt) as avg_aadt,
+                    SUM(aadt) as total_aadt,
+                    MAX(aadt) as max_aadt,
+                    MIN(aadt) as min_aadt
+                FROM traffic_roads
+                WHERE ST_Intersects(
+                    geometry,
+                    ST_SetSRID(ST_GeomFromText(:polygon_wkt), 4326)
+                )
+                AND aadt > 0
+            """)
+            
+            result = db.execute(query, {'polygon_wkt': polygon_wkt}).fetchone()
+            
+            if result and result[0] > 0:
+                avg_aadt = float(result[1]) if result[1] else 0
+                monthly_traffic = avg_aadt * 30
+                
+                traffic_data = {
+                    "road_count": int(result[0]),
+                    "avg_daily_traffic": round(avg_aadt),
+                    "monthly_traffic": round(monthly_traffic),
+                    "max_daily_traffic": int(result[3]) if result[3] else 0,
+                    "min_daily_traffic": int(result[4]) if result[4] else 0,
+                    "total_daily_traffic": int(result[2]) if result[2] else 0
+                }
+                
+                if avg_aadt > 50000:
+                    insights.append("High traffic area - excellent visibility")
+                    overall_score += 15
+                elif avg_aadt > 20000:
+                    insights.append("Moderate traffic - good foot traffic potential")
+                    overall_score += 10
+                elif avg_aadt > 5000:
+                    insights.append("Lower traffic area - consider marketing")
+                    overall_score += 5
+                else:
+                    insights.append("Low traffic zone - may need strong draw")
+            else:
+                traffic_data = {"road_count": 0, "message": "No traffic data available for this area"}
+                
+        except Exception as e:
+            logger.error(f"Traffic analysis error: {e}")
+            try:
+                db.rollback()
+            except:
+                pass
+    
+    if request.include_demographics:
+        try:
+            demographics_data = {
+                "estimated_population": round(area_sq_miles * 5000),
+                "population_density_per_sq_mile": 5000,
+                "median_income": 65000,
+                "median_age": 35,
+                "is_estimated": True,
+                "note": "Estimates based on area size - real census data coming soon"
+            }
+            
+            if area_sq_miles < 0.5:
+                insights.append("Compact area ideal for walkable retail")
+            elif area_sq_miles < 2:
+                insights.append("Medium-sized area with good coverage")
+            else:
+                insights.append("Large analysis area - consider multiple locations")
+                
+        except Exception as e:
+            logger.error(f"Demographics error: {e}")
+    
+    if request.include_competitors:
+        try:
+            competitors_list = []
+            insights.append("Draw polygon to analyze specific area competition")
+        except Exception as e:
+            logger.error(f"Competitor analysis error: {e}")
+    
+    overall_score = max(0, min(100, overall_score))
+    
+    if not insights:
+        insights.append("Polygon area analyzed successfully")
+    
+    return PolygonAnalysisResponse(
+        polygon_center={"lat": center_lat, "lng": center_lng},
+        area_sq_miles=round(area_sq_miles, 3),
+        traffic_data=traffic_data,
+        demographics=demographics_data,
+        competitors=competitors_list,
+        overall_score=round(overall_score, 1),
+        insights=insights
     )
