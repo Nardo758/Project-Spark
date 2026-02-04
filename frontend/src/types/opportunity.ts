@@ -44,3 +44,59 @@ export interface RecommendedOpportunitiesResponse {
     recommendation_strategy: string
   }
 }
+
+export interface OpportunitiesResponse {
+  opportunities: Opportunity[]
+  total: number
+  page: number
+  page_size: number
+  has_more?: boolean
+  is_gated: boolean
+  gated_message: string | null
+  full_total: number
+}
+
+export interface OpportunityFilters {
+  search?: string
+  category?: string
+  geographic_scope?: string
+  country?: string
+  completion_status?: string
+  realm_type?: string
+  min_feasibility?: number | null
+  max_feasibility?: number | null
+  min_validations?: number | null
+  max_age_days?: number | null
+  sort_by?: 'recent' | 'trending' | 'validated' | 'market' | 'feasibility'
+  freshness?: 'all' | 'hot' | 'fresh' | 'validated' | 'archive'
+  my_access_only?: boolean
+}
+
+export interface SavedSearch {
+  id: number
+  name: string
+  filters: OpportunityFilters
+  notification_prefs: {
+    email: boolean
+    push: boolean
+    frequency: 'instant' | 'daily' | 'weekly'
+  }
+  created_at: string
+  updated_at: string
+}
+
+export interface SavedSearchCreate {
+  name: string
+  filters: OpportunityFilters
+  notification_prefs: {
+    email: boolean
+    push: boolean
+    frequency: 'instant' | 'daily' | 'weekly'
+  }
+}
+
+export interface QuickValidationResponse {
+  success: boolean
+  validation_count: number
+  user_validated: boolean
+}
