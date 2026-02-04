@@ -70,28 +70,54 @@ export default function Discover() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Hero Section with emerald gradient background */}
-        <div className="mb-8 p-8 rounded-2xl bg-gradient-to-br from-emerald-50/50 via-white to-emerald-50/30 border border-emerald-100/50">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium mb-4">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-            {opportunities.length}+ Live Opportunities
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Discover Validated Opportunities
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-gray-600">
             Browse real-world problems validated by the community
           </p>
         </div>
 
-        {/* Personalized Recommendations */}
-        <RecommendedSection
-          opportunities={recommendedOpportunities}
-          loading={loading}
-          onValidate={quickValidate}
-          onSave={saveOpportunity}
-          className="mb-12"
-        />
+        {/* Personalized Recommendations (Compact Carousel) */}
+        {recommendedOpportunities.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <span className="text-purple-600">✨</span>
+                Recommended for You
+                <span className="text-xs text-gray-500 font-normal">
+                  (based on your past interactions)
+                </span>
+              </h2>
+              <button className="text-sm text-emerald-600 hover:text-emerald-700">
+                View All →
+              </button>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+              {recommendedOpportunities.slice(0, 5).map((opp) => (
+                <div
+                  key={opp.id}
+                  className="min-w-[280px] bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-lg p-4 cursor-pointer hover:border-purple-300 transition-all"
+                  onClick={() => window.location.href = `/opportunity/${opp.id}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-xs font-semibold text-purple-600">{opp.category}</span>
+                    <span className="text-lg font-bold text-purple-600">{opp.feasibility_score}</span>
+                  </div>
+                  <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
+                    {opp.title}
+                  </h3>
+                  <div className="flex items-center gap-3 text-xs text-gray-600">
+                    <span>✅ {opp.match_score}% match</span>
+                    <span>{opp.validation_count} validations</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <FilterBar

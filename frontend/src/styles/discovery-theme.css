@@ -106,3 +106,13 @@
   --confetti-color-3: #6ee7b7;
   --confetti-color-4: #a7f3d0;
 }
+
+/* Hide scrollbar for horizontal carousel */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
