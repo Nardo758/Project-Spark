@@ -40,6 +40,11 @@ interface DiscoveryState {
   total: number
   hasMore: boolean
   
+  // Gating (for free users)
+  isGated: boolean
+  gatedMessage: string | null
+  fullTotal: number
+  
   // Filters
   filters: OpportunityFilters
   
@@ -101,6 +106,9 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       pageSize: 20,
       total: 0,
       hasMore: false,
+      isGated: false,
+      gatedMessage: null,
+      fullTotal: 0,
       filters: DEFAULT_FILTERS,
       selectedOpportunityIds: [],
       loading: false,
@@ -119,7 +127,10 @@ export const useDiscoveryStore = create<DiscoveryState>()(
           set({
             opportunities: response.opportunities,
             total: response.total,
-            hasMore: response.has_more,
+            hasMore: response.has_more ?? false,
+            isGated: response.is_gated ?? false,
+            gatedMessage: response.gated_message ?? null,
+            fullTotal: response.full_total ?? response.total,
             loading: false,
           })
           

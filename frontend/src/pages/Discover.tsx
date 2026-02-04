@@ -24,6 +24,9 @@ export default function Discover() {
     selectedOpportunityIds,
     loading,
     error,
+    isGated,
+    gatedMessage,
+    fullTotal,
     
     // Actions
     initializeFromUrl,
@@ -120,16 +123,18 @@ export default function Discover() {
               search: filters.search || '',
               category: filters.category || null,
               feasibility: null,
-              location: filters.location || null,
-              sortBy: filters.sort_by || 'recent',
-              freshness: 'all',
-              myAccessOnly: false,
+              location: filters.geographic_scope || null,
+              sortBy: filters.sort_by || 'feasibility',
+              freshness: filters.freshness || 'all',
+              myAccessOnly: filters.my_access_only || false,
             }}
             onFiltersChange={(newFilters) => setFilters({
               search: newFilters.search,
               category: newFilters.category || undefined,
-              location: newFilters.location || undefined,
+              geographic_scope: newFilters.location || undefined,
               sort_by: newFilters.sortBy,
+              freshness: newFilters.freshness,
+              my_access_only: newFilters.myAccessOnly,
             })}
             resultsCount={total}
           />
@@ -139,6 +144,28 @@ export default function Discover() {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-800">{error}</p>
+          </div>
+        )}
+
+        {/* Gating Banner for Free Users */}
+        {isGated && (
+          <div className="mb-6 p-6 bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-violet-900 mb-1">
+                  Unlock All {fullTotal} Opportunities
+                </h3>
+                <p className="text-sm text-violet-700">
+                  {gatedMessage || `You're viewing a preview. Subscribe to access all opportunities with higher feasibility scores.`}
+                </p>
+              </div>
+              <a
+                href="/pricing"
+                className="px-6 py-3 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-700 transition-colors whitespace-nowrap"
+              >
+                View Plans
+              </a>
+            </div>
           </div>
         )}
 
