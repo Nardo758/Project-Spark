@@ -103,3 +103,4 @@ openai
 cachetools
 geoalchemy2
 shapely
+google-generativeai
