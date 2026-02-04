@@ -1,0 +1,166 @@
+/**
+ * Custom styles for Discovery Feed components
+ * Supplements Tailwind CSS with additional animations and transitions
+ */
+
+/* Fade-in animation for modals */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide-up animation for ComparisonPanel */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Scale-in animation for success states */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Utility classes */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-in;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Button hover effects */
+.quick-actions button {
+  transition: all 0.2s ease-in-out;
+}
+
+.quick-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.quick-actions button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Comparison modal backdrop */
+.comparison-modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Winner highlight pulse */
+@keyframes pulse-green {
+  0%, 100% {
+    background-color: rgba(220, 252, 231, 0.5);
+  }
+  50% {
+    background-color: rgba(220, 252, 231, 1);
+  }
+}
+
+.winner-highlight {
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+/* Selection chip animation */
+.selection-chip {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Progress bar smooth transition */
+.progress-bar {
+  transition: width 0.3s ease-out;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Truncate text with ellipsis */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .comparison-modal {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .comparison-panel {
+    padding: 12px;
+  }
+
+  .quick-actions {
+    flex-wrap: wrap;
+  }
+
+  .quick-actions button {
+    flex: 1 1 45%;
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .quick-actions {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+
+  .comparison-panel {
+    background-color: #111827;
+    border-color: #374151;
+  }
+}
+
+/* Print styles for comparison export */
+@media print {
+  .comparison-modal button,
+  .comparison-modal .no-print {
+    display: none;
+  }
+
+  .comparison-modal {
+    position: static;
+    box-shadow: none;
+  }
+}

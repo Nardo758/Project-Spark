@@ -1,0 +1,47 @@
+{
+  "name": "discovery-feed-components",
+  "description": "Required dependencies for Discovery Feed components",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-confetti": "^6.1.0",
+    "lucide-react": "^0.263.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24"
+  },
+  "installInstructions": {
+    "npm": "npm install react-confetti lucide-react",
+    "yarn": "yarn add react-confetti lucide-react",
+    "pnpm": "pnpm add react-confetti lucide-react"
+  },
+  "tailwindConfig": {
+    "note": "Ensure Tailwind CSS is configured with the following:",
+    "content": [
+      "./src/**/*.{js,jsx,ts,tsx}"
+    ],
+    "theme": {
+      "extend": {
+        "animation": {
+          "fade-in": "fadeIn 0.2s ease-in",
+          "slide-up": "slideUp 0.3s ease-out"
+        },
+        "keyframes": {
+          "fadeIn": {
+            "0%": { "opacity": "0" },
+            "100%": { "opacity": "1" }
+          },
+          "slideUp": {
+            "0%": { "transform": "translateY(100%)" },
+            "100%": { "transform": "translateY(0)" }
+          }
+        }
+      }
+    }
+  }
+}

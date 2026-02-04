@@ -72,6 +72,7 @@ from app.routers import (
     deep_clone,
     saved_layers,
     foot_traffic,
+    saved_searches,
 )
 
 install_trace_id_factory()
@@ -108,6 +109,7 @@ app.add_middleware(TraceIdMiddleware)
 # Include routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
 app.include_router(opportunities.router, prefix=f"{settings.API_V1_PREFIX}/opportunities", tags=["Opportunities"])
+app.include_router(saved_searches.router, prefix=f"{settings.API_V1_PREFIX}/saved-searches", tags=["Saved Searches"])
 app.include_router(validations.router, prefix=f"{settings.API_V1_PREFIX}/validations", tags=["Validations"])
 app.include_router(comments.router, prefix=f"{settings.API_V1_PREFIX}/comments", tags=["Comments"])
 app.include_router(users.router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])

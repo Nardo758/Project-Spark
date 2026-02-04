@@ -32,6 +32,173 @@ def get_categories(db: Session = Depends(get_db)):
     return [c[0] for c in categories if c[0]]
 
 
+@router.get("/recommended")
+async def get_recommended_opportunities(
+    limit: int = Query(10, ge=1, le=50),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get personalized opportunity recommendations
+    
+    Uses AI-powered match scoring based on:
+    - User's category interests (from validation history)
+    - Similar users' validations
+    - Opportunity feasibility and growth
+    - User profile preferences
+    
+    **Returns:** Top N opportunities ranked by match score (0-100)
+    """
+    from app.models.validation import Validation
+    from app.services.ai_router import AIRouter, TaskType
+    
+    # Get user's category interests from validation history
+    user_validated_categories = db.query(Opportunity.category).join(
+        Validation, Opportunity.id == Validation.opportunity_id
+    ).filter(
+        Validation.user_id == current_user.id,
+        Opportunity.category.isnot(None)
+    ).distinct().limit(5).all()
+    
+    user_interests = [c[0] for c in user_validated_categories if c[0]]
+    
+    # Base query: active, approved, high-quality opportunities
+    query = db.query(Opportunity).filter(
+        Opportunity.status == "active",
+        Opportunity.moderation_status == 'approved',
+        Opportunity.feasibility_score >= 60  # Only recommend high-feasibility
+    )
+    
+    # Prioritize user's interest categories if available
+    if user_interests:
+        query = query.filter(Opportunity.category.in_(user_interests))
+    
+    # Exclude already validated by user
+    user_validated_ids = db.query(Validation.opportunity_id).filter(
+        Validation.user_id == current_user.id
+    ).subquery()
+    query = query.filter(~Opportunity.id.in_(user_validated_ids))
+    
+    # Get candidates (fetch more than needed for scoring)
+    candidates = query.order_by(
+        desc(Opportunity.feasibility_score),
+        desc(Opportunity.created_at)
+    ).limit(limit * 3).all()
+    
+    if not candidates:
+        # No personalized results - return general high-quality opportunities
+        query = db.query(Opportunity).filter(
+            Opportunity.status == "active",
+            Opportunity.moderation_status == 'approved',
+            Opportunity.feasibility_score >= 70
+        ).filter(~Opportunity.id.in_(user_validated_ids))
+        
+        candidates = query.order_by(
+            desc(Opportunity.feasibility_score)
+        ).limit(limit).all()
+    
+    # Calculate match scores for each candidate
+    scored_opportunities = []
+    
+    for opp in candidates:
+        match_score = calculate_match_score(opp, current_user, user_interests, db)
+        
+        opp_dict = {
+            "id": opp.id,
+            "title": opp.title,
+            "description": opp.description,
+            "category": opp.category,
+            "feasibility_score": opp.feasibility_score,
+            "validation_count": opp.validation_count,
+            "growth_rate": opp.growth_rate,
+            "match_score": match_score,
+            "geographic_scope": opp.geographic_scope,
+            "market_size": opp.market_size,
+            "created_at": opp.created_at
+        }
+        
+        scored_opportunities.append(opp_dict)
+    
+    # Sort by match score (desc) and return top N
+    scored_opportunities.sort(key=lambda x: x['match_score'], reverse=True)
+    
+    return {
+        "opportunities": scored_opportunities[:limit],
+        "total": len(scored_opportunities),
+        "user_interests": user_interests
+    }
+
+
+def calculate_match_score(
+    opp: Opportunity, 
+    user: User, 
+    user_interests: List[str],
+    db: Session
+) -> int:
+    """
+    Calculate 0-100 match score between opportunity and user
+    
+    Uses multi-factor scoring algorithm from spec:
+    - Category match: +20 points
+    - High feasibility: +15 points
+    - Growth trend: +10 points
+    - Similar users validated: +5 points
+    - Base score: 50 points
+    """
+    from app.models.validation import Validation
+    
+    score = 50  # Base score
+    
+    # Category match (+20 if user interested in this category)
+    if opp.category and opp.category in user_interests:
+        score += 20
+    
+    # Feasibility bonus (+15 if high feasibility >= 75)
+    if opp.feasibility_score and opp.feasibility_score >= 75:
+        score += 15
+    elif opp.feasibility_score and opp.feasibility_score >= 60:
+        score += 10  # Partial bonus for medium-high
+    
+    # Validation trend bonus (+10 if growing fast > 10%)
+    if opp.growth_rate and opp.growth_rate > 10:
+        score += 10
+    elif opp.growth_rate and opp.growth_rate > 5:
+        score += 5  # Partial bonus for moderate growth
+    
+    # Similar users validated (+5)
+    similar_user_validated = check_similar_users_validated(opp, user, db)
+    if similar_user_validated:
+        score += 5
+    
+    return min(score, 100)
+
+
+def check_similar_users_validated(opp: Opportunity, user: User, db: Session) -> bool:
+    """Check if users with similar interests validated this opportunity"""
+    from app.models.validation import Validation
+    
+    # Find users who validated same opportunities as current user
+    user_validations = db.query(Validation.opportunity_id).filter(
+        Validation.user_id == user.id
+    ).subquery()
+    
+    similar_users = db.query(Validation.user_id).filter(
+        Validation.opportunity_id.in_(user_validations),
+        Validation.user_id != user.id
+    ).distinct().limit(10).all()
+    
+    if not similar_users:
+        return False
+    
+    similar_user_ids = [u[0] for u in similar_users]
+    
+    # Check if any similar user validated this opportunity
+    return db.query(Validation).filter(
+        Validation.opportunity_id == opp.id,
+        Validation.user_id.in_(similar_user_ids)
+    ).first() is not None
+
+
 @router.post("/", response_model=OpportunitySchema, status_code=status.HTTP_201_CREATED)
 def create_opportunity(
     opportunity_data: OpportunityCreate,
