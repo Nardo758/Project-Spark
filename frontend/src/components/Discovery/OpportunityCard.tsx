@@ -127,7 +127,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
 
   return (
     <div
-      className="opportunity-card group"
+      className="bg-white rounded-2xl border-2 border-stone-200 p-6 no-underline text-inherit transition-all block cursor-pointer hover:border-stone-900 hover:shadow-xl hover:-translate-y-0.5 group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
@@ -393,30 +393,6 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         </svg>
       </div>
 
-      {/* Styles */}
-      <style jsx>{`
-        .opportunity-card {
-          background: white;
-          border-radius: 1rem;
-          border: 2px solid #e7e5e4;
-          padding: 1.5rem;
-          text-decoration: none;
-          color: inherit;
-          transition: all 0.2s;
-          display: block;
-          cursor: pointer;
-        }
-
-        .opportunity-card:hover {
-          border-color: #1c1917;
-          box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
-          transform: translateY(-2px);
-        }
-
-        .font-spectral {
-          font-family: 'Spectral', serif;
-        }
-      `}</style>
     </div>
   );
 };

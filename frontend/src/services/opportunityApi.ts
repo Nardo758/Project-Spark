@@ -1,6 +1,6 @@
 import type { Opportunity, RecommendedOpportunitiesResponse, MatchReason, SocialProof } from '../types/opportunity'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 /**
  * Fetch personalized opportunity recommendations

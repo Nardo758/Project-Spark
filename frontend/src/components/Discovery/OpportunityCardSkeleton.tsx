@@ -11,7 +11,7 @@ import React from 'react';
 
 export const OpportunityCardSkeleton: React.FC = () => {
   return (
-    <div className="opportunity-card-skeleton animate-pulse">
+    <div className="bg-white rounded-2xl border-2 border-stone-200 p-6 animate-pulse">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -54,27 +54,6 @@ export const OpportunityCardSkeleton: React.FC = () => {
       {/* CTA */}
       <div className="h-4 w-32 bg-stone-200 rounded"></div>
 
-      <style jsx>{`
-        .opportunity-card-skeleton {
-          background: white;
-          border-radius: 1rem;
-          border: 2px solid #e7e5e4;
-          padding: 1.5rem;
-        }
-
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-      `}</style>
     </div>
   );
 };

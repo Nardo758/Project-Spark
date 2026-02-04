@@ -286,16 +286,26 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">
               Filter by access:
             </span>
-            {freshnessOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => onFiltersChange({ freshness: option.value as FilterState['freshness'] })}
-                className={`freshness-btn ${filters.freshness === option.value ? 'active' : ''} ${option.color}`}
-              >
-                {option.icon && <span>{option.icon}</span>}
-                <span>{option.label}</span>
-              </button>
-            ))}
+            {freshnessOptions.map((option) => {
+              const isActive = filters.freshness === option.value;
+              const colorClasses = {
+                stone: 'border-stone-300 text-stone-600 bg-white',
+                red: 'border-red-200 bg-red-50 text-red-600',
+                orange: 'border-orange-200 bg-orange-50 text-orange-600',
+                green: 'border-green-200 bg-green-50 text-green-600',
+                gray: 'border-gray-300 bg-gray-100 text-gray-600',
+              };
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => onFiltersChange({ freshness: option.value as FilterState['freshness'] })}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border cursor-pointer transition-all hover:opacity-80 hover:-translate-y-0.5 ${colorClasses[option.color as keyof typeof colorClasses] || colorClasses.stone} ${isActive ? 'ring-2 ring-current' : ''}`}
+                >
+                  {option.icon && <span>{option.icon}</span>}
+                  <span>{option.label}</span>
+                </button>
+              );
+            })}
 
             {/* My Access Toggle */}
             <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer ml-auto">
@@ -350,67 +360,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
       )}
 
-      {/* Styles */}
-      <style jsx>{`
-        .filter-bar.sticky {
-          position: sticky;
-          top: 64px;
-          z-index: 30;
-        }
-
-        .freshness-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 6px 12px;
-          border-radius: 9999px;
-          font-size: 12px;
-          font-weight: 600;
-          border: 1px solid;
-          background: white;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .freshness-btn.stone {
-          border-color: #d6d3d1;
-          color: #57534e;
-        }
-
-        .freshness-btn.red {
-          border-color: #fecaca;
-          background: #fef2f2;
-          color: #dc2626;
-        }
-
-        .freshness-btn.orange {
-          border-color: #fed7aa;
-          background: #fff7ed;
-          color: #ea580c;
-        }
-
-        .freshness-btn.green {
-          border-color: #bbf7d0;
-          background: #f0fdf4;
-          color: #16a34a;
-        }
-
-        .freshness-btn.gray {
-          border-color: #d1d5db;
-          background: #f3f4f6;
-          color: #6b7280;
-        }
-
-        .freshness-btn.active {
-          box-shadow: 0 0 0 2px currentColor;
-          opacity: 1;
-        }
-
-        .freshness-btn:hover {
-          opacity: 0.8;
-          transform: translateY(-1px);
-        }
-      `}</style>
     </div>
   );
 };

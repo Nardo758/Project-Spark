@@ -178,35 +178,6 @@ export const OpportunityGrid: React.FC<OpportunityGridProps> = ({
       {/* Results */}
       {renderResults()}
 
-      {/* Styles */}
-      <style jsx>{`
-        .opportunities-grid {
-          display: grid;
-          gap: 1.5rem;
-        }
-
-        @media (min-width: 768px) {
-          .opportunities-grid.grid-cols-2 {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .fade-in {
-          animation: fadeIn 0.4s ease-out forwards;
-          opacity: 0;
-        }
-      `}</style>
     </div>
   );
 };

@@ -97,7 +97,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="pagination-container">
+    <div className="mt-12 pt-8 border-t border-stone-200">
       <div className="flex items-center justify-between flex-wrap gap-4">
         {/* Results info */}
         <div className="text-sm text-stone-600">
@@ -114,7 +114,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           <button
             onClick={handlePrevious}
             disabled={!canGoPrevious}
-            className={`pagination-btn ${!canGoPrevious ? 'disabled' : ''}`}
+            className={`inline-flex items-center gap-2 px-4 py-2 border-2 border-stone-200 rounded-lg text-sm font-medium text-stone-700 bg-white cursor-pointer transition-all hover:border-stone-900 hover:bg-stone-50 ${!canGoPrevious ? 'opacity-40 cursor-not-allowed' : ''}`}
             aria-label="Previous page"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -138,7 +138,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 <button
                   key={page}
                   onClick={() => handlePageJump(page)}
-                  className={`page-number ${page === currentPage ? 'active' : ''}`}
+                  className={`min-w-[2.5rem] h-10 inline-flex items-center justify-center border-2 border-transparent rounded-lg text-sm font-medium text-stone-600 bg-transparent cursor-pointer transition-all hover:bg-stone-50 hover:text-stone-900 ${page === currentPage ? 'border-stone-900 bg-stone-900 text-white hover:bg-stone-900 hover:text-white' : ''}`}
                   aria-label={`Go to page ${page}`}
                   aria-current={page === currentPage ? 'page' : undefined}
                 >
@@ -152,7 +152,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           <button
             onClick={handleNext}
             disabled={!canGoNext}
-            className={`pagination-btn ${!canGoNext ? 'disabled' : ''}`}
+            className={`inline-flex items-center gap-2 px-4 py-2 border-2 border-stone-200 rounded-lg text-sm font-medium text-stone-700 bg-white cursor-pointer transition-all hover:border-stone-900 hover:bg-stone-50 ${!canGoNext ? 'opacity-40 cursor-not-allowed' : ''}`}
             aria-label="Next page"
           >
             <span className="hidden sm:inline">Next</span>
@@ -177,72 +177,6 @@ export const Pagination: React.FC<PaginationProps> = ({
         )}
       </div>
 
-      {/* Styles */}
-      <style jsx>{`
-        .pagination-container {
-          margin-top: 3rem;
-          padding-top: 2rem;
-          border-top: 1px solid #e7e5e4;
-        }
-
-        .pagination-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          border: 2px solid #e7e5e4;
-          border-radius: 0.5rem;
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #44403c;
-          background: white;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .pagination-btn:hover:not(.disabled) {
-          border-color: #1c1917;
-          background: #fafaf9;
-        }
-
-        .pagination-btn.disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-
-        .page-number {
-          min-width: 2.5rem;
-          height: 2.5rem;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid transparent;
-          border-radius: 0.5rem;
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: #57534e;
-          background: transparent;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .page-number:hover {
-          background: #fafaf9;
-          color: #1c1917;
-        }
-
-        .page-number.active {
-          border-color: #1c1917;
-          background: #1c1917;
-          color: white;
-        }
-
-        @media (max-width: 640px) {
-          .pagination-container > div {
-            justify-content: center;
-          }
-        }
-      `}</style>
     </div>
   );
 };
