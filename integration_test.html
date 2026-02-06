@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OppGrid Integration Test</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 40px; background: #f8fafc; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-card { background: white; border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .status { padding: 12px; border-radius: 8px; margin: 10px 0; font-weight: 500; }
+        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .endpoint { background: #f1f5f9; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.9em; margin: 8px 0; }
+        .results { background: #f8fafc; padding: 15px; border-radius: 6px; margin: 10px 0; font-family: monospace; font-size: 0.85em; max-height: 200px; overflow-y: auto; }
+        button { background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 0.9em; margin: 5px; }
+        button:hover { background: #0284c7; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        h1 { color: #0f172a; margin-bottom: 10px; }
+        h2 { color: #1e293b; margin-bottom: 15px; }
+        h3 { color: #334155; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 OppGrid Integration Test Suite</h1>
+        <p>Testing frontend → backend connectivity and API functionality</p>
+
+        <div class="test-card">
+            <h2>📡 Connection Tests</h2>
+            
+            <button onclick="testBackendConnection()">Test Backend Connection</button>
+            <button onclick="testHealthEndpoint()">Test Health Endpoint</button>
+            <button onclick="testOpportunitiesAPI()">Test Opportunities API</button>
+            <button onclick="testAgentsAPI()">Test Agents API</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+
+            <div id="connection-results" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="test-card">
+            <h2>🧪 API Response Tests</h2>
+            <div id="api-results"></div>
+        </div>
+
+        <div class="test-card">
+            <h2>📊 Performance Tests</h2>
+            <button onclick="testPerformance()">Test API Performance</button>
+            <div id="performance-results"></div>
+        </div>
+
+        <div class="test-card">
+            <h2>🎯 Summary</h2>
+            <div id="test-summary"></div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8000';
+        const FRONTEND_URL = 'http://localhost:3000';
+        
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            errors: []
+        };
+
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(div);
+            container.style.display = 'block';
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearResults(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+            document.getElementById(containerId).style.display = 'none';
+        }
+
+        async function testBackendConnection() {
+            clearResults('connection-results');
+            addResult('connection-results', 'Testing backend connection...', 'info');
+            
+            try {
+                const startTime = performance.now();
+                const response = await fetch(`${BACKEND_URL}/api/test`);
+                const endTime = performance.now();
+                const data = await response.json();
+                
+                testResults.total++;
+                if (response.ok) {
+                    testResults.passed++;
+                    addResult('connection-results', `✅ Backend connected in ${(endTime - startTime).toFixed(0)}ms`, 'success');
+                    addResult('connection-results', `Response: ${JSON.stringify(data, null, 2)}`, 'info');
+                } else {
+                    testResults.failed++;
+                    addResult('connection-results', `❌ Backend connection failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                testResults.failed++;
+                testResults.errors.push(error.message);
+                addResult('connection-results', `❌ Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testHealthEndpoint() {
+            clearResults('api-results');
+            addResult('api-results', 'Testing health endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/health`);
+                const data = await response.json();
+                
+                testResults.total++;
+                if (response.ok && data.status === 'healthy') {
+                    testResults.passed++;
+                    addResult('api-results', '✅ Health check passed', 'success');
+                    addResult('api-results', `Services: ${JSON.stringify(data.services, null, 2)}`, 'info');
+                } else {
+                    testResults.failed++;
+                    addResult('api-results', '❌ Health check failed', 'error');
+                }
+            } catch (error) {
+                testResults.failed++;
+                testResults.errors.push(error.message);
+                addResult('api-results', `❌ Health check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testOpportunitiesAPI() {
+            addResult('api-results', 'Testing opportunities API...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/opportunities`);
+                const data = await response.json();
+                
+                testResults.total++;
+                if (response.ok && data.opportunities) {
+                    testResults.passed++;
+                    addResult('api-results', `✅ Opportunities API working (${data.opportunities.length} items)`, 'success');
+                    addResult('api-results', `Sample: ${data.opportunities[0]?.title || 'No data'}`, 'info');
+                } else {
+                    testResults.failed++;
+                    addResult('api-results', '❌ Opportunities API failed', 'error');
+                }
+            } catch (error) {
+                testResults.failed++;
+                testResults.errors.push(error.message);
+                addResult('api-results', `❌ Opportunities API error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAgentsAPI() {
+            addResult('api-results', 'Testing agents API...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/agents`);
+                const data = await response.json();
+                
+                testResults.total++;
+                if (response.ok && data.agents) {
+                    testResults.passed++;
+                    addResult('api-results', `✅ Agents API working (${data.agents.length} agents)`, 'success');
+                    data.agents.forEach(agent => {
+                        addResult('api-results', `   • ${agent.name} (${agent.status}) - ${agent.usage.calls} calls`, 'info');
+                    });
+                } else {
+                    testResults.failed++;
+                    addResult('api-results', '❌ Agents API failed', 'error');
+                }
+            } catch (error) {
+                testResults.failed++;
+                testResults.errors.push(error.message);
+                addResult('api-results', `❌ Agents API error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testPerformance() {
+            clearResults('performance-results');
+            addResult('performance-results', 'Testing API performance...', 'info');
+            
+            const endpoints = [
+                '/api/test',
+                '/api/health',
+                '/api/opportunities',
+                '/api/agents'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const startTime = performance.now();
+                    const response = await fetch(`${BACKEND_URL}${endpoint}`);
+                    const endTime = performance.now();
+                    const responseTime = (endTime - startTime).toFixed(1);
+                    
+                    if (response.ok) {
+                        const color = responseTime < 100 ? 'success' : responseTime < 500 ? 'warning' : 'error';
+                        addResult('performance-results', `✅ ${endpoint}: ${responseTime}ms`, color);
+                    } else {
+                        addResult('performance-results', `❌ ${endpoint}: Failed (${response.status})`, 'error');
+                    }
+                } catch (error) {
+                    addResult('performance-results', `❌ ${endpoint}: Error`, 'error');
+                }
+            }
+        }
+
+        async function runAllTests() {
+            // Reset results
+            clearResults('connection-results');
+            clearResults('api-results');
+            clearResults('performance-results');
+            clearResults('test-summary');
+            
+            testResults = { total: 0, passed: 0, failed: 0, errors: [] };
+            
+            addResult('test-summary', '🚀 Starting comprehensive tests...', 'info');
+            
+            // Run connection tests
+            await testBackendConnection();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Run API tests
+            await testHealthEndpoint();
+            await testOpportunitiesAPI();
+            await testAgentsAPI();
+            
+            // Performance test
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testPerformance();
+            
+            // Summary
+            setTimeout(() => {
+                addResult('test-summary', '=' * 50, 'info');
+                addResult('test-summary', `📊 Test Summary:`, 'info');
+                addResult('test-summary', `Total Tests: ${testResults.total}`, 'info');
+                addResult('test-summary', `✅ Passed: ${testResults.passed}`, 'success');
+                addResult('test-summary', `❌ Failed: ${testResults.failed}`, 'error');
+                
+                if (testResults.errors.length > 0) {
+                    addResult('test-summary', `⚠️  Errors: ${testResults.errors.length}`, 'warning');
+                }
+                
+                const successRate = testResults.total > 0 ? (testResults.passed / testResults.total * 100).toFixed(1) : 0;
+                const summaryColor = successRate >= 90 ? 'success' : successRate >= 70 ? 'warning' : 'error';
+                addResult('test-summary', `🎯 Success Rate: ${successRate}%`, summaryColor);
+                
+                if (successRate >= 90) {
+                    addResult('test-summary', '🎉 Excellent! System is ready for production.', 'success');
+                } else if (successRate >= 70) {
+                    addResult('test-summary', '⚠️  Good, but some issues need attention.', 'warning');
+                } else {
+                    addResult('test-summary', '❌ Major issues detected. Review and fix.', 'error');
+                }
+            }, 2000);
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            addResult('test-summary', '🎯 OppGrid Integration Test Suite Loaded', 'info');
+            addResult('test-summary', `Backend: ${BACKEND_URL}`, 'info');
+            addResult('test-summary', `Frontend: ${FRONTEND_URL}`, 'info');
+            addResult('test-summary', 'Click "Run All Tests" to begin comprehensive testing', 'info');
+        });
+    </script>
+</body>
+</html>

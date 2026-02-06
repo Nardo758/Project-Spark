@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OppGrid AI Agent Integration - Wireframes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: #0f172a; color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        
+        .wireframe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin-top: 30px; }
+        
+        .wireframe { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 2px solid #e2e8f0; }
+        .wireframe h2 { color: #0f172a; margin-bottom: 20px; font-size: 1.5em; }
+        .wireframe h3 { color: #475569; margin: 15px 0 10px 0; font-size: 1.1em; }
+        
+        .component { background: #f1f5f9; border: 1px dashed #94a3b8; border-radius: 8px; padding: 15px; margin: 10px 0; position: relative; }
+        .component::before { content: attr(data-label); position: absolute; top: -8px; left: 10px; background: #64748b; color: white; font-size: 0.7em; padding: 2px 6px; border-radius: 3px; }
+        
+        .btn { background: #0ea5e9; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em; margin: 5px; }
+        .btn-success { background: #10b981; }
+        .btn-warning { background: #f59e0b; }
+        .btn-danger { background: #ef4444; }
+        
+        .form-group { margin: 15px 0; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #374151; }
+        .form-group input, .form-group select, .form-group textarea { 
+            width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9em; 
+        }
+        
+        .card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .card-header { font-weight: 600; color: #1f2937; margin-bottom: 8px; }
+        .card-content { color: #6b7280; font-size: 0.9em; }
+        
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-inactive { background: #fef2f2; color: #991b1b; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        
+        .nav-tabs { display: flex; border-bottom: 2px solid #e5e7eb; margin-bottom: 20px; }
+        .nav-tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; }
+        .nav-tab.active { border-bottom-color: #0ea5e9; color: #0ea5e9; font-weight: 500; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .flex { display: flex; align-items: center; gap: 10px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        
+        .text-sm { font-size: 0.8em; }
+        .text-lg { font-size: 1.1em; }
+        .text-xl { font-size: 1.3em; }
+        .font-semibold { font-weight: 600; }
+        
+        .mb-4 { margin-bottom: 20px; }
+        .mt-4 { margin-top: 20px; }
+        .p-4 { padding: 20px; }
+        
+        .border-t { border-top: 1px solid #e5e7eb; padding-top: 15px; margin-top: 15px; }
+        
+        @media (max-width: 768px) {
+            .wireframe-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 OppGrid AI Agent Integration</h1>
+            <p>Interactive Wireframes & UI Components</p>
+        </div>
+
+        <div class="wireframe-grid">
+            
+            <!-- Agent Dashboard -->
+            <div class="wireframe">
+                <h2>🏠 Agent Dashboard</h2>
+                <div class="nav-tabs">
+                    <div class="nav-tab active">My Agents</div>
+                    <div class="nav-tab">Marketplace</div>
+                    <div class="nav-tab">Analytics</div>
+                </div>
+                
+                <div class="component" data-label="SUMMARY CARD">
+                    <div class="flex-between">
+                        <div>
+                            <div class="text-xl font-semibold">5 Active Agents</div>
+                            <div class="text-sm text-gray-600">3,247 total analyses this month</div>
+                        </div>
+                        <button class="btn btn-success">+ Connect Agent</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex-between">
+                        <div class="flex">
+                            <div style="width: 40px; height: 40px; background: #0ea5e9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">MR</div>
+                            <div>
+                                <div class="font-semibold">Market Research Pro</div>
+                                <div class="text-sm text-gray-600">Analyzes competitors & market size</div>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            <span class="status-badge status-active">Active</span>
+                            <button class="btn">Configure</button>
+                        </div>
+                    </div>
+                    <div class="grid mt-4">
+                        <div><div class="text-sm text-gray-600">Usage</div><div class="font-semibold">847 calls</div></div>
+                        <div><div class="text-sm text-gray-600">Success Rate</div><div class="font-semibold">94.2%</div></div>
+                        <div><div class="text-sm text-gray-600">Cost</div><div class="font-semibold">$42.35</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex-between">
+                        <div class="flex">
+                            <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">IA</div>
+                            <div>
+                                <div class="font-semibold">Idea Analyzer</div>
+                                <div class="text-sm text-gray-600">Validates opportunity feasibility</div>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            <span class="status-badge status-active">Active</span>
+                            <button class="btn">Configure</button>
+                        </div>
+                    </div>
+                    <div class="grid mt-4">
+                        <div><div class="text-sm text-gray-600">Usage</div><div class="font-semibold">1,234 calls</div></div>
+                        <div><div class="text-sm text-gray-600">Success Rate</div><div class="font-semibold">89.7%</div></div>
+                        <div><div class="text-sm text-gray-600">Cost</div><div class="font-semibold">$61.70</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Registration -->
+            <div class="wireframe">
+                <h2>🔌 Agent Registration</h2>
+                <div class="component" data-label="FORM HEADER">
+                    <div class="font-semibold text-lg">Connect Your AI Agent</div>
+                    <div class="text-sm text-gray-600">Register your custom AI agent to work with OppGrid data</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Agent Name *</label>
+                    <input type="text" placeholder="My Market Research Bot" value="Competitor Analyzer Pro">
+                </div>
+
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea placeholder="What does your agent do?" rows="3">Automatically analyzes competitors, market size, and growth potential for new opportunities</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>AI Provider</label>
+                    <select>
+                        <option>Custom/API</option>
+                        <option>OpenAI</option>
+                        <option>Anthropic</option>
+                        <option>LangChain</option>
+                    </select>
+                </div>
+
+                <div class="component" data-label="CAPABILITIES">
+                    <div class="font-semibold mb-3">Capabilities *</div>
+                    <div class="grid">
+                        <label class="flex"><input type="checkbox" checked> Opportunity Analysis</label>
+                        <label class="flex"><input type="checkbox" checked> Market Research</label>
+                        <label class="flex"><input type="checkbox"> Report Generation</label>
+                        <label class="flex"><input type="checkbox"> Competitor Mapping</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Webhook URL *</label>
+                    <input type="url" placeholder="https://your-agent.com/webhook" value="https://api.researchco.com/oppgrid/webhook">
+                    <div class="text-sm text-gray-600 mt-1">OppGrid will send data to this URL when triggered</div>
+                </div>
+
+                <div class="component" data-label="AUTHENTICATION">
+                    <div class="font-semibold mb-3">Authentication</div>
+                    <label class="flex"><input type="radio" name="auth" checked> API Key (Recommended)</label>
+                    <label class="flex"><input type="radio" name="auth"> OAuth 2.0</label>
+                    <label class="flex"><input type="radio" name="auth"> Webhook Signature</label>
+                </div>
+
+                <div class="border-t">
+                    <button class="btn btn-success">Register Agent</button>
+                    <button class="btn" style="background: #6b7280;">Test Connection</button>
+                </div>
+            </div>
+
+            <!-- Agent Marketplace -->
+            <div class="wireframe">
+                <h2>🛒 Agent Marketplace</h2>
+                <div class="component" data-label="SEARCH BAR">
+                    <div class="flex">
+                        <input type="text" placeholder="Search agents by name, capability, or category..." style="flex: 1;">
+                        <select style="margin-left: 10px;">
+                            <option>All Categories</option>
+                            <option>Market Research</option>
+                            <option>Analysis</option>
+                            <option>Automation</option>
+                        </select>
+                        <select style="margin-left: 10px;">
+                            <option>Most Popular</option>
+                            <option>Highest Rated</option>
+                            <option>Newest</option>
+                            <option>Price: Low to High</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex-between">
+                        <div class="flex">
+                            <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em;">MR</div>
+                            <div style="margin-left: 15px;">
+                                <div class="font-semibold text-lg">Market Research Pro</div>
+                                <div class="text-sm text-gray-600">By ResearchCo • 1,234 installs</div>
+                                <div class="flex mt-2">
+                                    <span class="status-badge status-active" style="margin-right: 8px;">4.8 ⭐</span>
+                                    <span class="text-sm" style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px;">Market Research</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="text-lg font-semibold" style="color: #059669;">$5/analysis</div>
+                            <button class="btn btn-success">Install</button>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-sm text-gray-700">
+                        Comprehensive market analysis including competitor mapping, TAM calculation, and growth projections. Perfect for validating new opportunities.
+                    </div>
+                    <div class="flex mt-3 text-xs text-gray-600">
+                        <span>💡 Opportunity Analysis</span>
+                        <span style="margin: 0 10px;">•</span>
+                        <span>📊 Market Research</span>
+                        <span style="margin: 0 10px;">•</span>
+                        <span>🎯 Competitor Mapping</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex-between">
+                        <div class="flex">
+                            <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em;">IA</div>
+                            <div style="margin-left: 15px;">
+                                <div class="font-semibold text-lg">Idea Validator AI</div>
+                                <div class="text-sm text-gray-600">By ValidationAI • 892 installs</div>
+                                <div class="flex mt-2">
+                                    <span class="status-badge status-active" style="margin-right: 8px;">4.6 ⭐</span>
+                                    <span class="text-sm" style="background: #fce7f3; color: #be185d; padding: 2px 8px; border-radius: 12px;">Analysis</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="text-lg font-semibold" style="color: #059669;">Free</div>
+                            <button class="btn btn-success">Install</button>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-sm text-gray-700">
+                        AI-powered validation of opportunity feasibility, market timing, and execution complexity. Get instant feedback on your ideas.
+                    </div>
+                    <div class="flex mt-3 text-xs text-gray-600">
+                        <span>✅ Feasibility Analysis</span>
+                        <span style="margin: 0 10px;">•</span>
+                        <span>⏰ Market Timing</span>
+                        <span style="margin: 0 10px;">•</span>
+                        <span>🎯 Complexity Score</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Analytics -->
+            <div class="wireframe">
+                <h2>📊 Agent Analytics</h2>
+                <div class="component" data-label="METRICS OVERVIEW">
+                    <div class="grid">
+                        <div class="card" style="text-align: center;">
+                            <div class="text-2xl font-bold" style="color: #0ea5e9;">3,247</div>
+                            <div class="text-sm text-gray-600">Total Calls</div>
+                            <div class="text-xs text-green-600">↑ 23% this month</div>
+                        </div>
+                        <div class="card" style="text-align: center;">
+                            <div class="text-2xl font-bold" style="color: #10b981;">92.4%</div>
+                            <div class="text-sm text-gray-600">Success Rate</div>
+                            <div class="text-xs text-green-600">↑ 5% this month</div>
+                        </div>
+                        <div class="card" style="text-align: center;">
+                            <div class="text-2xl font-bold" style="color: #f59e0b;">$142.05</div>
+                            <div class="text-sm text-gray-600">Total Cost</div>
+                            <div class="text-xs text-red-600">↑ 15% this month</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="component" data-label="USAGE CHART">
+                    <div class="font-semibold mb-3">Usage Over Time</div>
+                    <div style="height: 150px; background: linear-gradient(to top, #dbeafe 0%, #eff6ff 100%); border-radius: 8px; display: flex; align-items: end; justify-content: space-around; padding: 20px;">
+                        <div style="width: 30px; height: 80%; background: #0ea5e9; border-radius: 4px 4px 0 0;"></div>
+                        <div style="width: 30px; height: 65%; background: #0ea5e9; border-radius: 4px 4px 0 0;"></div>
+                        <div style="width: 30px; height: 75%; background: #0ea5e9; border-radius: 4px 4px 0 0;"></div>
+                        <div style="width: 30px; height: 90%; background: #0ea5e9; border-radius: 4px 4px 0 0;"></div>
+                        <div style="width: 30px; height: 85%; background: #0ea5e9; border-radius: 4px 4px 0 0;"></div>
+                        <div style="width: 30px; height: 95%; background: #0ea5e9; border-radius: 4px 4px 0 0;"></div>
+                        <div style="width: 30px; height: 100%; background: #0ea5e9; border-radius: 4px 4px 0 0;"></div>
+                    </div>
+                    <div class="flex-between text-xs text-gray-600 mt-2">
+                        <span>Week 1</span><span>Week 2</span><span>Week 3</span><span>Week 4</span>
+                        <span>Week 5</span><span>Week 6</span><span>This Week</span>
+                    </div>
+                </div>
+
+                <div class="component" data-label="AGENT PERFORMANCE">
+                    <div class="font-semibold mb-3">Top Performing Agents</div>
+                    <div class="card">
+                        <div class="flex-between">
+                            <div class="flex">
+                                <div style="width: 35px; height: 35px; background: #0ea5e9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">MR</div>
+                                <div style="margin-left: 10px;">
+                                    <div class="font-semibold">Market Research Pro</div>
+                                    <div class="text-sm text-gray-600">847 calls • 94.2% success</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-semibold">$42.35</div>
+                                <div class="text-xs text-green-600">ROI: 340%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow Builder -->
+            <div class="wireframe">
+                <h2>🔄 Workflow Builder</h2>
+                <div class="component" data-label="WORKFLOW CANVAS">
+                    <div class="font-semibold mb-3">Multi-Agent Research Workflow</div>
+                    <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; min-height: 200px;">
+                        
+                        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                            <div style="width: 60px; height: 60px; background: #0ea5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">1</div>
+                            <div style="margin-left: 15px; flex: 1;">
+                                <div class="font-semibold">Trigger: New Opportunity Saved</div>
+                                <div class="text-sm text-gray-600">Automatically starts when user saves any opportunity</div>
+                            </div>
+                            <button class="btn" style="background: #6b7280;">⚙️</button>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+                            <div style="width: 2px; height: 30px; background: #cbd5e1;"></div>
+                            <div style="width: 2px; height: 30px; background: #cbd5e1;"></div>
+                            <div style="width: 2px; height: 30px; background: #cbd5e1;"></div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between;">
+                            <div class="card" style="flex: 1; margin: 0 5px;">
+                                <div class="font-semibold text-sm">Market Research Agent</div>
+                                <div class="text-xs text-gray-600">Analyze competitors & market size</div>
+                                <div class="status-badge status-active mt-2" style="font-size: 0.7em;">✓ Configured</div>
+                            </div>
+                            <div class="card" style="flex: 1; margin: 0 5px;">
+                                <div class="font-semibold text-sm">Idea Validator</div>
+                                <div class="text-xs text-gray-600">Check feasibility & timing</div>
+                                <div class="status-badge status-active mt-2" style="font-size: 0.7em;">✓ Configured</div>
+                            </div>
+                            <div class="card" style="flex: 1; margin: 0 5px;">
+                                <div class="font-semibold text-sm">Report Generator</div>
+                                <div class="text-xs text-gray-600">Create comprehensive report</div>
+                                <div class="status-badge status-pending mt-2" style="font-size: 0.7em;">⚡ Add</div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: center; margin-top: 20px;">
+                            <div style="width: 60px; height: 60px; background: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">✓</div>
+                            <div style="margin-left: 15px;">
+                                <div class="font-semibold">Combined Results Delivered</div>
+                                <div class="text-sm text-gray-600">All agent outputs merged into unified dashboard</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-between">
+                    <button class="btn">+ Add Agent</button>
+                    <div>
+                        <button class="btn" style="background: #6b7280;">Save Draft</button>
+                        <button class="btn btn-success">Activate Workflow</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Agent Activity -->
+            <div class="wireframe">
+                <h2>⚡ Real-time Agent Activity</h2>
+                <div class="component" data-label="ACTIVITY FEED">
+                    <div class="flex-between mb-3">
+                        <div class="font-semibold">Live Activity</div>
+                        <span class="status-badge status-active">● Live</span>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid #0ea5e9;">
+                        <div class="flex-between">
+                            <div class="flex">
+                                <div style="width: 30px; height: 30px; background: #0ea5e9; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8em;">MR</div>
+                                <div style="margin-left: 10px;">
+                                    <div class="font-semibold text-sm">Market Research Pro</div>
+                                    <div class="text-xs text-gray-600">Analyzing opportunity #1234</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">2 min ago</div>
+                        </div>
+                        <div class="mt-2 text-xs" style="background: #f0f9ff; padding: 8px; border-radius: 4px;">
+                            <strong>Status:</strong> Gathering competitor data from Google Maps API...
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid #10b981;">
+                        <div class="flex-between">
+                            <div class="flex">
+                                <div style="width: 30px; height: 30px; background: #10b981; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8em;">IA</div>
+                                <div style="margin-left: 10px;">
+                                    <div class="font-semibold text-sm">Idea Validator</div>
+                                    <div class="text-xs text-gray-600">Completed analysis for opportunity #1233</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">5 min ago</div>
+                        </div>
+                        <div class="mt-2 text-xs" style="background: #f0fdf4; padding: 8px; border-radius: 4px;">
+                            <strong>Results:</strong> ✅ High feasibility (87/100) • ✅ Good market timing • ⚠️ Medium complexity
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid #f59e0b;">
+                        <div class="flex-between">
+                            <div class="flex">
+                                <div style="width: 30px; height: 30px; background: #f59e0b; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8em;">RG</div>
+                                <div style="margin-left: 10px;">
+                                    <div class="font-semibold text-sm">Report Generator</div>
+                                    <div class="text-xs text-gray-600">Generating comprehensive report</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">8 min ago</div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="text-xs text-gray-600 mb-1">Progress: 65%</div>
+                            <div style="background: #e5e7eb; height: 4px; border-radius: 2px;">
+                                <div style="background: #f59e0b; height: 100%; width: 65%; border-radius: 2px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Components -->
+        <div class="wireframe" style="margin-top: 30px;">
+            <h2>🎨 Key UI Components Reference</h2>
+            <div class="grid">
+                <div>
+                    <h3>Status Badges</h3>
+                    <div class="flex" style="flex-wrap: wrap; gap: 8px;">
+                        <span class="status-badge status-active">Active</span>
+                        <span class="status-badge status-inactive">Inactive</span>
+                        <span class="status-badge status-pending">Pending</span>
+                        <span class="status-badge" style="background: #dbeafe; color: #1e40af;">4.8 ⭐</span>
+                    </div>
+                </div>
+                <div>
+                    <h3>Button Styles</h3>
+                    <div class="flex" style="flex-wrap: wrap; gap: 8px;">
+                        <button class="btn">Primary</button>
+                        <button class="btn btn-success">Success</button>
+                        <button class="btn btn-warning">Warning</button>
+                        <button class="btn btn-danger">Danger</button>
+                    </div>
+                </div>
+                <div>
+                    <h3>Form Elements</h3>
+                    <div class="form-group">
+                        <input type="text" placeholder="Text input example">
+                    </div>
+                    <div class="form-group">
+                        <select>
+                            <option>Select dropdown example</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wireframe" style="margin-top: 30px;">
+            <h2>📝 Technical Implementation Notes</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">🎨 Design System</div>
+                    <div class="card-content">
+                        • Primary: #0ea5e9 (Blue)<br>
+                        • Success: #10b981 (Green)<br>
+                        • Warning: #f59e0b (Orange)<br>
+                        • Danger: #ef4444 (Red)<br>
+                        • Background: #f8fafc (Light gray)
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📱 Responsive Design</div>
+                    <div class="card-content">
+                        • Mobile-first approach<br>
+                        • Breakpoint: 768px<br>
+                        • Touch-friendly targets (44px min)<br>
+                        • Collapsible navigation on mobile
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">⚡ Interactive Elements</div>
+                    <div class="card-content">
+                        • Real-time activity feed updates<br>
+                        • Progress bars for long-running tasks<br>
+                        • Status badges with live updates<br>
+                        • Drag-and-drop workflow builder
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">🔧 Technical Stack</div>
+                    <div class="card-content">
+                        • React/TypeScript frontend<br>
+                        • WebSocket for real-time updates<br>
+                        • Chart.js for analytics visualizations<br>
+                        • OAuth 2.0 for agent authentication
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
