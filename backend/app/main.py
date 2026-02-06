@@ -1,8 +1,11 @@
 import logging
 import os
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.core.config import settings
 from app.middleware.rate_limit import RateLimitMiddleware
@@ -177,16 +180,6 @@ app.include_router(saved_layers.router, prefix=f"{settings.API_V1_PREFIX}/saved-
 app.include_router(foot_traffic.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Foot Traffic"])
 
 
-@app.get("/")
-def root():
-    """Root endpoint"""
-    return {
-        "message": "Welcome to OppGrid API",
-        "docs": "/docs",
-        "version": "1.0.0"
-    }
-
-
 @app.on_event("startup")
 async def startup_event():
     """Initialize database connection on startup"""
@@ -292,3 +285,25 @@ def health_check():
         "database": {"status": "connected" if db_ok else "error", "error": db_error},
         "migrations": migration_status,
     }
+
+
+FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if FRONTEND_DIST.is_dir():
+    if (FRONTEND_DIST / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="static-assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str):
+        file_path = FRONTEND_DIST / full_path
+        if full_path and file_path.is_file():
+            return FileResponse(str(file_path))
+        return FileResponse(str(FRONTEND_DIST / "index.html"))
+else:
+    @app.get("/")
+    def root():
+        return {
+            "message": "Welcome to OppGrid API",
+            "docs": "/docs",
+            "version": "1.0.0"
+        }

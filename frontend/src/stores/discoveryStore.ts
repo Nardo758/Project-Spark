@@ -19,7 +19,6 @@ import {
   saveSearch,
   fetchSavedSearches,
   deleteSavedSearch,
-  loadSavedSearch,
   saveOpportunity,
   unsaveOpportunity,
 } from '../services/api'
