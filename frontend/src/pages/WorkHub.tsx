@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, memo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { 
@@ -289,15 +289,16 @@ function InlineCardsDisplay({ cards, opportunityId, workspaceId, onToolClick }: 
   )
 }
 
-function MessageContent({ content, isUser, opportunityId }: { content: string; isUser: boolean; opportunityId?: number }) {
+const MessageContent = memo(function MessageContent({ content, isUser, opportunityId }: { content: string; isUser: boolean; opportunityId?: number }) {
   if (isUser) {
     return <p className="text-sm whitespace-pre-wrap">{content}</p>
   }
   
-  const blocks = parseMessageContent(content)
+  const blocks = useMemo(() => parseMessageContent(content), [content])
+  const lowercaseContent = useMemo(() => content.toLowerCase(), [content])
   
   const reportKeywords = ['detailed analysis', 'full report', 'deep dive', 'comprehensive research', 'market research report', 'competitor analysis report', 'financial projections']
-  const showReportCTA = opportunityId && reportKeywords.some(kw => content.toLowerCase().includes(kw))
+  const showReportCTA = opportunityId && reportKeywords.some(kw => lowercaseContent.includes(kw))
   
   return (
     <div className="space-y-3">
@@ -348,7 +349,7 @@ function MessageContent({ content, isUser, opportunityId }: { content: string; i
       {showReportCTA && <PaidReportCard opportunityId={opportunityId} />}
     </div>
   )
-}
+})
 
 const stageQuickActions: Record<WorkspaceStatus, { label: string; icon: typeof CheckCircle; action: string }[]> = {
   researching: [
@@ -587,49 +588,70 @@ export default function WorkHub() {
   }, [locationFinderState.center])
 
   useEffect(() => {
-    const fetchLayersData = async () => {
-      if (!locationFinderState.center) return
+    let cancelled = false
 
-      const layersToFetch = locationFinderState.layers.filter(layer => {
+    const fetchLayersData = async () => {
+      const stateSnapshot = locationFinderState
+      if (!stateSnapshot.center) return
+
+      const layersToFetch = stateSnapshot.layers.filter(layer => {
         if (!layer.visible) return false
         if (layer.loading) return false
         if (!layer.data && !layer.error) return true
-        return shouldRefetchLayer(layer, prevLocationFinderStateRef.current, locationFinderState)
+        return shouldRefetchLayer(layer, prevLocationFinderStateRef.current, stateSnapshot)
       })
 
       if (layersToFetch.length === 0) {
-        prevLocationFinderStateRef.current = locationFinderState
+        prevLocationFinderStateRef.current = stateSnapshot
         return
       }
 
-      for (const layer of layersToFetch) {
-        setLocationFinderState(prev => ({
-          ...prev,
-          layers: prev.layers.map(l => 
-            l.id === layer.id ? { ...l, loading: true, error: null } : l
-          )
-        }))
+      const targetLayerIds = new Set(layersToFetch.map(layer => layer.id))
+      setLocationFinderState(prev => ({
+        ...prev,
+        layers: prev.layers.map(layer =>
+          targetLayerIds.has(layer.id) ? { ...layer, loading: true, error: null } : layer
+        )
+      }))
 
-        const result = await fetchLayerData(layer.type, {
-          center: locationFinderState.center!,
-          radius: locationFinderState.radius,
-          config: layer.config
+      const layerResults = await Promise.all(
+        layersToFetch.map(async (layer) => {
+          const result = await fetchLayerData(layer.type, {
+            center: stateSnapshot.center!,
+            radius: stateSnapshot.radius,
+            config: layer.config
+          })
+          return { layerId: layer.id, result }
         })
+      )
 
-        setLocationFinderState(prev => ({
-          ...prev,
-          layers: prev.layers.map(l => 
-            l.id === layer.id 
-              ? { ...l, loading: false, data: result.data, error: result.error || null }
-              : l
-          )
-        }))
-      }
+      if (cancelled) return
 
-      prevLocationFinderStateRef.current = locationFinderState
+      const resultByLayerId = new Map(
+        layerResults.map(({ layerId, result }) => [layerId, result] as const)
+      )
+      setLocationFinderState(prev => ({
+        ...prev,
+        layers: prev.layers.map(layer => {
+          const result = resultByLayerId.get(layer.id)
+          if (!result) return layer
+          return {
+            ...layer,
+            loading: false,
+            data: result.data,
+            error: result.error || null
+          }
+        })
+      }))
+
+      prevLocationFinderStateRef.current = stateSnapshot
     }
 
     fetchLayersData()
+
+    return () => {
+      cancelled = true
+    }
   }, [locationFinderState.center, locationFinderState.radius, layerVisibilityKey, layerConfigKey])
 
   const handleLayerDataUpdate = (layerId: string, data: any, error?: string) => {

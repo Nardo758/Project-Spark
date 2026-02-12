@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from typing import Any, Literal
 import hashlib
 import logging
+import asyncio
 
 from app.db.database import get_db
 from app.models.opportunity import Opportunity
@@ -513,6 +514,8 @@ class DOTTrafficRequest(BaseModel):
     radius_miles: float = 3.0
     force_refresh: bool = False
     include_google_fusion: bool = True
+    include_road_segments: bool = False
+    include_live_traffic: bool = False
 
 
 class TrafficTrendResponse(BaseModel):
@@ -531,6 +534,7 @@ class DOTTrafficResponse(BaseModel):
     source: str
     state: str | None = None
     road_segments: list[dict] = []
+    road_geojson: dict | None = None
     fusion_breakdown: dict | None = None
     trend: TrafficTrendResponse | None = None
     message: str
@@ -589,6 +593,30 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
                 insight=fused.trend.insight
             )
         
+        road_geojson = None
+        if request.include_road_segments:
+            try:
+                road_geojson = await dot_service.get_road_segments_with_geometry(
+                    request.latitude,
+                    request.longitude,
+                    request.radius_miles
+                )
+                if (
+                    request.include_live_traffic
+                    and isinstance(road_geojson, dict)
+                    and road_geojson.get("features")
+                ):
+                    from app.services.mapbox_traffic_service import MapboxTrafficService
+                    mapbox_service = MapboxTrafficService()
+                    road_geojson["features"] = mapbox_service.get_live_traffic_for_segments(
+                        road_geojson["features"],
+                        sample_rate=0.15
+                    )
+                    road_geojson.setdefault("metadata", {})["includes_live_traffic"] = True
+            except Exception as e:
+                logger.warning(f"Road geometry fetch failed during dot-traffic request: {e}")
+                road_geojson = None
+        
         return DOTTrafficResponse(
             monthly_estimate=fused.monthly_vehicle_traffic,
             daily_average=fused.monthly_vehicle_traffic // 30,
@@ -597,6 +625,7 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
             source=fused.primary_source,
             state=dot_result.get('state') if dot_result else None,
             road_segments=dot_result.get('road_segments', []) if dot_result else [],
+            road_geojson=road_geojson,
             fusion_breakdown=fused.breakdown,
             trend=trend_response,
             message=f"Traffic data fused from {fused.primary_source} sources"
@@ -610,6 +639,7 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
             monthly_foot_traffic=0,
             confidence_score=0,
             source="error",
+            road_geojson=None,
             message=f"Failed to fetch traffic data: {str(e)}"
         )
 
@@ -996,7 +1026,7 @@ class FindEnhancedOptimalZonesResponse(BaseModel):
 
 
 @router.post("/find-optimal-zones-enhanced", response_model=FindEnhancedOptimalZonesResponse)
-def find_optimal_zones_enhanced(
+async def find_optimal_zones_enhanced(
     request: FindEnhancedOptimalZonesRequest,
     db: Session = Depends(get_db),
 ) -> FindEnhancedOptimalZonesResponse:
@@ -1010,10 +1040,10 @@ def find_optimal_zones_enhanced(
     - Drive By Traffic (monthly)
     - Foot Traffic (monthly)
     """
+    from app.db.database import SessionLocal
     from app.services.zone_data_fetcher import ZoneDataFetcher, calculate_zone_score
     from app.services.location_analyzer import LocationAnalyzer
     
-    fetcher = ZoneDataFetcher(db)
     analyzer = LocationAnalyzer()
     
     grid_points = analyzer.generate_grid_points(
@@ -1025,9 +1055,13 @@ def find_optimal_zones_enhanced(
     
     logger.info(f"Analyzing {len(grid_points)} candidate zones with enhanced metrics")
     
-    scored_zones = []
-    for point in grid_points:
+    max_concurrency = min(6, max(2, len(grid_points)))
+    semaphore = asyncio.Semaphore(max_concurrency)
+
+    def analyze_point(point):
+        local_db = SessionLocal()
         try:
+            fetcher = ZoneDataFetcher(local_db)
             metrics = fetcher.fetch_zone_metrics(
                 center_lat=point.lat,
                 center_lng=point.lng,
@@ -1036,65 +1070,75 @@ def find_optimal_zones_enhanced(
                 fetch_competitors=bool(request.business_type),
                 fetch_traffic=True
             )
+            
+            score_result = calculate_zone_score(metrics)
+            insights = []
+            
+            if metrics.total_population >= 50000:
+                insights.append(f"High population ({metrics.total_population:,} residents)")
+            elif metrics.total_population >= 25000:
+                insights.append(f"Good population base ({metrics.total_population:,} residents)")
+            
+            if metrics.population_growth >= 2.0:
+                insights.append(f"Strong growth ({metrics.population_growth:.1f}% annually)")
+            
+            if metrics.median_income >= 75000:
+                insights.append(f"High income area (${metrics.median_income:,} median)")
+            
+            if metrics.total_competitors == 0:
+                insights.append("No direct competitors - unproven market")
+            elif metrics.total_competitors <= 3:
+                insights.append(f"Low competition ({metrics.total_competitors} competitors)")
+            elif metrics.total_competitors >= 10:
+                insights.append(f"High competition ({metrics.total_competitors} competitors)")
+            
+            if metrics.foot_traffic_monthly >= 25000:
+                insights.append(f"High foot traffic ({metrics.foot_traffic_monthly:,}/month)")
+            
+            if metrics.drive_by_traffic_monthly >= 100000:
+                insights.append(f"High vehicle traffic ({metrics.drive_by_traffic_monthly:,}/month)")
+            
+            zone_id = f"zone_{point.lat:.4f}_{point.lng:.4f}"
+            
+            return {
+                'id': zone_id,
+                'center_lat': point.lat,
+                'center_lng': point.lng,
+                'radius_miles': request.analysis_radius_miles,
+                'total_score': score_result['total_score'],
+                'metrics': EnhancedZoneMetrics(
+                    total_population=metrics.total_population,
+                    population_growth=metrics.population_growth,
+                    median_income=metrics.median_income,
+                    median_age=metrics.median_age,
+                    total_competitors=metrics.total_competitors,
+                    drive_by_traffic_monthly=metrics.drive_by_traffic_monthly,
+                    foot_traffic_monthly=metrics.foot_traffic_monthly
+                ),
+                'component_scores': score_result['component_scores'],
+                'derived_metrics': score_result.get('derived_metrics'),
+                'category_scores': score_result.get('category_scores'),
+                'trends': metrics.raw_data.get('trends') if metrics.raw_data else None,
+                'insights': insights[:4]
+            }
         except Exception as e:
             logger.warning(f"Failed to fetch metrics for zone at {point.lat}, {point.lng}: {e}")
             try:
-                db.rollback()
+                local_db.rollback()
             except Exception:
                 pass
-            continue
-        
-        score_result = calculate_zone_score(metrics)
-        
-        insights = []
-        
-        if metrics.total_population >= 50000:
-            insights.append(f"High population ({metrics.total_population:,} residents)")
-        elif metrics.total_population >= 25000:
-            insights.append(f"Good population base ({metrics.total_population:,} residents)")
-        
-        if metrics.population_growth >= 2.0:
-            insights.append(f"Strong growth ({metrics.population_growth:.1f}% annually)")
-        
-        if metrics.median_income >= 75000:
-            insights.append(f"High income area (${metrics.median_income:,} median)")
-        
-        if metrics.total_competitors == 0:
-            insights.append("No direct competitors - unproven market")
-        elif metrics.total_competitors <= 3:
-            insights.append(f"Low competition ({metrics.total_competitors} competitors)")
-        elif metrics.total_competitors >= 10:
-            insights.append(f"High competition ({metrics.total_competitors} competitors)")
-        
-        if metrics.foot_traffic_monthly >= 25000:
-            insights.append(f"High foot traffic ({metrics.foot_traffic_monthly:,}/month)")
-        
-        if metrics.drive_by_traffic_monthly >= 100000:
-            insights.append(f"High vehicle traffic ({metrics.drive_by_traffic_monthly:,}/month)")
-        
-        zone_id = f"zone_{point.lat:.4f}_{point.lng:.4f}"
-        
-        scored_zones.append({
-            'id': zone_id,
-            'center_lat': point.lat,
-            'center_lng': point.lng,
-            'radius_miles': request.analysis_radius_miles,
-            'total_score': score_result['total_score'],
-            'metrics': EnhancedZoneMetrics(
-                total_population=metrics.total_population,
-                population_growth=metrics.population_growth,
-                median_income=metrics.median_income,
-                median_age=metrics.median_age,
-                total_competitors=metrics.total_competitors,
-                drive_by_traffic_monthly=metrics.drive_by_traffic_monthly,
-                foot_traffic_monthly=metrics.foot_traffic_monthly
-            ),
-            'component_scores': score_result['component_scores'],
-            'derived_metrics': score_result.get('derived_metrics'),
-            'category_scores': score_result.get('category_scores'),
-            'trends': metrics.raw_data.get('trends') if metrics.raw_data else None,
-            'insights': insights[:4]
-        })
+            return None
+        finally:
+            local_db.close()
+
+    async def analyze_point_bounded(point):
+        async with semaphore:
+            return await asyncio.to_thread(analyze_point, point)
+
+    zone_analysis_results = await asyncio.gather(
+        *(analyze_point_bounded(point) for point in grid_points)
+    )
+    scored_zones = [zone for zone in zone_analysis_results if zone is not None]
     
     scored_zones.sort(key=lambda z: z['total_score'], reverse=True)
     
