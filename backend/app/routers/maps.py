@@ -1028,7 +1028,6 @@ class FindEnhancedOptimalZonesResponse(BaseModel):
 @router.post("/find-optimal-zones-enhanced", response_model=FindEnhancedOptimalZonesResponse)
 async def find_optimal_zones_enhanced(
     request: FindEnhancedOptimalZonesRequest,
-    db: Session = Depends(get_db),
 ) -> FindEnhancedOptimalZonesResponse:
     """
     Enhanced optimal zones finder with real data for all 7 metrics:
