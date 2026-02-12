@@ -372,7 +372,9 @@ async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data
         latitude: center.lat,
         longitude: center.lng,
         radius_miles: radiusMiles,
-        force_refresh: forceRefresh
+        force_refresh: forceRefresh,
+        include_road_segments: true,
+        include_live_traffic: false
       })
     })
     
@@ -411,27 +413,7 @@ async function fetchDriveByTrafficData(params: LayerFetchParams): Promise<{ data
       intensity: Math.min(100, Math.floor((data.daily_average || 0) / 500))
     }]
     
-    // Also fetch road segments for line visualization
-    // Include live traffic comparison for leading indicators
-    let roadGeoJSON = null
-    try {
-      const segmentsResponse = await fetch(`${API_BASE}/maps/road-traffic-segments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        credentials: 'include',
-        body: JSON.stringify({
-          latitude: center.lat,
-          longitude: center.lng,
-          radius_miles: radiusMiles,
-          include_live_traffic: false  // Disabled by default for faster loading
-        })
-      })
-      if (segmentsResponse.ok) {
-        roadGeoJSON = await segmentsResponse.json()
-      }
-    } catch (segmentError) {
-      console.warn('Failed to fetch road segments:', segmentError)
-    }
+    const roadGeoJSON = data.road_geojson || null
     
     return {
       data: {

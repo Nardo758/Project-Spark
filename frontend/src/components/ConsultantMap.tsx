@@ -186,14 +186,17 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
     latitude: 39.8283,
     zoom: 4,
   });
+  const liveViewStateRef = useRef(viewState);
   
   useEffect(() => {
     if (mapData?.center) {
-      setViewState({
+      const centeredViewState = {
         longitude: mapData.center.lng,
         latitude: mapData.center.lat,
         zoom: 11,
-      });
+      };
+      setViewState(centeredViewState);
+      liveViewStateRef.current = centeredViewState;
     }
   }, [mapData?.center]);
   
@@ -201,7 +204,7 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
     setLayerState(prev => ({ ...prev, [layer]: !prev[layer] }));
   }, []);
   
-  const heatmapGeoJSON = {
+  const heatmapGeoJSON = useMemo(() => ({
     type: 'FeatureCollection' as const,
     features: (mapData?.layers?.heatmap?.data || []).map((point) => ({
       type: 'Feature' as const,
@@ -214,12 +217,12 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
         coordinates: [point.lng, point.lat],
       },
     })),
-  };
+  }), [mapData?.layers?.heatmap?.data]);
   
-  const polygonGeoJSON = {
+  const polygonGeoJSON = useMemo(() => ({
     type: 'FeatureCollection' as const,
     features: (mapData?.layers?.polygons?.data || []).filter(g => g?.geometry?.type === 'Polygon'),
-  };
+  }), [mapData?.layers?.polygons?.data]);
   
   const competitorZonesGeoJSON = useMemo(() => {
     const pins = mapData?.layers?.pins?.data || [];
@@ -271,7 +274,10 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
     };
   }, [mapData?.layers?.pins?.data, mapData?.center]);
   
-  const opportunityCount = opportunityGridGeoJSON.features.filter(f => f.properties.score > 50).length;
+  const opportunityCount = useMemo(
+    () => opportunityGridGeoJSON.features.filter(f => f.properties.score > 50).length,
+    [opportunityGridGeoJSON]
+  );
   
   if (isLoading) {
     return (
@@ -344,7 +350,27 @@ export default function ConsultantMap({ mapData, city, isLoading }: ConsultantMa
           <Map
             ref={mapRef}
             {...viewState}
-            onMove={(evt: ViewStateChangeEvent) => setViewState(evt.viewState)}
+            onMove={(evt: ViewStateChangeEvent) => {
+              liveViewStateRef.current = evt.viewState;
+            }}
+            onMoveEnd={(evt: ViewStateChangeEvent) => {
+              liveViewStateRef.current = evt.viewState;
+              setViewState(prev => {
+                const next = liveViewStateRef.current;
+                if (
+                  prev.longitude === next.longitude &&
+                  prev.latitude === next.latitude &&
+                  prev.zoom === next.zoom
+                ) {
+                  return prev;
+                }
+                return {
+                  longitude: next.longitude,
+                  latitude: next.latitude,
+                  zoom: next.zoom,
+                };
+              });
+            }}
             style={{ width: '100%', height: 500 }}
             mapStyle="mapbox://styles/mapbox/light-v11"
             mapboxAccessToken={MAPBOX_TOKEN}

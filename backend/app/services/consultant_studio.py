@@ -10,6 +10,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.models.consultant_activity import ConsultantActivity, ConsultantPath
 from app.models.detected_trend import DetectedTrend
@@ -93,8 +94,6 @@ class ConsultantStudioService:
 
     def _cache_validation(self, cache_key: str, idea_description: str, context: Optional[Dict], result: Dict[str, Any]):
         """Cache validation result to database with safe upsert handling"""
-        from sqlalchemy.exc import IntegrityError
-        
         try:
             existing = self.db.query(IdeaValidationCache).filter(
                 IdeaValidationCache.cache_key == cache_key
@@ -330,7 +329,6 @@ class ConsultantStudioService:
             if cached:
                 cached["from_cache"] = True
                 cached["cache_hit_count"] = cached.get("hit_count", 1)
-                self._increment_cache_hit(cache_key)
                 return cached
             
             geo_start = time.time()
@@ -1795,15 +1793,22 @@ class ConsultantStudioService:
         
         top_categories = sorted(categories.items(), key=lambda x: x[1], reverse=True)[:5]
         
+        trend_names = [f"{cat_name} Growth" for cat_name, _ in top_categories]
+        existing_by_name = {
+            trend.trend_name: trend
+            for trend in self.db.query(DetectedTrend).filter(
+                DetectedTrend.trend_name.in_(trend_names)
+            ).all()
+        }
+
         trends = []
         for cat_name, count in top_categories:
-            existing = self.db.query(DetectedTrend).filter(
-                DetectedTrend.trend_name == f"{cat_name} Growth"
-            ).first()
+            trend_name = f"{cat_name} Growth"
+            existing = existing_by_name.get(trend_name)
             
             if not existing:
                 trend = DetectedTrend(
-                    trend_name=f"{cat_name} Growth",
+                    trend_name=trend_name,
                     trend_strength=min(100, count * 10),
                     description=f"Growing opportunities in {cat_name} category",
                     category=cat_name,
@@ -2124,33 +2129,31 @@ class ConsultantStudioService:
 
     def _get_cached_analysis(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """Get cached location analysis if not expired"""
-        cached = self.db.query(LocationAnalysisCache).filter(
-            LocationAnalysisCache.cache_key == cache_key,
-            LocationAnalysisCache.expires_at > datetime.utcnow(),
-        ).first()
-        
-        if cached:
-            return {
-                "success": True,
-                "city": cached.city,
-                "business_type": cached.business_type,
-                "business_subtype": cached.business_subtype,
-                "geo_analysis": cached.demographic_data or {},
-                "market_report": {"executive_summary": cached.claude_summary},
-                "site_recommendations": cached.site_recommendations or [],
-                "hit_count": cached.hit_count,
-            }
-        
-        return None
+        try:
+            cached = self.db.query(LocationAnalysisCache).filter(
+                LocationAnalysisCache.cache_key == cache_key,
+                LocationAnalysisCache.expires_at > datetime.utcnow(),
+            ).first()
+            
+            if cached:
+                cached.hit_count = (cached.hit_count or 0) + 1
+                cached.updated_at = datetime.utcnow()
+                self.db.commit()
+                return {
+                    "success": True,
+                    "city": cached.city,
+                    "business_type": cached.business_type,
+                    "business_subtype": cached.business_subtype,
+                    "geo_analysis": cached.demographic_data or {},
+                    "market_report": {"executive_summary": cached.claude_summary},
+                    "site_recommendations": cached.site_recommendations or [],
+                    "hit_count": cached.hit_count,
+                }
+        except Exception as e:
+            logger.warning(f"Location cache lookup failed: {e}")
+            self.db.rollback()
 
-    def _increment_cache_hit(self, cache_key: str):
-        """Increment cache hit counter"""
-        cached = self.db.query(LocationAnalysisCache).filter(
-            LocationAnalysisCache.cache_key == cache_key
-        ).first()
-        if cached:
-            cached.hit_count += 1
-            self.db.commit()
+        return None
 
     async def _cache_analysis(
         self,
@@ -2163,21 +2166,60 @@ class ConsultantStudioService:
         market_report: Dict[str, Any],
         site_recommendations: List[Dict[str, Any]],
     ):
-        """Cache location analysis for future use"""
-        cache_entry = LocationAnalysisCache(
-            cache_key=cache_key,
-            city=city,
-            business_type=business_type,
-            business_subtype=business_subtype,
-            query_params=query_params,
-            demographic_data=geo_analysis,
-            market_metrics=geo_analysis.get("demographics"),
-            claude_summary=market_report.get("executive_summary"),
-            site_recommendations=site_recommendations,
-            expires_at=datetime.utcnow() + timedelta(days=self.CACHE_TTL_DAYS),
-        )
-        self.db.add(cache_entry)
-        self.db.commit()
+        """Cache location analysis for future use with safe upsert handling"""
+        try:
+            existing = self.db.query(LocationAnalysisCache).filter(
+                LocationAnalysisCache.cache_key == cache_key
+            ).first()
+
+            if existing:
+                existing.city = city
+                existing.business_type = business_type
+                existing.business_subtype = business_subtype
+                existing.query_params = query_params
+                existing.demographic_data = geo_analysis
+                existing.market_metrics = geo_analysis.get("demographics")
+                existing.claude_summary = market_report.get("executive_summary")
+                existing.site_recommendations = site_recommendations
+                existing.expires_at = datetime.utcnow() + timedelta(days=self.CACHE_TTL_DAYS)
+                existing.updated_at = datetime.utcnow()
+                self.db.commit()
+                return
+
+            cache_entry = LocationAnalysisCache(
+                cache_key=cache_key,
+                city=city,
+                business_type=business_type,
+                business_subtype=business_subtype,
+                query_params=query_params,
+                demographic_data=geo_analysis,
+                market_metrics=geo_analysis.get("demographics"),
+                claude_summary=market_report.get("executive_summary"),
+                site_recommendations=site_recommendations,
+                expires_at=datetime.utcnow() + timedelta(days=self.CACHE_TTL_DAYS),
+            )
+            self.db.add(cache_entry)
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            existing = self.db.query(LocationAnalysisCache).filter(
+                LocationAnalysisCache.cache_key == cache_key
+            ).first()
+            if existing:
+                existing.city = city
+                existing.business_type = business_type
+                existing.business_subtype = business_subtype
+                existing.query_params = query_params
+                existing.demographic_data = geo_analysis
+                existing.market_metrics = geo_analysis.get("demographics")
+                existing.claude_summary = market_report.get("executive_summary")
+                existing.site_recommendations = site_recommendations
+                existing.expires_at = datetime.utcnow() + timedelta(days=self.CACHE_TTL_DAYS)
+                existing.updated_at = datetime.utcnow()
+                self.db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to cache location analysis: {e}")
+            self.db.rollback()
 
     async def _log_activity(
         self,
