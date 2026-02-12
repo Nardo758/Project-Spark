@@ -290,12 +290,12 @@ function InlineCardsDisplay({ cards, opportunityId, workspaceId, onToolClick }: 
 }
 
 const MessageContent = memo(function MessageContent({ content, isUser, opportunityId }: { content: string; isUser: boolean; opportunityId?: number }) {
+  const blocks = useMemo(() => parseMessageContent(content), [content])
+  const lowercaseContent = useMemo(() => content.toLowerCase(), [content])
+
   if (isUser) {
     return <p className="text-sm whitespace-pre-wrap">{content}</p>
   }
-  
-  const blocks = useMemo(() => parseMessageContent(content), [content])
-  const lowercaseContent = useMemo(() => content.toLowerCase(), [content])
   
   const reportKeywords = ['detailed analysis', 'full report', 'deep dive', 'comprehensive research', 'market research report', 'competitor analysis report', 'financial projections']
   const showReportCTA = opportunityId && reportKeywords.some(kw => lowercaseContent.includes(kw))
