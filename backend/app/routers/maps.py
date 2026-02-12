@@ -560,16 +560,20 @@ async def get_dot_traffic(request: DOTTrafficRequest, db: Session = Depends(get_
         google_data = None
         if request.include_google_fusion:
             try:
-                serpapi = SerpAPIService()
-                foot_traffic_result = await serpapi.get_area_foot_traffic(
+                from app.services.traffic_analyzer import TrafficAnalyzer
+
+                # Use local/cached foot-traffic aggregation when available.
+                analyzer = TrafficAnalyzer(db)
+                foot_traffic_result = analyzer.analyze_area_traffic(
                     request.latitude,
                     request.longitude,
-                    request.radius_miles
+                    int(request.radius_miles * 1609.34)
                 )
-                if foot_traffic_result:
+                if foot_traffic_result and foot_traffic_result.get("total_locations_sampled", 0) > 0:
+                    avg_daily_traffic = foot_traffic_result.get("current_avg_popularity") or 0
                     google_data = {
-                        'avg_daily_traffic': foot_traffic_result.get('avg_daily_foot_traffic', 0),
-                        'area_vitality_score': foot_traffic_result.get('vitality_score', 50)
+                        'avg_daily_traffic': int(avg_daily_traffic),
+                        'area_vitality_score': foot_traffic_result.get('area_vitality_score', 50)
                     }
             except Exception as e:
                 logger.warning(f"Google data fetch failed, using DOT only: {e}")
@@ -1015,6 +1019,7 @@ class FindEnhancedOptimalZonesRequest(BaseModel):
     analysis_radius_miles: float = Field(default=3.0, ge=1.0, le=10.0)
     business_type: str | None = None
     top_n: int = Field(default=3, ge=1, le=10)
+    traffic_mode: Literal["auto", "hybrid", "estimated"] = "auto"
 
 
 class FindEnhancedOptimalZonesResponse(BaseModel):
@@ -1053,6 +1058,11 @@ async def find_optimal_zones_enhanced(
     )
     
     logger.info(f"Analyzing {len(grid_points)} candidate zones with enhanced metrics")
+    if request.traffic_mode == "auto":
+        # For larger sweeps, use deterministic estimated traffic to avoid multi-minute timeout cascades.
+        traffic_mode = "estimated" if len(grid_points) > 12 else "hybrid"
+    else:
+        traffic_mode = request.traffic_mode
     
     max_concurrency = min(6, max(2, len(grid_points)))
     semaphore = asyncio.Semaphore(max_concurrency)
@@ -1067,7 +1077,8 @@ async def find_optimal_zones_enhanced(
                 radius_miles=request.analysis_radius_miles,
                 business_type=request.business_type,
                 fetch_competitors=bool(request.business_type),
-                fetch_traffic=True
+                fetch_traffic=True,
+                traffic_mode=traffic_mode
             )
             
             score_result = calculate_zone_score(metrics)
@@ -1164,6 +1175,8 @@ async def find_optimal_zones_enhanced(
         summary += f"Best zone scored {top.total_score}/100"
         if top.insights:
             summary += f" - {top.insights[0]}"
+        if traffic_mode == "estimated":
+            summary += " (traffic scored in fast estimated mode)"
     else:
         summary = "No optimal zones identified in the target area."
     
