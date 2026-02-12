@@ -1,0 +1,50 @@
+{
+  "name": "oppgrid-frontend-replit",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5000 --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "build:replit": "tsc -b --skipLibCheck && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview --port 5000",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.0",
+    "@tanstack/react-query": "^5.59.0",
+    "@excalidraw/excalidraw": "^0.17.0",
+    "@mapbox/mapbox-gl-draw": "^1.4.3",
+    "axios": "^1.7.7",
+    "clsx": "^2.1.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.454.0",
+    "mapbox-gl": "^3.9.4",
+    "react": "^18.3.1",
+    "react-confetti": "^6.1.0",
+    "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
+    "react-map-gl": "^7.1.8",
+    "react-router-dom": "^6.28.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/leaflet": "^1.9.21",
+    "@types/mapbox-gl": "^3.4.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.11.0",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.10.0",
+    "vite": "^5.4.10",
+    "vitest": "^1.0.0"
+  }
+}
