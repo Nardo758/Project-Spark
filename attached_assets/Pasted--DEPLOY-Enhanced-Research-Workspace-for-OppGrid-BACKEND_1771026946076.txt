@@ -1,0 +1,79 @@
+🚀 DEPLOY: Enhanced Research Workspace for OppGrid
+
+=== BACKEND DEPLOYMENT ===
+
+# 1. Create Enhanced Database Models
+Create file: backend/app/models/enhanced_workspace.py
+[Paste the complete enhanced_workspace.py content from our implementation]
+
+# 2. Create Enhanced Service Layer  
+Create file: backend/app/services/enhanced_workspace_service.py
+[Paste the complete enhanced_workspace_service.py content]
+
+# 3. Create Enhanced API Router
+Create file: backend/app/routers/enhanced_workspaces.py
+[Paste the complete enhanced_workspaces.py content]
+
+# 4. Update Main App Integration
+Update file: backend/app/main.py
+Add this import:
+from app.routers import enhanced_workspaces
+
+Add this router inclusion:
+app.include_router(enhanced_workspaces.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Enhanced Workspaces"])
+
+=== DATABASE MIGRATION ===
+
+# 5. Create Migration Script
+Create file: scripts/enhanced_workspace_migration.py
+
+import sqlalchemy as sa
+from alembic import op
+
+def upgrade():
+    # Create enhanced_user_workspaces table
+    op.create_table('enhanced_user_workspaces',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('user_id', sa.Integer(), nullable=False),
+        sa.Column('opportunity_id', sa.Integer(), nullable=False),
+        sa.Column('custom_title', sa.String(length=255), nullable=True),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('ai_context', sa.Text(), nullable=True),
+        sa.Column('workflow_type', sa.Enum('lean_validation', 'enterprise_b2b', 'product_market_fit', 'custom', name='workflowtype'), nullable=False),
+        sa.Column('workflow_config', sa.JSON(), nullable=True),
+        sa.Column('current_stage', sa.String(length=100), nullable=True),
+        sa.Column('current_phase', sa.String(length=100), nullable=True),
+        sa.Column('progress_percent', sa.Integer(), nullable=True),
+        sa.Column('stage_progress', sa.JSON(), nullable=True),
+        sa.Column('ai_research_context', sa.JSON(), nullable=True),
+        sa.Column('ai_recommendations', sa.JSON(), nullable=True),
+        sa.Column('research_summary', sa.JSON(), nullable=True),
+        sa.Column('validation_score', sa.JSON(), nullable=True),
+        sa.Column('status', sa.Enum('not_started', 'in_progress', 'completed', 'skipped', 'failed', name='workflowstatus'), nullable=False),
+        sa.Column('started_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('last_activity_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(['opportunity_id'], ['opportunities.id'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id')
+    )
+    
+    # Create similar tables for enhanced_workflow_stages, enhanced_workflow_tasks, enhanced_research_artifacts, custom_workflows
+    # [Include all table creation statements]
+
+=== FRONTEND INTEGRATION ===
+
+# 6. Create Enhanced Workspace Component
+Update file: frontend/src/pages/Workspace.tsx
+
+Replace current basic tabs with enhanced 8-tab system:
+
+const ENHANCED_WORKSPACE_TABS = [
+  { id: 'overview', name: 'Overview', icon: '📊', component: EnhancedOverviewTab },
+  { id: 'research', name: 'Research Hub', icon: '🔍', component: ResearchHubTab },
+  { id: 'workflow', name: 'Workflow', icon: '⚡️', component: WorkflowTab },
+  { id: 'interviews', name: 'Interviews', icon: '🎤', component: InterviewTab },
+  { id: 'surveys', name: 'Surveys', icon: '📋', component: SurveyTab },
+  { id: 'competitors', name: 'Competitors', icon: '🎯', component: CompetitorTab },
