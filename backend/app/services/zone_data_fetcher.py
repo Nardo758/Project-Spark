@@ -9,7 +9,7 @@ Fetches real data for each optimal zone candidate:
 """
 
 import math
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Literal
 from dataclasses import dataclass
 from sqlalchemy.orm import Session
 import logging
@@ -48,7 +48,8 @@ class ZoneDataFetcher:
         radius_miles: float = 3.0,
         business_type: str = None,
         fetch_competitors: bool = True,
-        fetch_traffic: bool = True
+        fetch_traffic: bool = True,
+        traffic_mode: Literal["hybrid", "estimated"] = "hybrid"
     ) -> ZoneMetrics:
         """
         Fetch all 7 metrics for a zone
@@ -79,7 +80,12 @@ class ZoneDataFetcher:
             metrics.raw_data['competitors'] = competitors
         
         if fetch_traffic:
-            traffic = self._fetch_traffic(center_lat, center_lng, radius_miles)
+            traffic = self._fetch_traffic(
+                center_lat,
+                center_lng,
+                radius_miles,
+                mode=traffic_mode
+            )
             metrics.foot_traffic_monthly = traffic.get('foot_traffic_monthly', 0)
             metrics.drive_by_traffic_monthly = traffic.get('drive_by_traffic_monthly', 0)
             metrics.raw_data['traffic'] = traffic
@@ -338,7 +344,8 @@ class ZoneDataFetcher:
         self,
         lat: float,
         lng: float,
-        radius_miles: float
+        radius_miles: float,
+        mode: Literal["hybrid", "estimated"] = "hybrid"
     ) -> Dict[str, Any]:
         """
         Fetch traffic data using fusion of multiple sources:
@@ -347,6 +354,17 @@ class ZoneDataFetcher:
         
         The fusion algorithm combines both for more accurate estimates.
         """
+        if mode == "estimated":
+            estimated = self._estimate_traffic(lat, lng, radius_miles)
+            estimated["source"] = "estimated_fast"
+            estimated["confidence"] = 35.0
+            estimated["fusion_breakdown"] = {
+                "method": "fast estimated mode",
+                "dot_available": False,
+                "google_available": False,
+            }
+            return estimated
+
         google_data = None
         dot_data = None
         
@@ -367,8 +385,13 @@ class ZoneDataFetcher:
         # Get DOT AADT data (vehicle traffic)
         try:
             from app.services.dot_traffic_service import DOTTrafficService
-            dot_service = DOTTrafficService(timeout=5)
-            dot_data = dot_service.get_area_traffic_summary(lat, lng, radius_miles)
+            dot_service = DOTTrafficService(timeout=2)
+            dot_data = dot_service.get_area_traffic_summary(
+                lat,
+                lng,
+                radius_miles,
+                sample_points=1
+            )
         except Exception as e:
             logger.debug(f"DOT traffic lookup failed: {e}")
             try:
