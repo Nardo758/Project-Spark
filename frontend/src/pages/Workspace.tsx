@@ -4,9 +4,18 @@ import { Link, useParams } from 'react-router-dom'
 import { 
   ArrowLeft, Briefcase, CheckCircle2, ChevronRight, FileText, 
   PenLine, Plus, 
-  Send, Sparkles, Target, Trash2, Loader2
+  Send, Sparkles, Target, Trash2, Loader2,
+  BarChart3, Search, Zap, Mic, ClipboardList, Crosshair, DollarSign, TrendingUp
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import EnhancedOverviewTab from '../components/workspace/EnhancedOverviewTab'
+import ResearchHubTab from '../components/workspace/ResearchHubTab'
+import WorkflowTab from '../components/workspace/WorkflowTab'
+import InterviewTab from '../components/workspace/InterviewTab'
+import SurveyTab from '../components/workspace/SurveyTab'
+import CompetitorTab from '../components/workspace/CompetitorTab'
+import FinancialTab from '../components/workspace/FinancialTab'
+import AnalyticsTab from '../components/workspace/AnalyticsTab'
 
 type WorkspaceStatus = 'researching' | 'validating' | 'planning' | 'building' | 'launched' | 'paused' | 'archived'
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
@@ -71,6 +80,26 @@ const statusOptions: { value: WorkspaceStatus; label: string; color: string }[] 
   { value: 'archived', label: 'Archived', color: 'bg-stone-100 text-stone-500' },
 ]
 
+type TabId = 'overview' | 'research' | 'workflow' | 'interviews' | 'surveys' | 'competitors' | 'financial' | 'analytics' | 'tasks' | 'notes' | 'docs' | 'ai'
+
+const enhancedTabs: { id: TabId; name: string; icon: typeof BarChart3 }[] = [
+  { id: 'overview', name: 'Overview', icon: BarChart3 },
+  { id: 'research', name: 'Research Hub', icon: Search },
+  { id: 'workflow', name: 'Workflow', icon: Zap },
+  { id: 'interviews', name: 'Interviews', icon: Mic },
+  { id: 'surveys', name: 'Surveys', icon: ClipboardList },
+  { id: 'competitors', name: 'Competitors', icon: Crosshair },
+  { id: 'financial', name: 'Financial', icon: DollarSign },
+  { id: 'analytics', name: 'Analytics', icon: TrendingUp },
+]
+
+const legacyTabs: { id: TabId; name: string; icon: typeof CheckCircle2 }[] = [
+  { id: 'tasks', name: 'Tasks', icon: CheckCircle2 },
+  { id: 'notes', name: 'Notes', icon: PenLine },
+  { id: 'docs', name: 'Documents', icon: FileText },
+  { id: 'ai', name: 'AI Assistant', icon: Sparkles },
+]
+
 const priorityColors: Record<TaskPriority, string> = {
   low: 'bg-stone-100 text-stone-600',
   medium: 'bg-blue-100 text-blue-700',
@@ -84,7 +113,7 @@ export default function WorkspacePage() {
   const { token } = useAuthStore()
   const queryClient = useQueryClient()
 
-  const [activeTab, setActiveTab] = useState<'tasks' | 'notes' | 'docs' | 'ai'>('tasks')
+  const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newNoteContent, setNewNoteContent] = useState('')
   const [aiMessage, setAiMessage] = useState('')
@@ -98,6 +127,37 @@ export default function WorkspacePage() {
       })
       if (!res.ok) throw new Error('Failed to load workspace')
       return await res.json()
+    },
+  })
+
+  const enhancedQuery = useQuery({
+    queryKey: ['enhanced-workspace-by-opp', workspaceQuery.data?.opportunity_id],
+    enabled: Boolean(token) && Boolean(workspaceQuery.data?.opportunity_id),
+    queryFn: async () => {
+      const res = await fetch(`/api/v1/enhanced-workspaces`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.workspaces?.find((w: any) => w.opportunity_id === workspaceQuery.data?.opportunity_id) || null
+    },
+  })
+
+  const createEnhancedMutation = useMutation({
+    mutationFn: async (workflowType: string) => {
+      const res = await fetch(`/api/v1/enhanced-workspaces`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          opportunity_id: workspaceQuery.data?.opportunity_id,
+          workflow_type: workflowType,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to create enhanced workspace')
+      return await res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enhanced-workspace-by-opp'] })
     },
   })
 
@@ -190,7 +250,13 @@ export default function WorkspacePage() {
   })
 
   const workspace = workspaceQuery.data
+  const enhancedWs = enhancedQuery.data
   const currentStatus = statusOptions.find(s => s.value === workspace?.status) || statusOptions[0]
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['enhanced-workspace-by-opp'] })
+    queryClient.invalidateQueries({ queryKey: ['workspace', workspaceId] })
+  }
 
   if (workspaceQuery.isLoading) {
     return (
@@ -218,6 +284,9 @@ export default function WorkspacePage() {
   const completedTasks = workspace.tasks.filter(t => t.is_completed).length
   const totalTasks = workspace.tasks.length
 
+  const isEnhancedTab = enhancedTabs.some(t => t.id === activeTab)
+  const allTabs = enhancedWs ? [...enhancedTabs, ...legacyTabs] : legacyTabs
+
   return (
     <div className="min-h-screen bg-stone-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -230,7 +299,7 @@ export default function WorkspacePage() {
           <span className="text-stone-900 font-medium">{workspace.custom_title || workspace.opportunity?.title}</span>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
+        <div className="grid lg:grid-cols-5 gap-6">
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl border border-stone-200 p-5 sticky top-6">
               <div className="mb-4">
@@ -253,12 +322,14 @@ export default function WorkspacePage() {
               <div className="mb-4">
                 <div className="flex items-center justify-between text-sm mb-2">
                   <span className="text-stone-600">Progress</span>
-                  <span className="font-medium text-stone-900">{workspace.progress_percent}%</span>
+                  <span className="font-medium text-stone-900">
+                    {enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}%
+                  </span>
                 </div>
                 <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
-                    style={{ width: `${workspace.progress_percent}%` }}
+                    style={{ width: `${enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}%` }}
                   />
                 </div>
                 <p className="text-xs text-stone-500 mt-1">
@@ -266,43 +337,40 @@ export default function WorkspacePage() {
                 </p>
               </div>
 
-              <div className="border-t border-stone-100 pt-4 space-y-2">
-                <button
-                  onClick={() => setActiveTab('tasks')}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activeTab === 'tasks' ? 'bg-violet-50 text-violet-700' : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Tasks ({totalTasks})
-                </button>
-                <button
-                  onClick={() => setActiveTab('notes')}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activeTab === 'notes' ? 'bg-violet-50 text-violet-700' : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <PenLine className="w-4 h-4" />
-                  Notes ({workspace.notes.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('docs')}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activeTab === 'docs' ? 'bg-violet-50 text-violet-700' : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  Documents ({workspace.documents.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('ai')}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activeTab === 'ai' ? 'bg-violet-50 text-violet-700' : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  AI Assistant
-                </button>
+              {!enhancedWs && (
+                <div className="border-t border-stone-100 pt-4 mb-4">
+                  <p className="text-xs text-stone-500 mb-2">Upgrade to Enhanced Workspace</p>
+                  <button
+                    onClick={() => createEnhancedMutation.mutate('lean_validation')}
+                    disabled={createEnhancedMutation.isPending}
+                    className="w-full px-3 py-2 bg-violet-600 text-white text-sm rounded-lg hover:bg-violet-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {createEnhancedMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Zap className="w-4 h-4" />
+                    )}
+                    Enable Enhanced Mode
+                  </button>
+                </div>
+              )}
+
+              <div className="border-t border-stone-100 pt-4 space-y-1">
+                {allTabs.map(tab => {
+                  const Icon = tab.icon
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        activeTab === tab.id ? 'bg-violet-50 text-violet-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {tab.name}
+                    </button>
+                  )
+                })}
               </div>
 
               <div className="border-t border-stone-100 pt-4 mt-4">
@@ -317,7 +385,7 @@ export default function WorkspacePage() {
             </div>
           </div>
 
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
               <div className="border-b border-stone-200 p-5">
                 <h1 className="text-xl font-bold text-stone-900 mb-1">
@@ -325,6 +393,45 @@ export default function WorkspacePage() {
                 </h1>
                 <p className="text-stone-600 text-sm">{workspace.opportunity?.category}</p>
               </div>
+
+              {isEnhancedTab && enhancedWs && token && (
+                <div className="p-5">
+                  {activeTab === 'overview' && (
+                    <EnhancedOverviewTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                  {activeTab === 'research' && (
+                    <ResearchHubTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                  {activeTab === 'workflow' && (
+                    <WorkflowTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                  {activeTab === 'interviews' && (
+                    <InterviewTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                  {activeTab === 'surveys' && (
+                    <SurveyTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                  {activeTab === 'competitors' && (
+                    <CompetitorTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                  {activeTab === 'financial' && (
+                    <FinancialTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                  {activeTab === 'analytics' && (
+                    <AnalyticsTab workspaceId={enhancedWs.id} workspace={enhancedWs} token={token} onRefresh={handleRefresh} />
+                  )}
+                </div>
+              )}
+
+              {isEnhancedTab && !enhancedWs && (
+                <div className="p-5">
+                  <div className="text-center py-12">
+                    <Zap className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+                    <h3 className="font-medium text-stone-900 mb-2">Enhanced Workspace Not Active</h3>
+                    <p className="text-sm text-stone-500 mb-4">Enable Enhanced Mode from the sidebar to access AI-powered research tools.</p>
+                  </div>
+                </div>
+              )}
 
               {activeTab === 'tasks' && (
                 <div className="p-5">

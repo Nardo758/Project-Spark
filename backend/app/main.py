@@ -76,6 +76,7 @@ from app.routers import (
     saved_layers,
     foot_traffic,
     saved_searches,
+    enhanced_workspaces,
 )
 
 install_trace_id_factory()
@@ -161,6 +162,7 @@ app.include_router(linkedin.router, prefix=f"{settings.API_V1_PREFIX}/auth/linke
 app.include_router(command_center.router, prefix=f"{settings.API_V1_PREFIX}/command-center", tags=["Command Center"])
 app.include_router(google_scraping.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Google Scraping"])
 app.include_router(workspaces.router, prefix=f"{settings.API_V1_PREFIX}/workspaces", tags=["Workspaces"])
+app.include_router(enhanced_workspaces.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Enhanced Workspaces"])
 app.include_router(ai_cofounder.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Co-Founder"])
 app.include_router(copilot.router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Copilot"])
 app.include_router(report_pricing.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Report Pricing"])
@@ -190,6 +192,14 @@ async def startup_event():
 
         logger.info("Initializing database connection...")
         engine = initialize_database()
+
+        import app.models.enhanced_workspace  # noqa: F401
+        from app.db.database import Base
+        try:
+            Base.metadata.create_all(bind=engine, checkfirst=True)
+            logger.info("Enhanced workspace tables ensured.")
+        except Exception as table_err:
+            logger.warning(f"Table creation skipped: {table_err}")
 
         # Best practice: rely on Alembic migrations, not runtime create_all().
         # We do a lightweight check and log a clear warning if migrations haven't run.
