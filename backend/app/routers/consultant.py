@@ -413,23 +413,28 @@ async def get_consultant_stats(
     from app.models.detected_trend import DetectedTrend
     from app.models.location_analysis_cache import LocationAnalysisCache
     
-    total_activities = db.query(func.count(ConsultantActivity.id)).filter(
-        ConsultantActivity.user_id == user_id
-    ).scalar() or 0
-    
     path_counts = db.query(
         ConsultantActivity.path,
         func.count(ConsultantActivity.id)
     ).filter(
         ConsultantActivity.user_id == user_id
     ).group_by(ConsultantActivity.path).all()
+    activities_by_path = {path: count for path, count in path_counts}
+    # Derive total from grouped counts to avoid an extra COUNT(*) round trip.
+    total_activities = sum(activities_by_path.values())
     
     total_trends = db.query(func.count(DetectedTrend.id)).scalar() or 0
     cached_locations = db.query(func.count(LocationAnalysisCache.id)).scalar() or 0
     
     return {
         "total_activities": total_activities,
-        "activities_by_path": {path: count for path, count in path_counts},
+        "activities_by_path": activities_by_path,
+        # Explicit per-path counters expected by dashboard/UI clients.
+        "validate_idea_count": activities_by_path.get("validate_idea", 0),
+        "search_ideas_count": activities_by_path.get("search_ideas", 0),
+        "identify_location_count": activities_by_path.get("identify_location", 0),
+        "clone_success_count": activities_by_path.get("clone_success", 0),
+        "deep_clone_count": activities_by_path.get("deep_clone", 0),
         "total_trends_detected": total_trends,
         "cached_locations": cached_locations,
     }
