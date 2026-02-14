@@ -5,7 +5,8 @@ import {
   ArrowLeft, Briefcase, CheckCircle2, ChevronRight, FileText, 
   PenLine, Plus, 
   Send, Sparkles, Target, Trash2, Loader2,
-  BarChart3, Search, Zap, Mic, ClipboardList, Crosshair, DollarSign, TrendingUp
+  BarChart3, Search, Zap, Mic, ClipboardList, Crosshair, DollarSign, TrendingUp,
+  PanelLeftClose, PanelLeftOpen
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import EnhancedOverviewTab from '../components/workspace/EnhancedOverviewTab'
@@ -114,6 +115,7 @@ export default function WorkspacePage() {
   const queryClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState<TabId>('overview')
+  const [sidebarExpanded, setSidebarExpanded] = useState(true)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newNoteContent, setNewNoteContent] = useState('')
   const [aiMessage, setAiMessage] = useState('')
@@ -299,93 +301,143 @@ export default function WorkspacePage() {
           <span className="text-stone-900 font-medium">{workspace.custom_title || workspace.opportunity?.title}</span>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl border border-stone-200 p-5 sticky top-6">
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Briefcase className="w-5 h-5 text-violet-600" />
-                  <span className="font-bold text-stone-900">Workspace</span>
-                </div>
-                
-                <select 
-                  value={workspace.status}
-                  onChange={(e) => updateStatusMutation.mutate(e.target.value as WorkspaceStatus)}
-                  className={`w-full px-3 py-2 rounded-lg text-sm font-medium ${currentStatus.color} border-0 cursor-pointer`}
+        <div className="flex gap-6">
+          <div className={`shrink-0 transition-all duration-300 ${sidebarExpanded ? 'w-56' : 'w-14'}`}>
+            <div className="bg-white rounded-xl border border-stone-200 sticky top-6 overflow-hidden">
+              <div className="flex items-center justify-between p-3 border-b border-stone-100">
+                {sidebarExpanded && (
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-violet-600" />
+                    <span className="font-bold text-stone-900 text-sm">Workspace</span>
+                  </div>
+                )}
+                <button
+                  onClick={() => setSidebarExpanded(!sidebarExpanded)}
+                  className={`p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-50 transition-colors ${!sidebarExpanded ? 'mx-auto' : ''}`}
+                  title={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
                 >
-                  {statusOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                  {sidebarExpanded ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+                </button>
               </div>
 
-              <div className="mb-4">
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-stone-600">Progress</span>
-                  <span className="font-medium text-stone-900">
-                    {enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}%
-                  </span>
-                </div>
-                <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
-                    style={{ width: `${enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}%` }}
-                  />
-                </div>
-                <p className="text-xs text-stone-500 mt-1">
-                  {completedTasks} of {totalTasks} tasks completed
-                </p>
-              </div>
+              {sidebarExpanded ? (
+                <div className="p-4">
+                  <div className="mb-4">
+                    <select 
+                      value={workspace.status}
+                      onChange={(e) => updateStatusMutation.mutate(e.target.value as WorkspaceStatus)}
+                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium ${currentStatus.color} border-0 cursor-pointer`}
+                    >
+                      {statusOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {!enhancedWs && (
-                <div className="border-t border-stone-100 pt-4 mb-4">
-                  <p className="text-xs text-stone-500 mb-2">Upgrade to Enhanced Workspace</p>
-                  <button
-                    onClick={() => createEnhancedMutation.mutate('lean_validation')}
-                    disabled={createEnhancedMutation.isPending}
-                    className="w-full px-3 py-2 bg-violet-600 text-white text-sm rounded-lg hover:bg-violet-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {createEnhancedMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Zap className="w-4 h-4" />
-                    )}
-                    Enable Enhanced Mode
-                  </button>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-stone-600">Progress</span>
+                      <span className="font-medium text-stone-900">
+                        {enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
+                        style={{ width: `${enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-stone-500 mt-1">
+                      {completedTasks} of {totalTasks} tasks completed
+                    </p>
+                  </div>
+
+                  {!enhancedWs && (
+                    <div className="border-t border-stone-100 pt-4 mb-4">
+                      <p className="text-xs text-stone-500 mb-2">Upgrade to Enhanced Workspace</p>
+                      <button
+                        onClick={() => createEnhancedMutation.mutate('lean_validation')}
+                        disabled={createEnhancedMutation.isPending}
+                        className="w-full px-3 py-2 bg-violet-600 text-white text-sm rounded-lg hover:bg-violet-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {createEnhancedMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Zap className="w-4 h-4" />
+                        )}
+                        Enable Enhanced Mode
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="border-t border-stone-100 pt-4 space-y-1">
+                    {allTabs.map(tab => {
+                      const Icon = tab.icon
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            activeTab === tab.id ? 'bg-violet-50 text-violet-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          {tab.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <div className="border-t border-stone-100 pt-4 mt-4">
+                    <Link
+                      to={`/opportunity/${workspace.opportunity_id}`}
+                      className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900"
+                    >
+                      <Target className="w-4 h-4 shrink-0" />
+                      View Opportunity Details
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-3 space-y-1">
+                  <div className="px-2 mb-2">
+                    <div className="h-2 bg-stone-100 rounded-full overflow-hidden" title={`${enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}% complete`}>
+                      <div 
+                        className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-500"
+                        style={{ width: `${enhancedWs ? enhancedWs.progress_percent : workspace.progress_percent}%` }}
+                      />
+                    </div>
+                  </div>
+                  {allTabs.map(tab => {
+                    const Icon = tab.icon
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center justify-center p-2 rounded-lg transition-colors mx-auto ${
+                          activeTab === tab.id ? 'bg-violet-50 text-violet-700' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
+                        }`}
+                        title={tab.name}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    )
+                  })}
+                  <div className="border-t border-stone-100 pt-2 mt-2">
+                    <Link
+                      to={`/opportunity/${workspace.opportunity_id}`}
+                      className="w-full flex items-center justify-center p-2 text-stone-400 hover:text-stone-600 transition-colors"
+                      title="View Opportunity Details"
+                    >
+                      <Target className="w-4 h-4" />
+                    </Link>
+                  </div>
                 </div>
               )}
-
-              <div className="border-t border-stone-100 pt-4 space-y-1">
-                {allTabs.map(tab => {
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        activeTab === tab.id ? 'bg-violet-50 text-violet-700 font-medium' : 'text-stone-600 hover:bg-stone-50'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {tab.name}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="border-t border-stone-100 pt-4 mt-4">
-                <Link
-                  to={`/opportunity/${workspace.opportunity_id}`}
-                  className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900"
-                >
-                  <Target className="w-4 h-4" />
-                  View Opportunity Details
-                </Link>
-              </div>
             </div>
           </div>
 
-          <div className="lg:col-span-4">
+          <div className="flex-1 min-w-0">
             <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
               <div className="border-b border-stone-200 p-5">
                 <h1 className="text-xl font-bold text-stone-900 mb-1">
