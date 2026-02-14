@@ -1,0 +1,48 @@
+You are a Git/code integration agent. Integrate all new code from:
+
+  Repo: https://github.com/Nardo758/Project-Spark
+  Branch: cursor/workspace-wiring-completion-ba31
+
+into the current Replit workspace branch.
+
+Requirements:
+1) Work autonomously end-to-end (no planning-only response).
+2) Do NOT discard local work; preserve existing changes and resolve conflicts carefully.
+3) If remote branch is not visible on `origin`, fetch directly from the GitHub URL.
+4) After integration, run build/verification and report results.
+5) Commit and push the integrated result to the current branch.
+
+Execution steps:
+- Show current branch + remotes:
+  - `git branch --show-current`
+  - `git remote -v`
+- Create a safety backup branch:
+  - `git checkout -b backup/pre-integration-$(date +%Y%m%d-%H%M%S)`
+  - `git checkout -`
+- Ensure source remote exists:
+  - if missing, run: `git remote add project_spark https://github.com/Nardo758/Project-Spark.git`
+- Fetch source branch:
+  - `git fetch project_spark cursor/workspace-wiring-completion-ba31`
+- Merge source branch into current branch:
+  - `git merge --no-ff project_spark/cursor/workspace-wiring-completion-ba31`
+- If merge is not possible due history issues, fallback to cherry-picking the new commits:
+  - `git cherry-pick 191846b 516c2d5`
+- Resolve conflicts, then verify key integrations exist:
+  - enhanced workspace route wiring in backend
+  - saved/watchlist endpoint alignment in frontend services
+  - Saved page collection assignment endpoint alignment
+- Run verification:
+  - `python3 -m compileall backend/app`
+  - `cd frontend && npm install && npm run build && cd ..`
+- Commit (if needed):
+  - `git add -A`
+  - `git commit -m "Integrate workspace wiring updates from cursor/workspace-wiring-completion-ba31"`
+- Push:
+  - `git push -u origin $(git branch --show-current)`
+
+Final output format:
+- Current branch integrated into
+- Source branch + commit hashes integrated
+- Conflict files (if any) and how resolved
+- Verification results (compile/build)
+- Final commit hash + push status
