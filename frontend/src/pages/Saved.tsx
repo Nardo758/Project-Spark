@@ -173,13 +173,10 @@ export default function Saved() {
 
   const moveToCollection = useMutation({
     mutationFn: async ({ watchlistId, collectionId }: { watchlistId: number, collectionId: number | null }) => {
-      const res = await fetch(`/api/v1/workhub/watchlist/${watchlistId}/collection`, {
-        method: 'PUT',
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ collection_id: collectionId })
+      const targetCollectionId = collectionId ?? 0
+      const res = await fetch(`/api/v1/workhub/watchlist/${watchlistId}/collection/${targetCollectionId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
       })
       if (!res.ok) throw new Error('Failed to move item')
       return res.json()

@@ -253,7 +253,7 @@ export async function fetchOpportunityById(id: number): Promise<Opportunity> {
  * Save/bookmark an opportunity
  */
 export async function saveOpportunity(opportunityId: number): Promise<void> {
-  const url = `${API_BASE}/saved-opportunities`
+  const url = `${API_BASE}/watchlist/`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -270,7 +270,7 @@ export async function saveOpportunity(opportunityId: number): Promise<void> {
  * Unsave/unbookmark an opportunity
  */
 export async function unsaveOpportunity(opportunityId: number): Promise<void> {
-  const url = `${API_BASE}/saved-opportunities/${opportunityId}`
+  const url = `${API_BASE}/watchlist/opportunity/${opportunityId}`
 
   const response = await fetch(url, {
     method: 'DELETE',
