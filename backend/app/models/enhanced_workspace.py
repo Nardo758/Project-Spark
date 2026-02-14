@@ -153,7 +153,7 @@ class EnhancedResearchArtifact(Base):
     # Enhanced artifact content and metadata
     content = Column(Text, nullable=True)
     file_url = Column(String(500), nullable=True)
-    metadata = Column(JSON, nullable=True)  # Enhanced metadata
+    artifact_metadata = Column("metadata", JSON, nullable=True)  # Enhanced metadata
     tags = Column(ARRAY(String), nullable=True)  # PostgreSQL array for tags
     
     # AI-generated insights and analysis
@@ -177,7 +177,7 @@ class EnhancedWorkspaceChat(Base):
     
     role = Column(String(20), nullable=False)  # 'user', 'assistant', 'system'
     content = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)  # Enhanced metadata for AI responses
+    message_metadata = Column("metadata", JSON, nullable=True)  # Enhanced metadata for AI responses
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

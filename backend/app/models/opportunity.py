@@ -100,6 +100,7 @@ class Opportunity(Base):
     comments = relationship("Comment", back_populates="opportunity", cascade="all, delete-orphan")
     generated_reports = relationship("GeneratedReport", back_populates="opportunity")
     workspaces = relationship("UserWorkspace", back_populates="opportunity")
+    enhanced_workspaces = relationship("EnhancedUserWorkspace", back_populates="opportunity")
     user_notes = relationship("OpportunityNote", back_populates="opportunity", cascade="all, delete-orphan")
     service_areas = relationship("ServiceAreaBoundary", back_populates="opportunity", cascade="all, delete-orphan")
     claim_limit_record = relationship("OpportunityClaimLimit", back_populates="opportunity", uselist=False, cascade="all, delete-orphan")

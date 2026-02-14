@@ -47,6 +47,11 @@ from .workspace import (
     UserWorkspace, WorkspaceNote, WorkspaceTask, WorkspaceDocument,
     WorkspaceChatMessage, WorkspaceStatus, TaskPriority
 )
+from .enhanced_workspace import (
+    EnhancedUserWorkspace, EnhancedWorkflowStage, EnhancedWorkflowTask,
+    EnhancedResearchArtifact, EnhancedWorkspaceChat, CustomWorkflow,
+    WorkflowType, WorkflowStatus, ResearchArtifactType, ResearchArtifactStatus
+)
 from .copilot import GlobalChatMessage, CopilotSuggestion
 from .census_demographics import (
     CensusPopulationEstimate, CensusMigrationFlow, MarketGrowthTrajectory,
@@ -157,6 +162,16 @@ __all__ = [
     "WorkspaceChatMessage",
     "WorkspaceStatus",
     "TaskPriority",
+    "EnhancedUserWorkspace",
+    "EnhancedWorkflowStage",
+    "EnhancedWorkflowTask",
+    "EnhancedResearchArtifact",
+    "EnhancedWorkspaceChat",
+    "CustomWorkflow",
+    "WorkflowType",
+    "WorkflowStatus",
+    "ResearchArtifactType",
+    "ResearchArtifactStatus",
     "GlobalChatMessage",
     "CopilotSuggestion",
     "CensusPopulationEstimate",

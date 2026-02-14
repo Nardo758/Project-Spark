@@ -41,6 +41,32 @@ interface Viewport {
   zoom: number
 }
 
+function toNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
+function getOpportunityCoords(opportunity: any): { lat: number | null; lng: number | null } {
+  return {
+    lat: toNumber(opportunity?.latitude) ?? toNumber(opportunity?.location_lat),
+    lng: toNumber(opportunity?.longitude) ?? toNumber(opportunity?.location_lng),
+  }
+}
+
+function getOpportunityLocationLabel(opportunity: any): string {
+  if (typeof opportunity?.location === 'string' && opportunity.location.trim()) {
+    return opportunity.location.trim()
+  }
+  const parts = [opportunity?.city, opportunity?.region, opportunity?.country]
+    .filter((part: unknown): part is string => typeof part === 'string' && part.trim().length > 0)
+    .map((part) => part.trim())
+  return parts.length > 0 ? parts.join(', ') : 'Current Location'
+}
+
 export default function MapWorkspace() {
   const { opportunityId } = useParams()
   const navigate = useNavigate()
@@ -95,10 +121,11 @@ export default function MapWorkspace() {
       if (res.ok) {
         const data = await res.json()
         setOpportunity(data)
+        const coords = getOpportunityCoords(data)
         
-        if (data.location_lat && data.location_lng) {
+        if (coords.lat !== null && coords.lng !== null) {
           setViewport({
-            center: [data.location_lng, data.location_lat],
+            center: [coords.lng, coords.lat],
             zoom: 10
           })
         }
@@ -152,9 +179,9 @@ export default function MapWorkspace() {
         body: JSON.stringify({
           source: {
             business_type: opportunity.category || 'retail',
-            source_latitude: opportunity.location_lat || viewport.center[1],
-            source_longitude: opportunity.location_lng || viewport.center[0],
-            source_location: opportunity.location || 'Current Location'
+            source_latitude: getOpportunityCoords(opportunity).lat ?? viewport.center[1],
+            source_longitude: getOpportunityCoords(opportunity).lng ?? viewport.center[0],
+            source_location: getOpportunityLocationLabel(opportunity)
           },
           targets: targets.map(t => ({
             target_latitude: t.lat,
@@ -234,7 +261,7 @@ export default function MapWorkspace() {
           content: userMessage.content,
           opportunity_id: opportunityId ? parseInt(opportunityId) : undefined,
           business_type: opportunity?.category,
-          current_location: opportunity?.location,
+          current_location: getOpportunityLocationLabel(opportunity),
           center_lat: viewport.center[1],
           center_lng: viewport.center[0]
         })

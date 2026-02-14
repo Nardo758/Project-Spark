@@ -3,16 +3,13 @@
 
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-import json
+from datetime import datetime
 
 from app.models.enhanced_workspace import (
     EnhancedUserWorkspace, EnhancedWorkflowStage, EnhancedWorkflowTask,
     EnhancedResearchArtifact, CustomWorkflow, WorkflowType, WorkflowStatus,
     ResearchArtifactType, ResearchArtifactStatus
 )
-from app.models.opportunity import Opportunity
-from app.models.user import User
 from app.services.ai_orchestrator import AIOrchestrator
 
 class EnhancedWorkspaceService:
@@ -64,10 +61,16 @@ class EnhancedWorkspaceService:
                 {"name": "Customer Segmentation", "description": "Segment target customers", "duration_weeks": 2},
                 {"name": "Product Testing", "description": "Test product with users", "duration_weeks": 3},
                 {"name": "Market Validation", "description": "Validate market fit", "duration_weeks": 3}
+            ],
+            WorkflowType.CUSTOM: [
+                {"name": "Validate", "description": "Validate the core problem and demand", "duration_weeks": 2},
+                {"name": "Research", "description": "Research market, users, and competitors", "duration_weeks": 2},
+                {"name": "Plan", "description": "Define solution strategy and milestones", "duration_weeks": 2},
+                {"name": "Execute", "description": "Run implementation and launch tasks", "duration_weeks": 4}
             ]
         }
         
-        stages_config = workflow_configs.get(workflow_type, workflow_configs[WorkflowType.CUSTOM])
+        stages_config = workflow_configs.get(workflow_type, workflow_configs[WorkflowType.LEAN_VALIDATION])
         
         for idx, stage_config in enumerate(stages_config):
             stage = EnhancedWorkflowStage(
@@ -115,7 +118,7 @@ class EnhancedWorkspaceService:
         
         for idx, task_config in enumerate(stage_tasks):
             task = EnhancedWorkflowTask(
-                stage_id=stage.id,
+                stage=stage,
                 name=task_config["name"],
                 description=task_config["description"],
                 sort_order=idx
@@ -126,6 +129,8 @@ class EnhancedWorkspaceService:
                                name: str, artifact_type: ResearchArtifactType,
                                content: Optional[str] = None, **kwargs) -> EnhancedResearchArtifact:
         """Create research artifact with AI insights"""
+        if "metadata" in kwargs and "artifact_metadata" not in kwargs:
+            kwargs["artifact_metadata"] = kwargs.pop("metadata")
         
         artifact = EnhancedResearchArtifact(
             workspace_id=workspace_id,

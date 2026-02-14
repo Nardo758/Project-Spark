@@ -179,7 +179,7 @@ app.include_router(workspace_digital.router, prefix=f"{settings.API_V1_PREFIX}",
 app.include_router(deep_clone.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Deep Clone"])
 app.include_router(saved_layers.router, prefix=f"{settings.API_V1_PREFIX}/saved-layers", tags=["Saved Layers"])
 app.include_router(foot_traffic.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Foot Traffic"])
-app.include_router(enhanced_workspaces.router, prefix=f"{settings.API_V1_PREFIX}/enhanced-workspaces", tags=["Enhanced Workspaces"])
+app.include_router(enhanced_workspaces.router, prefix=f"{settings.API_V1_PREFIX}", tags=["Enhanced Workspaces"])
 
 
 @app.on_event("startup")

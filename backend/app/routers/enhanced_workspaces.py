@@ -19,7 +19,7 @@ from app.models.opportunity import Opportunity
 from app.core.dependencies import get_current_active_user
 from app.services.enhanced_workspace_service import EnhancedWorkspaceService
 
-router = APIRouter(prefix="/api/enhanced-workspaces", tags=["enhanced-workspaces"])
+router = APIRouter(prefix="/enhanced-workspaces", tags=["enhanced-workspaces"])
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 def create_enhanced_workspace(
@@ -184,7 +184,7 @@ def get_enhanced_workspace(
                 "status": artifact.status,
                 "content": artifact.content,
                 "file_url": artifact.file_url,
-                "metadata": artifact.metadata,
+                "metadata": artifact.artifact_metadata,
                 "tags": artifact.tags,
                 "ai_insights": artifact.ai_insights,
                 "ai_summary": artifact.ai_summary,
@@ -292,7 +292,7 @@ def create_research_artifact(
         artifact_type=artifact_type,
         content=content,
         file_url=file_url,
-        metadata={"tags": tags} if tags else None
+        artifact_metadata={"tags": tags} if tags else None
     )
     
     # Update workspace last activity
@@ -356,7 +356,7 @@ def list_research_artifacts(
             "status": artifact.status,
             "content": artifact.content,
             "file_url": artifact.file_url,
-            "metadata": artifact.metadata,
+            "metadata": artifact.artifact_metadata,
             "tags": artifact.tags,
             "ai_insights": artifact.ai_insights,
             "ai_summary": artifact.ai_summary,
