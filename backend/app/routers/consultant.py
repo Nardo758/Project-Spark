@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.services.consultant_studio import ConsultantStudioService
 from app.models.consultant_activity import ConsultantActivity
+from app.models.user import User
+from app.core.dependencies import get_current_user, get_current_admin_user
 
 router = APIRouter(prefix="/consultant", tags=["Consultant Studio"])
 
@@ -143,7 +145,7 @@ class ActivityLogResponse(BaseModel):
 async def validate_idea(
     request: ValidateIdeaRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Path 1: Validate Idea - Online vs Physical decision engine
@@ -161,7 +163,7 @@ async def validate_idea(
     try:
         result = await asyncio.wait_for(
             service.validate_idea(
-                user_id=user_id,
+                user_id=current_user.id,
                 idea_description=request.idea_description,
                 business_context=request.business_context,
                 session_id=request.session_id,
@@ -193,7 +195,7 @@ async def validate_idea(
 async def search_ideas(
     request: SearchIdeasRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Path 2: Search Ideas - Database exploration with trend detection
@@ -217,7 +219,7 @@ async def search_ideas(
     try:
         result = await asyncio.wait_for(
             service.search_ideas(
-                user_id=user_id,
+                user_id=current_user.id,
                 filters=filters,
                 session_id=request.session_id,
             ),
@@ -240,7 +242,7 @@ async def search_ideas(
 async def identify_location(
     request: IdentifyLocationRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Path 3: Identify Location - Geographic intelligence
@@ -257,7 +259,7 @@ async def identify_location(
     try:
         result = await asyncio.wait_for(
             service.identify_location(
-                user_id=user_id,
+                user_id=current_user.id,
                 city=request.city,
                 business_description=request.business_description,
                 additional_params=request.additional_params,
@@ -286,7 +288,7 @@ async def identify_location(
 async def clone_success(
     request: CloneSuccessRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Path 4: Clone Success - Replicate successful business models
@@ -301,7 +303,7 @@ async def clone_success(
     try:
         result = await asyncio.wait_for(
             service.clone_success(
-                user_id=user_id,
+                user_id=current_user.id,
                 business_name=request.business_name,
                 business_address=request.business_address,
                 target_city=request.target_city,
@@ -330,7 +332,7 @@ async def clone_success(
 async def deep_clone_analysis(
     request: DeepCloneRequest,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
     paid: bool = False,
 ):
     """
@@ -342,13 +344,12 @@ async def deep_clone_analysis(
     - Competition comparison
     - Match score and key factors
     """
-    from app.models import User
-    
-    user = db.query(User).filter(User.id == user_id).first()
     has_premium_access = False
     
-    if user and user.subscription:
-        has_premium_access = user.subscription.tier in ['growth', 'pro', 'team', 'business', 'enterprise']
+    if current_user.subscription and current_user.subscription.tier:
+        tier = current_user.subscription.tier
+        tier_value = tier.value if hasattr(tier, "value") else str(tier)
+        has_premium_access = tier_value.lower() in ['growth', 'pro', 'team', 'business', 'enterprise']
     
     if not has_premium_access and not paid:
         return DeepCloneResponse(
@@ -360,7 +361,7 @@ async def deep_clone_analysis(
     service = ConsultantStudioService(db)
     
     result = await service.deep_clone_analysis(
-        user_id=user_id,
+        user_id=current_user.id,
         source_business_name=request.source_business_name,
         source_business_address=request.source_business_address,
         target_city=request.target_city,
@@ -375,11 +376,11 @@ async def get_activity_log(
     limit: int = 20,
     path: Optional[str] = None,
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
     """Get user's consultant activity history"""
     query = db.query(ConsultantActivity).filter(
-        ConsultantActivity.user_id == user_id
+        ConsultantActivity.user_id == current_user.id
     )
     
     if path:
@@ -406,7 +407,7 @@ async def get_activity_log(
 @router.get("/stats")
 async def get_consultant_stats(
     db: Session = Depends(get_db),
-    user_id: int = 1,
+    current_user: User = Depends(get_current_user),
 ):
     """Get consultant studio usage statistics"""
     from sqlalchemy import func
@@ -417,7 +418,7 @@ async def get_consultant_stats(
         ConsultantActivity.path,
         func.count(ConsultantActivity.id)
     ).filter(
-        ConsultantActivity.user_id == user_id
+        ConsultantActivity.user_id == current_user.id
     ).group_by(ConsultantActivity.path).all()
     activities_by_path = {path: count for path, count in path_counts}
     # Derive total from grouped counts to avoid an extra COUNT(*) round trip.
@@ -444,6 +445,7 @@ async def get_consultant_stats(
 async def get_consultant_analytics(
     days: int = 30,
     db: Session = Depends(get_db),
+    _admin_user: User = Depends(get_current_admin_user),
 ):
     """
     Admin analytics for Consultant Studio usage.
