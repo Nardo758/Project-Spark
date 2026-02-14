@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   FileText, 
@@ -99,6 +99,12 @@ export default function ReportLibrary({
   const [generatingSlug, setGeneratingSlug] = useState<string | null>(null)
   const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null)
   const [contextInput, setContextInput] = useState(customContext || '')
+
+  useEffect(() => {
+    if (customContext) {
+      setContextInput(customContext)
+    }
+  }, [customContext])
 
   const { data: categories, isLoading } = useQuery<CategoryWithTemplates[]>({
     queryKey: ['report-templates'],
