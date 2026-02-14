@@ -9,7 +9,7 @@ import {
 
 const guestNavItems = [
   { name: 'Discover', path: '/discover' },
-  { name: 'Consultant Studio', path: '/build/reports' },
+  { name: 'Consultant Studio', path: '/build/consultant-studio' },
   { name: 'Leads', path: '/leads' },
   { 
     name: 'Join Our Network',
@@ -27,7 +27,7 @@ const guestNavItems = [
 const paidNavItems = [
   { name: 'Dashboard', path: '/dashboard' },
   { name: 'Discover', path: '/discover' },
-  { name: 'Consultant Studio', path: '/build/reports' },
+  { name: 'Consultant Studio', path: '/build/consultant-studio' },
   { 
     name: 'My Projects',
     dropdown: [

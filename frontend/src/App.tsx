@@ -35,6 +35,7 @@ import MagicLinkCallback from './pages/MagicLinkCallback'
 import Saved from './pages/Saved'
 import OpportunityDetail from './pages/OpportunityDetail'
 import ReportStudio from './pages/build/ReportStudio'
+import ConsultantStudio from './pages/build/ConsultantStudio'
 import ApiPortal from './pages/ApiPortal'
 import Settings from './pages/Settings'
 import Projects from './pages/Projects'
@@ -137,6 +138,7 @@ function App() {
             </RequireAuth>
           }
         />
+        <Route path="build/consultant-studio" element={<ConsultantStudio />} />
         <Route path="build/reports" element={<ReportStudio />} />
         <Route path="build/reports/:type" element={<ReportStudio />} />
         <Route path="build/business-plan" element={<ReportStudio />} />
