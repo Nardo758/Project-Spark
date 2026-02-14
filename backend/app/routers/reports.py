@@ -153,11 +153,16 @@ async def generate_report(
                 context_parts.append(f"Market Size: {opportunity.market_size}")
     
     if request.workspace_id:
-        workspace = db.query(UserWorkspace).filter(UserWorkspace.id == request.workspace_id).first()
-        if workspace:
-            context_parts.append(f"Workspace: {workspace.name}")
-            if workspace.description:
-                context_parts.append(f"Workspace Description: {workspace.description}")
+        workspace = db.query(UserWorkspace).filter(
+            UserWorkspace.id == request.workspace_id,
+            UserWorkspace.user_id == current_user.id,
+        ).first()
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+        workspace_title = workspace.custom_title or f"Workspace #{workspace.id}"
+        context_parts.append(f"Workspace: {workspace_title}")
+        if workspace.description:
+            context_parts.append(f"Workspace Description: {workspace.description}")
     
     if request.custom_context:
         context_parts.append(f"Additional Context: {request.custom_context}")
