@@ -275,7 +275,7 @@ async def get_my_reports(
     ) for r in reports]
 
 
-@router.get("/{report_id}", response_model=GeneratedReportResponse)
+@router.get("/{report_id:int}", response_model=GeneratedReportResponse)
 async def get_report(
     report_id: int,
     db: Session = Depends(get_db),

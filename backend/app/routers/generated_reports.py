@@ -41,7 +41,7 @@ def create_report(
     return report
 
 
-@router.patch("/{report_id}", response_model=GeneratedReportResponse)
+@router.patch("/{report_id:int}", response_model=GeneratedReportResponse)
 def update_report(
     report_id: int,
     payload: GeneratedReportUpdate,
@@ -204,7 +204,7 @@ def get_report_stats(
     }
 
 
-@router.get("/{report_id}", response_model=GeneratedReportDetail)
+@router.get("/{report_id:int}", response_model=GeneratedReportDetail)
 def get_report(
     report_id: int,
     current_user: User = Depends(get_current_user),
@@ -711,7 +711,7 @@ def cleanup_stuck_reports(
     }
 
 
-@router.get("/{report_id}/status")
+@router.get("/{report_id:int}/status")
 def get_report_status(
     report_id: int,
     current_user: User = Depends(get_current_user),
