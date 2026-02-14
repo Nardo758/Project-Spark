@@ -42,9 +42,8 @@ export default function EnhancedOverviewTab({ workspaceId, workspace, token, onR
 
   const workflowTypeLabel: Record<string, string> = {
     lean_validation: 'Lean Validation',
-    full_research: 'Full Research',
-    competitor_focused: 'Competitor Focused',
-    financial_first: 'Financial First',
+    enterprise_b2b: 'Enterprise B2B',
+    product_market_fit: 'Product-Market Fit',
     custom: 'Custom',
   }
 
